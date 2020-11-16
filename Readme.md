@@ -1,11 +1,15 @@
 # Terminal
+```
 ctrl x e        'Edit command line
 esc + b         'Word back
 esc + f         'Word forward
+```
 
 # Command substitution
 <!-- 'Value equals value of shell or /bin/sh if shell is not present -->
-`${SHELL:-"/bin/sh"}` 
+```
+${SHELL:-"/bin/sh"}
+```
 
 # Tmux
 ```
@@ -22,10 +26,12 @@ Ctrl+a Alt + |  'Vertical Layout
 ```
 
 # Vim
+```
 Ctrl + V        'Visual block mode  
 Shift + >       'Indent line'  
 Shift + n>      'Indent line n steps'  
 F7              'reindent file
+```
 
 # Install dotfile
 
