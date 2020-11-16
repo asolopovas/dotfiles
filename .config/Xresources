@@ -1,0 +1,72 @@
+
+!! black dark/light
+*color0:                          #14191f
+*color8:                          #585858
+
+!! red dark/light
+*color1:                          #FF410D
+*color9:                          #FF410D
+
+!! green dark/light
+*color2:                          #A6E22E
+*color10:                         #A6E22E
+
+!! yellow dark/light
+*color3:                          #FFD80D
+*color11:                         #FFD80D
+!! blue dark/light
+*color4:                          #2643B1
+*color12:                         #267fb5
+
+!! magenta dark/light
+*color5:                          #823F72
+*color13:                         #ba8baf
+
+!! cyan dark/light
+*color6:                          #267fb5
+*color14:                         #267fb5
+
+!! white dark/light
+*color7:                          #d8d8d8
+*color15:                         #f8f8f8
+
+*background:                      #14191f
+*foreground:                      #f1f6fb
+*fading:                          8
+*fadeColor:                       black
+*cursorColor:                     #f8f8f0
+*pointerColorBackground:          #4B4D4B
+*pointerColorForeground:          #f8f8f0
+
+st.xfps: 300;
+!! Transparency (0-1):
+st.alpha: 0.90;
+
+!! Set a default font and font size as below:
+!! st.font:FuraCode Nerd Font Mono-16;
+!! st.termname: st-256color
+!! st.borderpx: 2
+
+Xft.dpi:       96
+Xft.antialias: true
+Xft.hinting:   true
+Xft.rgba:      rgb
+Xft.autohint:  false
+Xft.hintstyle: hintslight
+Xft.lcdfilter: lcddefault
+
+XTerm*background:        #f1f6fb
+XTerm*foreground:        #14191f
+XTerm*pointerColor:      #1ABB9B
+XTerm*faceName:          Inconsolata for Powerline
+XTerm*faceSize:          14
+XTerm*renderFont:	       true
+XTerm*reverseVideo:      on
+XTerm*selectToClipboard: true
+
+UXTerm*faceName:        Inconsolata for Powerline
+UXTerm*faceSize:        14
+UXTerm*renderFont:      true
+Xcursor.size:   				18
+Xcursor.theme:					DMZ-White
+Xcursor.theme_core:     true

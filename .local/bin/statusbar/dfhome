@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+df -h /home | awk 'NR==2 { print $5 "/" $2 " " }'
+

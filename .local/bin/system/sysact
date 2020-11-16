@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cmds="\
+leave kill -TERM $(pidof -s dwm)
+suspend systemctl suspend
+reboot sudo -A reboot
+shutdown sudo -A shutdown -h now
+refresh kill -HUP $(pidof -s dwm)
+"
+
+choice="$(echo "$cmds" | cut -d' ' -f 1 | dmenu)"
+
+`echo "$cmds" | grep "^$choice " | cut -d' ' -f2-`

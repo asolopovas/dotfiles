@@ -1,0 +1,14 @@
+#!/bin/bash
+
+case "$1" in 
+  rebuild)
+    pushd ~/www/dev > /dev/null
+      docker-compose build app; docker-compose up -d --force-recreate app
+    popd > /dev/null
+    ;;
+  restart)
+    pushd ~/www/dev > /dev/null
+      docker-compose restart
+    popd > /dev/null
+esac
+

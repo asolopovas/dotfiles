@@ -1,0 +1,20 @@
+#!/bin/zsh
+
+function _dvls() {
+  local state
+  _describe 'command' "($(docker volume ls --format={{.Name}}))"
+}
+compdef _dvls dvls
+
+function _dvbackup() {
+  local state
+  _describe 'command' "($(docker container ls -a --format={{.Names}}))"
+}
+compdef _dvbackup dvbackup
+
+function _dvrestore() {
+  local state
+  _describe 'command' "($(docker container ls -a --format={{.Names}}))"
+}
+compdef _dvrestore dvrestore
+

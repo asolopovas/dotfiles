@@ -1,0 +1,8 @@
+[user]
+	email = andrius.solopovas@gmail.com
+	name = Andrius Solopovas
+[alias]
+[core]
+	excludesfile = ~/.globignore
+[pull]
+	rebase = true

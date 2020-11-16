@@ -1,0 +1,21 @@
+#!/bin/bash
+
+[ ! -f ~/www/dev/.env ] && cp ~/www/dev/.env.example ~/www/dev/.env
+
+case "$1" in
+  w*)
+    sed -i "s#APP_URL=.*#APP_URL=$2#g;s#APP_WORKDIR=.*#APP_WORKDIR=/var/www/project#g;s#NGINX_ROOT=.*#NGINX_ROOT=/var/www/project#g" ~/www/dev/.env
+    ;;
+  l*) 
+    sed -i "s#APP_URL=.*#APP_URL=$2#g;s#APP_WORKDIR=.*#APP_WORKDIR=/var/www/project#g;s#NGINX_ROOT=.*#NGINX_ROOT=/var/www/project/public#g" ~/www/dev/.env
+    ;;
+  *) cat << EOF
+Allowed options:
+    wp {domain} 
+    laravel {domain} 
+EOF
+esac
+
+pushd ~/www/dev > /dev/null
+docker-compose up -d 
+popd > /dev/null

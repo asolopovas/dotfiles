@@ -1,0 +1,8 @@
+#!/bin/bash
+
+folder=$(ls -d ~/www/* | dmenu -i)
+if [ ! -z $folder ]; then
+	st zsh -c "cd $folder;zsh"
+fi
+
+

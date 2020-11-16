@@ -1,0 +1,3 @@
+#!/bin/bash
+
+awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]'

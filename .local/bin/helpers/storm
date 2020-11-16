@@ -1,0 +1,9 @@
+#!/bin/bash
+
+result=$(find ~/www -type d | fzf)
+
+[ -z $result ] && exit
+
+(nohup phpstorm $result >/dev/null 2>&1 &)
+
+pkill -f fzfmenu
