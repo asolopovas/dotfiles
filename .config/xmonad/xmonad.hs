@@ -62,6 +62,7 @@ blue2     = "#2266d0"
 -------------------------------------------
 -- Globals
 -------------------------------------------
+
 myTerminal      = "st"
 
 -- Whether focus follows the mouse pointer.
@@ -85,6 +86,7 @@ myFocusedBorderColor = "#fff323"
 -------------------------------------------
 -- Floating functions
 -------------------------------------------
+
 centerRect = W.RationalRect 0.25 0.25 0.5 0.5
 
 -- If the window is floating then (f), if tiled then (n)
@@ -120,20 +122,20 @@ myKeyb :: [(String, X ())]
 myKeyb =
   [
     --Windows 
-    ("M-q",           kill1                          ), -- Kill focused window
-    ("M-S-q",         killAll                        ), -- Kill all workspace windows
-    ("M-s",           windows W.focusMaster          ), -- Move focus to the master window
-    ("M-j",           windows W.focusDown            ), -- Move focus to the next window
-    ("M-k",           windows W.focusUp              ), -- Move focus to the prev window
-    ("M-S-j",         windows W.swapDown             ), -- Swap focused window with next window
-    ("M-S-k",         windows W.swapUp               ), -- Swap focused window with prev window
-    ("M-<Backspace>", promote                        ), -- Moves focused window to master
-    ("M-f",           sendMessage (T.Toggle "full")  ), -- Toggle layout full layout
-    ("M1-<Space>",    sendMessage NextLayout         ), -- Toggle layout full layout
-    ("M1-y",          sendMessage Shrink             ), -- Expand Layout
-    ("M1-o",          sendMessage Expand             ), -- Shrink Layout
-    ("M1-u",          sendMessage MirrorShrink       ), -- Vertical Shrink Layout
-    ("M1-i",          sendMessage MirrorExpand       ), -- Vertical Expand Layout
+    ("M-q",           kill1                           ), -- Kill focused window
+    ("M-S-q",         killAll                         ), -- Kill all workspace windows
+    ("M-s",           windows W.focusMaster           ), -- Move focus to the master window
+    ("M-j",           windows W.focusDown             ), -- Move focus to the next window
+    ("M-k",           windows W.focusUp               ), -- Move focus to the prev window
+    ("M-S-j",         windows W.swapDown              ), -- Swap focused window with next window
+    ("M-S-k",         windows W.swapUp                ), -- Swap focused window with prev window
+    ("M-<Backspace>", promote                         ), -- Moves focused window to master
+    ("M-f",           sendMessage (T.Toggle "full")   ), -- Toggle layout full layout
+    ("M1-<Space>",    sendMessage NextLayout          ), -- Toggle layout full layout
+    ("M1-y",          sendMessage Shrink              ), -- Expand Layout
+    ("M1-o",          sendMessage Expand              ), -- Shrink Layout
+    ("M1-u",          sendMessage MirrorShrink        ), -- Vertical Shrink Layout
+    ("M1-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
 
     --Applications 
     ("M-<Return>",     spawn myTerminal               ),
@@ -146,21 +148,21 @@ myKeyb =
     ("M-o",            spawn "fzfmenu vscode"         ),
 
     --Layouts
-    ("M-.",           sendMessage (IncMasterN 1)     ), -- Increase number of clients in master pane
-    ("M-,",           sendMessage (IncMasterN (-1))  ), -- Decrease number of clients in master pane
+    ("M-.",           sendMessage (IncMasterN 1)      ), -- Increase number of clients in master pane
+    ("M-,",           sendMessage (IncMasterN (-1))   ), -- Decrease number of clients in master pane
 
     --Floating Windows 
     ("M-<Delete>",     withFocused $ windows . W.sink ), -- Push floating window back to tile
     ("M-t",            toggleFloat                    ),
 
     --Xmonad
-    ("M-r",           spawn "xmonad --restart"                          ), -- Restarts xmonad
-    ("M-S-r",         spawn "xmonad --recompile && xmonad --restart"    ), -- Recompiles xmonad
+    ("M-r",           spawn "xmonad --recompile; xmonad --restart"      ), -- Restarts xmonad
     ("M-S-e",         io exitSuccess                                    ), -- Quits xmonad
 
     --Scratchpads
     ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"   ),
     ("M-m",           namedScratchpadAction myScratchPads "spotify"    ),
+    ("M-g",           namedScratchpadAction myScratchPads "steam"      ),
     ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer" ),
     ("M-x",           namedScratchpadAction myScratchPads "thunar"     ),
 
@@ -211,6 +213,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 --------------------------------------------
 -- LogHook
 --------------------------------------------
+
 myLogHook :: D.Client -> PP
 myLogHook dbus = def
     { 
@@ -244,17 +247,20 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 -- Scratchpads
 -------------------------------------------
+
 myScratchPads = 
   [
     NS "terminal"   spawnTerm      findTerm       mediumFloat,
     NS "spotify"    "spotify"      findSpotify    largeFloat,
     NS "teamviewer" "teamviewer"   findTeamviewer defaultFloating,
-    NS "thunar"     "thunar"       findThunar     defaultFloating
+    NS "thunar"     "thunar"       findThunar     defaultFloating,
+    NS "steam"      "steam"        findSteam      largeFloat
   ]
 
   where
     spawnTerm      = myTerminal ++ " -n scratchpad"
     findTerm       = resource  =? "scratchpad"
+    findSteam      = className =? "Steam"
     findSpotify    = className =? "Spotify"
     findTeamviewer = className =? "TeamViewer"
     findThunar     = className =? "Thunar"
@@ -276,6 +282,7 @@ myScratchPads =
 -- Layouts
 --------------------------------------------
 -- Tall nmaster delta ratio
+
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
@@ -351,23 +358,23 @@ myEventHook = myHandleEventHook
 --------------------------------------------
 
 myStartupHook = do
-    spawnOnce "picom &" -- Compositor,
-    spawnOnce ".config/polybar/launch.sh &"
-    spawnOnce "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
-    spawnOnce "xsetroot -cursor_name left_ptr &"
-    spawnOnce "picom & # Compositor"
-    spawnOnce "autorandr --change --force &"
-    spawnOnce "flameshot &"
-    spawnOnce "nm-applet &"
-    spawnOnce "clipit &"
-    spawnOnce "xfce4-power-manager &"
-    spawnOnce "blueman-applet &"
-    spawnOn "7" "skypeforlinux &"
-    spawnOn "7" "whatsapp-nativefier &"
-    spawnOn "7" "telegram-desktop &"
-    spawnOn "7" "viber &"
-    spawnOnce "setbg &"
-    spawnOnce "remaps & # run the remaps script, switching caps/esc and more; check it for more info"
+    spawnOnce     "picom &" -- Compositor,
+    spawnOnce     ".config/polybar/launch.sh &"
+    spawnOnce     "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
+    spawnOnce     "xsetroot -cursor_name left_ptr &"
+    spawnOnce     "picom & # Compositor"
+    spawnOnce     "autorandr --change --force &"
+    spawnOnce     "flameshot &"
+    spawnOnce     "nm-applet &"
+    spawnOnce     "clipit &"
+    spawnOnce     "xfce4-power-manager &"
+    spawnOnce     "blueman-applet &"
+    spawnOnce     "setbg &"
+    spawnOnce     "remaps & # run the remaps script, switching caps/esc and more; check it for more info"
+    spawnOn   "7" "skypeforlinux &"
+    spawnOn   "7" "whatsapp-nativefier &"
+    spawnOn   "7" "telegram-desktop &"
+    spawnOn   "7" "viber &"
 
 -------------------------------------------
 -- Main

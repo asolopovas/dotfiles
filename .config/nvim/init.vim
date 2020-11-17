@@ -374,7 +374,6 @@ augroup autosourcing
   autocmd BufWritePost $MYVIMRC source $MYVIMRC
   autocmd BufWritePost ~/www/dev/.env silent! !dev rebuild
   autocmd BufWritePost ~/.config/i3/config silent! !i3-msg reload
-  autocmd BufWritePost ~/.config/xmonad/xmonad.hs silent! !xmonad --recompile
   autocmd BufWritePost ~/Git/dwm/* silent! !rebuild-dwm
   autocmd BufWritePost ~/.config/polybar/** silent! !~/.config/polybar/launch.sh
   autocmd BufWritePost ~/.config/dunst/dunstrc silent! !killall dunst & dunst &
