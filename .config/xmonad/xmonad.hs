@@ -121,7 +121,7 @@ toggleFloat = floatOrNot (withFocused $ windows . W.sink) (withFocused centerFlo
 myKeyb :: [(String, X ())]
 myKeyb =
   [
-    --Windows 
+    --Windows
     ("M-q",           kill1                           ), -- Kill focused window
     ("M-S-q",         killAll                         ), -- Kill all workspace windows
     ("M-s",           windows W.focusMaster           ), -- Move focus to the master window
@@ -137,7 +137,7 @@ myKeyb =
     ("M1-u",          sendMessage MirrorShrink        ), -- Vertical Shrink Layout
     ("M1-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
 
-    --Applications 
+    --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-b",            spawn "chrome"                 ),
     ("M-d",            spawn "dmenu_run"              ),
@@ -151,7 +151,7 @@ myKeyb =
     ("M-.",           sendMessage (IncMasterN 1)      ), -- Increase number of clients in master pane
     ("M-,",           sendMessage (IncMasterN (-1))   ), -- Decrease number of clients in master pane
 
-    --Floating Windows 
+    --Floating Windows
     ("M-<Delete>",     withFocused $ windows . W.sink ), -- Push floating window back to tile
     ("M-t",            toggleFloat                    ),
 
@@ -198,7 +198,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 --------------------------------------------
 
 myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
-    [ 
+    [
       -- mod-button1, Set the window to floating mode and move by dragging
       ((modm, button1), (\w -> focus w >> mouseMoveWindow w
                                        >> windows W.shiftMaster)),
@@ -216,7 +216,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 
 myLogHook :: D.Client -> PP
 myLogHook dbus = def
-    { 
+    {
       ppOutput  = dbusOutput dbus,
       ppCurrent = wrap ("%{F" ++ blue2 ++ "} ") " %{F-}",
       ppVisible = wrap ("%{F" ++ blue ++ "} ") " %{F-}",
@@ -248,7 +248,7 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -- Scratchpads
 -------------------------------------------
 
-myScratchPads = 
+myScratchPads =
   [
     NS "terminal"   spawnTerm      findTerm       mediumFloat,
     NS "spotify"    "spotify"      findSpotify    largeFloat,
@@ -287,9 +287,9 @@ mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spaci
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
 tiled    =   renamed [Replace "tiled"]
+           $ smartBorders
            $ limitWindows 12
            $ mySpacing 5
-           $ smartBorders
            $ ResizableTall 1 (3/100) (1/2) []
 full    =    renamed [Replace "full"]
            $ noBorders
@@ -299,10 +299,10 @@ magnify  =   renamed [Replace "magnify"]
            $ limitWindows 4
            $ mySpacing 5
            $ ResizableTall 1 (3/100) (1/2) []
- 
-myLayout =  desktopLayoutModifiers $ T.toggleLayouts full $ onWorkspaces ["7"] magnify $ myDefaultLayout
+
+myLayout = T.toggleLayouts full $ desktopLayoutModifiers $ onWorkspaces ["7"] magnify $ myDefaultLayout
   where
-    myDefaultLayout = tiled 
+    myDefaultLayout = tiled
                   ||| magnify
 
 
@@ -311,7 +311,7 @@ myLayout =  desktopLayoutModifiers $ T.toggleLayouts full $ onWorkspaces ["7"] m
 --------------------------------------------
 
 myManageHook = composeAll
-    [ 
+    [
       className =? "whatsapp-nativefier-d40211" --> doShift ( myWorkspaces !! 6 ),
       className =? "whatsapp-nativefier-d52542" --> doShift ( myWorkspaces !! 6 ),
       className =? "ViberPC"                    --> doShift ( myWorkspaces !! 6 ),
@@ -386,9 +386,9 @@ main = do
   D.requestName dbus (D.busName_ "org.xmonad.Log")
     [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
 
-  xmonad  
+  xmonad
     $ docks
-    $ ewmh def { 
+    $ ewmh def {
 
         -- simple stuff
         terminal           = myTerminal,
@@ -409,5 +409,5 @@ main = do
         manageHook         = manageDocks <+> myManageHook,
         handleEventHook    = myEventHook <+> fullscreenEventHook,
         startupHook        = myStartupHook,
-        logHook            = dynamicLogWithPP (myLogHook dbus) 
+        logHook            = dynamicLogWithPP (myLogHook dbus)
     } `additionalKeysP` myKeyb
