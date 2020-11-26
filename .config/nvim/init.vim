@@ -118,6 +118,7 @@ imap <m-k> <c-T>
 
 
 imap jk <Esc>;
+nmap <silent><leader>et :e ~/.config/alacritty/alacritty.yml<cr>
 nmap <silent><leader>ev :e $MYVIMRC<cr>
 nmap <silent><leader>er :e ~/Readme.md<cr>
 nmap <silent><leader>eh :e /etc/hosts<cr>
