@@ -23,6 +23,8 @@
 !/.config/rclone
 !/.config/dunst
 !/.config/dunst/dunstrc
+!/.config/fish
+!/.config/fish/**
 !/.config/nvim
 !/.config/nvim/init.vim
 !/.config/nvim/ginit.vim
