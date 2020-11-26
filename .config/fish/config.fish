@@ -1,5 +1,6 @@
 #!/bin/fish
 
+set fish_greeting
 if test -n "$DESKTOP_SESSION"
     set -x (gnome-keyring-daemon --start --components=ssh | string split "=")
 end
@@ -8,12 +9,12 @@ end
 fish_hybrid_key_bindings
 
 # Add user scripts
-set -U fish_user_paths $HOME/.local/bin                  $fish_user_paths
-set -U fish_user_paths $HOME/.local/share/gem/bin        $fish_user_paths
-set -U fish_user_paths $HOME/.config/composer/vendor/bin $fish_user_paths
-set -U fish_user_paths $HOME/.local/yarn/bin             $fish_user_paths
-set -U fish_user_paths $HOME/.yarn/bin                   $fish_user_paths
-set -U fish_user_paths $HOME/.config/fzf/bin             $fish_user_paths
+set PATH $HOME/.local/bin                  $PATH
+set PATH $HOME/.local/share/gem/bin        $PATH
+set PATH $HOME/.config/composer/vendor/bin $PATH
+set PATH $HOME/.local/yarn/bin             $PATH
+set PATH $HOME/.yarn/bin                   $PATH
+set PATH $HOME/.config/fzf/bin             $PATH
 
 # Display full path
 set -U fish_prompt_pwd_dir_length 0
