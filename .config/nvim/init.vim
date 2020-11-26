@@ -123,7 +123,7 @@ nmap <silent><leader>er :e ~/Readme.md<cr>
 nmap <silent><leader>eh :e /etc/hosts<cr>
 nmap <silent><leader>ee :e ~/.config/xmonad/xmonad.hs<cr>
 nmap <silent><leader>eb :e ~/.config/polybar/config<cr>
-nmap <silent><leader>ez :e ~/.config/zsh/.zshrc<cr>
+nmap <silent><leader>ez :e ~/.config/fish/config.fish<cr>
 nmap <silent><leader>ea :e ~/.config/.aliasrc<cr>
 nmap <silent><leader>ef :e ~/.config/.func<cr>
 nmap <silent><leader>ec :e ~/.config/zsh/.completions<cr>
