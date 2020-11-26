@@ -5,9 +5,9 @@ export QT_QPA_PLATFORMTHEME=gtk2
 export _JAVA_AWT_WM_NONREPARENTING=1
 
 # Applications
-export BROWSER="chrome"
+export BROWSER="google-chrome-stable"
 export FILEMANAGER="thunar"
-export TERMINAL="st"
+export TERMINAL="alacrity"
 
 # ~/ Clean-Up
 export XDG_CONFIG_HOME="$HOME/.config"

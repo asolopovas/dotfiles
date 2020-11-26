@@ -1,18 +1,20 @@
 [Default Applications]
-application/pdf=pdf.desktop;
-application/postscript=pdf.desktop;
+application/pdf=pdf.desktop
+application/postscript=pdf.desktop
 application/rss+xml=rss.desktop
-application/x-bittorrent=torrent.desktop;
-image/gif=img.desktop;
+application/x-bittorrent=torrent.desktop
+image/gif=img.desktop
 image/jpeg=viewnior.desktop
 image/png=viewnior.desktop
 inode/directory=file.desktop
 inode/directory=thunar.desktop
-text/plain=text.desktop;
-text/x-shellscript=text.desktop;
+text/plain=text.desktop
+text/x-shellscript=text.desktop
+text/html=google-chrome.desktop
 video/x-matroska=video.desktop
 x-scheme-handler/http=google-chrome.desktop
 x-scheme-handler/https=google-chrome.desktop
+x-scheme-handler/about=google-chrome.desktop
 x-scheme-handler/lbry=lbry.desktop
 x-scheme-handler/magnet=torrent.desktop;
 x-scheme-handler/mailto=mail.desktop;
@@ -24,9 +26,9 @@ x-scheme-handler/file=thunar.desktop
 
 [Added Associations]
 application/x-archive=gnome-file-roller.desktop;org.gnome.FileRoller.desktop;
-application/x-shellscript=visual-studio-code.desktop;
-image/jpeg=picom.desktop;viewnior.desktop;
-image/png=google-chrome.desktop;viewnior.desktop;
-text/html=visual-studio-code.desktop;
-text/plain=nvim.desktop;
-text/vbscript=visual-studio-code.desktop;
+application/x-shellscript=visual-studio-code.desktop
+image/jpeg=picom.desktop;viewnior.desktop
+image/png=google-chrome.desktop;viewnior.desktop
+text/html=visual-studio-code.desktop
+text/plain=nvim.desktop
+text/vbscript=visual-studio-code.desktop
