@@ -3,6 +3,8 @@
 !/.local/bin
 !/.local/bin/**
 !/.config
+!/.config/alacrity
+!/.config/alacrity/**
 !/.config/autorandr
 !/.config/autorandr/**
 !/.config/fish
