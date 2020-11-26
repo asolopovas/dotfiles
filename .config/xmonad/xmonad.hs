@@ -62,8 +62,8 @@ blue2     = "#2266d0"
 -------------------------------------------
 -- Globals
 -------------------------------------------
-
-myTerminal      = "st"
+myTerminal      = "alacritty"
+myBrowser       = "google-chrome-stable"
 
 -- Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool
@@ -139,7 +139,7 @@ myKeyb =
 
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
-    ("M-b",            spawn "chrome"                 ),
+    ("M-b",            spawn myBrowser                ),
     ("M-d",            spawn "dmenu_run"              ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
@@ -258,8 +258,8 @@ myScratchPads =
   ]
 
   where
-    spawnTerm      = myTerminal ++ " -n scratchpad"
-    findTerm       = resource  =? "scratchpad"
+    spawnTerm      = myTerminal ++ " -t scratchpad"
+    findTerm       = title =? "scratchpad"
     findSteam      = className =? "Steam"
     findSpotify    = className =? "Spotify"
     findTeamviewer = className =? "TeamViewer"
@@ -329,6 +329,7 @@ myManageHook = composeAll
       className =? "Viewnior"                   --> doCenterFloat,
       className =? "Ao"                         --> doCenterFloat,
       className =? "Blueman-manager"            --> doCenterFloat,
+      className =? "Catfish"                    --> doCenterFloat,
       className =? "Gpg-crypter"                --> doCenterFloat,
       className =? "kcachegrind"                --> doCenterFloat,
       className =? "Lxappearance"               --> doCenterFloat,
