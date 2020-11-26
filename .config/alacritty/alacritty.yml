@@ -222,15 +222,15 @@ colors:
     #  foreground: '#1d1f21'
 
   # Normal colors
-  #normal:
-  #  black:   '#1d1f21'
-  #  red:     '#cc6666'
-  #  green:   '#b5bd68'
-  #  yellow:  '#f0c674'
-  #  blue:    '#81a2be'
-  #  magenta: '#b294bb'
-  #  cyan:    '#8abeb7'
-  #  white:   '#c5c8c6'
+  normal:
+   black:   '#1d1f21'
+   red:     '#cc6666'
+   green:   '#A6E22E'
+   yellow:  '#FFD80D'
+   blue:    '#2643B1'
+   magenta: '#823F72'
+   cyan:    '#267fb5'
+   white:   '#d8d8d8'
 
   # Bright colors
   #bright:
