@@ -371,7 +371,7 @@ myStartupHook = do
     spawnOnce     "xfce4-power-manager &"
     spawnOnce     "blueman-applet &"
     spawnOnce     "setbg &"
-    spawnOnce     "remaps & # run the remaps script, switching caps/esc and more; check it for more info"
+    spawnOnce     "remaps &"
     spawnOn   "7" "skypeforlinux &"
     spawnOn   "7" "whatsapp-nativefier &"
     spawnOn   "7" "telegram-desktop &"
