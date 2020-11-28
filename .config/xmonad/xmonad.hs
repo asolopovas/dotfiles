@@ -21,6 +21,7 @@ import XMonad.Util.NoTaskbar
 -- Layouts
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Magnifier
+import XMonad.Layout.Reflect
 
 -- Layout Modifiers
 import XMonad.Layout.PerWorkspace
@@ -290,19 +291,15 @@ tiled    =   renamed [Replace "tiled"]
            $ smartBorders
            $ limitWindows 12
            $ mySpacing 5
+           $ reflectHoriz
            $ ResizableTall 1 (3/100) (1/2) []
 full    =    renamed [Replace "full"]
            $ noBorders
            $ Full
-magnify  =   renamed [Replace "magnify"]
-           $ magnifier
-           $ limitWindows 4
-           $ mySpacing 5
-           $ ResizableTall 1 (3/100) (1/2) []
 
 myLayout = desktopLayoutModifiers $ T.toggleLayouts full $ myDefaultLayout
   where
-    myDefaultLayout = tiled ||| magnify
+    myDefaultLayout = tiled
 
 
 --------------------------------------------

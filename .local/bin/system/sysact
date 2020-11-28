@@ -1,11 +1,10 @@
 #!/bin/sh
 
 cmds="\
-leave kill -TERM $(pidof -s dwm)
+leave kill -TERM $(pidof -s xmonad-x86_64-linux)
 suspend systemctl suspend
 reboot sudo -A reboot
 shutdown sudo -A shutdown -h now
-refresh kill -HUP $(pidof -s dwm)
 "
 
 choice="$(echo "$cmds" | cut -d' ' -f 1 | dmenu)"
