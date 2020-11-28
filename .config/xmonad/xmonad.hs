@@ -300,10 +300,9 @@ magnify  =   renamed [Replace "magnify"]
            $ mySpacing 5
            $ ResizableTall 1 (3/100) (1/2) []
 
-myLayout = T.toggleLayouts full $ desktopLayoutModifiers $ onWorkspaces ["7"] magnify $ myDefaultLayout
+myLayout = desktopLayoutModifiers $ T.toggleLayouts full $ myDefaultLayout
   where
-    myDefaultLayout = tiled
-                  ||| magnify
+    myDefaultLayout = tiled ||| magnify
 
 
 --------------------------------------------
