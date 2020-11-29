@@ -22,6 +22,7 @@ import XMonad.Util.NoTaskbar
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Magnifier
 import XMonad.Layout.Reflect
+import XMonad.Layout.IndependentScreens
 
 -- Layout Modifiers
 import XMonad.Layout.PerWorkspace
@@ -78,16 +79,32 @@ myModMask       = mod4Mask
 
 -- A tagging example:
 -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
-myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
+myWorkspaces    = ["1","2","3","4","5","6","7:chat","8","9"]
 
 myBorderWidth   = 2
 myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#fff323"
 
+--------------------------------------------
+-- Workspaces Binding
+--------------------------------------------
+myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
+    -- mod-[1..9], Switch to workspace N
+    -- mod-shift-[1..9], Move client to workspace N
+    [((m .|. modm, k), windows $ onCurrentScreen f i)
+        | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
+        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+    ++
+
+    -- mod-{h,j}, Switch to physical/Xinerama screens 1, 2, or 3
+    -- mod-shift-{h,j}, Move client to screen 1, 2, or 3
+    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
+        | (key, sc) <- zip [xK_h, xK_l] [0..]
+        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
+
 -------------------------------------------
 -- Floating functions
 -------------------------------------------
-
 centerRect = W.RationalRect 0.25 0.25 0.5 0.5
 
 -- If the window is floating then (f), if tiled then (n)
@@ -141,6 +158,7 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-b",            spawn myBrowser                ),
+    ("M-S-b",          spawnOn "0_7:chat" myBrowser                ),
     ("M-d",            spawn "dmenu_run"              ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
@@ -180,24 +198,9 @@ myKeyb =
 
 shiftAndView i = W.view i . W.shift i
 
-myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
-    -- mod-[1..9], Switch to workspace N
-    -- mod-shift-[1..9], Move client to workspace N
-    [((m .|. modm, k), windows $ f i)
-        | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
-    ++
-
-    -- mod-{h,j,n}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{h,j,n}, Move client to screen 1, 2, or 3
-    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_h, xK_l] [0..]
-        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
-
 --------------------------------------------
 -- Mouse bindings
 --------------------------------------------
-
 myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
     [
       -- mod-button1, Set the window to floating mode and move by dragging
@@ -214,7 +217,6 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 --------------------------------------------
 -- LogHook
 --------------------------------------------
-
 myLogHook :: D.Client -> PP
 myLogHook dbus = def
     {
@@ -248,7 +250,6 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 -- Scratchpads
 -------------------------------------------
-
 myScratchPads =
   [
     NS "terminal"   spawnTerm      findTerm       mediumFloat,
@@ -260,7 +261,7 @@ myScratchPads =
 
   where
     spawnTerm      = myTerminal ++ " -t scratchpad"
-    findTerm       = title =? "scratchpad"
+    findTerm       = title     =? "scratchpad"
     findSteam      = className =? "Steam"
     findSpotify    = className =? "Spotify"
     findTeamviewer = className =? "TeamViewer"
@@ -282,12 +283,16 @@ myScratchPads =
 --------------------------------------------
 -- Layouts
 --------------------------------------------
--- Tall nmaster delta ratio
-
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
-tiled    =   renamed [Replace "tiled"]
+
+tiled   =    renamed [Replace "tiled"]
+           $ smartBorders
+           $ limitWindows 12
+           $ mySpacing 5
+           $ ResizableTall 1 (3/100) (1/2) []
+tiledR  =   renamed [Replace "tiledR"]
            $ smartBorders
            $ limitWindows 12
            $ mySpacing 5
@@ -297,22 +302,24 @@ full    =    renamed [Replace "full"]
            $ noBorders
            $ Full
 
-myLayout = desktopLayoutModifiers $ T.toggleLayouts full $ myDefaultLayout
+myLayout =   desktopLayoutModifiers 
+           $ T.toggleLayouts full 
+           $ onWorkspaces ["1_1", "1_2", "1_3", "1_4", "1_5", "1_6", "1_7:chat", "1_8", "1_9"] tiled
+           $ onWorkspaces ["0_1", "0_2", "0_3", "0_4", "0_5", "0_6", "0_7:chat", "0_8", "0_9"] tiledR
+           $ myDefaultLayout
   where
     myDefaultLayout = tiled
 
-
---------------------------------------------
+-------------------------------------------
 -- Window Rules
 --------------------------------------------
-
 myManageHook = composeAll
     [
-      className =? "whatsapp-nativefier-d40211" --> doShift ( myWorkspaces !! 6 ),
-      className =? "whatsapp-nativefier-d52542" --> doShift ( myWorkspaces !! 6 ),
-      className =? "ViberPC"                    --> doShift ( myWorkspaces !! 6 ),
-      className =? "TelegramDesktop"            --> doShift ( myWorkspaces !! 6 ),
-      className =? "Skype"                      --> doShift ( myWorkspaces !! 6 ),
+      className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
+      className =? "whatsapp-nativefier-d52542" --> doShift "1_7:chat",
+      className =? "ViberPC"                    --> doShift "1_7:chat",
+      className =? "TelegramDesktop"            --> doShift "1_7:chat",
+      className =? "Skype"                      --> doShift "1_7:chat",
       className =? "fzfmenu"                    --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
@@ -334,11 +341,9 @@ myManageHook = composeAll
       className =? "Seahorse"                   --> doCenterFloat
     ] <+> namedScratchpadManageHook myScratchPads
 
-
 --------------------------------------------
 -- Event handling
 --------------------------------------------
-
 myHandleEventHook :: Event -> X All
 myHandleEventHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
     where floating  = customFloating $ W.RationalRect l t w h
@@ -353,32 +358,35 @@ myEventHook = myHandleEventHook
 --------------------------------------------
 -- Startup Hook
 --------------------------------------------
-
 myStartupHook = do
-    spawnOnce     "picom &" -- Compositor,
-    spawnOnce     ".config/polybar/launch.sh &"
-    spawnOnce     "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
-    spawnOnce     "xsetroot -cursor_name left_ptr &"
-    spawnOnce     "picom & # Compositor"
-    spawnOnce     "autorandr --change --force &"
-    spawnOnce     "flameshot &"
-    spawnOnce     "nm-applet &"
-    spawnOnce     "clipit &"
-    spawnOnce     "xfce4-power-manager &"
-    spawnOnce     "blueman-applet &"
-    spawnOnce     "setbg &"
-    spawnOnce     "remaps &"
-    spawnOn   "7" "skypeforlinux &"
-    spawnOn   "7" "whatsapp-nativefier &"
-    spawnOn   "7" "telegram-desktop &"
-    spawnOn   "7" "viber &"
+    spawnOnce      "picom &" -- Compositor,
+    spawnOnce      ".config/polybar/launch.sh &"
+    spawnOnce      "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
+    spawnOnce      "xsetroot -cursor_name left_ptr &"
+    spawnOnce      "picom & # Compositor"
+    spawnOnce      "autorandr --change --force &"
+    spawnOnce      "flameshot &"
+    spawnOnce      "nm-applet &"
+    spawnOnce      "clipit &"
+    spawnOnce      "xfce4-power-manager &"
+    spawnOnce      "blueman-applet &"
+    spawnOnce      "setbg &"
+    spawnOnce      "remaps &"
+    spawnOnce      "skypeforlinux &"
+    spawnOnce      "whatsapp-nativefier &"
+    spawnOnce      "telegram-desktop &"
+    spawnOnce      "viber &"
+    screenWorkspace 1 >>= flip whenJust (windows . W.view)
+    windows $ W.greedyView "1_7:chat"
+    screenWorkspace 0 >>= flip whenJust (windows . W.view)
+    windows $ W.greedyView "0_1"
 
 -------------------------------------------
 -- Main
 -------------------------------------------
-
 main :: IO ()
 main = do
+  nScreens <- countScreens
   dbus <- D.connectSession
   D.requestName dbus (D.busName_ "org.xmonad.Log")
     [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
@@ -393,7 +401,7 @@ main = do
         clickJustFocuses   = myClickJustFocuses,
         borderWidth        = myBorderWidth,
         modMask            = myModMask,
-        workspaces         = myWorkspaces,
+        workspaces         = withScreens nScreens myWorkspaces,
         normalBorderColor  = myNormalBorderColor,
         focusedBorderColor = myFocusedBorderColor,
 
@@ -403,7 +411,7 @@ main = do
 
         -- hooks, layouts
         layoutHook         = myLayout,
-        manageHook         = manageDocks <+> myManageHook,
+        manageHook         = manageSpawn <+> myManageHook,
         handleEventHook    = myEventHook <+> fullscreenEventHook,
         startupHook        = myStartupHook,
         logHook            = dynamicLogWithPP (myLogHook dbus)
