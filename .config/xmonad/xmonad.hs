@@ -327,6 +327,7 @@ myManageHook = composeAll
       className =? "Lxappearance"               --> doCenterFloat,
       className =? "Vmware"                     --> doCenterFloat,
       className =? "Nvidia-settings"            --> doCenterFloat,
+      className =? "Hexchat"                    --> doCenterFloat,
       className =? "p3x-onenote"                --> doCenterFloat,
       className =? "Gimp"                       --> doCenterFloat,
       className =? "Viewnior"                   --> doCenterFloat,

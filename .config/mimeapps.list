@@ -30,5 +30,5 @@ application/x-shellscript=visual-studio-code.desktop
 image/jpeg=picom.desktop;viewnior.desktop
 image/png=google-chrome.desktop;viewnior.desktop
 text/html=visual-studio-code.desktop
-text/plain=nvim.desktop
+text/plain=nvim-qt.desktop
 text/vbscript=visual-studio-code.desktop

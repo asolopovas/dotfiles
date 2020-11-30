@@ -58,6 +58,7 @@ filetype off                                      " Required for Vundle
 filetype plugin indent on                         " Enable Indenting
 syntax on                                         " Enable Syntax Highlighting
 let mapleader = ","                               " Chane <leader> from '\'  to ',
+let s:fontsize = 12
 set hidden                                        " Hides Buffers instead of closing
 set fileformat=unix                               " File Endings in unix format,
 set backspace=indent,eol,start whichwrap+=<,>,[,]
