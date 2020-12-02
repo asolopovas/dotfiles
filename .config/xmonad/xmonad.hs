@@ -311,15 +311,27 @@ myLayout =   desktopLayoutModifiers
     myDefaultLayout = tiled
 
 -------------------------------------------
+-- Create a new ManageHook
+-------------------------------------------
+openSilent :: WorkspaceId -> ManageHook
+openSilent tows = do
+   fromws <- liftX $ return . W.currentTag . windowset =<< get -- get the current ws tag
+   wid    <- ask                                             -- get opened windowId
+   doF $ W.view fromws . W.insertUp wid . W.view tows
+--       |               |                |- move focus to "to" workspace
+--       |               |- insert window
+--       |- move focus back to "from" workspace
+
+-------------------------------------------
 -- Window Rules
 --------------------------------------------
 myManageHook = composeAll
     [
-      className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
-      className =? "whatsapp-nativefier-d52542" --> doShift "1_7:chat",
-      className =? "ViberPC"                    --> doShift "1_7:chat",
-      className =? "TelegramDesktop"            --> doShift "1_7:chat",
-      className =? "Skype"                      --> doShift "1_7:chat",
+      className =? "whatsapp-nativefier-d40211" --> openSilent "1_7:chat",
+      className =? "whatsapp-nativefier-d52542" --> openSilent "1_7:chat",
+      className =? "ViberPC"                    --> openSilent "1_7:chat",
+      className =? "TelegramDesktop"            --> openSilent "1_7:chat",
+      className =? "Skype"                      --> openSilent "1_7:chat",
       className =? "fzfmenu"                    --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
