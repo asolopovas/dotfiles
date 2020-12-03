@@ -376,7 +376,6 @@ myStartupHook = do
     spawnOnce      ".config/polybar/launch.sh &"
     spawnOnce      "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
     spawnOnce      "xsetroot -cursor_name left_ptr &"
-    spawnOnce      "picom & # Compositor"
     spawnOnce      "autorandr --change --force &"
     spawnOnce      "flameshot &"
     spawnOnce      "nm-applet &"
