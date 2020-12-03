@@ -11,7 +11,12 @@ export FILEMANAGER="thunar"
 export TERMINAL="alacrity"
 export FZF_DEFAULT_OPTS="--layout=reverse --height 30%"
 
-# ~/ Clean-Up
+## ~/ Clean-Up
+export LESSHISTFILE="-"
+export LESS=-R
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
 export ANDROID_SDK_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/android"
 export DOCKER_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/docker"
 export GEM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/gem"
@@ -22,8 +27,6 @@ export GOPATH="${XDG_DATA_HOME:-$HOME/.local/share}/go"
 export GTK2_RC_FILES="$HOME/.config/gtk-2.0/.gtkrc-2.0"
 export INPUTRC="${XDG_CONFIG_HOME:-$HOME/.config}/inputrc"
 export KDEHOME="${XDG_CONFIG_HOME:-$HOME/.config}/kde"
-export LESSHISTFILE="-"
-export LESS=-R
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
 export NVM_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nvm"
 export PASSWORD_STORE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/password-store"
@@ -31,13 +34,10 @@ export TMUX_TMPDIR="$XDG_RUNTIME_DIR"
 export WEECHAT_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/weechat"
 export WGETRC="${XDG_CONFIG_HOME:-$HOME/.config}/wget/wgetrc"
 export WINEPREFIX="${XDG_DATA_HOME:-$HOME/.local/share}/wineprefixes/default"
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
 export XMONAD_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}/xmonad"
 export XMONAD_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/xmonad"
 export XMONAD_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/xmonad"
 
-# sudo -n loadkeys ${XDG_DATA_HOME:-$HOME/.local/share}/ttymaps.kmap 2>/dev/null
-# Program Settings
+## sudo -n loadkeys ${XDG_DATA_HOME:-$HOME/.local/share}/ttymaps.kmap 2>/dev/null
+## Program Settings
 source ~/.env
