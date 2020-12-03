@@ -1,7 +1,7 @@
 #!/bin/fish
 #
-if test -n "$DESKTOP_SESSION"
-    set -x (gnome-keyring-daemon --start --components=ssh | string split "=")
+if set -q DESKTOP_SESSION
+    set -x (gnome-keyring-daemon --start --components=pkcs11,secrets,ssh,gpg | string split "=")
 end
 
 # ----------------------------------
