@@ -384,6 +384,10 @@ myStartupHook = do
     spawnOnce      "blueman-applet &"
     spawnOnce      "setbg &"
     spawnOnce      "remaps &"
+    spawnOnce      "skypeforlinux &"
+    spawnOnce      "whatsapp-nativefier &"
+    spawnOnce      "telegram-desktop &"
+    spawnOnce      "viber &"
     screenWorkspace 1 >>= flip whenJust (windows . W.view)
     windows $ W.greedyView "1_7:chat"
     screenWorkspace 0 >>= flip whenJust (windows . W.view)
