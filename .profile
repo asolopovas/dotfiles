@@ -1,3 +1,4 @@
+## sudo -n loadkeys ${XDG_DATA_HOME:-$HOME/.local/share}/ttymaps.kmap 2>/dev/null
 [ ! -d $XMONAD_DATA_HOME ] && mkdir $XMONAD_DATA_HOME
 
 export LC_ALL="en_GB.UTF-8"
@@ -9,7 +10,6 @@ export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 export BROWSER="google-chrome-stable"
 export FILEMANAGER="thunar"
 export TERMINAL="alacrity"
-export FZF_DEFAULT_OPTS="--layout=reverse --height 30%"
 
 ## ~/ Clean-Up
 export LESSHISTFILE="-"
@@ -38,7 +38,15 @@ export XMONAD_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}/xmonad"
 export XMONAD_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/xmonad"
 export XMONAD_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/xmonad"
 
-## sudo -n loadkeys ${XDG_DATA_HOME:-$HOME/.local/share}/ttymaps.kmap 2>/dev/null
+# FZF Settings
+export FZF_DEFAULT_OPTS="--layout=reverse --height 30%"
+FZF_COMMAND='rg --files --hidden --follow -g "!.git/*" -g "!.steam/*" -g "!.local/share" -g "!.local/usr/bin" -g "!node_modules/*" -g "!vendor/*" 2> /dev/null'
+export FZF_DEFAULT_COMMAND=$FZF_COMMAND
+export FZF_CTRL_T_COMMAND=$FZF_COMMAND
+
+# Docker Settings
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 
 ## Program Settings
 source ~/.env
