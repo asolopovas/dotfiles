@@ -27,7 +27,7 @@ x-scheme-handler/file=thunar.desktop
 [Added Associations]
 application/x-archive=gnome-file-roller.desktop;org.gnome.FileRoller.desktop;
 application/x-shellscript=visual-studio-code.desktop
-image/jpeg=picom.desktop;viewnior.desktop
+image/jpeg=gimp.desktop;picom.desktop;viewnior.desktop;
 image/png=google-chrome.desktop;viewnior.desktop
 text/html=visual-studio-code.desktop
 text/plain=nvim-qt.desktop
