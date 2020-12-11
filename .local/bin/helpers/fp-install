@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ln -sf /var/lib/flatpak/exports/bin/com.viber.Viber          ~/.local/bin/apps/viber
-ln -sf /var/lib/flatpak/exports/bin/com.visualstudio.code    ~/.local/bin/apps/code
 ln -sf /var/lib/flatpak/exports/bin/com.skype.Client         ~/.local/bin/apps/skype
 ln -sf /var/lib/flatpak/exports/bin/com.jetbrains.PhpStorm   ~/.local/bin/apps/phpstorm
 ln -sf /var/lib/flatpak/exports/bin/com.jetbrains.PhpStorm   ~/.local/bin/apps/storm
