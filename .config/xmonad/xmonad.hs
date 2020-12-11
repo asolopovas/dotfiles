@@ -327,11 +327,7 @@ openSilent tows = do
 --------------------------------------------
 myManageHook = composeAll
     [
-      className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
-      className =? "whatsapp-nativefier-d52542" --> doShift "1_7:chat",
-      className =? "ViberPC"                    --> doShift "1_7:chat",
-      className =? "TelegramDesktop"            --> doShift "1_7:chat",
-      className =? "Skype"                      --> doShift "1_7:chat",
+      className =? "Rambox"                     --> doShift "1_7:chat",
       appName   =? "fzfmenu"                    --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
@@ -384,10 +380,7 @@ myStartupHook = do
     spawnOnce      "blueman-applet &"
     spawnOnce      "setbg &"
     spawnOnce      "remaps &"
-    spawnOnce      "skypeforlinux &"
-    spawnOnce      "whatsapp-nativefier &"
-    spawnOnce      "telegram-desktop &"
-    spawnOnce      "viber &"
+    spawnOnce      "rambox &"
     screenWorkspace 1 >>= flip whenJust (windows . W.view)
     windows $ W.greedyView "1_7:chat"
     screenWorkspace 0 >>= flip whenJust (windows . W.view)
