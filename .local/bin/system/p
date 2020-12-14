@@ -1,0 +1,57 @@
+#!/bin/bash
+
+OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+
+command_exists() {
+	command -v $1 >/dev/null 2>&1
+}
+
+is_sudoer() {
+  sudo -v > /dev/null 2>&1
+}
+
+removePackage() {
+  if ! command_exists $1 && is_sudoer; then
+    case $OS in
+      ubuntu)
+        sudo apt remove -y $1;
+        ;;
+      centos)
+        sudo yum remove -y $1;
+        ;;
+      arch)
+        sudo pacman -Rns --noconfirm $1;
+        ;;
+    esac
+  fi
+}
+
+installPackage() {
+  if ! command_exists $1 && is_sudoer; then
+    case $OS in
+      ubuntu)
+        sudo apt install -y $1;
+        ;;
+      centos)
+        sudo yum install -y $1;
+        ;;
+      arch)
+        sudo pacman -S --noconfirm $1;
+        ;;
+    esac
+  fi
+}
+
+case "$1" in
+  i*)
+    installPackage $2
+    ;;
+  r*) 
+    removePackage $2
+    ;;
+  *) cat << EOF
+Usage Example:
+    p i/inst/install [package-name]
+    p rm/rem/remove [package-name]
+EOF
+esac
