@@ -11,7 +11,7 @@ else
 endif
 
 if has("win32")
-  let g:python3_host_prog='C:\Python38\python.exe'
+  let g:python3_host_prog='C:\Python39\python.exe'
   let g:plug_dir="~/AppData/Local/nvim-plugged"
 endif
 
