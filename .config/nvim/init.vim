@@ -123,6 +123,13 @@ nmap <silent><leader>et :e ~/.config/alacritty/alacritty.yml<cr>
 nmap <silent><leader>ev :e $MYVIMRC<cr>
 nmap <silent><leader>er :e ~/Readme.md<cr>
 nmap <silent><leader>eh :e /etc/hosts<cr>
+
+if has("win32")
+  nmap <silent><leader>eh :e C:\Windows\System32\drivers\etc\hosts<cr>
+else
+  nmap <silent><leader>eh :e /etc/hosts<cr>
+endif
+
 nmap <silent><leader>ee :e ~/.config/xmonad/xmonad.hs<cr>
 nmap <silent><leader>eb :e ~/.config/polybar/config<cr>
 nmap <silent><leader>ez :e ~/.config/fish/config.fish<cr>
@@ -399,8 +406,8 @@ fun! s:ToggleMouse()
     let &mouse = s:old_mouse
     echo "Mouse is for Vim (" . &mouse . ")"
   else
-      let s:old_mouse = &mouse
-      let &mouse=""
-      echo "Mouse is for terminal"
+    let s:old_mouse = &mouse
+    let &mouse=""
+    echo "Mouse is for terminal"
   endif
 endfunction
