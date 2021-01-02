@@ -3,7 +3,7 @@
 
 export LC_ALL="en_GB.UTF-8"
 export _JAVA_AWT_WM_NONREPARENTING=1
-export SUDO_ASKPASS="$HOME/.local/bin/dmenupass"
+export SUDO_ASKPASS="$HOME/.local/bin/tools/dmenupass"
 export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
 # Applications

@@ -6,7 +6,6 @@ application/x-bittorrent=torrent.desktop
 image/gif=img.desktop
 image/jpeg=viewnior.desktop
 image/png=viewnior.desktop
-inode/directory=file.desktop
 inode/directory=thunar.desktop
 text/plain=text.desktop
 text/x-shellscript=text.desktop
