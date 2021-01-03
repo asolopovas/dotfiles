@@ -37,7 +37,6 @@ import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts, ToggleLayout(T
 import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 
 -- Hooks
-import XMonad.Hooks.Place
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops (ewmh, fullscreenEventHook)
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
@@ -417,7 +416,7 @@ main = do
 
         -- hooks, layouts
         layoutHook         = myLayout,
-        manageHook         = placeHook simpleSmart <+> manageSpawn <+> myManageHook,
+        manageHook         = manageSpawn <+> myManageHook,
         handleEventHook    = myEventHook <+> fullscreenEventHook,
         startupHook        = myStartupHook,
         logHook            = dynamicLogWithPP (myLogHook dbus)
