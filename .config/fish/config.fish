@@ -15,12 +15,11 @@ set -U fish_prompt_pwd_dir_length 0
 # ----------------------------------
 # Add user scripts
 # ----------------------------------
-set PATH $HOME/.local/bin                  $PATH
-set PATH $HOME/.local/share/gem/bin        $PATH
-set PATH $HOME/.config/composer/vendor/bin $PATH
-set PATH $HOME/.local/yarn/bin             $PATH
-set PATH $HOME/.yarn/bin                   $PATH
-set PATH $HOME/.config/fzf/bin             $PATH
+# set PATH $HOME/.local/bin                  $PATH
+# set PATH $HOME/.local/share/gem/bin        $PATH
+# set PATH $HOME/.config/composer/vendor/bin $PATH
+# set PATH $HOME/.config/fzf/bin             $PATH
+# set PATH (npm bin -g)                      $PATH
 
 # ----------------------------------
 # Env Variables
