@@ -3,7 +3,7 @@
 result=$(find ~/www -type d | fzf)
 
 [ -z $result ] && exit
-
-(nohup phpstorm $result >/dev/null 2>&1 &)
+# phpstorm $result >/dev/null 2>&1 &
+nohup env /opt/phpstorm/bin/phpstorm.sh $result >/dev/null 2>&1 & 
 
 pkill -f fzfmenu

@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-alacritty --class fzfmenu -t fzfmenu -d 100 12 -e sh -c "$1" & disown
+# alacritty --class fzfmenu -t fzfmenu -d 100 12 -e /bin/bash -l -i -c "$1" & disown
+alacritty --class fzfmenu -t fzfmenu -d 100 12 -e /bin/bash -l -i -c "$1"
