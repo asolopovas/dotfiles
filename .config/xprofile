@@ -8,6 +8,6 @@
 dbus-update-activation-environment --systemd DBUS_SESSION_BUS_ADDRESS DISPLAY XAUTHORITY
 xset r rate 300 50 &	# Speed xrate up
 
-setxkbmap -layout gb,ru -model pc105 -option grp:win_space_toggle
+setxkbmap -layout gb,ru -model macintosh -option grp:win_space_toggle
 
 xrdb ${XDG_CONFIG_HOME:-$HOME/.config}/Xresources &
