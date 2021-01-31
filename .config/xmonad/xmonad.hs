@@ -328,6 +328,7 @@ openSilent tows = do
 myManageHook = composeAll
     [
       className =? "Rambox"                     --> doShift "1_7:chat",
+      className =? "jetbrains-phpstorm"         --> doIgnore,
       appName   =? "fzfmenu"                    --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
