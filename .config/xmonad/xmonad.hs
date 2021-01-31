@@ -327,9 +327,11 @@ openSilent tows = do
 --------------------------------------------
 myManageHook = composeAll
     [
-      className =? "Rambox"                     --> doShift "1_7:chat",
-      className =? "jetbrains-phpstorm"         --> doIgnore,
       appName   =? "fzfmenu"                    --> doCenterFloat,
+      className =? "TelegramDesktop"            --> doShift "1_7:chat",
+      className =? "Signal"                     --> doShift "1_7:chat",
+      title     =? "Media viewer"               --> doCenterFloat,
+      className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
       className =? "stacer"                     --> doCenterFloat,
@@ -381,7 +383,9 @@ myStartupHook = do
     spawnOnce      "blueman-applet &"
     spawnOnce      "setbg &"
     spawnOnce      "remaps &"
-    spawnOnce      "rambox &"
+    spawnOnce      "signal-desktop &"
+    spawnOnce      "whatsapp-nativefier &"
+    spawnOnce      "telegram-desktop &"
     screenWorkspace 1 >>= flip whenJust (windows . W.view)
     windows $ W.greedyView "1_7:chat"
     screenWorkspace 0 >>= flip whenJust (windows . W.view)
