@@ -13,6 +13,8 @@
 !/.config/fontconfig/**
 !/.config/kdeglobals
 !/.config/xmonad
+!/.config/rofi
+!/.config/rofi/**
 !/.config/xmonad/xmonad.hs
 !/.config/polybar
 !/.config/polybar/**

@@ -3,4 +3,4 @@
 
 [ -f ~/.xprofile ] && . ~/.xprofile
 
-exec xmonad
+exec dwm
