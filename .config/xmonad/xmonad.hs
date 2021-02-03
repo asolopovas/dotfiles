@@ -384,6 +384,7 @@ myStartupHook = do
     spawnOnce      "setbg &"
     spawnOnce      "remaps &"
     spawnOnce      "signal-desktop &"
+    spawnOnce      "skypeforlinux &"
     spawnOnce      "whatsapp-nativefier &"
     spawnOnce      "telegram-desktop &"
     screenWorkspace 1 >>= flip whenJust (windows . W.view)
