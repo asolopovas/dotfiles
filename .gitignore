@@ -16,6 +16,8 @@
 !/.config/rofi
 !/.config/rofi/**
 !/.config/xmonad/xmonad.hs
+!/.config/dconf
+!/.config/dconf/**
 !/.config/polybar
 !/.config/polybar/**
 !/.config/tmux
