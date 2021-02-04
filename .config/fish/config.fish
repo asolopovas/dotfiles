@@ -67,6 +67,8 @@ alias gx='gitx --all'
 alias nah='git reset --hard'
 alias gp='git push'
 alias gl='git pull'
+alias gdrive-up='rclone copy .data/ gdrive:'
+alias gdrive-down='rclone copy gdrive: .data/'
 
 alias update-dev-conf='yarn remove dev-conf && yarn add https://github.com/asolopovas/dev-conf.git'
 
@@ -74,3 +76,5 @@ alias art='php artisan'
 alias fd='fdfind'
 alias rs='rsync -zrvhP '
 alias l='ls -lah --group-directories-first'
+
+alias sail='bash vendor/bin/sail'

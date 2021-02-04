@@ -6,3 +6,5 @@
 	excludesfile = ~/.globignore
 [pull]
 	rebase = true
+[init]
+	defaultBranch = master
