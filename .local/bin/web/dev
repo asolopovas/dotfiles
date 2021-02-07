@@ -1,14 +1,23 @@
 #!/bin/bash
 
+pushd ~/www/dev > /dev/null
+
 case "$1" in 
   rebuild)
-    pushd ~/www/dev > /dev/null
-      docker-compose build app; docker-compose up -d --force-recreate app
-    popd > /dev/null
+    docker-compose build app; docker-compose up -d --force-recreate app
     ;;
   restart)
-    pushd ~/www/dev > /dev/null
-      docker-compose restart
-    popd > /dev/null
+    docker-compose restart
+    ;;
+  up)
+    docker-compose up -d 
+    ;;
+  down)
+    docker-compose down
+    ;;
+  *)
+    docker-compose "$@"
+    ;;
 esac
 
+popd > /dev/null

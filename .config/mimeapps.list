@@ -71,3 +71,4 @@ image/x-pcx=viewnior.desktop;
 image/svg+xml=viewnior.desktop;
 image/svg+xml-compressed=viewnior.desktop;
 image/vnd.wap.wbmp=viewnior.desktop;
+application/json=nvim-qt.desktop;
