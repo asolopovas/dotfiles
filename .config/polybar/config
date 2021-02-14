@@ -44,14 +44,13 @@ alert = #bd2c40
 ; monitor = ${env:MONITOR}
 ; Other modules: xkeyboard filesystem xbacklight backlight-acpi cpu memory temperature powermenu weather
 modules-left = xmonad
-modules-right = cpu temperature memory date pulseaudio
+modules-right = cpu memory temperature date pulseaudio
 ;modules-center =
 include-file = ~/.config/polybar/defaults
 
 [bar/second]
 monitor = ${env:MONITOR}
-modules-right = pulseaudio filesystem
-include-file = ~/.config/polybar/defaults
+modules-right = include-file = ~/.config/polybar/defaults
 
 [bar/laptop]
 monitor = ${env:MONITOR}
@@ -63,6 +62,7 @@ include-file = ~/.config/polybar/modules
 
 [settings]
 screenchange-reload = true
+
 ;compositing-background = xor
 ;compositing-background = screen
 ;compositing-foreground = source
@@ -70,5 +70,5 @@ screenchange-reload = true
 ;pseudo-transparency = false
 
 [global/wm]
-margin-top = 2
-margin-bottom = 2
+margin-top = 1
+margin-bottom = 1

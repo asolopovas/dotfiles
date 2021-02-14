@@ -41,13 +41,16 @@ image/x-pcx=viewnior.desktop
 image/svg+xml=viewnior.desktop
 image/svg+xml-compressed=viewnior.desktop
 image/vnd.wap.wbmp=viewnior.desktop
+video/mp4=vlc.desktop
+video/webm=vlc.desktop
+text/vnd.trolltech.linguist=visual-studio-code.desktop
 
 [Added Associations]
 application/x-archive=gnome-file-roller.desktop;org.gnome.FileRoller.desktop;
 application/x-shellscript=visual-studio-code.desktop
 image/jpeg=gimp.desktop;picom.desktop;
 image/png=google-chrome.desktop;
-text/html=visual-studio-code.desktop
+text/html=nvim-qt.desktop;visual-studio-code.desktop;
 text/plain=nvim-qt.desktop
 text/vbscript=visual-studio-code.desktop
 x-scheme-handler/tg=userapp-Telegram Desktop-QRS3X0.desktop;
@@ -72,3 +75,6 @@ image/svg+xml=viewnior.desktop;
 image/svg+xml-compressed=viewnior.desktop;
 image/vnd.wap.wbmp=viewnior.desktop;
 application/json=nvim-qt.desktop;
+video/mp4=vlc.desktop;
+video/webm=vlc.desktop;
+text/vnd.trolltech.linguist=visual-studio-code.desktop;

@@ -179,11 +179,11 @@ myKeyb =
     ("M-S-e",         io exitSuccess                                    ), -- Quits xmonad
 
     --Scratchpads
-    ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"   ),
-    ("M-m",           namedScratchpadAction myScratchPads "spotify"    ),
-    ("M-g",           namedScratchpadAction myScratchPads "steam"      ),
-    ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer" ),
-    ("M-x",           namedScratchpadAction myScratchPads "thunar"     ),
+    ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"    ),
+    ("M-m",           namedScratchpadAction myScratchPads "spotify"     ),
+    ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"  ),
+    ("M-x",           namedScratchpadAction myScratchPads "thunar"      ),
+    ("M-v",           namedScratchpadAction myScratchPads "pavucontrol" ),
 
     --Media Keys
     ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)"),
@@ -252,20 +252,15 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"   spawnTerm      findTerm       mediumFloat,
-    NS "spotify"    "spotify"      findSpotify    largeFloat,
-    NS "teamviewer" "teamviewer"   findTeamviewer defaultFloating,
-    NS "thunar"     "thunar"       findThunar     defaultFloating,
-    NS "steam"      "steam"        findSteam      largeFloat
+    NS "terminal"      spawnTerm      (title     =? "scratchpad")   mediumFloat,
+    NS "spotify"       "spotify"      (className =? "Spotify")      largeFloat,
+    NS "teamviewer"    "teamviewer"   (className =? "TeamViewer")   defaultFloating,
+    NS "thunar"        "thunar"       (className =? "Thunar")       defaultFloating,
+    NS "pavucontrol"   "pavucontrol"  (className =? "Pavucontrol")  mediumFloat
   ]
 
   where
     spawnTerm      = myTerminal ++ " -t scratchpad"
-    findTerm       = title     =? "scratchpad"
-    findSteam      = className =? "Steam"
-    findSpotify    = className =? "Spotify"
-    findTeamviewer = className =? "TeamViewer"
-    findThunar     = className =? "Thunar"
 
     mediumFloat    = customFloating $ W.RationalRect l t w h
                      where
@@ -302,8 +297,8 @@ full    =    renamed [Replace "full"]
            $ noBorders
            $ Full
 
-myLayout =   desktopLayoutModifiers 
-           $ T.toggleLayouts full 
+myLayout =   desktopLayoutModifiers
+           $ T.toggleLayouts full
            $ onWorkspaces ["1_1", "1_2", "1_3", "1_4", "1_5", "1_6", "1_7:chat", "1_8", "1_9"] tiled
            $ onWorkspaces ["0_1", "0_2", "0_3", "0_4", "0_5", "0_6", "0_7:chat", "0_8", "0_9"] tiledR
            $ myDefaultLayout
@@ -331,6 +326,7 @@ myManageHook = composeAll
       className =? "TelegramDesktop"            --> doShift "1_7:chat",
       className =? "Signal"                     --> doShift "1_7:chat",
       title     =? "Media viewer"               --> doCenterFloat,
+      className =? "Pavucontrol"                --> doCenterFloat,
       className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
@@ -342,7 +338,6 @@ myManageHook = composeAll
       className =? "p3x-onenote"                --> doCenterFloat,
       className =? "Gimp"                       --> doCenterFloat,
       className =? "Viewnior"                   --> doCenterFloat,
-      className =? "Ao"                         --> doCenterFloat,
       className =? "Blueman-manager"            --> doCenterFloat,
       className =? "Catfish"                    --> doCenterFloat,
       className =? "Gpg-crypter"                --> doCenterFloat,
