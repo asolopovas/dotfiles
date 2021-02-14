@@ -252,7 +252,7 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"      spawnTerm      (title     =? "scratchpad")   mediumFloat,
+    NS "terminal"      spawnTerm      (title     =? "scratchpad")   largeFloat,
     NS "spotify"       "spotify"      (className =? "Spotify")      largeFloat,
     NS "teamviewer"    "teamviewer"   (className =? "TeamViewer")   defaultFloating,
     NS "thunar"        "thunar"       (className =? "Thunar")       defaultFloating,
