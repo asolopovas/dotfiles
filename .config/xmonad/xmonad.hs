@@ -38,7 +38,7 @@ import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 
 -- Hooks
 import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.EwmhDesktops (ewmh, fullscreenEventHook)
+import XMonad.Hooks.EwmhDesktops ( fullscreenEventHook)
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat)
 import XMonad.Hooks.DynamicProperty ( dynamicPropertyChange )
@@ -79,7 +79,7 @@ myModMask       = mod4Mask
 
 -- A tagging example:
 -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
-myWorkspaces    = ["1","2","3","4","5","6","7:chat","8","9"]
+myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
 
 myBorderWidth   = 2
 myNormalBorderColor  = "#dddddd"
@@ -317,9 +317,6 @@ myManageHook = composeAll
       appName   =? "fzfmenu"                    --> doCenterFloat,
       title     =? "Media viewer"               --> doCenterFloat,
       className =? "Pavucontrol"                --> doCenterFloat,
-      -- className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
-      -- className =? "TelegramDesktop"            --> doShift "1_7:chat",
-      -- className =? "Signal"                     --> doShift "1_7:chat",
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
       className =? "stacer"                     --> doCenterFloat,
@@ -329,7 +326,7 @@ myManageHook = composeAll
       className =? "Hexchat"                    --> doCenterFloat,
       className =? "p3x-onenote"                --> doCenterFloat,
       className =? "Gimp"                       --> doCenterFloat,
-      className =? "Viewnior"                   --> doCenterFloat,
+      className =? "Viewnioprogramr"            --> doCenterFloat,
       className =? "Blueman-manager"            --> doCenterFloat,
       className =? "Catfish"                    --> doCenterFloat,
       className =? "Gpg-crypter"                --> doCenterFloat,
@@ -338,7 +335,11 @@ myManageHook = composeAll
       className =? "Lxappearance"               --> doCenterFloat,
       className =? "Psi"                        --> doCenterFloat,
       className =? "Image Lounge"               --> doCenterFloat,
-      className =? "Seahorse"                   --> doCenterFloat
+      className =? "Seahorse"                   --> doCenterFloat,
+      className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
+      className =? "TelegramDesktop"            --> doShift "1_7",
+      className =? "Signal"                     --> doShift "1_7",
+      className =? "Skype"                      --> doShift "1_7"
     ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
@@ -356,10 +357,9 @@ myHandleEventHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floa
 myEventHook = myHandleEventHook
 
 spawnToWorkspace :: String -> String -> X ()
-spawnToWorkspace program workspace = do
+spawnToWorkspace workspace program = do
                                       spawnOnce program     
                                       windows $ W.greedyView workspace
-
 --------------------------------------------
 -- Startup Hook
 --------------------------------------------
@@ -375,14 +375,14 @@ myStartupHook = do
     spawnOnce            "blueman-applet &"
     spawnOnce            "setbg &"
     spawnOnce            "remaps &"
-    spawnToWorkspace            "whatsapp-nativefier &" "1_7:chat" 
-    spawnToWorkspace            "skypeforlinux &"       "1_7:chat"     
-    spawnToWorkspace            "signal-desktop &"      "1_7:chat"
-    spawnToWorkspace            "telegram-desktop &"    "1_7:chat"    
+    spawnOnce            "whatsapp-nativefier &" 
+    spawnOnce            "skypeforlinux &"           
+    spawnOnce            "signal-desktop &"     
+    spawnOnce            "telegram-desktop &"       
+    -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
+    -- windows $ W.greedyView "1_7"
     -- screenWorkspace 0 >>= flip whenJust (windows . W.view)
     -- windows $ W.greedyView "0_1"
-    -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
-    -- windows $ W.greedyView "1_1"
 
 -------------------------------------------
 -- Main
@@ -396,7 +396,8 @@ main = do
 
   xmonad
     $ docks
-    $ ewmh def {
+    $ def {
+    -- $ ewmh def {
 
         -- simple stuff
         terminal           = myTerminal,
