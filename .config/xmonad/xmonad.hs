@@ -10,7 +10,6 @@ import XMonad.Actions.WithAll (sinkAll, killAll)
 import XMonad.Actions.CopyWindow (kill1, killAllOtherCopies)
 import XMonad.Actions.WindowGo (runOrRaise)
 import XMonad.Actions.Promote
-import XMonad.Actions.SpawnOn
 
 -- Util
 import XMonad.Util.Run
@@ -165,7 +164,6 @@ myKeyb =
     ("M-p",            spawn "fzfmenu storm"          ),
     ("M-S-p",          spawn "fzfmenu fzfst"          ),
     ("M-o",            spawn "fzfmenu vscode"         ),
-    ("F17",       spawn "flameshot gui"          ),
 
     --Layouts
     ("M-.",           sendMessage (IncMasterN 1)      ), -- Increase number of clients in master pane
@@ -312,28 +310,16 @@ myLayout =   desktopLayoutModifiers
     myDefaultLayout = tiled
 
 -------------------------------------------
--- Create a new ManageHook
--------------------------------------------
-openSilent :: WorkspaceId -> ManageHook
-openSilent tows = do
-   fromws <- liftX $ return . W.currentTag . windowset =<< get -- get the current ws tag
-   wid    <- ask                                             -- get opened windowId
-   doF $ W.view fromws . W.insertUp wid . W.view tows
---       |               |                |- move focus to "to" workspace
---       |               |- insert window
---       |- move focus back to "from" workspace
-
--------------------------------------------
 -- Window Rules
 --------------------------------------------
 myManageHook = composeAll
     [
       appName   =? "fzfmenu"                    --> doCenterFloat,
-      className =? "TelegramDesktop"            --> doShift "1_7:chat",
-      className =? "Signal"                     --> doShift "1_7:chat",
       title     =? "Media viewer"               --> doCenterFloat,
       className =? "Pavucontrol"                --> doCenterFloat,
-      className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
+      -- className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
+      -- className =? "TelegramDesktop"            --> doShift "1_7:chat",
+      -- className =? "Signal"                     --> doShift "1_7:chat",
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
       className =? "stacer"                     --> doCenterFloat,
@@ -369,29 +355,34 @@ myHandleEventHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floa
 
 myEventHook = myHandleEventHook
 
+spawnToWorkspace :: String -> String -> X ()
+spawnToWorkspace program workspace = do
+                                      spawnOnce program     
+                                      windows $ W.greedyView workspace
+
 --------------------------------------------
 -- Startup Hook
 --------------------------------------------
 myStartupHook = do
-    spawnOnce      "picom &" -- Compositor,
-    spawnOnce      ".config/polybar/launch.sh &"
-    spawnOnce      "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
-    spawnOnce      "xsetroot -cursor_name left_ptr &"
-    spawnOnce      "autorandr --change --force &"
-    spawnOnce      "flameshot &"
-    spawnOnce      "nm-applet &"
-    spawnOnce      "clipit &"
-    spawnOnce      "blueman-applet &"
-    spawnOnce      "setbg &"
-    spawnOnce      "remaps &"
-    spawnOnce      "signal-desktop &"
-    spawnOnce      "skypeforlinux &"
-    spawnOnce      "whatsapp-nativefier &"
-    spawnOnce      "telegram-desktop &"
-    -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
-    -- windows $ W.greedyView "1_7:chat"
+    spawnOnce            "picom &" -- Compositor,
+    spawnOnce            ".config/polybar/launch.sh &"
+    spawnOnce            "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
+    spawnOnce            "xsetroot -cursor_name left_ptr &"
+    spawnOnce            "autorandr --change --force &"
+    spawnOnce            "flameshot &"
+    spawnOnce            "nm-applet &"
+    spawnOnce            "clipit &"
+    spawnOnce            "blueman-applet &"
+    spawnOnce            "setbg &"
+    spawnOnce            "remaps &"
+    spawnToWorkspace            "whatsapp-nativefier &" "1_7:chat" 
+    spawnToWorkspace            "skypeforlinux &"       "1_7:chat"     
+    spawnToWorkspace            "signal-desktop &"      "1_7:chat"
+    spawnToWorkspace            "telegram-desktop &"    "1_7:chat"    
     -- screenWorkspace 0 >>= flip whenJust (windows . W.view)
     -- windows $ W.greedyView "0_1"
+    -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
+    -- windows $ W.greedyView "1_1"
 
 -------------------------------------------
 -- Main
@@ -423,7 +414,7 @@ main = do
 
         -- hooks, layouts
         layoutHook         = myLayout,
-        manageHook         = manageSpawn <+> myManageHook,
+        manageHook         = myManageHook,
         handleEventHook    = myEventHook <+> fullscreenEventHook,
         startupHook        = myStartupHook,
         logHook            = dynamicLogWithPP (myLogHook dbus)
