@@ -40,8 +40,8 @@ export XMONAD_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/xmonad"
 export HOSTALIASES=~/.hosts
 
 # FZF Settings
-export FZF_DEFAULT_OPTS="--layout=reverse --height 30%"
-FZF_COMMAND='rg --files --follow --no-ignore-vcs --hidden -g "!{node_modules/,.git/}" -g "!.steam/*" -g "!vendor/*" 2> /dev/null'
+export FZF_DEFAULT_OPTS="--layout=reverse --height 40%"
+FZF_COMMAND='rg --files --follow --no-ignore-vcs --hidden -g "!{node_modules,Steam,npm,*skype*,*vscode*,*Code*,*chrome*,*Cache*,*cache*,*gem*,fish,python,.git,.mozilla,*cargo*,*log*}" -g "!.steam/*" -g "!vendor" 2> /dev/null'
 export FZF_DEFAULT_COMMAND=$FZF_COMMAND
 export FZF_CTRL_T_COMMAND=$FZF_COMMAND
 

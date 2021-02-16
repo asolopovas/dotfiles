@@ -1,6 +1,6 @@
 #!/bin/bash
 
-result=$(find ~ | fzf)
+result=$(rg --files --follow --no-ignore-vcs --hidden -g "!{node_modules,Steam,npm,*skype*,*vscode*,*Code*,*chrome*,*Cache*,*cache*,*gem*,fish,python,.git,.mozilla,*cargo*,*log*}" -g "!.steam/*" -g "!vendor" 2> /dev/null | xargs -0 dirname | uniq | fzf)
 
 [ -z $result ] && exit
 

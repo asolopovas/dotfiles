@@ -63,7 +63,6 @@ alias gdrive-down='rclone copy gdrive: .data/'
 alias update-dev-conf='yarn remove dev-conf && yarn add https://github.com/asolopovas/dev-conf.git'
 
 alias art='php artisan'
-alias fd='fdfind'
 alias rs='rsync -zrvhP '
 alias l='ls -lah --group-directories-first'
 
