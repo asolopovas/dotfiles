@@ -195,7 +195,8 @@ myKeyb =
     ("<XF86AudioPrev>",        spawn "playerctl prev"                                   ),
     ("<XF86AudioNext>",        spawn "playerctl next"                                   ), 
     ("<XF86Launch7>",          runOrRaise "qalculate-gtk" (resource =? "qalculate-gtk") ),
-    ("<XF86Launch8>",          spawn "flameshot gui"                                    )
+    ("<XF86Launch8>",          spawn "flameshot gui"                                    ),
+    ("<XF86Launch9>",          spawn "sudo -A stacer"                                   )
 
   ]
 
