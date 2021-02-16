@@ -185,6 +185,7 @@ myKeyb =
     ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"  ),
     ("M-x",           namedScratchpadAction myScratchPads "thunar"      ),
     ("M-v",           namedScratchpadAction myScratchPads "pavucontrol" ),
+    ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"      ),
 
     --Media Keys
     ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)"            ),
@@ -196,7 +197,6 @@ myKeyb =
     ("<XF86AudioNext>",        spawn "playerctl next"                                   ), 
     ("<XF86Launch7>",          runOrRaise "qalculate-gtk" (resource =? "qalculate-gtk") ),
     ("<XF86Launch8>",          spawn "flameshot gui"                                    ),
-    ("<XF86Launch9>",          spawn "sudo -A stacer"                                   )
 
   ]
 
@@ -257,11 +257,12 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"      spawnTerm      (title     =? "scratchpad")   largeFloat,
-    NS "spotify"       "spotify"      (className =? "Spotify")      largeFloat,
-    NS "teamviewer"    "teamviewer"   (className =? "TeamViewer")   defaultFloating,
-    NS "thunar"        "thunar"       (className =? "Thunar")       defaultFloating,
-    NS "pavucontrol"   "pavucontrol"  (className =? "Pavucontrol")  mediumFloat
+    NS "terminal"      spawnTerm          (title     =? "scratchpad")    largeFloat,
+    NS "spotify"       "spotify"          (className =? "Spotify")       largeFloat,
+    NS "teamviewer"    "teamviewer"       (className =? "TeamViewer")    defaultFloating,
+    NS "thunar"        "thunar"           (className =? "Thunar")        defaultFloating,
+    NS "pavucontrol"   "pavucontrol"      (className =? "Pavucontrol")   mediumFloat,
+    NS "stacer"        "sudo -A stacer"   (className =? "stacer")        mediumFloat
   ]
 
   where
