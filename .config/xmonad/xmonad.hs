@@ -196,7 +196,7 @@ myKeyb =
     ("<XF86AudioPrev>",        spawn "playerctl prev"                                   ),
     ("<XF86AudioNext>",        spawn "playerctl next"                                   ), 
     ("<XF86Launch7>",          runOrRaise "qalculate-gtk" (resource =? "qalculate-gtk") ),
-    ("<XF86Launch8>",          spawn "flameshot gui"                                    ),
+    ("<XF86Launch8>",          spawn "flameshot gui"                                    )
 
   ]
 
@@ -329,11 +329,11 @@ openSilent tows = do
 myManageHook = composeAll
     [
       appName   =? "fzfmenu"                    --> doCenterFloat,
-      className =? "TelegramDesktop"            --> doShift "1_7:chat",
-      className =? "Signal"                     --> doShift "1_7:chat",
+      className =? "TelegramDesktop"            --> openSilent "1_7:chat",
+      className =? "Signal"                     --> openSilent "1_7:chat",
       title     =? "Media viewer"               --> doCenterFloat,
       className =? "Pavucontrol"                --> doCenterFloat,
-      className =? "whatsapp-nativefier-d40211" --> doShift "1_7:chat",
+      className =? "whatsapp-nativefier-d40211" --> openSilent "1_7:chat",
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
       className =? "stacer"                     --> doCenterFloat,
