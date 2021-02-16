@@ -8,6 +8,7 @@ import XMonad.Config.Desktop
 -- Actions
 import XMonad.Actions.WithAll (sinkAll, killAll)
 import XMonad.Actions.CopyWindow (kill1, killAllOtherCopies)
+import XMonad.Actions.WindowGo (runOrRaise)
 import XMonad.Actions.Promote
 import XMonad.Actions.SpawnOn
 
@@ -158,13 +159,13 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-b",            spawn myBrowser                ),
-    ("M-S-b",          spawnOn "0_7:chat" myBrowser   ),
     ("M-d",            spawn "rofi -show run"         ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzfmenu storm"          ),
     ("M-S-p",          spawn "fzfmenu fzfst"          ),
     ("M-o",            spawn "fzfmenu vscode"         ),
+    ("F17",       spawn "flameshot gui"          ),
 
     --Layouts
     ("M-.",           sendMessage (IncMasterN 1)      ), -- Increase number of clients in master pane
@@ -186,13 +187,16 @@ myKeyb =
     ("M-v",           namedScratchpadAction myScratchPads "pavucontrol" ),
 
     --Media Keys
-    ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)"),
-    ("<XF86AudioRaiseVolume>", spawn "lmc up; kill -44 $(pidof dwmblocks)"  ),
-    ("<XF86AudioMute>",        spawn "lmc mute; kill -44 $(pidof dwmblocks)"),  -- Bug prevents it from toggling correctly in 12.04.
-    ("<XF86AudioPlay>",        spawn "playerctl play-pause"                 ),
-    ("<XF86AudioStop>",        spawn "playerctl stop"                       ),
-    ("<XF86AudioPrev>",        spawn "playerctl prev"                       ),
-    ("<XF86AudioNext>",        spawn "playerctl next"                       )
+    ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)"            ),
+    ("<XF86AudioRaiseVolume>", spawn "lmc up; kill -44 $(pidof dwmblocks)"              ),
+    ("<XF86AudioMute>",        spawn "lmc mute; kill -44 $(pidof dwmblocks)"            ),  -- Bug prevents it from toggling correctly in 12.04.
+    ("<XF86AudioPlay>",        spawn "playerctl play-pause"                             ),
+    ("<XF86AudioStop>",        spawn "playerctl stop"                                   ),
+    ("<XF86AudioPrev>",        spawn "playerctl prev"                                   ),
+    ("<XF86AudioNext>",        spawn "playerctl next"                                   ), 
+    ("<XF86Launch7>",          runOrRaise "qalculate-gtk" (resource =? "qalculate-gtk") ),
+    ("<XF86Launch8>",          spawn "flameshot gui"                                    )
+
   ]
 
 
@@ -342,6 +346,7 @@ myManageHook = composeAll
       className =? "Catfish"                    --> doCenterFloat,
       className =? "Gpg-crypter"                --> doCenterFloat,
       className =? "kcachegrind"                --> doCenterFloat,
+      className =? "Qalculate-gtk"              --> doCenterFloat,
       className =? "Lxappearance"               --> doCenterFloat,
       className =? "Psi"                        --> doCenterFloat,
       className =? "Image Lounge"               --> doCenterFloat,
