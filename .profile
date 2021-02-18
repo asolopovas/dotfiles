@@ -58,6 +58,7 @@ load_scripts() {
 
 load_scripts /.local/bin
 load_scripts /.local/bin/helpers
+load_scripts /.local/bin/apps
 load_scripts /.local/bin/statusbar
 load_scripts /.local/bin/system
 load_scripts /.local/bin/tools
