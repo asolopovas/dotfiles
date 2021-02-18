@@ -339,8 +339,7 @@ myManageHook = composeAll
       className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
       className =? "TelegramDesktop"            --> doShift "1_7",
       className =? "Signal"                     --> doShift "1_7",
-      className =? "Skype"                      --> doShift "1_7",
-      stringProperty "WM_WINDOW_ROLE" =? "browser-window" --> doCenterFloat
+      className =? "Skype"                      --> doShift "1_7"
     ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
