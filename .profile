@@ -57,6 +57,11 @@ load_scripts() {
 }
 
 load_scripts /.local/bin
+load_scripts /.local/bin/helpers
+load_scripts /.local/bin/statusbar
+load_scripts /.local/bin/system
+load_scripts /.local/bin/tools
+load_scripts /.local/bin/web
 load_scripts /.local/share/gem/bin
 load_scripts /.config/composer/vendor/bin
 load_scripts /.config/fzf/bin
