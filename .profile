@@ -49,5 +49,16 @@ export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-## Program Settings
-source ~/.env
+# Load script paths
+load_scripts() {
+  if [ -d "${HOME}${1}" ]; then
+    scriptsPath="$scriptsPath:$(du "${HOME}${1}" | cut -f2 | tr '\n' ':' | sed 's/:*$//')"
+  fi
+}
+
+load_scripts /.local/bin
+load_scripts /.local/share/gem/bin
+load_scripts /.config/composer/vendor/bin
+load_scripts /.config/fzf/bin
+
+export PATH="$PATH:${scriptsPath:1}"
