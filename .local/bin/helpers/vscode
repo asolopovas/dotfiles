@@ -1,6 +1,6 @@
 #!/bin/bash
 
-result=$(rg --files --follow --no-ignore-vcs --hidden -g "!{node_modules,Steam,npm,*skype*,*vscode*,*Code*,*chrome*,*Cache*,*cache*,*gem*,fish,python,.git,.mozilla,*cargo*,*log*}" -g "!.steam/*" -g "!vendor" 2> /dev/null | xargs -0 dirname | uniq | fzf)
+result=$(fd -t d -E node_modules -E Steam -E npm -E skype -E vscode -E Code -E chrome -E Cache -E cache -E gem -E fish -E python -E .git -E mozilla -E cargo -E log | fzf)
 
 [ -z $result ] && exit
 

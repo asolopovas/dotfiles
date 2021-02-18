@@ -1,3 +1,8 @@
+# ----------------------------------
+# Aliases
+# ----------------------------------
+alias pw='WP_TESTS_SKIP_INSTALL=1 phpunit-watcher watch'
+
 # System
 alias xclip='xclip -selection c'
 
@@ -17,23 +22,28 @@ alias dss='docker-sync-stack'
 alias dc='docker-compose'
 alias dcd='docker-compose -f docker-compose.dev.yml'
 alias dk='docker'
-alias dk-stop='docker stop $(docker ps -a -q); docker rm $(docker ps -a -q)'
+alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
 
 # Github
 alias gs='git status '
 alias gw='git add -A && git commit -m "save"'
 alias ga='git add '
 alias gb='git branch '
-alias gp='git push'
 alias gc='git add -A && git commit -m'
 alias gd='git diff '
 alias go='git checkout '
 alias gk='gitk --all&'
 alias gx='gitx --all'
 alias nah='git reset --hard'
+alias gp='git push'
+alias gl='git pull'
+alias gdrive-up='rclone copy .data/ gdrive:'
+alias gdrive-down='rclone copy gdrive: .data/'
 
 alias update-dev-conf='yarn remove dev-conf && yarn add https://github.com/asolopovas/dev-conf.git'
 
 alias art='php artisan'
-alias fd='fdfind'
 alias rs='rsync -zrvhP '
+alias l='ls -lah --group-directories-first'
+
+alias sail='bash vendor/bin/sail'

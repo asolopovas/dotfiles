@@ -41,9 +41,9 @@ export HOSTALIASES=~/.hosts
 
 # FZF Settings
 export FZF_DEFAULT_OPTS="--layout=reverse --height 40%"
-export FZF_DEFAULT_COMMAND='fd -E "*node_modules*" -E "*vendor*" . $HOME'
+export FZF_DEFAULT_COMMAND='fd -E node_modules -E Steam -E npm -E skype -E vscode -E Code -E chrome -E Cache -E cache -E gem -E fish -E python -E .git -E mozilla -E cargo -E log . $HOME'
 export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
-export FZF_ALT_C_COMMAND='fd -E "*node_modules*" -E "*vendor*" -t d . $HOME'
+export FZF_ALT_C_COMMAND='fd -t d -E node_modules -E Steam -E npm -E skype -E vscode -E Code -E chrome -E Cache -E cache -E gem -E fish -E python -E .git -E mozilla -E cargo -E log . $HOME'
 
 # Docker Settings
 export DOCKER_BUILDKIT=1
