@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-result=$(fd -t d -E node_modules -E Steam -E npm -E skype -E vscode -E Code -E chrome -E Cache -E cache -E gem -E fish -E python -E .git -E mozilla -E cargo -E log | fzf)
+result=$(fd -t d  --maxdepth 1 . ~/www | fzf)
 
 [ -z $result ] && exit
 
-/bin/bash -l -c "code $result >/dev/null 2>&1"
+code $result >/dev/null 2>&1
