@@ -1,9 +1,5 @@
 stty -ixon
 
-
-# Load env vriables
-source ~/.env
-
 ZSH_THEME="agnoster"
 # Remove long host name
 DEFAULT_USER=`whoami`
@@ -128,13 +124,7 @@ source ~/.config/.func
 source ~/.config/zsh/.completions
 # Load Fuzzy Finder
 [ -f ~/.config/fzf.zsh ] && source ~/.config/fzf.zsh
-# Load Custom Environment Variables
-source ~/.env
-# Load Node Version Manager
-export NVM_DIR="$HOME/.local/share/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
-if [ -n "$DESKTOP_SESSION" ];then
-    eval $(gnome-keyring-daemon --start --components=ssh)
-    export SSH_AUTH_SOCK
-fi
+# Load Node Version Manager
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
