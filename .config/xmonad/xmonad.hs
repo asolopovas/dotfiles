@@ -364,7 +364,7 @@ spawnToWorkspace workspace program = do
 -- Startup Hook
 --------------------------------------------
 myStartupHook = do
-    spawnOnce            "picom &" -- Compositor,
+    spawnOnce            "picom --no-fading-openclose &" -- Compositor,
     spawnOnce            ".config/polybar/launch.sh &"
     spawnOnce            "xrandr --output DP-2 --auto --output DP-4 --auto --right-of DP-2 &"
     spawnOnce            "xsetroot -cursor_name left_ptr &"
@@ -379,6 +379,7 @@ myStartupHook = do
     spawnOnce            "skypeforlinux &"           
     spawnOnce            "signal-desktop &"     
     spawnOnce            "telegram-desktop &"       
+    spawnOnce            "cryptomator &"       
     -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
     -- windows $ W.greedyView "1_7"
     -- screenWorkspace 0 >>= flip whenJust (windows . W.view)

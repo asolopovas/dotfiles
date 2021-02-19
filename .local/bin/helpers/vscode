@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 result=$(fd -t d  --maxdepth 1 . ~/www | fzf)
 
