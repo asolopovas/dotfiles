@@ -1,4 +1,4 @@
-## sudo -n loadkeys ${XDG_DATA_HOME:-$HOME/.local/share}/ttymaps.kmap 2>/dev/null
+# sudo -n loadkeys ${XDG_DATA_HOME:-$HOME/.local/share}/ttymaps.kmap 2>/dev/null
 [ ! -d $XMONAD_DATA_HOME ] && mkdir $XMONAD_DATA_HOME
 
 export LC_ALL="en_GB.UTF-8"
@@ -11,7 +11,7 @@ export BROWSER="google-chrome-stable"
 export FILEMANAGER="thunar"
 export TERMINAL="alacrity"
 
-## ~/ Clean-Up
+# Clean-Up
 export LESSHISTFILE="-"
 export LESS=-R
 export XDG_CACHE_HOME="$HOME/.cache"
@@ -68,3 +68,7 @@ load_scripts /.config/composer/vendor/bin
 load_scripts /.config/fzf/bin
 
 export PATH="$PATH:${scriptsPath:1}"
+
+# Load NVM
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
