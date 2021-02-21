@@ -2,7 +2,7 @@
 # Any customization should be done in ~/.gtkrc-2.0.mine instead.
 
 include "/home/andrius/.gtkrc-2.0.mine"
-gtk-theme-name="Shades-of-gray-Orient"
+gtk-theme-name="Breeze-Dark"
 gtk-icon-theme-name="breeze-dark"
 gtk-font-name="Segoe UI 11"
 gtk-cursor-theme-name="breeze_cursors"

@@ -255,7 +255,7 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"      spawnTerm          (title     =? "scratchpad")    largeFloat,
+    NS "terminal"      spawnTerm          (title     =? "scratchpad")    mediumFloat,
     NS "spotify"       "spotify"          (className =? "Spotify")       largeFloat,
     NS "teamviewer"    "teamviewer"       (className =? "TeamViewer")    defaultFloating,
     NS "thunar"        "thunar"           (className =? "Thunar")        defaultFloating,
@@ -265,6 +265,12 @@ myScratchPads =
 
   where
     spawnTerm      = myTerminal ++ " -t scratchpad"
+    smallFloat    = customFloating $ W.RationalRect l t w h
+                     where
+                       h = 0.5
+                       w = 0.5
+                       t = 0.7 -h
+                       l = 0.7 -w
 
     mediumFloat    = customFloating $ W.RationalRect l t w h
                      where
@@ -336,6 +342,7 @@ myManageHook = composeAll
       className =? "Psi"                        --> doCenterFloat,
       className =? "Image Lounge"               --> doCenterFloat,
       className =? "Seahorse"                   --> doCenterFloat,
+      className =? "jetbrains-phpstorm"         --> doShift "0_1",
       className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
       className =? "TelegramDesktop"            --> doShift "1_7",
       className =? "Signal"                     --> doShift "1_7",
@@ -398,7 +405,6 @@ main = do
   xmonad
     $ docks
     $ def {
-    -- $ ewmh def {
 
         -- simple stuff
         terminal           = myTerminal,
