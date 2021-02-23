@@ -191,7 +191,7 @@ myKeyb =
     ("<XF86AudioMute>",        spawn "lmc mute; kill -44 $(pidof dwmblocks)"            ),  -- Bug prevents it from toggling correctly in 12.04.
     ("<XF86AudioPlay>",        spawn "playerctl play-pause"                             ),
     ("<XF86AudioStop>",        spawn "playerctl stop"                                   ),
-    ("<XF86AudioPrev>",        spawn "playerctl prev"                                   ),
+    ("<XF86AudioPrev>",        spawn "playerctl previous"                               ),
     ("<XF86AudioNext>",        spawn "playerctl next"                                   ), 
     ("<XF86Launch7>",          runOrRaise "qalculate-gtk" (resource =? "qalculate-gtk") ),
     ("<XF86Launch8>",          spawn "flameshot gui"                                    )

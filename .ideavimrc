@@ -20,12 +20,14 @@ set number              'nu'    "print the line number in front of each line
 set rnu                         "relative numbers
 let mapleader = ","
 set surround
+set NERDTree
 set clipboard+=unnamed
 
 imap jk <Esc><Space>
-njmap <leader>f :action FileChooser<cr>
+nmap <leader>f :action FileChooser<cr>
+nmap <leader>t :action NERDTree<cr>
 nmap <leader>vs :source ~/.ideavimrc<cr>
-nmap <leader>ev :e C:\Users\Andrius\.ideavimrc<cr>
+nmap <leader>ev :e ~/.ideavimrc<cr>
 
 
 "------------------------------------------------------
