@@ -49,6 +49,9 @@ export FZF_ALT_C_COMMAND='fd -t d -E node_modules -E Steam -E npm -E skype -E vs
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
+# Remove hostname from bash
+export PS1="\W \$"
+
 # Load script paths
 load_scripts() {
   if [ -d "${HOME}${1}" ]; then
@@ -66,8 +69,11 @@ load_scripts /.local/bin/web
 load_scripts /.local/share/gem/bin
 load_scripts /.config/composer/vendor/bin
 load_scripts /.config/fzf/bin
+load_scripts /.config/nvm/bin
+load_scripts /.yarn/bin
 
 export PATH="$PATH:${scriptsPath:1}"
+export -f load_scripts
 
 # Load NVM
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"

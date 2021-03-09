@@ -16,7 +16,7 @@
 ;
 ;==========================================================
 [colors]
-black = ${xrdb:color0:#1d2021}
+black = ${xrdb:color0:#1d2022}
 darkred = ${xrdb:color1:#cc241d}
 darkgreen = ${xrdb:color2:#98971a}
 darkyellow = ${xrdb:color3:#d79921}

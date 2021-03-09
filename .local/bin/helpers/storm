@@ -1,6 +1,6 @@
 #!/bin/bash
 
-result=$(fd -t d --maxdepth 1 . ~/www | fzf)
+result=$(fd -t d --maxdepth 4 . ~ | fzf)
 
 [ -z $result ] && exit
 
