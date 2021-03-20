@@ -37,8 +37,8 @@ alias gx='gitx --all'
 alias nah='git reset --hard'
 alias gp='git push'
 alias gl='git pull'
-alias gdrive-up='rclone copy .data/ gdrive:'
-alias gdrive-down='rclone copy gdrive: .data/'
+alias gdrive-up='rclone copy .data/ gdrive: -P'
+alias gdrive-down='rclone copy gdrive: .data/ -P'
 
 alias update-dev-conf='yarn remove dev-conf && yarn add https://github.com/asolopovas/dev-conf.git'
 

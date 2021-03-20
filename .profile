@@ -71,6 +71,7 @@ load_scripts /.config/composer/vendor/bin
 load_scripts /.config/fzf/bin
 load_scripts /.config/nvm/bin
 load_scripts /.yarn/bin
+load_scripts /gdrive/bin
 
 export PATH="$PATH:${scriptsPath:1}"
 export -f load_scripts
