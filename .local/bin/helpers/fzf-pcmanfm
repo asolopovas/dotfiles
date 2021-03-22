@@ -1,0 +1,7 @@
+#!/bin/bash
+
+result=$(fd -t d  --maxdepth 4 . ~ | fzf)
+
+[ -z $result ] && exit
+
+pcmanfm $result >/dev/null 2>&1

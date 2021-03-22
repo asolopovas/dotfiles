@@ -181,7 +181,7 @@ myKeyb =
     ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"    ),
     ("M-m",           namedScratchpadAction myScratchPads "spotify"     ),
     ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"  ),
-    ("M-x",           namedScratchpadAction myScratchPads "thunar"      ),
+    ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"      ),
     ("M-v",           namedScratchpadAction myScratchPads "pavucontrol" ),
     ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"      ),
 
@@ -255,12 +255,12 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"      spawnTerm          (title     =? "scratchpad")    mediumFloat,
-    NS "spotify"       "spotify"          (className =? "Spotify")       largeFloat,
-    NS "teamviewer"    "teamviewer"       (className =? "TeamViewer")    defaultFloating,
-    NS "thunar"        "thunar"           (className =? "Thunar")        defaultFloating,
-    NS "pavucontrol"   "pavucontrol"      (className =? "Pavucontrol")   mediumFloat,
-    NS "stacer"        "sudo -A stacer"   (className =? "stacer")        mediumFloat
+    NS "terminal"      spawnTerm              (title     =? "scratchpad")    mediumFloat,
+    NS "spotify"       "spotify"              (className =? "Spotify")       largeFloat,
+    NS "teamviewer"    "teamviewer"           (className =? "TeamViewer")    defaultFloating,
+    NS "pcmanfm"       "fzfmenu fzf-pcmanfm"  (className =? "Pcmanfm")       defaultFloating,
+    NS "pavucontrol"   "pavucontrol"          (className =? "Pavucontrol")   mediumFloat,
+    NS "stacer"        "sudo -A stacer"       (className =? "stacer")        mediumFloat
   ]
 
   where

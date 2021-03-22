@@ -43,13 +43,13 @@ installPackage() {
 }
 
 case "$1" in
-  i*)
-    installPackage $2
+  *)
+    installPackage $1
     ;;
   r*) 
     removePackage $2
     ;;
-  *) cat << EOF
+  h*) cat << EOF
 Usage Example:
     p i/inst/install [package-name]
     p rm/rem/remove [package-name]
