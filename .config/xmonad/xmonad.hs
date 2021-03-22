@@ -184,7 +184,8 @@ myKeyb =
     ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"    ),
     ("M-m",           namedScratchpadAction myScratchPads "spotify"     ),
     ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"  ),
-    ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"      ),
+    ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"     ),
+    ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird" ),
     ("M-v",           namedScratchpadAction myScratchPads "pavucontrol" ),
     ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"      ),
 
@@ -263,6 +264,7 @@ myScratchPads =
     NS "teamviewer"    "teamviewer"           (className =? "TeamViewer")    defaultFloating,
     NS "pcmanfm"       "fzfmenu fzf-pcmanfm"  (className =? "Pcmanfm")       defaultFloating,
     NS "pavucontrol"   "pavucontrol"          (className =? "Pavucontrol")   mediumFloat,
+    NS "thunderbird"   "thunderbird"          (className =? "Thunderbird")   largeFloat,
     NS "stacer"        "sudo -A stacer"       (className =? "stacer")        mediumFloat
   ]
 
