@@ -319,6 +319,9 @@ myLayout =   desktopLayoutModifiers
 -------------------------------------------
 -- Window Rules
 --------------------------------------------
+-- myPlacement = withGaps (16,0,16,0) (smart (0.5,0.5))
+myPlacement = withGaps (32,32,32,32) (smart (0.5,0.5))
+
 myManageHook = composeAll
     [
       appName   =? "fzfmenu"                    --> doCenterFloat,
@@ -339,10 +342,10 @@ myManageHook = composeAll
       className =? "Gpg-crypter"                --> doCenterFloat,
       className =? "kcachegrind"                --> doCenterFloat,
       className =? "Qalculate-gtk"              --> doCenterFloat,
-      className =? "Lxappearance"               --> doCenterFloat,
       className =? "Psi"                        --> doCenterFloat,
       className =? "Image Lounge"               --> doCenterFloat,
       className =? "Seahorse"                   --> doCenterFloat,
+      className =? "File-roller"                --> doCenterFloat,
       className =? "jetbrains-phpstorm"         --> doShift "0_1",
       className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
       className =? "TelegramDesktop"            --> doShift "1_7",
@@ -396,7 +399,6 @@ myStartupHook = do
 -------------------------------------------
 -- Main
 -------------------------------------------
-myPlacement = withGaps (16,0,16,0) (smart (0.5,0.5))
 
 main :: IO ()
 main = do
