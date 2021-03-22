@@ -335,6 +335,7 @@ myManageHook = composeAll
       className =? "Pavucontrol"                --> doCenterFloat,
       className =? "qt5ct"                      --> doCenterFloat,
       className =? "Nm-connection-editor"       --> doCenterFloat,
+      className =? "Gnome-builder"              --> doCenterFloat,
       className =? "Org.gnome.Software"         --> doCenterFloat,
       className =? "Libfm-pref-apps"            --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,
