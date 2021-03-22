@@ -38,7 +38,7 @@ import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 
 -- Hooks
 import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.EwmhDesktops ( fullscreenEventHook)
+import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat)
 import XMonad.Hooks.DynamicProperty ( dynamicPropertyChange )
