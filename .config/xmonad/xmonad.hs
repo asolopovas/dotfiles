@@ -37,6 +37,7 @@ import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts, ToggleLayout(T
 import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 
 -- Hooks
+import XMonad.Hooks.Place
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
@@ -395,6 +396,8 @@ myStartupHook = do
 -------------------------------------------
 -- Main
 -------------------------------------------
+myPlacement = withGaps (16,0,16,0) (smart (0.5,0.5))
+
 main :: IO ()
 main = do
   nScreens <- countScreens
@@ -422,7 +425,7 @@ main = do
 
         -- hooks, layouts
         layoutHook         = myLayout,
-        manageHook         = myManageHook,
+        manageHook         = placeHook myPlacement <+> myManageHook,
         handleEventHook    = myEventHook <+> fullscreenEventHook,
         startupHook        = myStartupHook,
         logHook            = dynamicLogWithPP (myLogHook dbus)
