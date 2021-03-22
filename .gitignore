@@ -21,6 +21,8 @@
 !/.config/xmonad/xmonad.hs
 !/.config/dconf
 !/.config/dconf/**
+!/.config/qt5ct
+!/.config/qt5ct/**
 !/.config/polybar
 !/.config/polybar/**
 !/.config/tmux
