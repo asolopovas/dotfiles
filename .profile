@@ -8,7 +8,7 @@ export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
 # Applications
 export BROWSER="google-chrome-stable"
-export FILEMANAGER="thunar"
+export FILEMANAGER="pcmanfm"
 export TERMINAL="alacrity"
 
 # Clean-Up

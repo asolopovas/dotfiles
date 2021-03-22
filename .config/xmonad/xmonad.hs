@@ -46,6 +46,7 @@ import XMonad.Hooks.DynamicProperty ( dynamicPropertyChange )
 
 import Data.Monoid
 import System.Exit
+import System.Environment
 
 import qualified DBus as D
 import qualified DBus.Client as D
@@ -65,6 +66,7 @@ blue2     = "#2266d0"
 -------------------------------------------
 -- Globals
 -------------------------------------------
+-- myTerminal      = "alacritty"
 myTerminal      = "alacritty"
 myBrowser       = "google-chrome-stable"
 
@@ -320,7 +322,8 @@ myLayout =   desktopLayoutModifiers
 -- Window Rules
 --------------------------------------------
 -- myPlacement = withGaps (16,0,16,0) (smart (0.5,0.5))
-myPlacement = withGaps (32,32,32,32) (smart (0.5,0.5))
+-- myPlacement = withGaps (0,128,0,128) (smart (0.5,0.5))
+myPlacement = fixed (0.5,0.5)
 
 myManageHook = composeAll
     [
@@ -329,6 +332,7 @@ myManageHook = composeAll
       className =? "Pavucontrol"                --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,
       className =? "vlc"                        --> doCenterFloat,
+      className =? "Viewnior"                   --> doCenterFloat,
       className =? "stacer"                     --> doCenterFloat,
       className =? "Lxappearance"               --> doCenterFloat,
       className =? "Vmware"                     --> doCenterFloat,
