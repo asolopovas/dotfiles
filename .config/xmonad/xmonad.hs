@@ -328,6 +328,7 @@ myPlacement = fixed (0.5,0.5)
 myManageHook = composeAll
     [
       appName   =? "fzfmenu"                    --> doCenterFloat,
+      appName   =? "pcmanfmTerm"                --> doCenterFloat,
       title     =? "Media viewer"               --> doCenterFloat,
       className =? "Pavucontrol"                --> doCenterFloat,
       className =? "pavucontrol"                --> doCenterFloat,

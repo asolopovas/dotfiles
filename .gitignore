@@ -12,6 +12,8 @@
 !/.config/fish/**
 !/.config/fontconfig
 !/.config/fontconfig/**
+!/.config/pcmanfm
+!/.config/pcmanfm/**
 !/.config/kdeglobals
 !/.config/xmonad
 !/.config/rofi
