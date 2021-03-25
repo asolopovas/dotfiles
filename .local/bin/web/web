@@ -35,6 +35,18 @@ case "$1" in
 			mv "$host*" $destination
 		fi
 		;;
+	d*) 
+    wget \
+         --recursive \
+         --no-clobber \
+         --page-requisites \
+         --html-extension \
+         --convert-links \
+         --restrict-file-names=windows \
+         --domains vuejs.org \
+         --no-parent \
+         vuejs.org/v2/guide/
+        ;;
 	*) cat << EOF
 ssl-cert: Generates 
 

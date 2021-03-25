@@ -25,9 +25,14 @@ font-1 = Inconsolata Nerd Font:size=8;1
 font-2 = Noto Color Emoji:scale=9:style=Regular;2
 font-3 = Symbola:pixelsize=9;1
 
-tray-position = right
+tray-position = center
 tray-padding = 8
 tray-background = #2b2b30
+tray-scale = 1.0
+tray-maxsize = 16
+tray-offset-x = 0
+tray-offset-y = 0
+tray-detached = false
 
 ;wm-restack = bspwm
 ;wm-restack = i3
