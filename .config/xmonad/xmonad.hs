@@ -181,9 +181,10 @@ myKeyb =
 
     --Scratchpads
     ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"            ),
-    ("M-b",           namedScratchpadAction myScratchPads "chrome"              ),
-    ("M-S-b",         namedScratchpadAction myScratchPads "firefox"             ),
+    ("M-c",           namedScratchpadAction myScratchPads "chrome"              ),
+    ("M-b"  ,         namedScratchpadAction myScratchPads "firefox"             ),
     ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"          ),
+    ("M-m",           namedScratchpadAction myScratchPads "spotify"             ),
     ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"             ),
     ("M-S-x",         namedScratchpadAction myScratchPads "pcmanfmSearch"       ),
     ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird"         ),
@@ -260,16 +261,16 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"      spawnTerm              (title     =? "scratchpad")    mediumFloat,
-    NS "spotify"       "spotify"              (className =? "Spotify")       largeFloat,
-    NS "chrome"        "google-chrome-stable" (className =? "Google-chrome") nonFloating,
-    NS "firefox"       "firefox"              (className =? "firefox")       nonFloating,
-    NS "teamviewer"    "teamviewer"           (className =? "TeamViewer")    defaultFloating,
-    NS "pcmanfm"       "pcmanfm"              (className =? "Pcmanfm")       defaultFloating,
-    NS "pcmanfmSearch" "fzfmenu fzf-pcmanfm"  (className =? "Pcmanfm")       defaultFloating,
-    NS "pavucontrol"   "pavucontrol"          (className =? "Pavucontrol")   mediumFloat,
-    NS "thunderbird"   "thunderbird"          (className =? "Thunderbird")   largeFloat,
-    NS "stacer"        "sudo -A stacer"       (className =? "stacer")        mediumFloat
+    NS "terminal"      spawnTerm                               (title     =? "scratchpad")    mediumFloat,
+    NS "spotify"       "spotify"                               (className =? "Spotify")       largeFloat,
+    NS "chrome"        "google-chrome-stable"                  (className =? "Google-chrome") nonFloating,
+    NS "firefox"       "firefox --class='FirefoxScratchpad'"   (className =? "FirefoxScratchpad")       nonFloating,
+    NS "teamviewer"    "teamviewer"                            (className =? "TeamViewer")    defaultFloating,
+    NS "pcmanfm"       "pcmanfm"                               (className =? "Pcmanfm")       defaultFloating,
+    NS "pcmanfmSearch" "fzfmenu fzf-pcmanfm"                   (className =? "Pcmanfm")       defaultFloating,
+    NS "pavucontrol"   "pavucontrol"                           (className =? "Pavucontrol")   mediumFloat,
+    NS "thunderbird"   "thunderbird"                           (className =? "Thunderbird")   largeFloat,
+    NS "stacer"        "sudo -A stacer"                        (className =? "stacer")        mediumFloat
   ]
 
   where
