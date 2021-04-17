@@ -28,6 +28,7 @@ nmap <leader>f :action FileChooser<cr>
 nmap <leader>t :action NERDTree<cr>
 nmap <leader>vs :source ~/.ideavimrc<cr>
 nmap <leader>ev :e ~/.ideavimrc<cr>
+nmap <leader>er :e README.md<cr>
 
 
 "------------------------------------------------------
