@@ -1,0 +1,39 @@
+#!/usr/bin/env node
+const https = require('https')
+const CoinbasePro = require('coinbase-pro');
+const publicClient = new CoinbasePro.PublicClient();
+
+publicClient
+  .getProducts()
+  .then(data => {
+    console.log(data)
+  })
+  .catch(error => {
+    console.error(error)
+  });
+
+const client = https.createClient
+const options = {
+    hostname: 'api.coinbase.com',
+    path: '/v2/prices/BTC-GBP/spot',
+    port: 443,
+    method: 'GET',
+    headers: {
+        Authorization: 'abd90df5f27a7b170cd775abf89d632b350b7c1c9d53e08b340cd9832ce52c2c'
+    },
+}
+
+https.get(options, (response) => {
+
+    let result = ''
+    response.on('data', function(chunk) {
+        result += chunk
+    })
+
+    response.on('end', function() {
+        result = JSON.parse(result)
+        const amount = result.data.amount
+        console.log(new Intl.NumberFormat('en-US', {style: 'currency', currency: 'GBP'}).format(amount))
+    })
+
+})

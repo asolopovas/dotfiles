@@ -128,6 +128,14 @@ inherit = module/xbacklight
 type = internal/backlight
 card = intel_backlight
 
+
+[module/bitcoin]
+
+type = custom/script
+exec = bitcoin_price
+interval = 60
+;format-underline =
+
 [module/weather]
 
 type = custom/script
