@@ -133,7 +133,7 @@ card = intel_backlight
 
 type = custom/script
 exec = bitcoin_price
-interval = 60
+interval = 20
 ;format-underline =
 
 [module/weather]
