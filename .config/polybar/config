@@ -44,7 +44,7 @@ alert = #bd2c40
 ; monitor = ${env:MONITOR}
 ; Other modules: xkeyboard filesystem xbacklight backlight-acpi cpu memory temperature powermenu weather
 modules-left = xmonad
-modules-right = bitcoin cpu memory temperature date pulseaudio 
+modules-right = litecoin bitcoin cpu memory temperature date pulseaudio 
 ;modules-center =
 include-file = ~/.config/polybar/defaults
 

@@ -132,7 +132,14 @@ card = intel_backlight
 [module/bitcoin]
 
 type = custom/script
-exec = bitcoin_price
+exec = crypto_price BTC-GBP
+interval = 20
+;format-underline =
+
+[module/litecoin]
+
+type = custom/script
+exec = crypto_price LTC-GBP
 interval = 20
 ;format-underline =
 
