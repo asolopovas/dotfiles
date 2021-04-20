@@ -2,10 +2,12 @@
 
 const https = require('https')
 
+const symbol = process.argv.pop()
+
 const client = https.createClient
 const options = {
     hostname: 'api.pro.coinbase.com',
-    path: '/products/BTC-GBP/ticker',
+    path: `/products/${symbol}/ticker`,
     port: 443,
     method: 'GET',
 }
