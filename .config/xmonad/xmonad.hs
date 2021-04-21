@@ -410,6 +410,7 @@ myStartupHook = do
     spawnOnce            "signal-desktop &"     
     spawnOnce            "telegram-desktop &"       
     spawnOnce            "cryptomator &"       
+    spawnOnce            "xsetroot -cursor_name left_ptr &"
     -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
     -- windows $ W.greedyView "1_7"
     -- screenWorkspace 0 >>= flip whenJust (windows . W.view)
