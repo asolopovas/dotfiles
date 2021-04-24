@@ -1,5 +1,6 @@
 /**
 !/dotfiles-sync.sh
+!/dotfiles-install.sh
 !/.local
 !/.local/bin
 !/.local/bin/**
