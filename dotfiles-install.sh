@@ -118,7 +118,7 @@ while true; do
     [Yy]*)
       installPackage ripgrep
       installPackage fzf
-      if [[ $OS == 'ubuntu' ]]; then
+      if [ "$OS" == "ubuntu" ]; then
         installPackage fd-find
         sudo ln -sf /usr/bin/fdfind /usr/bin/fd
       fi
@@ -127,6 +127,7 @@ while true; do
       git clone --depth 1 https://github.com/junegunn/fzf.git ~/.config/fzf
       ~/.config/fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
       mv ~/.fzf.zsh ~/.config/fzf.zsh
+        break;;
     *)
       break;;
   esac
