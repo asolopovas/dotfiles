@@ -129,4 +129,4 @@ while true; do
   esac
 done
 
-source $HOME/dotfiles-sync.sh
+source $HOME/dotfiles/dotfiles-sync.sh
