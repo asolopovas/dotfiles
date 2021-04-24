@@ -10,7 +10,9 @@ is_sudoer() {
 }
 
 removePackage() {
+  printf "************************************************\n"
   printf "Removing $1 package from the system-------------\n"
+  printf "************************************************\n"
   if command_exists $1 && is_sudoer; then
     echo $OS
     case $OS in
@@ -28,7 +30,9 @@ removePackage() {
 }
 
 installPackage() {
-  printf "Installing $1 package ----------------------------\n"
+  printf "************************************************\n"
+  printf "Installing $1 package --------------------------\n"
+  printf "************************************************\n"
   if ! command_exists $1 && is_sudoer; then
     case $OS in
       ubuntu)
