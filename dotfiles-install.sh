@@ -45,47 +45,47 @@ installPackage() {
 }
 
 cd $HOME
-# # -------------------------------------
-# # Download and install dotfiles
-# # -------------------------------------
-# mkdir $HOME/.cache 2> /dev/null && touch $HOME/.cache/.zsh_history
+# -------------------------------------
+# Download and install dotfiles
+# -------------------------------------
+mkdir $HOME/.cache 2> /dev/null && touch $HOME/.cache/.zsh_history
 
-# printf "Installing dotfiles...\n"
-# while true; do
-#   read -p "Use https origin for dotfiles? (default: https) [yes/no]" yn
-#   case $yn in
-#     [Nn]*)
-#       dotfiles_origin=git@github.com:asolopovas/dotfiles.git
-#       git clone $dotfiles_origin
-#       break;;
-#     *)
-#       dotfiles_origin=https://github.com/asolopovas/dotfiles.git
-#       git clone $dotfiles_origin
-#       break;;
-#   esac
-# done
+printf "Installing dotfiles...\n"
+while true; do
+  read -p "Use https origin for dotfiles? (default: https) [yes/no]" yn
+  case $yn in
+    [Nn]*)
+      dotfiles_origin=git@github.com:asolopovas/dotfiles.git
+      git clone $dotfiles_origin
+      break;;
+    *)
+      dotfiles_origin=https://github.com/asolopovas/dotfiles.git
+      git clone $dotfiles_origin
+      break;;
+  esac
+done
 
 
-# # -------------------------------------
-# # Install zsh
-# # -------------------------------------
-# while true; do
-#   read -p "Install Zsh? (default: no) [yes/no]" yn
-#   case $yn in
-#     [Yy]*)
-#       installPackage zsh
-#       default_shell=$(which zsh)
-#       oh_my_plugin="https://github.com/ohmyzsh/ohmyzsh.git"
-#       oh_my_name=$(basename $oh_my_plugin | sed 's/\.[^.]*$//')
-#       ln -sf "$HOME/.config/zsh/.zshrc" "$HOME/.zshrc"
-#       if [ ! -d "$HOME/.config/$oh_my_name" ]; then
-#         git clone $oh_my_plugin "$HOME/.config/$oh_my_name"
-#       fi
-#       break;;
-#     *)
-#       break;;
-#   esac
-# done
+# -------------------------------------
+# Install zsh
+# -------------------------------------
+while true; do
+  read -p "Install Zsh? (default: no) [yes/no]" yn
+  case $yn in
+    [Yy]*)
+      installPackage zsh
+      default_shell=$(which zsh)
+      oh_my_plugin="https://github.com/ohmyzsh/ohmyzsh.git"
+      oh_my_name=$(basename $oh_my_plugin | sed 's/\.[^.]*$//')
+      ln -sf "$HOME/.config/zsh/.zshrc" "$HOME/.zshrc"
+      if [ ! -d "$HOME/.config/$oh_my_name" ]; then
+        git clone $oh_my_plugin "$HOME/.config/$oh_my_name"
+      fi
+      break;;
+    *)
+      break;;
+  esac
+done
 
 # -------------------------------------
 # Install Neovim
@@ -94,37 +94,37 @@ while true; do
   read -p "Install NeoVim? (default: no) [yes/no]" yn
   case $yn in
     [Yy]*)
-    #   nvim_home_autoload=~/.config/nvim/autoload/plug.vim
-    #   nvim_root_autoload=/usr/share/nvim/runtime/autoload/plug.vim
-    #   nvim_plug_url=https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    #   if [ ! -f $nvim_home_autoload ]; then
-    #     curl -fLo $nvim_home_autoload --create-dirs $nvim_plug_url
-    #   fi
+      nvim_home_autoload=~/.config/nvim/autoload/plug.vim
+      nvim_root_autoload=/usr/share/nvim/runtime/autoload/plug.vim
+      nvim_plug_url=https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+      if [ ! -f $nvim_home_autoload ]; then
+        curl -fLo $nvim_home_autoload --create-dirs $nvim_plug_url
+      fi
       removePackage vim
-    #   installPackage neovim
-    #   nvim +silent +PlugInstall +qall;
+      installPackage neovim
+      nvim +silent +PlugInstall +qall;
       break;;
     *)
       break;;
   esac
 done
 
-# # -------------------------------------
-# # Install fuzzy search
-# # -------------------------------------
-# while true; do
-#   read -p "Install fuzzy search for terminal? (default: no) [yes/no]" yn
-#   case $yn in
-#     [Yy]*)
-#       installPackage ripgrep
-#       installPackage fzf
-#       printf "Installing Fuzzy Search...\n"
-#       mkdir -p ~/.local/share/gem/bin
-#       git clone --depth 1 https://github.com/junegunn/fzf.git ~/.config/fzf
-#       ~/.config/fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
-#       mv ~/.fzf.zsh ~/.config/fzf.zsh
-#       break;;
-#     *)
-#       break;;
-#   esac
-# done
+# -------------------------------------
+# Install fuzzy search
+# -------------------------------------
+while true; do
+  read -p "Install fuzzy search for terminal? (default: no) [yes/no]" yn
+  case $yn in
+    [Yy]*)
+      installPackage ripgrep
+      installPackage fzf
+      printf "Installing Fuzzy Search...\n"
+      mkdir -p ~/.local/share/gem/bin
+      git clone --depth 1 https://github.com/junegunn/fzf.git ~/.config/fzf
+      ~/.config/fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
+      mv ~/.fzf.zsh ~/.config/fzf.zsh
+      break;;
+    *)
+      break;;
+  esac
+done
