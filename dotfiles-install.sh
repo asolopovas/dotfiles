@@ -128,3 +128,5 @@ while true; do
       break;;
   esac
 done
+
+source $HOME/dotfiles-sync.sh
