@@ -106,10 +106,11 @@ done
 # Install fuzzy search
 # -------------------------------------
 while true; do
-  read -p "Install NeoVim? (default: no) [yes/no]" yn
+  read -p "Install fuzzy search for terminal? (default: no) [yes/no]" yn
   case $yn in
     [Yy]*)
       installPackage ripgrep
+      installPackage fzf
       printf "Installing Fuzzy Search...\n"
       mkdir -p ~/.local/share/gem/bin
       git clone --depth 1 https://github.com/junegunn/fzf.git ~/.config/fzf
