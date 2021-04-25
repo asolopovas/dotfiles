@@ -92,21 +92,37 @@ while true; do
 done
 
 # -------------------------------------
+# Install Fish
+# -------------------------------------
+while true; do
+  read -p "Install Fish Shell? (default: no) [yes/no]" yn
+  case $yn in
+    [Yy]*)
+      installPackage fish
+      curl -L https://get.oh-my.fish > install
+      fish install --offline=omf.tar.gz
+      default_shell=$(which fish)
+      break;;
+    *)
+      break;;
+  esac
+done
+
+# -------------------------------------
 # Install Neovim
 # -------------------------------------
 while true; do
   read -p "Install NeoVim? (default: no) [yes/no]" yn
   case $yn in
     [Yy]*)
-      nvim_home_autoload=~/.config/nvim/autoload/plug.vim
-      nvim_root_autoload=/usr/share/nvim/runtime/autoload/plug.vim
-      nvim_plug_url=https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-      if [ ! -f $nvim_home_autoload ]; then
-        curl -fLo $nvim_home_autoload --create-dirs $nvim_plug_url
-      fi
       removePackage vim
+      vim_plug_autoload=~/.config/nvim/autoload/plug.vim
+      vim_plug=https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+      if [ ! -f $vim_plug_autoload ]; then
+        curl -fLo $vim_plug_autoload --create-dirs $vim_plug
+      fi
       installPackage neovim
-      nvim +silent +PlugInstall +qall;
+      nvim +silent +PlugInstall +qall
       break;;
     *)
       break;;
