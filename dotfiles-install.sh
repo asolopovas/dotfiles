@@ -100,6 +100,7 @@ while true; do
     [Yy]*)
       installPackage fish
       curl -L https://get.oh-my.fish | fish
+      fish -C "omf install agnoster; omf theme agnoster"
       default_shell=$(which fish)
       break;;
     *)
