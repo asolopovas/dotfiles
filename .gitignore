@@ -57,6 +57,7 @@
 !/.config/inputrc
 !/.config/wall.jpg
 !/.config/mimeapps.list
+!/.config/picom.conf
 !/.scripts
 !/.scripts/**
 !.gitignore
