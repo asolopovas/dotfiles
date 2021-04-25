@@ -22,7 +22,7 @@ syncConfig ~/dotfiles/.local ~/.local
 readarray -d '' dotfiles < <(find ~/dotfiles -maxdepth 1 -type f  )
 for src in $dotfiles
 do
-  if [  $src == "dotfiles-install.sh" ] || [ $src == "dotfiles-sync.sh" ]; then continue; fi
+  if [  $(basename $src) == "dotfiles-install.sh" ] || [ $(basename $src) == "dotfiles-sync.sh" ]; then continue; fi
   dest=${src/\/dotfiles\///}
   ln -sf $src $dest
 done
