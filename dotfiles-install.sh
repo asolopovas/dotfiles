@@ -99,8 +99,7 @@ while true; do
   case $yn in
     [Yy]*)
       installPackage fish
-      curl -L https://get.oh-my.fish > install
-      fish install --offline=omf.tar.gz
+      curl -L https://get.oh-my.fish | fish
       default_shell=$(which fish)
       break;;
     *)
