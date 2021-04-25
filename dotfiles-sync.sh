@@ -18,11 +18,11 @@ function syncConfig {
 syncConfig ~/dotfiles/.config ~/.config
 syncConfig ~/dotfiles/.local ~/.local
 
-
 # Sync dotfile from root directory
 readarray -d '' dotfiles < <(find ~/dotfiles -maxdepth 1 -type f  )
 for src in $dotfiles
 do
+  if [  $src == "dotfiles-install.sh" ] || [ $src == "dotfiles-sync.sh" ]; then continue; fi
   dest=${src/\/dotfiles\///}
   ln -sf $src $dest
 done
