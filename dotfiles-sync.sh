@@ -4,23 +4,32 @@ function syncConfig {
   srcPath=$1
   destPath=$2
 
-  readarray -d '' dotfiles < <(find $srcPath -maxdepth 1 )
+  dotfiles=()
 
-  for src in $dotfiles
+  while IFS=  read -r -d $'\0'; do
+    dotfiles+=($REPLY)
+  done < <(find $srcPath -maxdepth 1 -print0)
+
+  for src in "${dotfiles[@]}"
   do
     if [  $srcPath == $src ]; then continue; fi
     dest=${src/\/dotfiles\///}
     rm -rf $dest
     ln -sf $src $destPath
   done
+
 }
 
 syncConfig ~/dotfiles/.config ~/.config
 syncConfig ~/dotfiles/.local ~/.local
 
 # Sync dotfile from root directory
-readarray -d '' dotfiles < <(find ~/dotfiles -maxdepth 1 -type f  )
-for src in $dotfiles
+dotfiles=()
+while IFS=  read -r -d $'\0'; do
+  dotfiles+=($REPLY)
+done < <(find $HOME/dotfiles -maxdepth 1 -type f -print0)
+
+for src in "${dotfiles[@]}"
 do
   if [  $(basename $src) == "dotfiles-install.sh" ] || [ $(basename $src) == "dotfiles-sync.sh" ]; then continue; fi
   dest=${src/\/dotfiles\///}
