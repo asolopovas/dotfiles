@@ -309,20 +309,20 @@ tiled   =    renamed [Replace "tiled"]
            $ limitWindows 12
            $ mySpacing 5
            $ ResizableTall 1 (3/100) (1/2) []
-tiledR  =   renamed [Replace "tiledR"]
-           $ smartBorders
-           $ limitWindows 12
-           $ mySpacing 5
-           $ reflectHoriz
-           $ ResizableTall 1 (3/100) (1/2) []
+-- tiledR  =   renamed [Replace "tiledR"]
+--            $ smartBorders
+--            $ limitWindows 12
+--            $ mySpacing 5
+--            $ reflectHoriz
+--            $ ResizableTall 1 (3/100) (1/2) []
 full    =    renamed [Replace "full"]
            $ noBorders
            $ Full
 
 myLayout =   desktopLayoutModifiers
            $ T.toggleLayouts full
-           $ onWorkspaces ["1_1", "1_2", "1_3", "1_4", "1_5", "1_6", "1_7:chat", "1_8", "1_9"] tiled
-           $ onWorkspaces ["0_1", "0_2", "0_3", "0_4", "0_5", "0_6", "0_7:chat", "0_8", "0_9"] tiledR
+           $ onWorkspaces ["0_1", "0_2", "0_3", "0_4", "0_5", "0_6", "0_7:chat", "0_8", "0_9"] tiled
+           -- $ onWorkspaces ["1_1", "1_2", "1_3", "1_4", "1_5", "1_6", "1_7:chat", "1_8", "1_9"] tiled
            $ myDefaultLayout
   where
     myDefaultLayout = tiled
