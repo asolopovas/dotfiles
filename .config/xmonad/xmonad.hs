@@ -366,10 +366,10 @@ myManageHook = composeAll
       className =? "Seahorse"                   --> doCenterFloat,
       className =? "File-roller"                --> doCenterFloat,
       className =? "jetbrains-phpstorm"         --> doShift "0_1",
-      className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
-      className =? "TelegramDesktop"            --> doShift "1_7",
-      className =? "Signal"                     --> doShift "1_7",
-      className =? "Skype"                      --> doShift "1_7"
+      className =? "whatsapp-nativefier-d40211" --> doShift "0_7",
+      className =? "TelegramDesktop"            --> doShift "0_7",
+      className =? "Signal"                     --> doShift "0_7",
+      className =? "Skype"                      --> doShift "0_7"
     ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
