@@ -187,10 +187,10 @@ myKeyb =
     ("M-m",           namedScratchpadAction myScratchPads "spotify"             ),
     ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"             ),
     ("M-S-x",         namedScratchpadAction myScratchPads "pcmanfmSearch"       ),
-    ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird"         ),
     ("M-v",           namedScratchpadAction myScratchPads "pavucontrol"         ),
-    ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"              ),
     ("<F9>",          namedScratchpadAction myScratchPads "freezer"             ),
+    ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird"         ),
+    ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"              ),
 
     --Media Keys
     ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)"            ),
@@ -369,7 +369,8 @@ myManageHook = composeAll
       className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
       className =? "TelegramDesktop"            --> doShift "1_7",
       className =? "Signal"                     --> doShift "1_7",
-      className =? "Skype"                      --> doShift "1_7"
+      className =? "Skype"                      --> doShift "1_7",
+      className =? "Teamviewer"                 --> doShift "1_9"
     ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
