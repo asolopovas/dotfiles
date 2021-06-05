@@ -180,17 +180,17 @@ myKeyb =
     ("M-S-e",         io exitSuccess                                    ), -- Quits xmonad
 
     --Scratchpads
-    ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"            ),
-    ("M-c",           namedScratchpadAction myScratchPads "chrome"              ),
-    ("M-b"  ,         namedScratchpadAction myScratchPads "firefox"             ),
-    ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"          ),
-    ("M-m",           namedScratchpadAction myScratchPads "spotify"             ),
-    ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"             ),
-    ("M-S-x",         namedScratchpadAction myScratchPads "pcmanfmSearch"       ),
-    ("M-v",           namedScratchpadAction myScratchPads "pavucontrol"         ),
-    ("<F9>",          namedScratchpadAction myScratchPads "freezer"             ),
-    ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird"         ),
-    ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"              ),
+    ("M-S-<Return>",  namedScratchpadAction myScratchPads "terminal"      ),
+    ("M-c",           namedScratchpadAction myScratchPads "chrome"        ),
+    ("M-b"  ,         namedScratchpadAction myScratchPads "firefox"       ),
+    ("M-<F11>",       namedScratchpadAction myScratchPads "teamviewer"    ),
+    ("M-x",           namedScratchpadAction myScratchPads "pcmanfm"       ),
+    ("M-S-x",         namedScratchpadAction myScratchPads "pcmanfmSearch" ),
+    ("M-v",           namedScratchpadAction myScratchPads "pavucontrol"   ),
+    ("<F9>",          namedScratchpadAction myScratchPads "freezer"       ),
+    ("<XF86Eject>",   namedScratchpadAction myScratchPads "spotify"       ),
+    ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird"   ),
+    ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"        ),
 
     --Media Keys
     ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)"            ),
@@ -202,7 +202,6 @@ myKeyb =
     ("<XF86AudioNext>",        spawn "playerctl next"                                   ), 
     ("<XF86Launch7>",          runOrRaise "qalculate-gtk" (resource =? "qalculate-gtk") ),
     ("<XF86Launch8>",          spawn "flameshot gui"                                    )
-
   ]
 
 
