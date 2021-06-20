@@ -54,7 +54,7 @@ modules-right = include-file = ~/.config/polybar/defaults
 
 [bar/laptop]
 monitor = ${env:MONITOR}
-modules-right = cpu temperature memory network battery date
+modules-right = cpu temperature memory network battery date xkeyboard
 include-file = ~/.config/polybar/defaults
 
 ; Include Modules

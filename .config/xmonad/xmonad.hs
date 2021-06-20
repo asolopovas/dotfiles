@@ -188,7 +188,7 @@ myKeyb =
     ("M-S-x",         namedScratchpadAction myScratchPads "pcmanfmSearch" ),
     ("M-v",           namedScratchpadAction myScratchPads "pavucontrol"   ),
     ("<F9>",          namedScratchpadAction myScratchPads "freezer"       ),
-    ("<XF86Eject>",   namedScratchpadAction myScratchPads "spotify"       ),
+    ("M-m",           namedScratchpadAction myScratchPads "spotify"       ),
     ("<XF86Launch6>", namedScratchpadAction myScratchPads "thunderbird"   ),
     ("<XF86Launch9>", namedScratchpadAction myScratchPads "stacer"        ),
 
