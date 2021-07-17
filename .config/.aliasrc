@@ -19,8 +19,8 @@ alias ds='docker-sync'
 alias dss='docker-sync-stack'
 
 # Docker
-alias dc='docker compose'
-alias dcd='docker compose -f docker-compose.dev.yml'
+alias dc='docker-compose'
+alias dcd='docker-compose -f docker-compose.dev.yml'
 alias dk='docker'
 alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
 
