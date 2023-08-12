@@ -17,3 +17,5 @@
 
 [submodule]
 	recurse = true
+[safe]
+	directory = /home/andrius/www/alisiagreen.test/wp-content/themes/alisiagreen_v4

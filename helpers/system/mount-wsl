@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo guestmount --add /mnt/c/WSL/ext4.vhdx --inspector --ro /mnt/wsl -o allow_other

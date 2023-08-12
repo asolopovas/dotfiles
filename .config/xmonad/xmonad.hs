@@ -399,7 +399,7 @@ spawnToWorkspace workspace program = do
 -- Startup Hook
 --------------------------------------------
 myStartupHook = do
-    spawnOnce            "dotfiles/.config/autostart.sh &"
+    spawnOnce            "dotfiles/autostart.sh &"
     -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
     -- windows $ W.greedyView "1_7"
     -- screenWorkspace 0 >>= flip whenJust (windows . W.view)
