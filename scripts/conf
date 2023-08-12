@@ -1,0 +1,40 @@
+#!/bin/bash
+
+GITPATHS=("$HOME/dotfiles" "$HOME/www/dev")
+
+print_color() {
+    declare -A colors=(
+        ['red']='\033[31m'
+        ['green']='\033[0;32m'
+    )
+    echo -e "${colors[$1]}$2\033[0m"
+}
+
+if [ $# -eq 0 ]; then
+    echo "No arguments supplied. Please provide 'save' or 'pull'."
+    exit 1
+fi
+
+case $1 in
+push)
+    for path in "${GITPATHS[@]}"; do
+        print_color green "Pushing $path ..."
+        git -C $path add .
+        git -C $path commit -m "Save"
+        git -C $path push
+    done
+
+    powershell.exe -Command 'conf push'
+    ;;
+pull)
+    for path in "${GITPATHS[@]}"; do
+        print_color green "Pulling $path ..."
+        git -C $path pull
+    done
+    powershell.exe -Command 'conf pull'
+    ;;
+*)
+    echo "Invalid argument. Please provide 'save' or 'pull'."
+    exit 1
+    ;;
+esac

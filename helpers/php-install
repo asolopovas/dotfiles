@@ -1,0 +1,92 @@
+#!/bin/bash
+
+[ ! -z $2 ] && ver=$2
+
+OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+printf '=============================================\n'
+printf "PHP install helper script in ${OS^} for $ver \n"
+printf '=============================================\n'
+
+is_sudoer() {
+    sudo -v >/dev/null 2>&1
+}
+
+removePackage() {
+    if is_sudoer; then
+        case $OS in
+        ubuntu)
+            printf "Ubuntu: Removing $1...\n"
+            sudo apt remove -y $1
+            ;;
+        centos)
+            printf "Centos: Removing $1...\n"
+            sudo yum remove -y $1
+            ;;
+        arch)
+            printf "Arch: Removing $1...\n"
+            sudo pacman -Rns --noconfirm $1
+            ;;
+        esac
+    fi
+}
+
+installPackage() {
+    if is_sudoer; then
+        case $OS in
+        ubuntu)
+            printf "Ubuntu: Installing $@...\n"
+            sudo apt install -y $@
+            ;;
+        centos)
+            printf "Centos: Installing $@...\n"
+            sudo yum install -y $@
+            ;;
+        arch)
+            printf "Arch: Installing $@...\n"
+            sudo pacman -S --noconfirm $@
+            ;;
+        esac
+    fi
+}
+
+phpPackages=(
+    "php$ver"
+    "php$ver-bcmath"
+    "php$ver-bz2"
+    "php$ver-cli"
+    "php$ver-common"
+    "php$ver-curl"
+    # "php$ver-fpm"
+    "php$ver-gd"
+    "php$ver-imagick"
+    # "php$ver-imap"
+    "php-json"
+    # "php$ver-litespeed"
+    "php$ver-mbstring"
+    # "php$ver-memcache"
+    # "php$ver-memcached"
+    "php$ver-mongodb"
+    "php$ver-mysql"
+    "php$ver-pcov"
+    "php$ver-pgsql"
+    "php$ver-redis"
+    "php$ver-sqlite3"
+    "php$ver-xdebug"
+    "php$ver-xml"
+    "php$ver-yaml"
+    "php$ver-zip"
+)
+
+packages=$(
+    IFS=$'\n'
+    echo "${phpPackages[*]}"
+)
+
+case "$1" in
+uninstall)
+    removePackage $packages
+    ;;
+*)
+    installPackage $packages
+    ;;
+esac

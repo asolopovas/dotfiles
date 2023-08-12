@@ -1,0 +1,10 @@
+#!/bin/bash
+
+result=$(fd -t d  --maxdepth 4 . ~ | fzf)
+
+[ -z $result ] && nohup env pcmanfm >/dev/null 2>&1 &
+
+# nohup env /opt/phpstorm/bin/phpstorm.sh $result >/dev/null 2>&1 &
+nohup env pcmanfm $result >/dev/null 2>&1 &
+
+pkill -f fzfmenu

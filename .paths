@@ -1,0 +1,16 @@
+go/bin
+.local/bin
+.local/bin/helpers
+.local/bin/helpers/apps
+.local/bin/helpers/statusbar
+.local/bin/helpers/system
+.local/bin/helpers/tools
+.local/bin/helpers/web
+.local/share/gem/bin
+.yarn/bin
+.deno/bin
+.nvm/bin
+.cargo/bin
+.config/composer/vendor/bin
+/usr/local/go/bin
+dotfiles/scripts

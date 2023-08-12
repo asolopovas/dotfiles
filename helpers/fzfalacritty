@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+result=$(fdfind -d 5 -H -t d --base-directory . --search-path ./www --search-path ./git -E node_modules -E vendor | fzf)
+[ -z $result ] && exit
+
+(nohup alacritty --working-directory $result >/dev/null 2>&1 &)
+pkill -f fzfmenu

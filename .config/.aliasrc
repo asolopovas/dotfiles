@@ -1,0 +1,56 @@
+# Aliases
+alias pw='WP_TESTS_SKIP_INSTALL=1 phpunit-watcher watch'
+
+# System
+alias xclip='xclip -selection c'
+
+alias upd='sudo apt update -y; sudo apt upgrade -y'
+
+# Cleanup
+# alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
+alias tm='tmux -f $HOME/.config/tmux/tmux.conf'
+alias gpg2='gpg2 --homedir "$XDG_DATA_HOME"/gnupg'
+
+# ssh with google
+alias sshg='ssh -i ~/.ssh/google_compute_engine'
+
+# Docker
+alias dk='docker '
+alias dc='docker compose '
+alias dcd='docker compose -f docker-compose.dev.yml '
+alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
+
+alias sys='systemctl'
+
+# Github
+alias gs='git status '
+alias gw='git add -A && git commit -m "save"'
+alias gb='git branch '
+alias gc='git add -A && git commit -m'
+alias gd='git diff '
+alias gp='git push'
+alias gpf='git push --force'
+alias gl='git pull'
+alias gk='git checkout '
+alias gsclone='git clone git@github.com:asolopovas/'
+alias ghclone='git clone https://github.com:asolopovas/'
+alias bfg='java -jar ~/.local/bin/bfg.jar '
+alias nah='git reset --hard; git clean -fd'
+
+# System
+alias dir-size='du -hd 1  2> /dev/null | sort -h'
+alias art='php artisan'
+alias rs='rsync -azr --info=progress2 '
+alias l='LC_ALL="C.UTF-8" ls -la --group-directories-first'
+alias ll='ls -lh --group-directories-first'
+alias xevkb='xev -event keyboard'
+alias dd='cd $HOME/www/dev'
+
+alias ..="cd .."
+alias ..2="cd ../.."
+alias ..3="cd ../../.."
+alias ..4="cd ../../../.."
+alias ..5="cd ../../../../.."
+alias ci="composer install"
+alias cu="composer update"
+alias cdump="composer dumpautoload"

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+alacritty --class fzfmenu -o window.dimensions.columns=80 -o window.dimensions.lines=10 -t fzfmenu -e $1

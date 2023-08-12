@@ -1,0 +1,7 @@
+#!/bin/bash
+
+git clone https://github.com/oh-my-fish/oh-my-fish
+pushd oh-my-fish
+bin/install --offline
+popd
+rm -rf oh-my-fish

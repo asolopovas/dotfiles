@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/opt/phpstorm/bin/phpstorm.sh $1

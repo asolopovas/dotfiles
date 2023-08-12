@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+
+const https = require('https')
+
+const symbol = process.argv.pop()
+
+const userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36'
+const options = {
+    hostname: 'api.pro.coinbase.com',
+    path: `/products/${symbol}/ticker`,
+    port: 443,
+    headers: { 'user-agent': userAgent }
+}
+
+https.get(options, (response) => {
+    let data = [];
+    let result = ''
+    response.on('data', function(chunk) {
+        data.push(chunk)
+    })
+
+    response.on('end', function() {
+        result = JSON.parse(Buffer.concat(data).toString())
+        console.log(new Intl.NumberFormat('en-US', {style: 'currency', currency: 'GBP'}).format(result.price))
+    })
+
+
+}).on('error', err => {
+    console.error('Error: ', err.message);
+});

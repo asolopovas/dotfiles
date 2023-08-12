@@ -1,0 +1,23 @@
+#!/bin/bash
+
+INCLUDE=()
+STORE=()
+while IFS= read -r line; do INCLUDE+=("$line"); done <$HOME/dotfiles/bookmarks.txt
+
+for i in ${INCLUDE[@]}; do
+    P="$HOME/$i"
+    for dir in $P/*; do 
+      if [ -d $dir ]; then
+        STORE+=("$dir")
+      fi
+    done
+done
+
+STORE+=("$HOME/dotfiles")
+echo $STORE
+
+RESULT=$(printf "%s\n" "${STORE[@]}" | fzf)
+
+[ -z $RESULT ] && exit
+
+code $RESULT >/dev/null 2>&1

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+result=$(fd -t d --maxdepth 4 . ~ | fzf)
+
+[ -z $result ] && exit
+
+nohup env phpstorm $result >/dev/null 2>&1 & 
+
+pkill -f fzfmenu
