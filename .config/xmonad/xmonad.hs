@@ -208,7 +208,7 @@ myScratchPads =
   [
     NS "terminal"       spawnTerm                                    (title     =? "scratchpad")         largeFloat,
     NS "spotify"       "snap run spotify"                            (className =? "Spotify")            largeFloat,
-    NS "browser"        currentBrowser                               (className =? "Google-chrome")      largeFloat,
+    NS "browser"        currentBrowser                               (className =? "Google-chrome")      nonFloating,
     NS "chatGPT"       "chat-gpt"                                    (className =? "Chat-gpt")           largeFloat,
     NS "filebrowser"    myFilebrowser                                (className =? "Thunar")             nonFloating,
     NS "firefox"       "firefox --class='FirefoxScratchpad'"         (className =? "FirefoxScratchpad")  nonFloating,
@@ -337,6 +337,7 @@ myManageHook = composeAll
       stringProperty "WM_WINDOW_ROLE" =? "GtkFileChooserDialog"  -->doCenterFloat,
       appName   =? "fzfmenu"                    --> doCenterFloat,
       appName   =? "pcmanfmTerm"                --> doCenterFloat,
+      appName   =? "gnome-tweaks"               --> doCenterFloat,
       title     =? "Media viewer"               --> doCenterFloat,
       className =? "Pavucontrol"                --> doCenterFloat,
       className =? "qt5ct"                      --> doCenterFloat,
