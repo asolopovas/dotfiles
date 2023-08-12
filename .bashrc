@@ -6,6 +6,10 @@ source $DOTFILES/env/env-vars.sh
 source $DOTFILES/functions.sh
 source $DOTFILES/env/oh-my-bash.sh
 
+for file in $DOTFILES/completions/bash/*.sh; do
+    source $file
+done
+
 if cmd_exist fzf; then
     source $DOTFILES/fzf/fzf-opts.sh
     source $DOTFILES/fzf/completion.bash
