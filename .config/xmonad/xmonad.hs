@@ -179,7 +179,7 @@ myKeyb =
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "spotify"       ),
     ("M-c",              namedScratchpadAction myScratchPads "browser"       ),
-    ("M-S-c",            namedScratchpadAction myScratchPads "chatGPT"       ),
+    ("M-<F7>",           namedScratchpadAction myScratchPads "chatGPT"       ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
     ("M-S-x",            namedScratchpadAction myScratchPads "pcmanfmSearch" ),
@@ -206,40 +206,39 @@ myKeyb =
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"       spawnTerm                                    (title     =? "scratchpad")         mediumFloat,
+    NS "terminal"       spawnTerm                                    (title     =? "scratchpad")         largeFloat,
     NS "spotify"       "snap run spotify"                            (className =? "Spotify")            largeFloat,
-    NS "browser"        currentBrowser                               (className =? "Google-chrome")      nonFloating,
+    NS "browser"        currentBrowser                               (className =? "Google-chrome")      largeFloat,
     NS "chatGPT"       "chat-gpt"                                    (className =? "Chat-gpt")           largeFloat,
     NS "filebrowser"    myFilebrowser                                (className =? "Thunar")             nonFloating,
     NS "firefox"       "firefox --class='FirefoxScratchpad'"         (className =? "FirefoxScratchpad")  nonFloating,
     NS "pavucontrol"   "pavucontrol"                                 (className =? "Pavucontrol")        mediumFloat,
     NS "thunderbird"   "thunderbird"                                 (className =? "Thunderbird")        largeFloat,
     NS "stacer"        "sudo -A /usr/bin/stacer > ~/tmp/stacer.log"  (className =? "stacer")             mediumFloat,
-    NS "calc"          "gnome-calculator"                            (className =? "Gnome-calculator")   mediumFloat
+    NS "calc"          "gnome-calculator"                            (className =? "Gnome-calculator")   largeFloat
   ]
 
   where
     currentBrowser  = myBrowser
     spawnTerm  = myTerminal ++ " -t scratchpad"
     smallFloat = customFloating $ W.RationalRect l t w h
-                     where
-                       h = 0.5
-                       w = 0.5
-                       t = 0.7 -h
-                       l = 0.7 -w
-    mediumFloat    = customFloating $ W.RationalRect l t w h
-                     where
-                       h = 0.6
-                       w = 0.6
-                       t = 0.8 -h
-                       l = 0.8 -w
-    largeFloat     = customFloating $ W.RationalRect l t w h
-                     where
-                       h = 0.9
-                       w = 0.9
-                       t = 0.95 -h
-                       l = 0.95 -w
-
+        where
+            h = 0.5
+            w = 0.5
+            t = 0.5 - h / 2
+            l = 0.5 - w / 2
+    mediumFloat = customFloating $ W.RationalRect l t w h
+        where
+            h = 0.7
+            w = 0.7
+            t = 0.5 - h / 2
+            l = 0.5 - w / 2
+    largeFloat = customFloating $ W.RationalRect l t w h
+        where
+            h = 0.9
+            w = 0.9
+            t = 0.5 - h / 2
+            l = 0.5 - w / 2
 
 shiftAndView i = W.view i . W.shift i
 
@@ -331,7 +330,7 @@ myLayout =   desktopLayoutModifiers
 --------------------------------------------
 -- myPlacement = withGaps (16,0,16,0) (smart (0.5,0.5))
 -- myPlacement = withGaps (0,128,0,128) (smart (0.5,0.5))
-myPlacement = fixed (0.5,0.5)
+-- myPlacement = fixed (0.5,0.5)
 
 myManageHook = composeAll
     [
@@ -380,16 +379,17 @@ myManageHook = composeAll
 winSwallowHook :: Event -> X All
 winSwallowHook = swallowEventHook ( className =? "Alacritty" ) (return True)
 
-spotifyHook :: Event -> X All
-spotifyHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
-    where floating  = customFloating $ W.RationalRect l t w h
-                      where
-                          h = 0.9
-                          w = 0.9
-                          t = 0.95 -h
-                          l = 0.95 -w
+-- spotifyHook :: Event -> X All
+-- spotifyHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
+--     where floating  = customFloating $ W.RationalRect l t w h
+--                       where
+--                           h = 0.4
+--                           w = 0.4
+--                           t = 0.95 -h
+--                           l = 0.95 -w
 
-myHandleEventHook = winSwallowHook <+> spotifyHook
+-- myHandleEventHook = winSwallowHook <+> spotifyHook
+myHandleEventHook = winSwallowHook
 
 spawnToWorkspace :: String -> String -> X ()
 spawnToWorkspace workspace program = do
@@ -400,15 +400,10 @@ spawnToWorkspace workspace program = do
 --------------------------------------------
 myStartupHook = do
     spawnOnce            "dotfiles/autostart.sh &"
-    -- screenWorkspace 1 >>= flip whenJust (windows . W.view)
-    -- windows $ W.greedyView "1_7"
-    -- screenWorkspace 0 >>= flip whenJust (windows . W.view)
-    -- windows $ W.greedyView "0_1"
 
 -------------------------------------------
 -- Main
 -------------------------------------------
-
 main :: IO ()
 main = do
   nScreens <- countScreens
@@ -437,7 +432,8 @@ main = do
 
         -- hooks, layouts
         layoutHook         = myLayout,
-        manageHook         = placeHook myPlacement <+> myManageHook,
+        -- manageHook         = placeHook myPlacement <+> myManageHook,
+        manageHook         = myManageHook,
         handleEventHook    = myHandleEventHook,
         startupHook        = myStartupHook,
         logHook            = dynamicLogWithPP (myLogHook dbus)

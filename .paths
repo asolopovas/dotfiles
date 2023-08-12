@@ -14,3 +14,5 @@ go/bin
 .config/composer/vendor/bin
 /usr/local/go/bin
 dotfiles/scripts
+.cabal/bin
+.ghcup/bin
