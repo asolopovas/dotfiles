@@ -206,15 +206,15 @@ myKeyb =
 -------------------------------------------
 myScratchPads =
   [
-    NS "terminal"       spawnTerm                                    (title     =? "scratchpad")         largeFloat,
-    NS "spotify"       "snap run spotify"                            (className =? "Spotify")            largeFloat,
     NS "browser"        currentBrowser                               (className =? "Google-chrome")      nonFloating,
-    NS "chatGPT"       "chat-gpt"                                    (className =? "Chat-gpt")           largeFloat,
     NS "filebrowser"    myFilebrowser                                (className =? "Thunar")             nonFloating,
     NS "firefox"       "firefox --class='FirefoxScratchpad'"         (className =? "FirefoxScratchpad")  nonFloating,
-    NS "pavucontrol"   "pavucontrol"                                 (className =? "Pavucontrol")        mediumFloat,
-    NS "thunderbird"   "thunderbird"                                 (className =? "Thunderbird")        largeFloat,
+    NS "terminal"       spawnTerm                                    (title     =? "scratchpad")         mediumFloat,
     NS "stacer"        "sudo -A /usr/bin/stacer > ~/tmp/stacer.log"  (className =? "stacer")             mediumFloat,
+    NS "pavucontrol"   "pavucontrol"                                 (className =? "Pavucontrol")        mediumFloat,
+    NS "spotify"       "snap run spotify"                            (className =? "Spotify")            largeFloat,
+    NS "chatGPT"       "chat-gpt"                                    (className =? "Chat-gpt")           largeFloat,
+    NS "thunderbird"   "thunderbird"                                 (className =? "Thunderbird")        largeFloat,
     NS "calc"          "gnome-calculator"                            (className =? "Gnome-calculator")   largeFloat
   ]
 
