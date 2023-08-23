@@ -339,6 +339,7 @@ myManageHook = composeAll
       appName   =? "pcmanfmTerm"                --> doCenterFloat,
       appName   =? "gnome-tweaks"               --> doCenterFloat,
       title     =? "Media viewer"               --> doCenterFloat,
+      className =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
       className =? "Pavucontrol"                --> doCenterFloat,
       className =? "qt5ct"                      --> doCenterFloat,
       className =? "Nm-connection-editor"       --> doCenterFloat,

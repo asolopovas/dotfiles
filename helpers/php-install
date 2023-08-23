@@ -90,3 +90,5 @@ uninstall)
     installPackage $packages
     ;;
 esac
+
+removePackage "php*-psr"

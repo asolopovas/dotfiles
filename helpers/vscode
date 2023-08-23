@@ -5,7 +5,6 @@ INCLUDE=()
 STORE=()
 
 JSON_DATA=$(sqlite3 ~/.config/Code/User/globalStorage/state.vscdb "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'")
-# RECENT_FOLDERS=$(echo "$JSON_DATA" | jq -r '.entries[] | .folderUri // .workspace.configPath | select(startswith("file://")) | sub("^file://"; "")')
 RECENT_FOLDERS=$(echo "$JSON_DATA" | jq -r '.entries[] | .folderUri // .workspace.configPath | select(type == "string" and startswith("file://")) | sub("^file://"; "")')
 
 for folder in $RECENT_FOLDERS; do

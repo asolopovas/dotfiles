@@ -23,6 +23,7 @@ alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
 alias sys='systemctl'
 
 # Github
+alias ga='git commit --amend'
 alias gs='git status '
 alias gw='git add -A && git commit -m "save"'
 alias gb='git branch '
