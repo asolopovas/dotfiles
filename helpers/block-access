@@ -3,7 +3,6 @@
 blockAccess() {
     directoryToBlock="$1"
 
-    # Find .htaccess in the current directory
     htaccessPath="./.htaccess"
     if [[ ! -f "$htaccessPath" ]]; then
         echo "Error: .htaccess file not found in the current directory."
@@ -15,12 +14,7 @@ blockAccess() {
         exit 1
     fi
 
-    # Resolve relative paths
-    if [[ "$directoryToBlock" == ./* ]]; then
-        directoryToBlock="$(realpath "$directoryToBlock")"
-    fi
-
-    echo "Blocking access to $directoryToBlock in $htaccessPath"
+    directoryToBlock="$(realpath "$directoryToBlock")"
 
     cat <<EOL >> "$htaccessPath"
 <Directory "$directoryToBlock">
