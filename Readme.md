@@ -1,11 +1,11 @@
-## Terminal Shortcuts
+### Terminal Shortcuts
 ```
 ctrl x e        'Edit command line
 esc + b         'Word back
 esc + f         'Word forward
 ```
 
-## Tmux Shortcuts
+### Tmux Shortcuts
 ```
 Ctrl+a c        'Create new window
 Ctrl+a ,        'Rename window
@@ -19,7 +19,7 @@ Ctrl+a Alt + -  'Horizontal Layout
 Ctrl+a Alt + |  'Vertical Layout
 ```
 
-## Vim Shortcuts
+### Vim Shortcuts
 ```
 Ctrl + V        'Visual block mode
 Shift + >       'Indent line'
@@ -27,22 +27,34 @@ Shift + n>      'Indent line n steps'
 F7              'reindent file
 ```
 
-## Dotfiles (Menu Version)
+### Menu
 ```
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
 
-## Dotfiles (Menu Version) No Cache Flag
+### Default
+```
+FISH=true FZF=true FDFIND=true NVIM=true NVM=true OHMYFISH=true UNATTENDED=true bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+```
+
+### Dotfiles for WordPress Environment (Gutenberg Block Editings) ([wp-env](https://www.npmjs.com/package/@wordpress/env?activeTab=readme))
+```
+NODEVER=16.20.0 FZF=true FDFIND=true NVM=true OHMYBASH=true UNATTENDED=true bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+```
+
+## No Cache Flag
+
+### Menu
 ```
 bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
 
-## Full Stack No Cache Versions No Cache Flag
+### Default
 ```
-FISH=true FZF=true FDFIND=true NVIM=true NVM=true OHMYFISH=true UNATTENDED=true bash -c "$(curl -fsSLH 'Cache-Control: no-cache' https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+FISH=true FZF=true FDFIND=true NVIM=true NVM=true OHMYFISH=true UNATTENDED=true bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
 
-## Dotfiles for WordPress Environment (Gutenberg Block Editings) ([wp-env](https://www.npmjs.com/package/@wordpress/env?activeTab=readme))
+### Dotfiles for WordPress Environment (Gutenberg Block Editings) ([wp-env](https://www.npmjs.com/package/@wordpress/env?activeTab=readme))
 ```
-NODEVER=16.20.0 FZF=true FDFIND=true NVM=true OHMYBASH=true UNATTENDED=true bash -c "$(curl -fsSLH 'Cache-Control: no-cache' https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+NODEVER=16.20.0 FZF=true FDFIND=true NVM=true OHMYBASH=true UNATTENDED=true bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
