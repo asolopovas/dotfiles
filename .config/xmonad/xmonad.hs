@@ -173,7 +173,7 @@ myKeyb =
     ("M-t",            toggleFloat                    ),
 
     --Xmonad
-    ("<F6>",          spawn "xmonad --recompile; xmonad --restart"      ), -- Restarts xmonad
+    ("M-<F6>",          spawn "xmonad --recompile; xmonad --restart"      ), -- Restarts xmonad
     ("M-S-e",         io exitSuccess                                    ), -- Quits xmonad
 
     --Scratchpads
