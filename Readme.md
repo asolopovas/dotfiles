@@ -1,11 +1,13 @@
-### Terminal Shortcuts
+## Shortcuts
+
+### Terminal
 ```
 ctrl x e        'Edit command line
 esc + b         'Word back
 esc + f         'Word forward
 ```
 
-### Tmux Shortcuts
+### Tmux
 ```
 Ctrl+a c        'Create new window
 Ctrl+a ,        'Rename window
@@ -19,13 +21,15 @@ Ctrl+a Alt + -  'Horizontal Layout
 Ctrl+a Alt + |  'Vertical Layout
 ```
 
-### Vim Shortcuts
+### Vim
 ```
 Ctrl + V        'Visual block mode
 Shift + >       'Indent line'
 Shift + n>      'Indent line n steps'
 F7              'reindent file
 ```
+
+## Install
 
 ### Menu
 ```
