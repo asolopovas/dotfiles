@@ -1,12 +1,14 @@
 function add2path
-    set -l full_path
-    if string match -qr '^/' -- $argv
-        set full_path "$argv"
-    else
-        set full_path "$HOME/$argv"
-    end
+    for arg in $argv
+        set -l fullPath
+        if string match -qr '^/' -- $arg
+            set fullPath "$arg"
+        else
+            set fullPath "$HOME/$arg"
+        end
 
-    if test -d $full_path; and not contains $full_path $PATH
-        set -U fish_user_paths $full_path $fish_user_paths
+        if test -d "$fullPath"; and not contains "$fullPath" $fish_user_paths
+            set -U fish_user_paths $fullPath $fish_user_paths
+        end
     end
 end
