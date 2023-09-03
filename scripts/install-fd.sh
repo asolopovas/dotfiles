@@ -10,8 +10,8 @@ if [ "$OS" = "ubuntu" ] || [ ""$OS"" = "debian" ]; then
 fi
 
 if [ "$OS" = "almalinux" ]; then
-    $VER = "8.7.0"
-    $NAME="fd-v${VER}-x86_64-unknown-linux-gnu"
+    VER="8.7.0"
+    NAME="fd-v${VER}-x86_64-unknown-linux-gnu"
     curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$NAME.tar.gz
     tar -xf $NAME.tar.gz -C . $NAME/fd
     mv $NAME/fd /usr/local/bin
