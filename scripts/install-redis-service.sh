@@ -20,6 +20,12 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target
 EOF
 
+adduser --system --group --no-create-home redis
+mkdir /var/lib/redis; chown redis:redis /var/lib/redis; chmod 770 /var/lib/redis
+cp $HOME/dotfiles/redis/6379.conf /etc/redis/6379.conf
+
 echo "$redis_service" > /etc/systemd/system/redis.service
 systemctl daemon-reload
 systemctl enable --now redis.service
+
+redis-cli ping
