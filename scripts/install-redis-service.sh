@@ -20,7 +20,7 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target
 EOF
 
-adduser --system --group --no-create-home redis
+adduser --system --user-group --no-create-home redis
 mkdir /var/lib/redis; chown redis:redis /var/lib/redis; chmod 770 /var/lib/redis
 cp $HOME/dotfiles/redis/6379.conf /etc/redis/6379.conf
 
