@@ -1,9 +1,5 @@
 #!/bin/bash
 
-gw() {
-    read -p "Enter commit message: " commit_message
-    git add -A && git commit -m "$commit_message"
-}
-
-
-gw
+read -p "Enter commit message (default: save): " commit_message
+commit_message=${commit_message:-"save"}
+git add -A && git commit -m "$commit_message"
