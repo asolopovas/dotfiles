@@ -25,7 +25,7 @@ alias sys='systemctl'
 # Github
 alias ga='git commit --amend'
 alias gs='git status '
-alias gw='git add -A && git commit -m "save"'
+# alias gw='git add -A && git commit -m "save"'
 alias gb='git branch '
 alias gc='git add -A && git commit -m'
 alias gd='git diff '
