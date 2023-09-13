@@ -10,6 +10,10 @@ SSL_PATH="$HOME/.local/share/barrier/SSL/"
 SSL_CERT="${SSL_PATH}Barrier.pem"
 DEFAULT_HOST="192.168.1.10:24800"
 
+[ ! -d "${SERVICE_PATH}" ] && mkdir -p "${SERVICE_PATH}"
+[ ! -d "${SSL_PATH}" ] && mkdir -p "${SSL_PATH}"
+[ ! -d "${LOG_DIR}" ] && mkdir -p "${LOG_DIR}"
+
 if [ ! -f "${SSL_CERT}" ]; then
     openssl req -x509 -nodes -days 365 -subj /CN=Barrier -newkey rsa:4096 -keyout "${SSL_CERT}" -out "${SSL_CERT}"
     echo "SSL certificate generated at ${SSL_CERT}."
