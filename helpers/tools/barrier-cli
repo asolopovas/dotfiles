@@ -117,7 +117,7 @@ EOL
 Description=Barrier Client Service
 
 [Service]
-ExecStart=/usr/bin/barrierc -f --no-tray --debug INFO --name pop-os --enable-crypto -l ${LOG_PATH} ${host}
+ExecStart=/usr/bin/barrierc -f --no-tray --debug INFO --name pop-os -l ${LOG_PATH} ${host}
 Restart=always
 
 [Install]
