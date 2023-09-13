@@ -22,10 +22,22 @@ function _git_info
     end
 end
 
+function _ssh_info
+    if set -q SSH_CONNECTION
+        hostname
+    end
+end
+
 function fish_prompt
     set -l last_status $status
     set -l user (whoami)
     set -l cwd $color_blue(pwd | sed "s:^$HOME:~:")
+
+    # Show SSH hostname if connected via SSH
+    set -l sshinfo (_ssh_info)
+    if [ "$sshinfo" ]
+        echo -n -s $color_cyan $sshinfo $color_normal ' '
+    end
 
     # Display [venvname] if in a virtualenv
     if set -q VIRTUAL_ENV
