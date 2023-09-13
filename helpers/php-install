@@ -1,8 +1,9 @@
 #!/bin/bash
 
-[ ! -z $2 ] && ver=$2
+[ ! -z $1 ] && ver=$1
 
 OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+
 printf '=============================================\n'
 printf "PHP install helper script in ${OS^} for $ver \n"
 printf '=============================================\n'
@@ -33,7 +34,7 @@ removePackage() {
 installPackage() {
     if is_sudoer; then
         case $OS in
-        ubuntu)
+        ubuntu|pop)
             printf "Ubuntu: Installing $@...\n"
             sudo apt install -y $@
             ;;
