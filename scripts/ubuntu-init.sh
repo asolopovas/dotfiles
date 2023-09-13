@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Don't ask sudo multiple times
-echo 'Defaults !tty_tickets' >> /etc/sudoers
+cat 'Defaults !tty_tickets' | sudo tee -A /etc/sudoers
 
 newStr='%admin ALL=(ALL:ALL) NOPASSWD: /usr/sbin/shutdown,/usr/sbin/reboot,/usr/bin/mount,/usr/bin/umount,/usr/bin/apt update -y,/usr/bin/apt upgrade -y'
 sudo sed -i -e "s|^%admin.*|${newStr}|g" /etc/sudoers
