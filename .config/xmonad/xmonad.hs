@@ -4,6 +4,7 @@
 import XMonad
 import XMonad.ManageHook
 import XMonad.Config.Desktop
+import Graphics.X11.ExtraTypes.XF86 
 
 -- Actions
 import XMonad.Actions.WithAll (sinkAll, killAll)
@@ -193,6 +194,8 @@ myKeyb =
     ("<XF86AudioRaiseVolume>", spawn "lmc up; kill -44 $(pidof dwmblocks)"   ),
     ("<XF86AudioMute>",        spawn "lmc mute; kill -44 $(pidof dwmblocks)" ),  -- Bug prevents it from toggling correctly in 12.04.
     ("<XF86AudioPlay>",        spawn "playerctl play-pause"                  ),
+    ("<XF86MonBrightnessUp>",   spawn "lux -a 2%"                  ),
+    ("<XF86MonBrightnessDown>", spawn "lux -s 2%"                  ),
     ("<XF86AudioStop>",        spawn "playerctl stop"                        ),
     ("<XF86AudioPrev>",        spawn "playerctl previous"                    ),
     ("<XF86AudioNext>",        spawn "playerctl next"                        ),

@@ -24,3 +24,4 @@ source_script() {
 for env_var in "${env_vars[@]}"; do
     source_script $env_var
 done
+. "$HOME/.cargo/env"
