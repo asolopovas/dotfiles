@@ -353,7 +353,6 @@ augroup autosourcing
   autocmd!
   autocmd FileType java,php,ruby,python,javascript,ini,conf,vim autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
   autocmd BufWritePost $MYVIMRC source $MYVIMRC
-  autocmd BufWritePost ~/dotfiles/.config/polybar/** silent! !bash -c "~/dotfiles/.config/polybar/launch.sh"
   autocmd BufWritePost ~/dotfiles/scripts/x11-synaptics.sh silent! !sudo -A ~/dotfiles/scripts/x11-synaptics.sh
   autocmd BufWritePost ~/.config/dunst/dunstrc silent! !killall dunst & dunst &
   "Run xrdb whenever Xdefaults or Xresources are updated.
