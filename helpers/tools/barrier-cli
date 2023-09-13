@@ -10,6 +10,11 @@ SSL_PATH="$HOME/.local/share/barrier/SSL/"
 SSL_CERT="${SSL_PATH}Barrier.pem"
 DEFAULT_HOST="192.168.1.10:24800"
 
+if [ ! -f "${SSL_CERT}" ]; then
+    openssl req -x509 -nodes -days 365 -subj /CN=Barrier -newkey rsa:4096 -keyout "${SSL_CERT}" -out "${SSL_CERT}"
+    echo "SSL certificate generated at ${SSL_CERT}."
+fi
+
 # Create directories if not present
 mkdir -p "${LOG_DIR}"
 mkdir -p "${SSL_PATH}"
@@ -72,7 +77,6 @@ EOL
     fi
 }
 
-
 function install_service() {
     local mode="$1"
     local host="$2"
@@ -93,7 +97,7 @@ function install_service() {
 Description=Barrier Server Service
 
 [Service]
-ExecStart=/usr/bin/barriers -a ${host} -c ${CONFIG_PATH} -d INFO --name main --no-daemon --enable-crypto -l ${LOG_PATH} --no-tray
+ExecStart=/usr/bin/barriers -a ${host} -c ${CONFIG_PATH} -d INFO --name main --no-daemon -l ${LOG_PATH} --no-tray
 Restart=always
 
 [Install]
@@ -103,11 +107,6 @@ EOL
         echo "Barrier server has been set up."
 
     elif [ "${mode}" == "client" ]; then
-
-        if [ ! -f "${SSL_CERT}" ]; then
-            openssl req -x509 -nodes -days 365 -subj /CN=Barrier -newkey rsa:4096 -keyout "${SSL_CERT}" -out "${SSL_CERT}"
-            echo "SSL certificate generated at ${SSL_CERT}."
-        fi
 
         cat >"${service_file}" <<EOL
 [Unit]
