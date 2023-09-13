@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# Constants
+SERVICE_NAME="barrier"
+SERVICE_PATH="$HOME/.config/systemd/user/"
+SERVICE_FILE="${SERVICE_PATH}${SERVICE_NAME}.service"
+CONFIG_PATH="$HOME/.local/share/barrier/.barrier.conf"
+LOG_DIR="$HOME/logs/"
+LOG_PATH="${LOG_DIR}barrier.log"
+SSL_PATH="$HOME/.local/share/barrier/SSL/"
+SSL_CERT="${SSL_PATH}Barrier.pem"
+DEFAULT_HOST="192.168.1.10:24800"
+
+function install_service() {
+    local mode="$1"
+    local host="$2"
+    mkdir -p "${SERVICE_PATH}"
+    mkdir -p "${LOG_DIR}"
+
+    if [ "${mode}" == "server" ]; then
+        if [ ! -f "${CONFIG_PATH}" ]; then
+            echo "Barrier configuration not found at ${CONFIG_PATH}. Please ensure it exists or specify a different path."
+            exit 1
+        fi
+
+        cat > "${SERVICE_FILE}" <<EOL
+[Unit]
+Description=Barrier Server Service
+
+[Service]
+ExecStart=/usr/bin/barriers -a ${host} -c ${CONFIG_PATH} -d INFO --name pop-os --no-daemon --enable-crypto -l ${LOG_PATH} --no-tray
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOL
+
+        echo "Barrier server has been set up."
+
+    elif [ "${mode}" == "client" ]; then
+        if [ ! -f "${SSL_CERT}" ]; then
+            mkdir -p "${SSL_PATH}"
+            openssl req -x509 -nodes -days 365 -subj /CN=Barrier -newkey rsa:4096 -keyout "${SSL_CERT}" -out "${SSL_CERT}"
+            echo "SSL certificate generated at ${SSL_CERT}."
+        fi
+
+        cat > "${SERVICE_FILE}" <<EOL
+[Unit]
+Description=Barrier Client Service
+
+[Service]
+ExecStart=/usr/bin/barrierc -f --no-tray --debug INFO --name pop-os --enable-crypto -l ${LOG_PATH} ${host}
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOL
+
+        echo "Barrier client has been set up."
+    else
+        echo "Invalid mode. Please use either 'server' or 'client'."
+        exit 1
+    fi
+
+    systemctl --user daemon-reload
+    systemctl --user enable "${SERVICE_NAME}"
+    systemctl --user start "${SERVICE_NAME}"
+
+    echo "Barrier ${mode} service has been created, enabled, and started."
+}
+
+function manage_service() {
+    local action="$1"
+
+    if systemctl --user --no-pager show "${SERVICE_NAME}" > /dev/null 2>&1; then
+        if [ "${action}" == "start" ] || [ "${action}" == "stop" ]; then
+            systemctl --user "${action}" "${SERVICE_NAME}"
+            echo "Barrier service ${action}ed."
+        else
+            echo "Invalid action. Use either 'start' or 'stop'."
+            exit 1
+        fi
+    else
+        echo "Barrier service is not installed. Install it first with 'install' command."
+        exit 1
+    fi
+}
+
+# Main Execution
+command="$1"
+shift
+
+case "${command}" in
+    install)
+        mode="$1"
+        shift
+        host="${DEFAULT_HOST}"
+
+        while [[ "$#" -gt 0 ]]; do
+            case $1 in
+                --host) host="$2"; shift;;
+                *) echo "Unknown parameter passed: $1"; exit 1;;
+            esac
+            shift
+        done
+
+        if [ "${mode}" != "server" ] && [ "${mode}" != "client" ]; then
+            echo "Usage: $0 install [server|client] [--host <hostname:port>]"
+            exit 1
+        fi
+
+        install_service "${mode}" "${host}"
+        ;;
+
+    start|stop)
+        manage_service "${command}"
+        ;;
+
+    *)
+        echo "Usage:"
+        echo "1. $0 install server|client [--host <hostname:port>]"
+        echo "2. $0 start|stop"
+        exit 1
+        ;;
+esac
