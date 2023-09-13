@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Functions
 install_packages() {
     local -A install_cmds=(
