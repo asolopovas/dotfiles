@@ -1,9 +1,5 @@
-# name: clearance
+# name: default
 # ---------------
-# Based on idan. Display the following bits on the left:
-# - Virtualenv name (if applicable, see https://github.com/adambrenecki/virtualfish)
-# - Current directory name
-# - Git branch and dirty state (if inside a git repo)
 
 function _git_branch_name
   echo (command git symbolic-ref HEAD 2> /dev/null | sed -e 's|^refs/heads/||')
@@ -21,14 +17,11 @@ function fish_prompt
   set -l red (set_color red)
   set -l blue (set_color blue)
   set -l green (set_color green)
+  set -l brgreen (set_color brgreen)
   set -l normal (set_color normal)
+  set -l user (whoami)
 
   set -l cwd $blue(pwd | sed "s:^$HOME:~:")
-
-  # Output the prompt, left to right
-
-  # Add a newline before new prompts
-#   echo -e ''
 
   # Display [venvname] if in a virtualenv
   if set -q VIRTUAL_ENV
@@ -49,6 +42,9 @@ function fish_prompt
     end
     echo -n -s ' ' $git_info $normal
   end
+
+  # Display username
+  echo -n -s $brgreen ' ('  $user ')' $normal
 
   set -l prompt_color $red
   if test $last_status = 0
