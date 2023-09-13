@@ -101,7 +101,7 @@ function install_service() {
 Description=Barrier Server Service
 
 [Service]
-ExecStart=/usr/bin/barriers -a ${host} -c ${CONFIG_PATH} -d INFO --name main --no-daemon -l ${LOG_PATH} --no-tray
+ExecStart=/usr/bin/barriers -f --no-tray --debug INFO --name main --disable-client-cert-checking -c ${CONFIG_PATH} --address :24800
 Restart=always
 
 [Install]
