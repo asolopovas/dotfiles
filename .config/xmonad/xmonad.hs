@@ -4,7 +4,7 @@
 import XMonad
 import XMonad.ManageHook
 import XMonad.Config.Desktop
-import Graphics.X11.ExtraTypes.XF86 
+import Graphics.X11.ExtraTypes.XF86
 
 -- Actions
 import XMonad.Actions.WithAll (sinkAll, killAll)
@@ -18,7 +18,6 @@ import XMonad.Util.SpawnOnce
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.EZConfig (additionalKeysP)
 import XMonad.Util.NoTaskbar
-
 
 -- Layouts
 import XMonad.Layout.ResizableTile
@@ -43,7 +42,8 @@ import XMonad.Hooks.Place
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
-import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat)
+import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat, doRectFloat)
+
 import XMonad.Hooks.DynamicProperty ( dynamicPropertyChange )
 import XMonad.Hooks.WindowSwallowing
 
@@ -159,6 +159,7 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-d",            spawn "rofi -show run"         ),
+    ("M-c",            spawn myBrowser                ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzfmenu storm"          ),
@@ -179,7 +180,6 @@ myKeyb =
 
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "spotify"       ),
-    ("M-c",              namedScratchpadAction myScratchPads "browser"       ),
     ("M-<F7>",           namedScratchpadAction myScratchPads "chatGPT"       ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
@@ -204,44 +204,93 @@ myKeyb =
 
   ]
 
--------------------------------------------
--- Scratchpads
--------------------------------------------
-myScratchPads =
-  [
-    NS "browser"        currentBrowser                               (className =? "Google-chrome")      nonFloating,
-    NS "filebrowser"    myFilebrowser                                (className =? "Thunar")             nonFloating,
-    NS "firefox"       "firefox --class='FirefoxScratchpad'"         (className =? "FirefoxScratchpad")  nonFloating,
-    NS "terminal"       spawnTerm                                    (title     =? "scratchpad")         mediumFloat,
-    NS "stacer"        "sudo -A /usr/bin/stacer > ~/tmp/stacer.log"  (className =? "stacer")             mediumFloat,
-    NS "pavucontrol"   "pavucontrol"                                 (className =? "Pavucontrol")        mediumFloat,
-    NS "spotify"       "snap run spotify"                            (className =? "Spotify")            largeFloat,
-    NS "chatGPT"       "chat-gpt"                                    (className =? "Chat-gpt")           largeFloat,
-    NS "thunderbird"   "thunderbird"                                 (className =? "Thunderbird")        largeFloat,
-    NS "calc"          "gnome-calculator"                            (className =? "Gnome-calculator")   largeFloat
-  ]
+-- Utility Functions
+makeFloat :: Float -> W.RationalRect
+makeFloat dim = W.RationalRect
+    (toRational ((1 - dim) / 2))
+    (toRational ((1 - dim) / 2))
+    (toRational dim)
+    (toRational dim)
 
-  where
-    currentBrowser  = myBrowser
-    spawnTerm  = myTerminal ++ " -t scratchpad"
-    smallFloat = customFloating $ W.RationalRect l t w h
-        where
-            h = 0.5
-            w = 0.5
-            t = 0.5 - h / 2
-            l = 0.5 - w / 2
-    mediumFloat = customFloating $ W.RationalRect l t w h
-        where
-            h = 0.7
-            w = 0.7
-            t = 0.5 - h / 2
-            l = 0.5 - w / 2
-    largeFloat = customFloating $ W.RationalRect l t w h
-        where
-            h = 0.9
-            w = 0.9
-            t = 0.5 - h / 2
-            l = 0.5 - w / 2
+-- Float Definitions for Scratchpads
+smFloatCustom  = customFloating $ makeFloat 0.5
+mdFloatCustom  = customFloating $ makeFloat 0.7
+lgFloatCustom  = customFloating $ makeFloat 0.9
+
+-- Float Definitions for Window Rules
+smFloat = makeFloat 0.5
+mdFloat = makeFloat 0.7
+lgFloat = makeFloat 0.9
+
+-- A helper function to build the NS row more concisely
+buildNS :: String -> String -> String -> String -> String -> NamedScratchpad
+buildNS name cmd prop value floatTypeStr = NS name cmd (property =? value) (floatType floatTypeStr)
+    where
+        property
+            | prop == "title"    = title
+            | prop == "className" = className
+            -- Add other properties as needed
+        floatType "sm" = smFloatCustom
+        floatType "md" = mdFloatCustom
+        floatType "lg" = lgFloatCustom
+
+myScratchPads =
+    [
+        buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
+        buildNS "firefox"      "firefox --class='FirefoxScratchpad'"         "className" "FirefoxScratchpad" "lg",
+        buildNS "terminal"     myTerminal                                    "title"     "scratchpad"        "md",
+        buildNS "stacer"       "sudo -A /usr/bin/stacer > ~/tmp/stacer.log"  "className" "stacer"            "md",
+        buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
+        buildNS "spotify"      "snap run spotify"                            "className" "Spotify"           "lg",
+        buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
+        buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
+        buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
+    ]
+
+myManageHook = composeAll
+    [
+        stringProperty "WM_WINDOW_ROLE" =? "GtkFileChooserDialog"  -->doCenterFloat,
+        appName   =? "fzfmenu"                    --> doCenterFloat,
+        appName   =? "pcmanfmTerm"                --> doCenterFloat,
+        appName   =? "gnome-tweaks"               --> doCenterFloat,
+        appName   =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
+        title     =? "Media viewer"               --> doCenterFloat,
+        className =? "Pavucontrol"                --> doCenterFloat,
+        className =? "qt5ct"                      --> doCenterFloat,
+        className =? "Nm-connection-editor"       --> doCenterFloat,
+        className =? "Gnome-builder"              --> doCenterFloat,
+        className =? "Org.gnome.Software"         --> doCenterFloat,
+        className =? "Libfm-pref-apps"            --> doCenterFloat,
+        className =? "pavucontrol"                --> doCenterFloat,
+        className =? "vlc"                        --> doRectFloat lgFloat,
+        className =? "Viewnior"                   --> doCenterFloat,
+        className =? "stacer"                     --> doCenterFloat,
+        className =? "Lxappearance"               --> doCenterFloat,
+        className =? "Vmware"                     --> doCenterFloat,
+        className =? "Nvidia-settings"            --> doCenterFloat,
+        className =? "Hexchat"                    --> doCenterFloat,
+        className =? "p3x-onenote"                --> doCenterFloat,
+        className =? "Gimp"                       --> doCenterFloat,
+        className =? "Viewnioprogramr"            --> doCenterFloat,
+        className =? "Blueman-manager"            --> doCenterFloat,
+        className =? "Catfish"                    --> doCenterFloat,
+        className =? "Gpg-crypter"                --> doCenterFloat,
+        className =? "kcachegrind"                --> doCenterFloat,
+        className =? "Qalculate-gtk"              --> doCenterFloat,
+        className =? "Psi"                        --> doCenterFloat,
+        className =? "Image Lounge"               --> doCenterFloat,
+        className =? "Seahorse"                   --> doCenterFloat,
+        className =? "Xarchiver"                  --> doCenterFloat,
+        className =? "File-roller"                --> doCenterFloat,
+        className =? "jetbrains-phpstorm"         --> doShift "0_1",
+        className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
+        className =? "TelegramDesktop"            --> doShift "1_7",
+        className =? "Signal"                     --> doShift "1_7",
+        className =? "Skype"                      --> doShift "1_7",
+        className =? "Teamviewer"                 --> doShift "1_9"
+    ] <+> namedScratchpadManageHook myScratchPads
+
+
 
 shiftAndView i = W.view i . W.shift i
 
@@ -328,55 +377,6 @@ myLayout =   desktopLayoutModifiers
   where
     myDefaultLayout = tiled
 
--------------------------------------------
--- Window Rules
---------------------------------------------
--- myPlacement = withGaps (16,0,16,0) (smart (0.5,0.5))
--- myPlacement = withGaps (0,128,0,128) (smart (0.5,0.5))
--- myPlacement = fixed (0.5,0.5)
-
-myManageHook = composeAll
-    [
-      stringProperty "WM_WINDOW_ROLE" =? "GtkFileChooserDialog"  -->doCenterFloat,
-      appName   =? "fzfmenu"                    --> doCenterFloat,
-      appName   =? "pcmanfmTerm"                --> doCenterFloat,
-      appName   =? "gnome-tweaks"               --> doCenterFloat,
-      title     =? "Media viewer"               --> doCenterFloat,
-      className =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
-      className =? "Pavucontrol"                --> doCenterFloat,
-      className =? "qt5ct"                      --> doCenterFloat,
-      className =? "Nm-connection-editor"       --> doCenterFloat,
-      className =? "Gnome-builder"              --> doCenterFloat,
-      className =? "Org.gnome.Software"         --> doCenterFloat,
-      className =? "Libfm-pref-apps"            --> doCenterFloat,
-      className =? "pavucontrol"                --> doCenterFloat,
-      className =? "vlc"                        --> doCenterFloat,
-      className =? "Viewnior"                   --> doCenterFloat,
-      className =? "stacer"                     --> doCenterFloat,
-      className =? "Lxappearance"               --> doCenterFloat,
-      className =? "Vmware"                     --> doCenterFloat,
-      className =? "Nvidia-settings"            --> doCenterFloat,
-      className =? "Hexchat"                    --> doCenterFloat,
-      className =? "p3x-onenote"                --> doCenterFloat,
-      className =? "Gimp"                       --> doCenterFloat,
-      className =? "Viewnioprogramr"            --> doCenterFloat,
-      className =? "Blueman-manager"            --> doCenterFloat,
-      className =? "Catfish"                    --> doCenterFloat,
-      className =? "Gpg-crypter"                --> doCenterFloat,
-      className =? "kcachegrind"                --> doCenterFloat,
-      className =? "Qalculate-gtk"              --> doCenterFloat,
-      className =? "Psi"                        --> doCenterFloat,
-      className =? "Image Lounge"               --> doCenterFloat,
-      className =? "Seahorse"                   --> doCenterFloat,
-      className =? "Xarchiver"                  --> doCenterFloat,
-      className =? "File-roller"                --> doCenterFloat,
-      className =? "jetbrains-phpstorm"         --> doShift "0_1",
-      className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
-      className =? "TelegramDesktop"            --> doShift "1_7",
-      className =? "Signal"                     --> doShift "1_7",
-      className =? "Skype"                      --> doShift "1_7",
-      className =? "Teamviewer"                 --> doShift "1_9"
-    ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
 -- Event handling
