@@ -8,4 +8,4 @@ export GNOME_KEYRING_PID
 xset r rate 300 50 & 
 xsetroot -cursor_name left_ptr &
 dbus-update-activation-environment --systemd DBUS_SESSION_BUS_ADDRESS DISPLAY XAUTHORITY > /dev/null 2>&1
-xrand -s 1600x900
+xrandr -s 1920x1080
