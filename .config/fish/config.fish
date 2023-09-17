@@ -47,3 +47,10 @@ set -U FZF_ALT_C_COMMAND "fd -H -t d $FZFARGS"
 fzf_key_bindings
 
 load_env "$HOME/.env-vars"
+
+# pnpm
+set -gx PNPM_HOME "/home/andrius/.local/share/pnpm"
+if not string match -q -- $PNPM_HOME $PATH
+  set -gx PATH "$PNPM_HOME" $PATH
+end
+# pnpm end

@@ -238,7 +238,7 @@ myScratchPads =
     [
         buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
         buildNS "firefox"      "firefox --class='FirefoxScratchpad'"         "className" "FirefoxScratchpad" "lg",
-        buildNS "terminal"     myTerminal                                    "title"     "scratchpad"        "md",
+        buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
         buildNS "stacer"       "sudo -A /usr/bin/stacer > ~/tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "snap run spotify"                            "className" "Spotify"           "lg",
@@ -246,6 +246,9 @@ myScratchPads =
         buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
     ]
+
+    where
+      spawnTerm  = myTerminal ++ " -t scratchpad"
 
 myManageHook = composeAll
     [
