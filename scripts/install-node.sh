@@ -12,11 +12,11 @@ if [ "$FORCE" = "true" ]; then
     rm -rf $NVM_DIR
 fi
 
-PROFILE=/dev/null curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh | bash
+PROFILE=/dev/null bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh | bash'
 
 if [ "$OS" = "alpine" ]; then
     chmod +x $NVM_DIR/nvm.sh
-    sed -i '/nvm_get_arch() {/,/^}$/c\nvm_get_arch() { nvm_echo "x64-musl"; }' $HOME/.nvm/nvm.sh
+    sed -i '/nvm_get_arch() {/,/^}$/c\nvm_get_arch() { nvm_echo "x64-musl"; }' $NVM_DIR/nvm.sh
 fi
 
 source "$NVM_DIR/nvm.sh"
