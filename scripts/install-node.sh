@@ -1,5 +1,6 @@
 #!/bin/bash
-source ./os.sh
+
+source $HOME/dotfiles/scripts/os.sh
 
 NODE_VERSION=${NODE_VERSION:-18.18.0}
 NVM_VERSION=${NVM_VERSION:-v0.39.5}
