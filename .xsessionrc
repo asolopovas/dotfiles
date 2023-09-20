@@ -4,8 +4,8 @@ eval $(gnome-keyring-daemon --start)
 export GNOME_KEYRING_SOCKET
 export GNOME_KEYRING_PID
 
-[ -f ~/.xprofile ] && . ~/.xprofile
+[ -f ~/.xprofile ] && source ~/.xprofile
 xset r rate 300 50 & 
 xsetroot -cursor_name left_ptr &
 dbus-update-activation-environment --systemd DBUS_SESSION_BUS_ADDRESS DISPLAY XAUTHORITY > /dev/null 2>&1
-xrandr -s 1920x1080
+
