@@ -6,4 +6,4 @@ for line in $info
     complete -f -c add-fstab -n 'test_depth 1' -a $device -d $size
 end
 
-complete -f -c add-fstab -n 'test_depth 2' -a "ext4 ntfs vfat xfs btrfs" -d 'Complete FileSystem'
+complete -f -c add-fstab -n 'test_depth 2' -a "ext4 ntfs ntfs-3g vfat xfs btrfs" -d 'Complete FileSystem'
