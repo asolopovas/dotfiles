@@ -11,27 +11,44 @@ install_packages() {
     )
     ${install_cmds["$1"]}
 }
-
 setup_xmonad_log() {
     mkdir -p "$XMONAD_LOG"
     git clone https://github.com/xintron/xmonad-log.git "$XMONAD_LOG"
-    go get github.com/godbus/dbus
+
+    pushd "$XMONAD_LOG"
     go mod init
+    go get github.com/godbus/dbus
     go build
-    go install
+    mv xintron $GOPATH/bin/xmonad-log
+    popd
 }
 
 clone_repo_if_not_exists() {
-    [ ! -d "$2" ] && git clone --branch "$3" "$1" "$2"
+    [ -d "$2" ] || {
+        cmd="git clone"
+        [ "$3" ] && cmd="$cmd --branch $3"
+        $cmd "$1" "$2"
+    }
 }
 
 # Variables
 OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
-XMONAD_ORIGIN="$HOME/dotfiles/.config/xmonad"
+XMONAD_DIR="$HOME/dotfiles/.config/xmonad"
 XMONAD_DEST="$HOME/.config/xmonad"
 XMONAD_LOG="$GOPATH/src/github.com/xintron"
 
-echo $OS
+# Set up Xmonad config
+mkdir -p "$XMONAD_DEST"
+ln -sf "$XMONAD_DIR/xmonad.hs" "$XMONAD_DEST/xmonad.hs" >/dev/null 2>&1
+ln -sf "$XMONAD_DIR/stack.yaml" "$XMONAD_DEST/stack.yaml" >/dev/null 2>&1
+
+# Setup xmonad-log if not exists
+[ ! -d $XMONAD_LOG ] && setup_xmonad_log
+
+# Clone repositories if not present
+clone_repo_if_not_exists "https://github.com/xmonad/xmonad" "$XMONAD_DEST/xmonad" "v0.17.2"
+clone_repo_if_not_exists "https://github.com/xmonad/xmonad-contrib" "$XMONAD_DEST/xmonad-contrib" "v0.17.1"
+clone_repo_if_not_exists "https://github.com/troydm/xmonad-dbus.git" "$XMONAD_DEST/xmonad-dbus" ""
 
 # Installing dependencies for different systems
 if [ -f /etc/debian_version ] || [ "$OS" == "pop" ]; then
@@ -48,18 +65,7 @@ fi
 # Install Haskell Stack if not present
 command -v stack &>/dev/null || curl -sSL https://get.haskellstack.org/ | sh
 
-# Set up Xmonad config
-mkdir -p "$XMONAD_DEST"
-ln -sf "$XMONAD_ORIGIN/xmonad.hs" "$XMONAD_DEST/xmonad.hs" >/dev/null 2>&1
-ln -sf "$XMONAD_ORIGIN/stack.yaml" "$XMONAD_DEST/stack.yaml" >/dev/null 2>&1
-
-# Setup xmonad-log if not exists
-[ ! -d $XMONAD_LOG ] && setup_xmonad_log
-
-# Clone repositories if not present
-clone_repo_if_not_exists "https://github.com/xmonad/xmonad" "$XMONAD_DEST/xmonad" "v0.17.2"
-clone_repo_if_not_exists "https://github.com/xmonad/xmonad-contrib" "$XMONAD_DEST/xmonad-contrib" "v0.17.1"
-clone_repo_if_not_exists "https://github.com/troydm/xmonad-dbus.git" "$XMONAD_DEST/xmonad-dbus" ""
+pushd "$XMONAD_DEST"
 
 stack install
 

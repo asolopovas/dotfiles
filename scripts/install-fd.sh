@@ -1,12 +1,26 @@
 #!/bin/bash
 
-source ./os.sh
+source $HOME/dotfiles/scripts/os.sh
 
-if [ "$OS" = "ubuntu" ] || [ ""$OS"" = "debian" ]; then
+print_color() {
+    declare -A colors=(
+        ['red']='\033[31m'
+        ['green']='\033[0;32m'
+    )
+    echo -e "${colors[$1]}$2\033[0m"
+}
+
+if [ "$OS" = "ubuntu" ] || [ ""$OS"" = "debian" ] || [ ""$OS"" = "pop" ]; then
+    VER="8.5.3"
+    FILE="fd-musl_${VER}_amd64.deb"
+    URL="https://github.com/sharkdp/fd/releases/download/v$VER/$FILE"
+
     print_color green "INSTALLING FD-FIND..."
-    curl -fsSLO https://github.com/sharkdp/fd/releases/download/v8.5.3/fd-musl_8.5.3_amd64.deb
-    sudo dpkg -i fd-musl_8.5.3_amd64.deb
-    rm -rf fd-musl_8.5.3_amd64.deb
+    echo $URL
+
+    curl -fsSLO $URL
+    sudo dpkg -i $FILE
+    rm -rf $FILE
 fi
 
 if [ "$OS" = "almalinux" ]; then
