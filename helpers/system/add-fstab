@@ -1,8 +1,20 @@
 #!/bin/bash
 
-if [ $# -ne 3 ]; then
+display_help() {
   echo "Usage: $0 <device_name> <filesystem_type> <directory_name>"
+  echo "Example: $0 sdb1 ext4 mydrive"
   exit 1
+}
+
+# Check if no arguments passed or help option provided
+if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+  display_help
+fi
+
+# Check for the correct number of arguments
+if [ $# -ne 3 ]; then
+  echo "Error: Incorrect number of arguments."
+  display_help
 fi
 
 device_name="$1"
