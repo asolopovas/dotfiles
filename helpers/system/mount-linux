@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Check if the script is NOT run with sudo privileges
+if [ "$EUID" -ne 0 ]; then
+    echo "Requesting elevated privileges..."
+    sudo "$0" "$@"   # Run the script as root
+    exit $?
+fi
+
+# The following code will be run with sudo privileges if the above condition is true
+
+cryptsetup luksOpen /dev/sdd3 cryptdata
+mount -a
