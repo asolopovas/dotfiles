@@ -267,6 +267,7 @@ myManageHook = composeAll
         className =? "pavucontrol"                --> doCenterFloat,
         className =? "vlc"                        --> doRectFloat lgFloat,
         className =? "Viewnior"                   --> doCenterFloat,
+        className =? "Barrier"                    --> doCenterFloat,
         className =? "stacer"                     --> doCenterFloat,
         className =? "Lxappearance"               --> doCenterFloat,
         className =? "Vmware"                     --> doCenterFloat,
