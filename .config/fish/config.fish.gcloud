@@ -55,4 +55,4 @@ if not string match -q -- $PNPM_HOME $PATH
 end
 # pnpm end
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f '/home/andrius/.local/google-cloud-sdk/path.fish.inc' ]; . '/home/andrius/.local/google-cloud-sdk/path.fish.inc'; end
+if [ -f '/home/andrius/google-cloud-sdk/path.fish.inc' ]; . '/home/andrius/google-cloud-sdk/path.fish.inc'; end
