@@ -2,6 +2,7 @@ OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]
 DOTFILES=$HOME/dotfiles
 export NVM_DIR="$HOME/.nvm"
 
+
 source $DOTFILES/env/env-vars.sh
 source $DOTFILES/functions.sh
 source $DOTFILES/env/oh-my-bash.sh
@@ -21,6 +22,6 @@ fi
 
 add_paths_from_file $DOTFILES/.paths
 
-[ -f "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -f "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-. "$HOME/.cargo/env"
+[ -f "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -f "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
