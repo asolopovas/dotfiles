@@ -1,7 +1,7 @@
-OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
-DOTFILES=$HOME/dotfiles
 export NVM_DIR="$HOME/.nvm"
 
+OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+DOTFILES=$HOME/dotfiles
 
 source $DOTFILES/env/env-vars.sh
 source $DOTFILES/functions.sh
