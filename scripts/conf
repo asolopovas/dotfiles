@@ -3,38 +3,25 @@
 GITPATHS=("$HOME/dotfiles" "$HOME/www/dev")
 
 print_color() {
-    declare -A colors=(
-        ['red']='\033[31m'
-        ['green']='\033[0;32m'
-    )
+    declare -A colors=(['red']='\033[31m' ['green']='\033[0;32m')
     echo -e "${colors[$1]}$2\033[0m"
 }
 
-if [ $# -eq 0 ]; then
-    echo "No arguments supplied. Please provide 'save' or 'pull'."
-    exit 1
-fi
+[ $# -eq 0 ] && { echo "Usage: $0 [push|pull]"; exit 1; }
+
+POWERSHELL_CMD=$(which powershell.exe 2>/dev/null)
 
 case $1 in
-push)
+push|pull)
     for path in "${GITPATHS[@]}"; do
-        print_color green "Pushing $path ..."
-        git -C $path add .
-        git -C $path commit -m "Save"
-        git -C $path push
+        print_color green "${1^}ing $path ..."
+        git -C $path ${1}
     done
 
-    powershell.exe -Command 'conf push'
-    ;;
-pull)
-    for path in "${GITPATHS[@]}"; do
-        print_color green "Pulling $path ..."
-        git -C $path pull
-    done
-    powershell.exe -Command 'conf pull'
+    [ -n "$POWERSHELL_CMD" ] && $POWERSHELL_CMD -Command "conf $1"
     ;;
 *)
-    echo "Invalid argument. Please provide 'save' or 'pull'."
+    echo "Invalid argument. Please provide 'push' or 'pull'."
     exit 1
     ;;
 esac
