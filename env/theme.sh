@@ -23,7 +23,7 @@ _git_info() {
 }
 
 _ssh_info() {
-    hostname
+    [ "$SSH_TTY" ] && hostname
 }
 
 trap '_start_time=$(date +%s%N)' DEBUG
