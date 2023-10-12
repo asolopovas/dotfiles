@@ -10,6 +10,7 @@ go/bin
 .yarn/bin
 .deno/bin
 .nvm/bin
+.bun/bin
 .cargo/bin
 .config/composer/vendor/bin
 /usr/local/go/bin

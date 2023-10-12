@@ -18,7 +18,7 @@ plugins=(
     bashmarks
 )
 
-export ohmybash_dir="$HOME/.local/share/ohmybash"
+ohmybash_dir="$HOME/.local/share/ohmybash"
 theme_dir="$ohmybash_dir/custom/themes/theme"
 theme_file="$theme_dir/theme.theme.sh"
 src_file="$HOME/dotfiles/env/theme.sh"
@@ -28,7 +28,8 @@ if [ ! -d "$theme_dir" ] || [ ! -f "$theme_file" ]; then
     ln -sf "$src_file" "$theme_file"
 fi
 
-if [ ! -d "$ohmybash_dir" ]; then
+if [ ! -f "$ohmybash_dir/oh-my-bash.sh" ]; then
+    rm -rf $ohmybash_dir;
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
     rm -rf "$HOME/.bashrc*"
     ln -sf "$HOME/dotfiles/.bashrc" "$HOME/.bashrc"
