@@ -180,7 +180,7 @@ myKeyb =
 
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "spotify"       ),
-    ("M-<F7>",           namedScratchpadAction myScratchPads "chatGPT"       ),
+    ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
     ("M-S-x",            namedScratchpadAction myScratchPads "pcmanfmSearch" ),
