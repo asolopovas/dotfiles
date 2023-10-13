@@ -43,7 +43,7 @@ alias art='php artisan'
 alias rs='rsync -azr --info=progress2 '
 alias l='LC_ALL="C.UTF-8" ls --color -la --group-directories-first'
 alias ll='ls --color -lh --group-directories-first'
-alias ls='ls --color -a'
+alias ls='ls --color -a --group-directories-first'
 alias xevkb='xev -event keyboard'
 alias dd='cd $HOME/www/dev'
 
