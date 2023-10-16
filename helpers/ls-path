@@ -1,0 +1,8 @@
+#!/bin/bash
+
+OLDIFS=$IFS
+IFS=:
+for dir in $PATH; do
+    echo "$dir"
+done
+IFS=$OLDIFS
