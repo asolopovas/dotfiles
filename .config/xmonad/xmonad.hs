@@ -186,7 +186,7 @@ myKeyb =
     ("M-S-x",            namedScratchpadAction myScratchPads "pcmanfmSearch" ),
     ("M-S-<Return>",     namedScratchpadAction myScratchPads "terminal"      ),
     ("<XF86Launch6>",    namedScratchpadAction myScratchPads "pavucontrol"   ),
-    ("<Menu>",           namedScratchpadAction myScratchPads "stacer"        ),
+    ("<F8>",             namedScratchpadAction myScratchPads "stacer"        ),
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
 
     --Media Keys
@@ -239,7 +239,7 @@ myScratchPads =
         buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
         buildNS "firefox"      "firefox --class='FirefoxScratchpad'"         "className" "FirefoxScratchpad" "lg",
         buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
-        buildNS "stacer"       "sudo -A /usr/bin/stacer > ~/tmp/stacer.log"  "className" "stacer"            "md",
+        buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "snap run spotify"                            "className" "Spotify"           "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
