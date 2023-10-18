@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function add2path() {
+add2path() {
     if [[ $1 == /* ]]; then
         full_path="$1"
     else

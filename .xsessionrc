@@ -1,5 +1,2 @@
 #!/bin/bash
-
-
-
 [ -f "$HOME/.xprofile" ] && . "$HOME/.xprofile"
