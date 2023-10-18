@@ -13,7 +13,6 @@ DOTFILES="$HOME/dotfiles"
 env_vars=(
     env-vars
     include-paths
-    xmonad-vars
 )
 
 source_script() {
@@ -27,3 +26,4 @@ for env_var in "${env_vars[@]}"; do
 done
 
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
