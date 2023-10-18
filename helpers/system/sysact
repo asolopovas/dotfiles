@@ -16,7 +16,7 @@ leave)
     if pgrep -x "Cryptomator" >/dev/null; then
         kill -TERM $cryptomatorPID
     fi
-    fusermount -uz /home/$USER/gdrive
+    fusermount -uz /home/$USER/safestore
     kill -TERM $(pidof -s xmonad-x86_64-linux)
     ;;
 suspend)
