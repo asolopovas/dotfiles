@@ -40,7 +40,7 @@ XMONAD_LOG="$GOPATH/src/github.com/xintron"
 # Set up Xmonad config
 [ ! -d "$XMONAD_DEST" ] && mkdir -p "$XMONAD_DEST"
 ln -s "$XMONAD_SRC/xmonad.hs" "$XMONAD_DEST/xmonad.hs" 
-ln -s "$XMONAD_SRC/stack.yaml" "$XMONAD_DEST/stack.yaml" 
+cp "$XMONAD_SRC/stack.yaml" "$XMONAD_DEST/stack.yaml" 
 
 # Setup xmonad-log if not exists
 [ ! -d $XMONAD_LOG ] && setup_xmonad_log

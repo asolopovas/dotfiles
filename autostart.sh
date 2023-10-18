@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/bash
 gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
-.config/polybar/launch.sh &
+.config/polybar/launch.sh > /tmp/polybar.log 2>&1 &
 nohup cryptomator &
 flameshot &
 nm-applet &
-blueman-appletk
+blueman-applet > /tmp/blueman.log 2>&1 &
 setbg &
 insync start
 

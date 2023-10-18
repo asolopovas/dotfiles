@@ -7,6 +7,7 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export GTK2_RC_FILES="$HOME/.config/gtk-2.0/.gtkrc-2.0"
 export HOSTALIASES="$HOME/.hosts"
+
 DOTFILES="$HOME/dotfiles"
 
 env_vars=(
@@ -24,4 +25,5 @@ source_script() {
 for env_var in "${env_vars[@]}"; do
     source_script $env_var
 done
-. "$HOME/.cargo/env"
+
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"

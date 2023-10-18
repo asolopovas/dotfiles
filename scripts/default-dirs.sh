@@ -42,7 +42,6 @@ if [ "$SYSTEM" = true ]; then
         ".config/polybar"
         ".config/rofi"
         ".config/tmux"
-        ".config/xmonad"
         ".config/inputrc"
         ".config/mimeapps.list"
         ".config/picom.conf"
