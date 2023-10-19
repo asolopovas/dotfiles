@@ -10,8 +10,8 @@ print_color() {
     echo -e "${colors[$1]}$2\033[0m"
 }
 
-if [ "$OS" = "ubuntu" ] || [ ""$OS"" = "debian" ] || [ ""$OS"" = "pop" ]; then
-    VER="8.5.3"
+if [ "$OS" = "ubuntu" ] || [ ""$OS"" = "debian" ] || [ ""$OS"" = "pop" ] || [ ""$OS"" = "linuxmint" ]; then
+    VER="8.7.0"
     FILE="fd-musl_${VER}_amd64.deb"
     URL="https://github.com/sharkdp/fd/releases/download/v$VER/$FILE"
 

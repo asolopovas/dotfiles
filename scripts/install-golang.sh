@@ -1,7 +1,11 @@
 #!/bin/bash
 
-OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+VER="1.14.3"
+ARCH="linux-amd64"
 
-if [ $OS = 'ubuntu' ]; then
-    sudo snap install go --classic
-fi
+rm -rf /usr/local/go
+
+curl -#LO "https://golang.org/dl/go${VER}.${ARCH}.tar.gz"
+sudo tar -C /usr/local -xzf "go${VER}.${ARCH}.tar.gz"
+rm "go${VER}.${ARCH}.tar.gz"
+
