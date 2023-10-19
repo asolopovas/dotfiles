@@ -241,7 +241,7 @@ myScratchPads =
         buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
-        buildNS "spotify"      "snap run spotify"                            "className" "Spotify"           "lg",
+        buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
@@ -388,17 +388,17 @@ myLayout =   desktopLayoutModifiers
 winSwallowHook :: Event -> X All
 winSwallowHook = swallowEventHook ( className =? "Alacritty" ) (return True)
 
--- spotifyHook :: Event -> X All
--- spotifyHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
---     where floating  = customFloating $ W.RationalRect l t w h
---                       where
---                           h = 0.4
---                           w = 0.4
---                           t = 0.95 -h
---                           l = 0.95 -w
+spotifyHook :: Event -> X All
+spotifyHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
+    where floating  = customFloating $ W.RationalRect l t w h
+                      where
+                          h = 0.4
+                          w = 0.4
+                          t = 0.95 -h
+                          l = 0.95 -w
 
--- myHandleEventHook = winSwallowHook <+> spotifyHook
-myHandleEventHook = winSwallowHook
+myHandleEventHook = winSwallowHook <+> spotifyHook
+-- myHandleEventHook = winSwallowHook
 
 spawnToWorkspace :: String -> String -> X ()
 spawnToWorkspace workspace program = do
