@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Please enter your sudo password: "
 sudo -v
 

@@ -61,6 +61,7 @@ packages=(
     "libnss3-tools"
     "lxappearance"
     "polybar"
+    "playerctl"
     "ripgrep"
     "rofi"
     "sqlite3"
