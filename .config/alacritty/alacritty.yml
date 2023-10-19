@@ -94,7 +94,7 @@ scrolling:
 font:
   # Normal (roman) font face
   normal:
-    family: FuraMono Nerd Font
+    family: FiraMono Nerd Font
     style: Regular
     #
     # Default:

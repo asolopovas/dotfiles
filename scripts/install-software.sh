@@ -1,11 +1,5 @@
 #!/bin/bash
 
-if [ "$EUID" -ne 0 ]; then
-    echo "Requesting elevated privileges..."
-    sudo "$0" "$@" # Run the script as root
-    exit $?
-fi
-
 OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
 DOTFILES_DIR="$HOME/dotfiles"
 source $DOTFILES_DIR/functions.sh
@@ -25,13 +19,13 @@ removePackage() {
     if command_exists $1 && is_sudoer; then
         case $OS in
         ubuntu)
-            apt remove -y $1
+            sudo apt remove -y "$@"
             ;;
         centos)
-            sudo yum remove -y $1
+            sudo yum remove -y "$@"
             ;;
         arch)
-            sudo pacman -Rns --noconfirm $1
+            sudo pacman -Rns --noconfirm "$@"
             ;;
         esac
     fi
@@ -43,7 +37,7 @@ installPackages() {
         print_color blue "  - $pkg"
     done
     case $OS in
-    ubuntu | debian)
+    ubuntu|debian|linuxmint)
         sudo apt install -y "$@"
         ;;
     centos)
@@ -69,7 +63,6 @@ packages=(
     "polybar"
     "ripgrep"
     "rofi"
-    "snapd"
     "sqlite3"
     "stacer"
     "timeshift"

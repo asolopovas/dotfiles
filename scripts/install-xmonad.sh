@@ -51,7 +51,7 @@ clone_repo_if_not_exists "https://github.com/xmonad/xmonad-contrib" "$XMONAD_DES
 clone_repo_if_not_exists "https://github.com/troydm/xmonad-dbus.git" "$XMONAD_DEST/xmonad-dbus" ""
 
 # Installing dependencies for different systems
-if [ -f /etc/debian_version ] || [ "$OS" == "pop" ]; then
+if [ -f /etc/debian_version ] || [ "$OS" == "pop" ] || [ "$OS" == "linuxmint" ]; then
     install_packages "debian"
 elif [ -f /etc/fedora-release ]; then
     install_packages "fedora"

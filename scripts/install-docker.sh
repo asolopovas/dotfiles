@@ -1,15 +1,17 @@
 #!/bin/bash
 
 OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
-VERSION_CODENAME=$(awk '/^VERSION_CODENAME=/' /etc/os-release | sed -e 's/VERSION_CODENAME=//' -e 's/"//g')
+
+if [ "$OS" == "linuxmint" ]; then
+	OS=ubuntu	
+	VERSION_CODENAME=jammy
+fi
 
 if [ "$EUID" -ne 0 ]; then
     echo "Requesting elevated privileges..."
     sudo "$0" "$@" # Run the script as root
     exit $?
 fi
-
-for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
 
 # Common Installation steps
 sudo apt-get update
