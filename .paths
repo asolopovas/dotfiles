@@ -1,3 +1,4 @@
+src/google-cloud-sdk/bin
 .local/bin
 .local/bin/helpers
 .local/bin/helpers/apps
