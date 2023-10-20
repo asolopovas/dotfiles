@@ -27,6 +27,7 @@ done
 
 xset r rate 300 50 &
 xsetroot -cursor_name left_ptr &
+setxkbmap -layout gb,ru -option 'grp:win_space_toggle'
 
 if xrandr | grep -q "eDP-1 connected"; then
     xrandr --output eDP-1 --primary --mode 1920x1080 --pos 0x0
