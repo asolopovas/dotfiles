@@ -155,7 +155,6 @@ myKeyb =
     ("M-S-o",          sendMessage Expand              ), -- Shrink Layout
     ("M-S-u",          sendMessage MirrorShrink        ), -- Vertical Shrink Layout
     ("M-S-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
-
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-d",            spawn "rofi -show run"         ),
@@ -165,19 +164,15 @@ myKeyb =
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
     ("M-o",            spawn "fzf-menu fzf-code"      ),
     ("M-S-p",          spawn "fzf-menu fzf-alacritty" ),
-
     --Layouts
     ("M-.",           sendMessage (IncMasterN 1)      ), -- Increase number of clients in master pane
     ("M-,",           sendMessage (IncMasterN (-1))   ), -- Decrease number of clients in master pane
-
     --Floating Windows
     ("M-<Delete>",     withFocused $ windows . W.sink ), -- Push floating window back to tile
     ("M-t",            toggleFloat                    ),
-
     --Xmonad
     ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"      ), -- Restarts xmonad
-    ("M-S-e",           io exitSuccess                                    ), -- Quits xmonad
-
+    ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "spotify"       ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),

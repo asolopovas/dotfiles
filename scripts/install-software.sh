@@ -6,7 +6,7 @@ source $DOTFILES_DIR/globals.sh
 print_color green "Installing Packages for ${OS^}"
 
 packages=(
-    "fd-find"
+    "dunst"
     "fish"
     "flameshot"
     "fzf"
