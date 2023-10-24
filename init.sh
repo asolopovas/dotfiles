@@ -34,9 +34,6 @@ done
 
 pushd $HOME >/dev/null
 
-cmd_exist() {
-    command -v "$1" >/dev/null
-}
 
 print_color() {
     declare -A colors=(

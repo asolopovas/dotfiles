@@ -30,7 +30,7 @@ create_dir() {
     fi
 }
 
-command_exists() {
+cmd_exist() {
     command -v $1 >/dev/null 2>&1
 }
 
@@ -87,7 +87,7 @@ installPackages() {
 
 removePackage() {
     print_color reed "Removing $1 package"
-    if command_exists $1 && is_sudoer; then
+    if cmd_exists $1 && is_sudoer; then
         case $OS in
         ubuntu)
             sudo apt remove -y "$@"

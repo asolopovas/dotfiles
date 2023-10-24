@@ -1,9 +1,0 @@
-#!/bin/bash 
-
-display="eDP1"
-mode="1600x900"
-
-if xrandr | grep "$display" | grep " connected "; then
-  xrandr --output "$display" --mode "$mode"
-fi
-

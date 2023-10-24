@@ -1,4 +1,3 @@
-export DOTFILES=$HOME/dotfiles
 export NVM_DIR="$HOME/.nvm"
 
 source $DOTFILES/globals.sh

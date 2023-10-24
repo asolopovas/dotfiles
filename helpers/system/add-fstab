@@ -29,6 +29,9 @@ if grep -q "UUID=$uuid" /etc/fstab; then
 fi
 
 fstab_entry="UUID=$uuid $mount_path $filesystem_type defaults 0 0"
+if [ "$filesystem_type" == "ntfs-3g" ]; then
+    fstab_entry="UUID=$uuid $mount_path $filesystem_type defaults,uid=1000,gid=1000 0 0"
+fi
 echo "$fstab_entry"
 
 read -p "Do you want to add this entry to /etc/fstab? (y/N): " response
