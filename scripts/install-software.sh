@@ -1,8 +1,9 @@
 #!/bin/bash
 
-OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
-DOTFILES_DIR="$HOME/dotfiles"
 source $DOTFILES_DIR/functions.sh
+
+DOTFILES_DIR="$HOME/dotfiles"
+
 
 print_color green "Installing Packages for $OS"
 

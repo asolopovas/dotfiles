@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $HOME/dotfiles/scripts/os.sh
+source $HOME/dotfiles/globals.sh
 
 NODE_VERSION=${NODE_VERSION:-18.18.0}
 NVM_VERSION=${NVM_VERSION:-v0.39.5}

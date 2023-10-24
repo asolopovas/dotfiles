@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $HOME/dotfiles/scripts/os.sh
+source $HOME/dotfiles/globals.sh
 
 print_color() {
     declare -A colors=(

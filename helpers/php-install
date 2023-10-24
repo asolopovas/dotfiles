@@ -2,7 +2,7 @@
 
 [ ! -z $1 ] && ver=$1
 
-source $HOME/dotfiles/scripts/os.sh
+source $HOME/dotfiles/globals.sh
 
 print_color green "PHP install helper script in ${OS^} for $ver \n"
 
