@@ -2,8 +2,7 @@
 
 source $HOME/dotfiles/globals.sh
 
-print_color green "CREATING DEFAULT DIRS ..."
-
+print_color green "Creating Defaults Directories ..."
 
 DEFAULT_DIRS=(
     "src"
@@ -66,17 +65,15 @@ if [ "$ZSH" = true ]; then
     CONFDIRS+=(".config/.zshrc")
 fi
 
-print_color green "CREATING SYMLINKS ..."
+print_color green "Creating Symlinks ..."
 for src in "${CONFDIRS[@]}"; do
     srcPath="$DOTFILES_DIR/$src"
     destPath="$HOME/$src"
 
-    echo "$HOME/$src"
     if [ -d "$destPath" ]; then
         rm -rf $destPath
     fi
     ln -sf $srcPath $destPath
 done
 
-echo "$HOME/.local/bin/helpers"
-ln -sf $DOTFILES_DIR/helpers $HOME/.local/bin > /dev/null
+ln -sf $DOTFILES_DIR/helpers $HOME/.local/bin

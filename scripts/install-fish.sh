@@ -2,12 +2,15 @@
 
 source $HOME/dotfiles/globals.sh
 
-if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ] || [ "$OS" = "linuxmint" ]; then
+case $OS in
+ubuntu | debian | linuxmint | pop)
     sudo apt-add-repository -y ppa:fish-shell/release-3
     sudo apt update -qq -y
     sudo apt install fish -y
+    ;;
+esac
+
+if [ "$FORCE" = true ]; then
+    rm -rf $HOME/.config/fish
+    ln -sf $DOTFILES_DIR/.config/fish $HOME/.config/
 fi
-
-rm -rf $HOME/.config/fish >/dev/null
-ln -sf $DOTFILES_DIR/.config/fish $HOME/.config/
-

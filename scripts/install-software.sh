@@ -3,7 +3,7 @@
 DOTFILES_DIR="$HOME/dotfiles"
 source $DOTFILES_DIR/globals.sh
 
-print_color green "Installing Packages for $OS"
+print_color green "Installing Packages for ${OS^}"
 
 packages=(
     "fd-find"
@@ -26,8 +26,11 @@ packages=(
     "xwallpaper"
 )
 
-[ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ] && sudo apt update
-
 installPackages "${packages[@]}"
 
-[ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ] && sudo ln -sf /usr/bin/fdfind /usr/bin/fd
+case $OS in
+ubuntu | debian | pop | linuxmint)
+    sudo apt update
+    sudo ln -sf /usr/bin/fdfind /usr/bin/fd
+    ;;
+esac

@@ -1,17 +1,8 @@
 #!/bin/bash
 
+source $HOME/dotfiles/globals.sh
 
-if [ "$EUID" -ne 0 ]; then
-    echo "Requesting elevated privileges..."
-    sudo "$0" "$@"   # Run the script as root
-    exit $?
-fi
+sudo add-apt-repository -y ppa:hvr/ghc
+sudo apt-get update -y && sudo apt upgrade -y
 
-apt-get update
-apt-get upgrade -y
-apt-get install -y build-essential libgmp-dev
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:hvr/ghc
-apt-get update
-apt-get install -y ghc
-ghc --version
+installPackages build-essential libgmp-dev oftware-properties-common ghc

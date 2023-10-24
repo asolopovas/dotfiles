@@ -6,10 +6,11 @@ NODE_VERSION=${NODE_VERSION:-18.18.0}
 NVM_VERSION=${NVM_VERSION:-v0.39.5}
 NVM_DIR="$HOME/.nvm"
 FORCE=${FORCE:-false}
-echo $NODE_VERSION
+
+print_color green "Installing Node Version: ${NODE_VERSION}"
 
 if [ "$FORCE" = "true" ]; then
-    echo "Force install nodejs"
+    print_color red "FORCE: Enabled - removing $NVM_DIR"
     rm -rf $NVM_DIR
 fi
 

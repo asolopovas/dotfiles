@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export DOTFILES_DIR=$HOME/dotfiles
 export OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
 
 add_paths_from_file() {
