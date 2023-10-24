@@ -163,7 +163,7 @@ myKeyb =
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
-    ("M-o",            spawn "fzf-menu fzf-vscode"    ),
+    ("M-o",            spawn "fzf-menu fzf-code"      ),
     ("M-S-p",          spawn "fzf-menu fzf-alacritty" ),
 
     --Layouts
@@ -175,8 +175,8 @@ myKeyb =
     ("M-t",            toggleFloat                    ),
 
     --Xmonad
-    ("M-<F6>",          spawn "xmonad --recompile; xmonad --restart"      ), -- Restarts xmonad
-    ("M-S-e",         io exitSuccess                                    ), -- Quits xmonad
+    ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"      ), -- Restarts xmonad
+    ("M-S-e",           io exitSuccess                                    ), -- Quits xmonad
 
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "spotify"       ),
