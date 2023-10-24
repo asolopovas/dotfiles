@@ -128,43 +128,38 @@ myKeyb :: [(String, X ())]
 myKeyb =
   [
     --Windows
-    ("M-q",           kill1                           ), -- Kill focused window
-    ("M-S-q",         killAll                         ), -- Kill all workspace windows
-    ("M-s",           windows W.focusMaster           ), -- Move focus to the master window
-    ("M-j",           windows W.focusDown             ), -- Move focus to the next window
-    ("M-k",           windows W.focusUp               ), -- Move focus to the prev window
-    ("M-S-j",         windows W.swapDown              ), -- Swap focused window with next window
-    ("M-S-k",         windows W.swapUp                ), -- Swap focused window with prev window
-    ("M-<Backspace>", promote                         ), -- Moves focused window to master
-    ("M-f",           sendMessage (T.Toggle "full")   ), -- Toggle layout full layout
+    ("M-q",            kill1                           ), -- Kill focused window
+    ("M-S-q",          killAll                         ), -- Kill all workspace windows
+    ("M-s",            windows W.focusMaster           ), -- Move focus to the master window
+    ("M-j",            windows W.focusDown             ), -- Move focus to the next window
+    ("M-k",            windows W.focusUp               ), -- Move focus to the prev window
+    ("M-S-j",          windows W.swapDown              ), -- Swap focused window with next window
+    ("M-S-k",          windows W.swapUp                ), -- Swap focused window with prev window
+    ("M-<Backspace>",  promote                         ), -- Moves focused window to master
+    ("M-f",            sendMessage (T.Toggle "full")   ), -- Toggle layout full layout
     ("M-S-<Space>",    sendMessage NextLayout          ), -- Toggle layout full layout
     ("M-S-y",          sendMessage Shrink              ), -- Expand Layout
     ("M-S-o",          sendMessage Expand              ), -- Shrink Layout
     ("M-S-u",          sendMessage MirrorShrink        ), -- Vertical Shrink Layout
     ("M-S-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
-
     --Applications
-    ("M-<Return>",     spawn myTerminal               ),
-    ("M-d",            spawn "rofi -show run"         ),
-    ("M-c",            spawn myBrowser                ),
-    ("M-S-d",          spawn "su_dmenu_run"           ),
-    ("M-0",            spawn "sysact"                 ),
-    ("M-p",            spawn "fzfmenu storm"          ),
-    ("M-o",            spawn "fzfmenu vscode"         ),
-    ("M-S-p",          spawn "fzfmenu fzfalacritty"   ),
-
+    ("M-<Return>",     spawn myTerminal                ),
+    ("M-d",            spawn "rofi -show run"          ),
+    ("M-c",            spawn myBrowser                 ),
+    ("M-S-d",          spawn "su_dmenu_run"            ),
+    ("M-0",            spawn "sysact"                  ),
+    ("M-p",            spawn "fzfmenu storm"           ),
+    ("M-o",            spawn "fzfmenu vscode"          ),
+    ("M-S-p",          spawn "fzfmenu fzfalacritty"    ),
     --Layouts
-    ("M-.",           sendMessage (IncMasterN 1)      ), -- Increase number of clients in master pane
-    ("M-,",           sendMessage (IncMasterN (-1))   ), -- Decrease number of clients in master pane
-
+    ("M-.",           sendMessage (IncMasterN 1)       ), -- Increase number of clients in master pane
+    ("M-,",           sendMessage (IncMasterN (-1))    ), -- Decrease number of clients in master pane
     --Floating Windows
-    ("M-<Delete>",     withFocused $ windows . W.sink ), -- Push floating window back to tile
-    ("M-t",            toggleFloat                    ),
-
+    ("M-<Delete>",     withFocused $ windows . W.sink  ), -- Push floating window back to tile
+    ("M-t",            toggleFloat                     ),
     --Xmonad
-    ("M-<F6>",          spawn "xmonad --recompile; xmonad --restart"      ), -- Restarts xmonad
-    ("M-S-e",         io exitSuccess                                    ), -- Quits xmonad
-
+    ("M-<F6>",          spawn "xmonad --recompile; xmonad --restart"         ), -- Restarts xmonad
+    ("M-S-e",           io exitSuccess                                       ), -- Quits xmonad
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "spotify"       ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
@@ -175,20 +170,17 @@ myKeyb =
     ("<XF86Launch6>",    namedScratchpadAction myScratchPads "pavucontrol"   ),
     ("<F8>",             namedScratchpadAction myScratchPads "stacer"        ),
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
-
     --Media Keys
-    ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)" ),
-    ("<XF86AudioRaiseVolume>", spawn "lmc up; kill -44 $(pidof dwmblocks)"   ),
-    ("<XF86AudioMute>",        spawn "lmc mute; kill -44 $(pidof dwmblocks)" ),  -- Bug prevents it from toggling correctly in 12.04.
-    ("<XF86AudioPlay>",        spawn "playerctl play-pause"                  ),
-    ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                            ),
-    ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
-    ("<XF86AudioStop>",        spawn "playerctl stop"                        ),
-    ("<XF86AudioPrev>",        spawn "playerctl previous"                    ),
-    ("<XF86AudioNext>",        spawn "playerctl next"                        ),
-    ("<Print>",                spawn "flameshot gui"                         ),
-    ("<XF86MenuPB>",           spawn "flameshot gui"                         )
-
+    ("<XF86AudioLowerVolume>",  spawn "lmc down; kill -44 $(pidof dwmblocks)" ),
+    ("<XF86AudioRaiseVolume>",  spawn "lmc up; kill -44 $(pidof dwmblocks)"   ),
+    ("<XF86AudioMute>",         spawn "lmc mute; kill -44 $(pidof dwmblocks)" ),  -- Bug prevents it from toggling correctly in 12.04.
+    ("<XF86AudioPlay>",         spawn "playerctl play-pause"                  ),
+    ("<XF86AudioStop>",         spawn "playerctl stop"                        ),
+    ("<XF86AudioPrev>",         spawn "playerctl previous"                    ),
+    ("<XF86AudioNext>",         spawn "playerctl next"                        ),
+    ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                             ),
+    ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                             ),
+    ("<Print>",                 spawn "flameshot gui"                         ),
   ]
 
 -- Utility Functions
@@ -280,8 +272,6 @@ myManageHook = composeAll
         className =? "Teamviewer"                 --> doShift "1_9"
     ] <+> namedScratchpadManageHook myScratchPads
 
-
-
 shiftAndView i = W.view i . W.shift i
 
 -- Mouse bindings
@@ -338,7 +328,7 @@ mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spaci
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
 
-tiled   =    renamed [Replace "tiled"]
+tiled   =  renamed [Replace "tiled"]
            $ smartBorders
            $ limitWindows 12
            $ mySpacing 5
@@ -349,7 +339,7 @@ tiledR  =   renamed [Replace "tiledR"]
            $ mySpacing 5
            $ reflectHoriz
            $ ResizableTall 1 (3/100) (1/2) []
-full    =    renamed [Replace "full"]
+full    =  renamed [Replace "full"]
            $ noBorders
            $ Full
 

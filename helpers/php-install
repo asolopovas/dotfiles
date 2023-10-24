@@ -2,53 +2,9 @@
 
 [ ! -z $1 ] && ver=$1
 
-OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+source $HOME/dotfiles/scripts/os.sh
 
-printf '=============================================\n'
-printf "PHP install helper script in ${OS^} for $ver \n"
-printf '=============================================\n'
-
-is_sudoer() {
-    sudo -v >/dev/null 2>&1
-}
-
-removePackage() {
-    if is_sudoer; then
-        case $OS in
-        ubuntu)
-            printf "Ubuntu: Removing $1...\n"
-            sudo apt remove -y $1
-            ;;
-        centos)
-            printf "Centos: Removing $1...\n"
-            sudo yum remove -y $1
-            ;;
-        arch)
-            printf "Arch: Removing $1...\n"
-            sudo pacman -Rns --noconfirm $1
-            ;;
-        esac
-    fi
-}
-
-installPackage() {
-    if is_sudoer; then
-        case $OS in
-        ubuntu|pop)
-            printf "Ubuntu: Installing $@...\n"
-            sudo apt install -y $@
-            ;;
-        centos)
-            printf "Centos: Installing $@...\n"
-            sudo yum install -y $@
-            ;;
-        arch)
-            printf "Arch: Installing $@...\n"
-            sudo pacman -S --noconfirm $@
-            ;;
-        esac
-    fi
-}
+print_color green "PHP install helper script in ${OS^} for $ver \n"
 
 phpPackages=(
     "php$ver"
@@ -88,8 +44,7 @@ uninstall)
     removePackage $packages
     ;;
 *)
-    installPackage $packages
+    installPackages $packages
     ;;
 esac
 
-removePackage "php*-psr"
