@@ -1,6 +1,4 @@
--------------------------------------------
 -- Imports
--------------------------------------------
 import XMonad
 import XMonad.ManageHook
 import XMonad.Config.Desktop
@@ -59,11 +57,7 @@ import qualified Codec.Binary.UTF8.String as UTF8
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
-
--------------------------------------------
 -- Globals
--------------------------------------------
--- myTerminal      = "alacritty"
 myTerminal      = "alacritty"
 myBrowser       = "google-chrome --no-default-browser-check --force-dark-mode"
 myFilebrowser   = "thunar"
@@ -86,9 +80,7 @@ myBorderWidth   = 2
 myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#fff323"
 
---------------------------------------------
 -- Workspaces Binding
---------------------------------------------
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- mod-[1..9], Switch to workspace N
     -- mod-shift-[1..9], Move client to workspace N
@@ -103,9 +95,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
         | (key, sc) <- zip [xK_h, xK_l] [0..]
         , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
 
--------------------------------------------
 -- Floating functions
--------------------------------------------
 centerRect = W.RationalRect 0.25 0.25 0.5 0.5
 
 -- If the window is floating then (f), if tiled then (n)
@@ -133,10 +123,7 @@ standardSize win = do
 -- Float and center a tiled window, sink a floating window
 toggleFloat = floatOrNot (withFocused $ windows . W.sink) (withFocused centerFloat')
 
--------------------------------------------
 -- Keybinding
--------------------------------------------
-
 myKeyb :: [(String, X ())]
 myKeyb =
   [
@@ -246,7 +233,6 @@ myScratchPads =
         buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
     ]
-
     where
       spawnTerm  = myTerminal ++ " -t scratchpad"
 
@@ -298,9 +284,7 @@ myManageHook = composeAll
 
 shiftAndView i = W.view i . W.shift i
 
---------------------------------------------
 -- Mouse bindings
---------------------------------------------
 myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
     [
       -- mod-button1, Set the window to floating mode and move by dragging
@@ -314,9 +298,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
       -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
---------------------------------------------
 -- LogHook
---------------------------------------------
 red       = "#fb4934"
 blue      = "#83a598"
 blue2     = "#2266d0"
@@ -351,9 +333,7 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
     sstr = shorten len str
 
 
---------------------------------------------
 -- Layouts
---------------------------------------------
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
@@ -381,10 +361,7 @@ myLayout =   desktopLayoutModifiers
   where
     myDefaultLayout = tiled
 
-
---------------------------------------------
 -- Event handling
---------------------------------------------
 winSwallowHook :: Event -> X All
 winSwallowHook = swallowEventHook ( className =? "Alacritty" ) (return True)
 
@@ -398,21 +375,16 @@ spotifyHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
                           l = 0.95 -w
 
 myHandleEventHook = winSwallowHook <+> spotifyHook
--- myHandleEventHook = winSwallowHook
 
 spawnToWorkspace :: String -> String -> X ()
 spawnToWorkspace workspace program = do
                                       spawnOnce program
                                       windows $ W.greedyView workspace
---------------------------------------------
 -- Startup Hook
---------------------------------------------
 myStartupHook = do
     spawnOnce            "dotfiles/autostart.sh &"
 
--------------------------------------------
 -- Main
--------------------------------------------
 main :: IO ()
 main = do
   nScreens <- countScreens
