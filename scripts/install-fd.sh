@@ -2,14 +2,6 @@
 
 source $HOME/dotfiles/globals.sh
 
-print_color() {
-    declare -A colors=(
-        ['red']='\033[31m'
-        ['green']='\033[0;32m'
-    )
-    echo -e "${colors[$1]}$2\033[0m"
-}
-
 if [ "$OS" = "ubuntu" ] || [ ""$OS"" = "debian" ] || [ ""$OS"" = "pop" ] || [ ""$OS"" = "linuxmint" ]; then
     VER="8.7.0"
     FILE="fd-musl_${VER}_amd64.deb"

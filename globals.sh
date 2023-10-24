@@ -2,18 +2,35 @@
 
 export OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
 
-print_color() {
-    NC='\033[0m'
+add_paths_from_file() {
+    local file_path="$1"
 
-    if [ "$1" = "red" ]; then
-        COLOR="\033[31m"
+    while IFS= read -r line; do
+        if [[ $line == /* ]]; then
+            full_path="$line"
+        else
+            full_path="$HOME/$line"
+        fi
+
+        if [ -d "$full_path" ] && [[ ":$PATH:" != *":$full_path:"* ]]; then
+            export PATH="$full_path:$PATH"
+        fi
+    done <"$file_path"
+}
+
+cd_up() {
+    cd $(printf "%-1.s../" $(seq 1 $1))
+}
+
+create_dir() {
+    if [ ! -d "$1" ]; then
+        print_color green "Creating $1 ..."
+        mkdir -p "$1"
     fi
+}
 
-    if [ "$1" = "green" ]; then
-        COLOR="\033[0;32m"
-    fi
-
-    printf "${COLOR}$2${NC}\n"
+command_exists() {
+    command -v $1 >/dev/null 2>&1
 }
 
 load_env_vars() {
@@ -31,38 +48,11 @@ load_env_vars() {
     fi
 }
 
-add_paths_from_file() {
-    local file_path="$1"
-
-    while IFS= read -r line; do
-        if [[ $line == /* ]]; then
-            full_path="$line"
-        else
-            full_path="$HOME/$line"
-        fi
-
-        if [ -d "$full_path" ] && [[ ":$PATH:" != *":$full_path:"* ]]; then
-            export PATH="$full_path:$PATH"
-        fi
-    done <"$file_path"
-}
-
-create_dir() {
-    if [ ! -d "$1" ]; then
-        print_color green "Creating $1 ..."
-        mkdir -p "$1"
-    fi
-}
-
 load_env() {
-    # Ensure the script stops if there's any errors
     set -e
-
-    # Path to your env-vars file
     ENV_FILE=$1
 
     if [ -f "$ENV_FILE" ]; then
-        # If the file exists, source it
         echo "Loading environment variables from $ENV_FILE"
         set -a
         source "$ENV_FILE"
@@ -72,16 +62,26 @@ load_env() {
     fi
 }
 
-cd_up() {
-    cd $(printf "%-1.s../" $(seq 1 $1))
-}
-
-command_exists() {
-    command -v $1 >/dev/null 2>&1
-}
-
 is_sudoer() {
     sudo -v >/dev/null 2>&1
+}
+
+installPackages() {
+    print_color green "Installing the following packages:"
+    for pkg in "$@"; do
+        print_color blue "  - $pkg"
+    done
+    case $OS in
+    ubuntu | debian | linuxmint)
+        sudo apt install -y "$@"
+        ;;
+    centos)
+        sudo yum install -y "$@"
+        ;;
+    arch)
+        sudo pacman -S --noconfirm "$@"
+        ;;
+    esac
 }
 
 removePackage() {
@@ -101,20 +101,16 @@ removePackage() {
     fi
 }
 
-installPackages() {
-    print_color green "Installing the following packages:"
-    for pkg in "$@"; do
-        print_color blue "  - $pkg"
-    done
-    case $OS in
-    ubuntu | debian | linuxmint)
-        sudo apt install -y "$@"
-        ;;
-    centos)
-        sudo yum install -y "$@"
-        ;;
-    arch)
-        sudo pacman -S --noconfirm "$@"
-        ;;
-    esac
+print_color() {
+    NC='\033[0m'
+
+    if [ "$1" = "red" ]; then
+        COLOR="\033[31m"
+    fi
+
+    if [ "$1" = "green" ]; then
+        COLOR="\033[0;32m"
+    fi
+
+    printf "${COLOR}$2${NC}\n"
 }

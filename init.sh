@@ -110,7 +110,7 @@ for feature in "${!features[@]}"; do
 done
 echo -e "$separator\n"
 
-source $DOTFILES_DIR/functions.sh
+source $DOTFILES_DIR/globals.sh
 source $SCRIPTS_DIR/default-dirs.sh
 
 if [ "${features[FISH]}" = true ]; then

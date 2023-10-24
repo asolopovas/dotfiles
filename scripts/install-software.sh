@@ -1,9 +1,7 @@
 #!/bin/bash
 
-source $DOTFILES_DIR/functions.sh
-
 DOTFILES_DIR="$HOME/dotfiles"
-
+source $DOTFILES_DIR/globals.sh
 
 print_color green "Installing Packages for $OS"
 

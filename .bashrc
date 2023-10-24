@@ -1,9 +1,8 @@
-export OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
-export NVM_DIR="$HOME/.nvm"
 export DOTFILES=$HOME/dotfiles
+export NVM_DIR="$HOME/.nvm"
 
+source $DOTFILES/globals.sh
 source $DOTFILES/env/env-vars.sh
-source $DOTFILES/functions.sh
 source $DOTFILES/env/oh-my-bash.sh
 
 for file in $DOTFILES/completions/bash/*.sh; do

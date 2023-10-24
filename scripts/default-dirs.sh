@@ -1,8 +1,9 @@
 #!/bin/bash
 
+source $HOME/dotfiles/globals.sh
+
 print_color green "CREATING DEFAULT DIRS ..."
 
-source $HOME/dotfiles/functions.sh
 
 DEFAULT_DIRS=(
     "src"
