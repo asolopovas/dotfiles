@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # System
-export LANGUAGE=en_US.UTF-8
-export LANG=en_US.UTF-8
+export LANGUAGE=en_GB.UTF-8
+export LANG=en_GB.UTF-8
 export EDITOR="vim"
 export DOTFILES="$HOME/dotfiles"
-export SUDO_ASKPASS="$HOME/dotfiles/helpers/tools/dmenupass"
+export SUDO_ASKPASS="$HOME/dotfiles/helpers/tools/dmenu-pass"
 export ANDROID_SDK_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/android"
 export SSH_AUTH_SOCK="$GNOME_KEYRING_CONTROL/ssh"
 
@@ -13,7 +13,7 @@ export SSH_AUTH_SOCK="$GNOME_KEYRING_CONTROL/ssh"
 export OSH="$HOME/.local/share/ohmybash"
 
 # Applications
-export FILEMANAGER="pcmanfm"
+export FILEMANAGER="thunar"
 export TERMINAL="alacrity"
 
 # GoLang
@@ -28,8 +28,7 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 
 # NMP
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
-
-export DOTFILES="$HOME/dotfiles"
+export DOTFILES_DIR="$HOME/dotfiles"
 
 env_vars=(
     env-vars

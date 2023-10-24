@@ -1,10 +1,14 @@
 #!/bin/bash
 
+DEST_DIR="$HOME/.local/share/ohmybash"
+
+print_color green "Installing OhMyBash for ${OS^} ..."
+
 if [ "$FORCE" = true ]; then
-    rm -rf $HOME/.local/share/ohmybash
+    print_color red "FORCE Enabled: Removing ${DEST_DIR} ..."
+    rm -rf "$DEST_DIR"
 fi
 
-if [ ! -d "$HOME/.local/share/ohmybash" ]; then
-    print_color green "INSTALLING OH-MY-BASH..."
-    git clone https://github.com/ohmybash/oh-my-bash.git $HOME/.local/share/ohmybash
+if [ ! -d "$DEST_DIR" ]; then
+    git clone https://github.com/ohmybash/oh-my-bash.git $DEST_DIR
 fi

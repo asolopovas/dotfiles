@@ -1,18 +1,37 @@
 #!/bin/bash
 
-read -r -d '' redis_service <<-EOF
+USER="redis"
+GROUP="redis"
+CONFIG_DIR="/etc/redis"
+CONFIG_FILE="6379.conf"
+REDIS_DIR="/var/lib/redis"
+REDIS_SERVER="/usr/local/bin/redis-server"
+REDIS_CLI="/usr/local/bin/redis-cli"
+SYSTEMD_SERVICE_FILE="/etc/systemd/system/redis.service"
+PORT="6379"
+
+# Check if user exists, add if not
+if ! id "$USER" &>/dev/null; then
+    adduser --system --group --no-create-home "$USER"
+fi
+
+mkdir -p "$REDIS_DIR" "$CONFIG_DIR"
+chown "$USER:$GROUP" "$REDIS_DIR"
+chmod 770 "$REDIS_DIR"
+cp "$HOME/dotfiles/redis/$CONFIG_FILE" "$CONFIG_DIR"
+
+cat <<EOF >"$SYSTEMD_SERVICE_FILE"
 [Unit]
 Description=Redis persistent key-value database
-After=network.target
-After=network-online.target
+After=network.target network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/redis-server /etc/redis/6379.conf
-ExecStop=/usr/local/bin/redis-cli -p 6379 shutdown
+ExecStart=$REDIS_SERVER $CONFIG_DIR/$CONFIG_FILE
+ExecStop=$REDIS_CLI -p $PORT shutdown
 Type=simple
-User=redis
-Group=redis
+User=$USER
+Group=$GROUP
 RuntimeDirectory=redis
 RuntimeDirectoryMode=0755
 
@@ -20,12 +39,7 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target
 EOF
 
-adduser --system --user-group --no-create-home redis
-mkdir /var/lib/redis; chown redis:redis /var/lib/redis; chmod 770 /var/lib/redis
-cp $HOME/dotfiles/redis/6379.conf /etc/redis/6379.conf
-
-echo "$redis_service" > /etc/systemd/system/redis.service
 systemctl daemon-reload
 systemctl enable --now redis.service
 
-redis-cli ping
+$REDIS_CLI ping

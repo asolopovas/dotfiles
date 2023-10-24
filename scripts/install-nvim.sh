@@ -1,13 +1,13 @@
 #!/bin/bash
 
-AUTOLOAD_DIR="$HOME/.local/share/nvim/site/autoload"
-
 source $HOME/dotfiles/globals.sh
+
+AUTOLOAD_DIR="$HOME/.local/share/nvim/site/autoload"
 
 print_color green "Installing Neovim for ${OS^} ..."
 
 if [ "$FORCE" = true ]; then
-    print_color red "FORCE Enabled Removing ${AUTOLOAD_DIR} ..."
+    print_color red "FORCE Enabled: Removing ${AUTOLOAD_DIR} ..."
     rm -rf $AUTOLOAD_DIR
 fi
 

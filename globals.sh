@@ -68,7 +68,7 @@ is_sudoer() {
 }
 
 installPackages() {
-    print_color green "Installing the following packages:"
+    print_color green "Installing the following packages for ${OS^}:"
     for pkg in "$@"; do
         print_color blue "  - $pkg"
     done

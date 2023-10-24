@@ -1,37 +1,37 @@
 #!/bin/bash
 
-[ ! -z $1 ] && ver=$1
+VER=${$1:-"8.1"}
 
 source $HOME/dotfiles/globals.sh
 
-print_color green "PHP install helper script in ${OS^} for $ver \n"
+print_color green "Installing PHP Version: $VER for ${OS^} ...\n"
 
 phpPackages=(
-    "php$ver"
-    "php$ver-bcmath"
-    "php$ver-bz2"
-    "php$ver-cli"
-    "php$ver-common"
-    "php$ver-curl"
-    # "php$ver-fpm"
-    "php$ver-gd"
-    "php$ver-imagick"
-    # "php$ver-imap"
+    "php$VER"
+    "php$VER-bcmath"
+    "php$VER-bz2"
+    "php$VER-cli"
+    "php$VER-common"
+    "php$VER-curl"
+    # "php$VER-fpm"
+    "php$VER-gd"
+    "php$VER-imagick"
+    # "php$VER-imap"
     "php-json"
-    # "php$ver-litespeed"
-    "php$ver-mbstring"
-    # "php$ver-memcache"
-    # "php$ver-memcached"
-    "php$ver-mongodb"
-    "php$ver-mysql"
-    "php$ver-pcov"
-    "php$ver-pgsql"
-    "php$ver-redis"
-    "php$ver-sqlite3"
-    "php$ver-xdebug"
-    "php$ver-xml"
-    "php$ver-yaml"
-    "php$ver-zip"
+    # "php$VER-litespeed"
+    "php$VER-mbstring"
+    # "php$VER-memcache"
+    # "php$VER-memcached"
+    "php$VER-mongodb"
+    "php$VER-mysql"
+    "php$VER-pcov"
+    "php$VER-pgsql"
+    "php$VER-redis"
+    "php$VER-sqlite3"
+    "php$VER-xdebug"
+    "php$VER-xml"
+    "php$VER-yaml"
+    "php$VER-zip"
 )
 
 packages=$(
