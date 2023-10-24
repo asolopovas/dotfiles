@@ -1,9 +1,17 @@
 #!/bin/bash
 
+if xrandr | grep -q "eDP-1 connected"; then
+    xrandr --output eDP-1 --primary --mode 1920x1080 --pos 0x0
+else
+    xrandr --output DP-0 --primary --mode 1920x1080 --pos 0x0 --output DP-2 --mode 1920x1080 --pos 1920x0
+fi
+
 eval $(gnome-keyring-daemon --start)
 export GNOME_KEYRING_SOCKET
 export GNOME_KEYRING_PID
 export DOTFILES="$HOME/dotfiles"
+
+
 
 env_vars=(
     env-vars
@@ -28,10 +36,4 @@ done
 xset r rate 300 50 &
 xsetroot -cursor_name left_ptr &
 setxkbmap -layout gb,ru -option 'grp:win_space_toggle'
-
-if xrandr | grep -q "eDP-1 connected"; then
-    xrandr --output eDP-1 --primary --mode 1920x1080 --pos 0x0
-else
-    xrandr --output DP-0 --primary --mode 1920x1080 --pos 0x0 --output DP-2 --mode 1920x1080 --pos 1920x0
-fi
 
