@@ -89,6 +89,8 @@ myFocusedBorderColor = "#fff323"
 --------------------------------------------
 -- Workspaces Binding
 --------------------------------------------
+shiftAndView i = W.view i . W.shift i
+
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- mod-[1..9], Switch to workspace N
     -- mod-shift-[1..9], Move client to workspace N
@@ -291,7 +293,6 @@ myManageHook = composeAll
 
 
 
-shiftAndView i = W.view i . W.shift i
 
 --------------------------------------------
 -- Mouse bindings
