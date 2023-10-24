@@ -6,6 +6,10 @@ export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 export PI=$HOME/.tmp/p
 
+cmd_exist() {
+    command -v $1 >/dev/null 2>&1
+}
+
 mkdir -p $HOME/.tmp
 
 # Arguments
