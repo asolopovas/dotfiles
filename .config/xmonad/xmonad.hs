@@ -44,7 +44,6 @@ import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat, doRectFloat)
 
-import XMonad.Hooks.DynamicProperty ( dynamicPropertyChange )
 import XMonad.Hooks.WindowSwallowing
 
 import Data.Monoid
@@ -384,16 +383,7 @@ myLayout =   desktopLayoutModifiers
 winSwallowHook :: Event -> X All
 winSwallowHook = swallowEventHook ( className =? "Alacritty" ) (return True)
 
-spotifyHook :: Event -> X All
-spotifyHook = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
-    where floating  = customFloating $ W.RationalRect l t w h
-                      where
-                          h = 0.4
-                          w = 0.4
-                          t = 0.95 -h
-                          l = 0.95 -w
-
-myHandleEventHook = winSwallowHook <+> spotifyHook
+myHandleEventHook = winSwallowHook
 -- myHandleEventHook = winSwallowHook
 
 spawnToWorkspace :: String -> String -> X ()
