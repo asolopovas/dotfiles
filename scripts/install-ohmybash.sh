@@ -2,6 +2,8 @@
 
 DEST_DIR="$HOME/.local/share/ohmybash"
 
+source $HOME/dotfiles/globals.sh
+
 print_color green "Installing OhMyBash for ${OS^} ..."
 
 if [ "$FORCE" = true ]; then
