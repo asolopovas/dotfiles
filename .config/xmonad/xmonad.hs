@@ -43,11 +43,13 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat, doRectFloat)
-
 import XMonad.Hooks.WindowSwallowing
+import XMonad.Hooks.DynamicLog (dynamicLogWithPP, xmobarPP, xmobarColor, shorten, PP(..))
+
 
 import Data.Monoid
 import System.Exit
+import System.IO (hPutStrLn, Handle)
 import System.Environment
 
 import qualified DBus as D
@@ -310,6 +312,8 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
       -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
+
+
 --------------------------------------------
 -- LogHook
 --------------------------------------------
@@ -397,6 +401,19 @@ spawnToWorkspace workspace program = do
 myStartupHook = do
     spawnOnce            "dotfiles/autostart.sh &"
 
+--------------------------------------------
+-- myLogHook
+--------------------------------------------
+
+xmobarLogHook :: D.Client -> Handle -> X ()
+xmobarLogHook dbus xmproc = dynamicLogWithPP xmobarPP {
+    ppOutput = \x -> hPutStrLn xmproc x >> dbusOutput dbus x,
+    ppCurrent = xmobarColor "#ff6c6b" "" . wrap "[" "]",
+    ppVisible = xmobarColor "#98be65" "",
+    ppHidden = xmobarColor "#282c34" "" . wrap "*" "",
+    ppTitle = xmobarColor "#46d9ff" "" . shorten 40
+}
+
 -------------------------------------------
 -- Main
 -------------------------------------------
@@ -406,7 +423,7 @@ main = do
   dbus <- D.connectSession
   D.requestName dbus (D.busName_ "org.xmonad.Log")
     [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
-
+  xmproc <- spawnPipe "xmobar"  -- This starts xmobar
   xmonad
     $ docks
     $ ewmhFullscreen
@@ -432,6 +449,6 @@ main = do
         manageHook         = myManageHook,
         handleEventHook    = myHandleEventHook,
         startupHook        = myStartupHook,
-        logHook            = dynamicLogWithPP (myLogHook dbus)
+        logHook            = xmobarLogHook dbus xmproc
     }
     `additionalKeysP` myKeyb
