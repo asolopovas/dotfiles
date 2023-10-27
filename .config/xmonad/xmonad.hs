@@ -11,6 +11,7 @@ import XMonad.Actions.WithAll (sinkAll, killAll)
 import XMonad.Actions.CopyWindow (kill1, killAllOtherCopies)
 import XMonad.Actions.WindowGo (runOrRaise)
 import XMonad.Actions.Promote
+import XMonad.Actions.PhysicalScreens
 
 -- Util
 import XMonad.Util.Run
@@ -18,6 +19,7 @@ import XMonad.Util.SpawnOnce
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.EZConfig (additionalKeysP)
 import XMonad.Util.NoTaskbar
+
 
 -- Layouts
 import XMonad.Layout.ResizableTile
@@ -312,8 +314,6 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
       -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
-
-
 --------------------------------------------
 -- LogHook
 --------------------------------------------
@@ -399,7 +399,14 @@ spawnToWorkspace workspace program = do
 -- Startup Hook
 --------------------------------------------
 myStartupHook = do
-    spawnOnce            "dotfiles/autostart.sh &"
+    spawnOnce "dotfiles/autostart.sh &"
+    -- Ensure workspaces are assigned to the correct screens
+    let ws0 = "1_1"  -- Workspace 1 on Screen 0
+        ws1 = "1_1"  -- Workspace 1 on Screen 1
+    windows $ W.view ws0
+    windows $ W.view ws1
+
+
 
 --------------------------------------------
 -- myLogHook
@@ -449,6 +456,7 @@ main = do
         manageHook         = myManageHook,
         handleEventHook    = myHandleEventHook,
         startupHook        = myStartupHook,
-        logHook            = xmobarLogHook dbus xmproc
+        -- logHook            = xmobarLogHook dbus xmproc
+        logHook            = dynamicLogWithPP (myLogHook dbus)
     }
     `additionalKeysP` myKeyb
