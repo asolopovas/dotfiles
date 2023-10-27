@@ -160,7 +160,7 @@ myKeyb =
     ("M-<Return>",     spawn myTerminal               ),
     ("M-d",            spawn "rofi -show run"         ),
     ("M-c",            spawn myBrowser                ),
-    ("M-S-d",          spawn "su_dmenu_run"           ),
+    ("M-S-d",          spawn "su-dmenu-run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
     ("M-o",            spawn "fzf-menu fzf-code"      ),
