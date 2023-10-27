@@ -282,6 +282,7 @@ myManageHook = composeAll
         className =? "Seahorse"                   --> doCenterFloat,
         className =? "Xarchiver"                  --> doCenterFloat,
         className =? "File-roller"                --> doCenterFloat,
+        className =? "Zenity"                     --> doCenterFloat,
         className =? "jetbrains-phpstorm"         --> doShift "0_1",
         className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
         className =? "TelegramDesktop"            --> doShift "1_7",
