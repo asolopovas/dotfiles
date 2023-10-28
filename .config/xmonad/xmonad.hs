@@ -11,7 +11,6 @@ import XMonad.Actions.WithAll (sinkAll, killAll)
 import XMonad.Actions.CopyWindow (kill1, killAllOtherCopies)
 import XMonad.Actions.WindowGo (runOrRaise)
 import XMonad.Actions.Promote
-import XMonad.Actions.PhysicalScreens
 
 -- Util
 import XMonad.Util.Run
@@ -19,7 +18,6 @@ import XMonad.Util.SpawnOnce
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.EZConfig (additionalKeysP)
 import XMonad.Util.NoTaskbar
-
 
 -- Layouts
 import XMonad.Layout.ResizableTile
@@ -45,13 +43,11 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat, doRectFloat)
-import XMonad.Hooks.WindowSwallowing
-import XMonad.Hooks.DynamicLog (dynamicLogWithPP, xmobarPP, xmobarColor, shorten, PP(..))
 
+import XMonad.Hooks.WindowSwallowing
 
 import Data.Monoid
 import System.Exit
-import System.IO (hPutStrLn, Handle)
 import System.Environment
 
 import qualified DBus as D
@@ -164,7 +160,7 @@ myKeyb =
     ("M-<Return>",     spawn myTerminal               ),
     ("M-d",            spawn "rofi -show run"         ),
     ("M-c",            spawn myBrowser                ),
-    ("M-S-d",          spawn "su-dmenu-run"           ),
+    ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
     ("M-o",            spawn "fzf-menu fzf-code"      ),
@@ -286,7 +282,6 @@ myManageHook = composeAll
         className =? "Seahorse"                   --> doCenterFloat,
         className =? "Xarchiver"                  --> doCenterFloat,
         className =? "File-roller"                --> doCenterFloat,
-        className =? "Zenity"                     --> doCenterFloat,
         className =? "jetbrains-phpstorm"         --> doShift "0_1",
         className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
         className =? "TelegramDesktop"            --> doShift "1_7",
@@ -399,27 +394,7 @@ spawnToWorkspace workspace program = do
 -- Startup Hook
 --------------------------------------------
 myStartupHook = do
-    spawnOnce "dotfiles/autostart.sh &"
-    -- Ensure workspaces are assigned to the correct screens
-    let ws0 = "1_1"  -- Workspace 1 on Screen 0
-        ws1 = "1_1"  -- Workspace 1 on Screen 1
-    windows $ W.view ws0
-    windows $ W.view ws1
-
-
-
---------------------------------------------
--- myLogHook
---------------------------------------------
-
-xmobarLogHook :: D.Client -> Handle -> X ()
-xmobarLogHook dbus xmproc = dynamicLogWithPP xmobarPP {
-    ppOutput = \x -> hPutStrLn xmproc x >> dbusOutput dbus x,
-    ppCurrent = xmobarColor "#ff6c6b" "" . wrap "[" "]",
-    ppVisible = xmobarColor "#98be65" "",
-    ppHidden = xmobarColor "#282c34" "" . wrap "*" "",
-    ppTitle = xmobarColor "#46d9ff" "" . shorten 40
-}
+    spawnOnce            "dotfiles/autostart.sh &"
 
 -------------------------------------------
 -- Main
@@ -430,7 +405,7 @@ main = do
   dbus <- D.connectSession
   D.requestName dbus (D.busName_ "org.xmonad.Log")
     [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
-  xmproc <- spawnPipe "xmobar"  -- This starts xmobar
+
   xmonad
     $ docks
     $ ewmhFullscreen
@@ -456,7 +431,6 @@ main = do
         manageHook         = myManageHook,
         handleEventHook    = myHandleEventHook,
         startupHook        = myStartupHook,
-        -- logHook            = xmobarLogHook dbus xmproc
         logHook            = dynamicLogWithPP (myLogHook dbus)
     }
     `additionalKeysP` myKeyb
