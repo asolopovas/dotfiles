@@ -47,6 +47,7 @@ alias ls='ls --color -ha --group-directories-first'
 alias xevkb='xev -event keyboard'
 alias dd='cd $HOME/www/dev'
 alias wd='cd $HOME/www'
+alias gd='cd $HOME/src/go'
 
 alias ..="cd .."
 alias ..2="cd ../.."
