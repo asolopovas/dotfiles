@@ -19,7 +19,6 @@ alias dk='docker '
 alias dc='docker compose '
 alias dcd='docker compose -f docker-compose.dev.yml '
 alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
-
 alias sys='systemctl'
 
 # Github
@@ -37,6 +36,8 @@ alias ghclone='git clone https://github.com:asolopovas/'
 alias bfg='java -jar ~/.local/bin/bfg.jar '
 alias nah='git reset --hard; git clean -fd'
 
+alias fc='fzf-code'
+
 # System
 alias dir-size='du -hd 1  2> /dev/null | sort -h'
 alias art='php artisan'
@@ -45,12 +46,15 @@ alias l='LC_ALL="C.UTF-8" ls --color -la --group-directories-first'
 alias ll='ls --color -lh --group-directories-first'
 alias ls='ls --color -ha --group-directories-first'
 alias xevkb='xev -event keyboard'
+
+# CD Directories
 alias dd='cd $HOME/www/dev'
 alias wd='cd $HOME/www'
 alias gos='cd $HOME/go/src'
 alias dot='cd $HOME/dotfiles'
 alias scr='cd $HOME/dotfiles/scripts'
 alias hlp='cd $HOME/dotfiles/helpers'
+
 alias ..="cd .."
 alias ..2="cd ../.."
 alias ..3="cd ../../.."
