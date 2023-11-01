@@ -49,12 +49,17 @@ done
 STORE_MAP["$(basename "$HOME/dotfiles")"]="$HOME/dotfiles"
 
 RESULT_KEY=$(printf "%s\n" "${!STORE_MAP[@]}" | fzf)
+
+# Check if a result was selected
+if [ -z "$RESULT_KEY" ]; then
+  echo "No selection made. Exiting."
+  exit 1
+fi
+
 RESULT=${STORE_MAP["$RESULT_KEY"]}
 
 if detect_wsl; then
     RESULT=$(echo $RESULT | sed 's|wsl.localhost/Ubuntu||')
 fi
-
-[ -z "$RESULT" ] && exit
 
 code "$RESULT" >/dev/null 2>&1
