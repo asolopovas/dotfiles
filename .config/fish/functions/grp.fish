@@ -1,5 +1,5 @@
-function gr
-    set repos (gh repo list asolopovas --json nameWithOwner --jq '.[].nameWithOwner' | string split "\n")
+function grp
+    set repos (curl -s "https://api.github.com/users/asolopovas/repos" | jq -r '.[].full_name' | string split "\n")
     if not count $repos > 0
         echo "No repositories found for user asolopovas."
         return
