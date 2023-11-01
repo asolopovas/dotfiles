@@ -49,7 +49,8 @@ alias dd='cd $HOME/www/dev'
 alias wd='cd $HOME/www'
 alias gos='cd $HOME/go/src'
 alias dot='cd $HOME/dotfiles'
-
+alias scr='cd $HOME/dotfiles/scripts'
+alias hlp='cd $HOME/dotfiles/helpers'
 alias ..="cd .."
 alias ..2="cd ../.."
 alias ..3="cd ../../.."
