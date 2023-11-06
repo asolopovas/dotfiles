@@ -15,6 +15,19 @@ if has("win32")
   let g:plug_dir="~/AppData/Local/nvim-plugged"
 endif
 
+let g:clipboard = {
+  \   'name': 'WslClipboard',
+  \   'copy': {
+  \      '+': 'clip.exe',
+  \      '*': 'clip.exe',
+  \    },
+  \   'paste': {
+  \      '+': 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+  \      '*': 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+  \   },
+  \   'cache_enabled': 0,
+  \ }
+
 call plug#begin(g:plug_dir)
 Plug 'jwalton512/vim-blade'           " Blade Syntax Support
 Plug 'posva/vim-vue'                  " Vue Syntax Support
@@ -89,7 +102,7 @@ set undolevels=1000                               " use many muchos levels of un
 set wildignore=*.swp,*.bak,*.pyc,*.class
 set autoread                                      " Automatically reload file when changed outside of buffer
 set encoding=utf-8
-set clipboard+=unnamedplus
+set clipboard^=unnamed,unnamedplus
 set formatoptions-=cro
 set listchars=eol:$,tab:→\ ,trail:~,extends:>,precedes:<,extends:#,nbsp:.,space:.
 set shell=fish\ -i

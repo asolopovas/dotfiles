@@ -12,6 +12,7 @@ set fish_color_search_match --background=blue
 set -U fish_prompt_pwd_dir_length 0
 
 # Env Variables
+set -x SUDO_ASKPASS $HOME/dotfiles/scripts/askpass.sh
 set -x TERMINAL alacritty
 set -x EDITOR nvim
 set -x GOPATH $HOME/go
@@ -47,6 +48,13 @@ set -U FZF_ALT_C_COMMAND "fd -H -t d $FZFARGS"
 fzf_key_bindings
 
 load_env "$HOME/.env-vars"
+
+#  TMUX
+if status is-interactive
+    and not set -q TMUX
+    and set -q SSH_CONNECTION
+    tmux attach-session -t ssh_tmux > /dev/null 2>&1; or tmux new-session -s ssh_tmux
+end
 
 # pnpm
 set -gx PNPM_HOME "/home/andrius/.local/share/pnpm"

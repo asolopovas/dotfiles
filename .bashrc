@@ -14,6 +14,10 @@ if cmd_exist fzf; then
     source $DOTFILES/fzf/key-bindings.bash
 fi
 
+if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
+  tmux attach-session -t ssh_tmux || tmux new-session -s ssh_tmux
+fi
+
 add_paths_from_file $DOTFILES/.paths
 
 [ -f "$HOME/.config/.aliasrc" ] && source $HOME/.config/.aliasrc
