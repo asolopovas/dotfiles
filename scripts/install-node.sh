@@ -18,7 +18,7 @@ PROFILE=/dev/null bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm
 
 if [ "$OS" = "alpine" ]; then
     chmod +x $NVM_DIR/nvm.sh
-    sed -i '/nvm_get_arch() {/,/^}$/c\nvm_get_arch() { nvm_echo "x64-musl"; }' $NVM_DIR/nvm.sh
+    sed -i '/nvm_get_arch() {/,/^}$/c\nvm_get_arch() { nvm_echo "musl-x64"; }' $NVM_DIR/nvm.sh
 fi
 
 source "$NVM_DIR/nvm.sh"

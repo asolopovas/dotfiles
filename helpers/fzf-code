@@ -62,4 +62,5 @@ if detect_wsl; then
     RESULT=$(echo $RESULT | sed 's|wsl.localhost/Ubuntu||')
 fi
 
-code "$RESULT" >/dev/null 2>&1
+# code "$RESULT" >/dev/null 2>&1
+code "$RESULT"

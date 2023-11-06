@@ -39,9 +39,9 @@ case "$1" in
     wp_config_setup ~/www/$2 "${root}_wp" secret
     # Setup Database
     pushd ~/www/dev > /dev/null
-    docker compose exec mariadb mysql -uroot -psecret -e "CREATE USER IF NOT EXISTS ${root}_wp@'%' IDENTIFIED BY 'secret';"
-    docker compose exec mariadb mysql -uroot -psecret -e "CREATE DATABASE IF NOT EXISTS ${root}_wp;"
-    docker compose exec mariadb mysql -uroot -psecret -e "GRANT ALL PRIVILEGES ON ${root}_wp.* TO ${root}_wp@'%'"
+    docker compose exec mariadb mysql -uroot -psecret -e "CREATE USER IF NOT EXISTS ${db}@'%' IDENTIFIED BY 'secret';"
+    docker compose exec mariadb mysql -uroot -psecret -e "CREATE DATABASE IF NOT EXISTS ${db};"
+    docker compose exec mariadb mysql -uroot -psecret -e "GRANT ALL PRIVILEGES ON ${db}.* TO ${db}@'%'"
     popd > /dev/null
 
     ;;
