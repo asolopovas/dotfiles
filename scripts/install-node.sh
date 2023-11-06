@@ -24,4 +24,4 @@ fi
 source "$NVM_DIR/nvm.sh"
 nvm install $NODE_VERSION
 
-npm -g install yarn
+npm -g install yarn pnpm
