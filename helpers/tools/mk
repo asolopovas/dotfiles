@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Detect the git root directory
+GIT_ROOT=$(git rev-parse --show-toplevel)
+if [ $? -ne 0 ]; then
+    echo "Error: Must be run within a git repository."
+    exit 1
+fi
+
+# Navigate to the git root directory
+cd "$GIT_ROOT"
+
+# Execute make with all passed arguments
+make "$@"
