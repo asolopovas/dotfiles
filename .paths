@@ -1,4 +1,3 @@
-src/google-cloud-sdk/bin
 go/bin
 .local/bin
 .local/bin/helpers
@@ -15,6 +14,7 @@ go/bin
 .cargo/bin
 .config/composer/vendor/bin
 /usr/local/go/bin
+/var/opt/google/google-cloud-sdk/bin
 /usr/sbin
 dotfiles/scripts
 .cabal/bin
