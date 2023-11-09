@@ -49,12 +49,12 @@ fzf_key_bindings
 
 load_env "$HOME/.env-vars"
 
-#  TMUX
-if status is-interactive
-    and not set -q TMUX
-    and set -q SSH_CONNECTION
-    tmux attach-session -t ssh_tmux > /dev/null 2>&1; or tmux new-session -s ssh_tmux
-end
+# #  TMUX
+# if status is-interactive
+#     and not set -q TMUX
+#     and set -q SSH_CONNECTION
+#     tmux attach-session -t ssh_tmux > /dev/null 2>&1; or tmux new-session -s ssh_tmux
+# end
 
 # pnpm
 set -gx PNPM_HOME "/home/andrius/.local/share/pnpm"
