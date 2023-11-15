@@ -62,127 +62,28 @@ import qualified Data.Map        as M
 import System.IO (appendFile)
 import Control.Monad (when)
 
-
--- Function to log messages
-logMessage :: String -> X ()
-logMessage msg = liftIO $ appendFile "/home/andrius/xmonad.log" (msg ++ "\n")
-
--- Function to log the current state of workspaces and screens
-logCurrentWorkspaceState :: String -> X ()
-logCurrentWorkspaceState label = do
-    ws <- gets windowset
-    let screenWsInfo = map (\s -> (W.screen s, W.tag . W.workspace $ s)) $ W.current ws : W.visible ws
-    logMessage $ label ++ " Workspace assignments: " ++ show screenWsInfo
-
-
--- Function to set the correct workspace
-setCorrectWorkspace :: ScreenId -> WorkspaceId -> X ()
-setCorrectWorkspace screenId expectedWorkspace = do
-    currentWorkspace <- screenWorkspace screenId
-    when (currentWorkspace /= Just expectedWorkspace) $ do
-        logMessage $ "Screen " ++ show screenId ++ " initial workspace: " ++ show currentWorkspace
-        windows $ W.view expectedWorkspace
-        logMessage $ "Set Screen " ++ show screenId ++ " to workspace " ++ expectedWorkspace
-
--- Maps workspaces to screens
-assignWorkspacesToScreens :: [(ScreenId, WorkspaceId)] -> X ()
-assignWorkspacesToScreens assignments = mapM_ assignWorkspace assignments
-  where
-    assignWorkspace (screenId, workspaceId) = do
-      screenWorkspace screenId >>= \maybeWorkspaceId -> do
-        when (maybeWorkspaceId /= Just workspaceId) $ do
-          windows $ W.view workspaceId
-          -- Optional: Add a delay here if necessary
-
-myStartupHook = do
-    logMessage "Starting XMonad"
-
-    logCurrentWorkspaceState "Initial"
-    assignWorkspacesToScreens [(S 0, "0_1"), (S 1, "1_1")]
-    logCurrentWorkspaceState "Final"
-
-    spawnOnce "dotfiles/autostart.sh &"
-    logMessage "XMonad startup completed"
-
 -------------------------------------------
 -- Globals
 -------------------------------------------
--- myTerminal      = "alacritty"
-myTerminal      = "alacritty"
-myBrowser       = "google-chrome --no-default-browser-check --force-dark-mode"
-myFilebrowser   = "thunar"
+myNormalBorderColor  = "#dddddd"
+myFocusedBorderColor = "#fff323"
 
--- Whether focus follows the mouse pointer.
+myTerminal           = "alacritty"
+myBrowser            = "google-chrome --no-default-browser-check --force-dark-mode"
+myFilebrowser        = "thunar"
+myModMask            = mod4Mask
+myWorkspaces         = ["1","2","3","4","5","6","7","8","9"]
+myBorderWidth        = 1
+
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = False
-
 -- Whether clicking on a window to focus also passes the click to the window
 myClickJustFocuses :: Bool
 myClickJustFocuses = False
 
-myModMask       = mod4Mask
-
--- A tagging example:
--- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
-myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
-
-myBorderWidth   = 1
-myNormalBorderColor  = "#dddddd"
-myFocusedBorderColor = "#fff323"
-
---------------------------------------------
--- Workspaces Binding
---------------------------------------------
-shiftAndView i = W.view i . W.shift i
-
-myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
-    -- mod-[1..9], Switch to workspace N
-    -- mod-shift-[1..9], Move client to workspace N
-    [((m .|. modm, k), windows $ onCurrentScreen f i)
-        | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
-        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
-    ++
-
-    -- mod-{h,j}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{h,j}, Move client to screen 1, 2, or 3
-    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_h, xK_l] [0..]
-        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
-
--------------------------------------------
--- Floating functions
--------------------------------------------
-centerRect = W.RationalRect 0.25 0.25 0.5 0.5
-
--- If the window is floating then (f), if tiled then (n)
-floatOrNot f n = withFocused $ \windowId -> do
-    floats <- gets (W.floating . windowset)
-    if windowId `M.member` floats -- if the current window is floating...
-       then f
-       else n
-
--- Center and float a window (retain size)
-centerFloat win = do
-    (_, W.RationalRect x y w h) <- floatLocation win
-    windows $ W.float win (W.RationalRect ((1 - w) / 1.5) ((1 - h) / 1.5) w h)
-    return ()
-
--- Float a window in the center
-centerFloat' w = windows $ W.float w centerRect
-
--- Make a window my 'standard size' (half of the screen) keeping the center of the window fixed
-standardSize win = do
-    (_, W.RationalRect x y w h) <- floatLocation win
-    windows $ W.float win (W.RationalRect x y 0.5 0.5)
-    return ()
-
--- Float and center a tiled window, sink a floating window
-toggleFloat = floatOrNot (withFocused $ windows . W.sink) (withFocused centerFloat')
-
 -------------------------------------------
 -- Keybinding
 -------------------------------------------
-
 myKeyb :: [(String, X ())]
 myKeyb =
   [
@@ -239,41 +140,12 @@ myKeyb =
     ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
     ("<XF86AudioStop>",        spawn "playerctl stop"                        ),
     ("<XF86AudioPrev>",        spawn "playerctl previous"                    ),
+
     ("<XF86AudioNext>",        spawn "playerctl next"                        ),
     ("<Print>",                spawn "flameshot gui"                         ),
     ("<XF86MenuPB>",           spawn "flameshot gui"                         )
 
   ]
-
--- Utility Functions
-makeFloat :: Float -> W.RationalRect
-makeFloat dim = W.RationalRect
-    (toRational ((1 - dim) / 2))
-    (toRational ((1 - dim) / 2))
-    (toRational dim)
-    (toRational dim)
-
--- Float Definitions for Scratchpads
-smFloatCustom  = customFloating $ makeFloat 0.5
-mdFloatCustom  = customFloating $ makeFloat 0.7
-lgFloatCustom  = customFloating $ makeFloat 0.9
-
--- Float Definitions for Window Rules
-smFloat = makeFloat 0.5
-mdFloat = makeFloat 0.7
-lgFloat = makeFloat 0.9
-
--- A helper function to build the NS row more concisely
-buildNS :: String -> String -> String -> String -> String -> NamedScratchpad
-buildNS name cmd prop value floatTypeStr = NS name cmd (property =? value) (floatType floatTypeStr)
-    where
-        property
-            | prop == "title"    = title
-            | prop == "className" = className
-            -- Add other properties as needed
-        floatType "sm" = smFloatCustom
-        floatType "md" = mdFloatCustom
-        floatType "lg" = lgFloatCustom
 
 myScratchPads =
     [
@@ -335,6 +207,148 @@ myManageHook = composeAll
         className =? "Teamviewer"                 --> doShift "1_9"
     ] <+> namedScratchpadManageHook myScratchPads
 
+
+--------------------------------------------
+-- Layouts
+--------------------------------------------
+mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
+mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
+
+
+tiled   =    renamed [Replace "tiled"]
+           $ smartBorders
+           $ limitWindows 12
+           $ mySpacing 5
+           $ ResizableTall 1 (3/100) (1/2) []
+tiledR  =   renamed [Replace "tiledR"]
+           $ smartBorders
+           $ limitWindows 12
+           $ mySpacing 5
+           $ reflectHoriz
+           $ ResizableTall 1 (3/100) (1/2) []
+full    =    renamed [Replace "full"]
+           $ noBorders
+           $ Full
+
+myLayout =   desktopLayoutModifiers
+           $ T.toggleLayouts full
+           $ onWorkspaces ["1_1", "1_2", "1_3", "1_4", "1_5", "1_6", "1_7:chat", "1_8", "1_9"] tiled
+           $ onWorkspaces ["0_1", "0_2", "0_3", "0_4", "0_5", "0_6", "0_7:chat", "0_8", "0_9"] tiledR
+           $ myDefaultLayout
+  where
+    myDefaultLayout = tiled
+
+
+-- Workspaces Binding
+shiftAndView i = W.view i . W.shift i
+
+myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
+    -- mod-[1..9], Switch to workspace N
+    -- mod-shift-[1..9], Move client to workspace N
+    [((m .|. modm, k), windows $ onCurrentScreen f i)
+        | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
+        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+    ++
+
+    -- mod-{h,j}, Switch to physical/Xinerama screens 1, 2, or 3
+    -- mod-shift-{h,j}, Move client to screen 1, 2, or 3
+    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
+        | (key, sc) <- zip [xK_h, xK_l] [0..]
+        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
+
+--------------------------------------------
+-- Startup
+--------------------------------------------
+myStartupHook = do
+    fixWorkspaceAssignment
+    spawnOnce "dotfiles/autostart.sh &"
+
+--------------------------------------------
+-- Functions and Configurations
+--------------------------------------------
+-- Function to log messages
+logMessage :: String -> X ()
+logMessage msg = liftIO $ appendFile "/home/andrius/xmonad.log" (msg ++ "\n")
+
+-- Function to log the current state of workspaces and screens
+logCurrentWorkspaceState :: String -> X ()
+logCurrentWorkspaceState label = do
+    ws <- gets windowset
+    let screenWsInfo = map (\s -> (W.screen s, W.tag . W.workspace $ s)) $ W.current ws : W.visible ws
+    logMessage $ label ++ " Workspace assignments: " ++ show screenWsInfo
+
+-- Fixes Workspace Asignment S0 0_1 and S1 1_1
+fixWorkspaceAssignment :: X ()
+fixWorkspaceAssignment = do
+    nScreens <- countScreens
+    when (nScreens == 2) $ do
+        -- Logic for two screens
+        screenWorkspace 1 >>= flip whenJust (windows . W.view)
+        windows $ W.view "1_1"
+        screenWorkspace 0 >>= flip whenJust (windows . W.view)
+
+-------------------------------------------
+-- Floating functions
+-------------------------------------------
+centerRect = W.RationalRect 0.25 0.25 0.5 0.5
+
+-- If the window is floating then (f), if tiled then (n)
+floatOrNot f n = withFocused $ \windowId -> do
+    floats <- gets (W.floating . windowset)
+    if windowId `M.member` floats -- if the current window is floating...
+       then f
+       else n
+
+-- Center and float a window (retain size)
+centerFloat win = do
+    (_, W.RationalRect x y w h) <- floatLocation win
+    windows $ W.float win (W.RationalRect ((1 - w) / 1.5) ((1 - h) / 1.5) w h)
+    return ()
+
+-- Float a window in the center
+centerFloat' w = windows $ W.float w centerRect
+
+-- Make a window my 'standard size' (half of the screen) keeping the center of the window fixed
+standardSize win = do
+    (_, W.RationalRect x y w h) <- floatLocation win
+    windows $ W.float win (W.RationalRect x y 0.5 0.5)
+    return ()
+
+-- Float and center a tiled window, sink a floating window
+toggleFloat = floatOrNot (withFocused $ windows . W.sink) (withFocused centerFloat')
+
+
+-- Utility Functions
+makeFloat :: Float -> W.RationalRect
+makeFloat dim = W.RationalRect
+    (toRational ((1 - dim) / 2))
+    (toRational ((1 - dim) / 2))
+    (toRational dim)
+    (toRational dim)
+
+-- Float Definitions for Scratchpads
+smFloatCustom  = customFloating $ makeFloat 0.5
+mdFloatCustom  = customFloating $ makeFloat 0.7
+lgFloatCustom  = customFloating $ makeFloat 0.9
+
+-- Float Definitions for Window Rules
+smFloat = makeFloat 0.5
+mdFloat = makeFloat 0.7
+lgFloat = makeFloat 0.9
+
+-- A helper function to build the NS row more concisely
+buildNS :: String -> String -> String -> String -> String -> NamedScratchpad
+buildNS name cmd prop value floatTypeStr = NS name cmd (property =? value) (floatType floatTypeStr)
+    where
+        property
+            | prop == "title"    = title
+            | prop == "className" = className
+            -- Add other properties as needed
+        floatType "sm" = smFloatCustom
+        floatType "md" = mdFloatCustom
+        floatType "lg" = lgFloatCustom
+
+
 --------------------------------------------
 -- Mouse bindings
 --------------------------------------------
@@ -386,38 +400,6 @@ myAddSpaces :: Int -> String -> String
 myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
   where
     sstr = shorten len str
-
-
---------------------------------------------
--- Layouts
---------------------------------------------
-mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
-mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
-
-
-tiled   =    renamed [Replace "tiled"]
-           $ smartBorders
-           $ limitWindows 12
-           $ mySpacing 5
-           $ ResizableTall 1 (3/100) (1/2) []
-tiledR  =   renamed [Replace "tiledR"]
-           $ smartBorders
-           $ limitWindows 12
-           $ mySpacing 5
-           $ reflectHoriz
-           $ ResizableTall 1 (3/100) (1/2) []
-full    =    renamed [Replace "full"]
-           $ noBorders
-           $ Full
-
-myLayout =   desktopLayoutModifiers
-           $ T.toggleLayouts full
-           $ onWorkspaces ["1_1", "1_2", "1_3", "1_4", "1_5", "1_6", "1_7:chat", "1_8", "1_9"] tiled
-           $ onWorkspaces ["0_1", "0_2", "0_3", "0_4", "0_5", "0_6", "0_7:chat", "0_8", "0_9"] tiledR
-           $ myDefaultLayout
-  where
-    myDefaultLayout = tiled
-
 
 --------------------------------------------
 -- Event handling
