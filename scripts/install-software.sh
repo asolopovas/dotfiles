@@ -21,6 +21,7 @@ packages=(
     "ripgrep"
     "rofi"
     "sqlite3"
+    "btop"
     "stacer"
     "timeshift"
     "xwallpaper"
