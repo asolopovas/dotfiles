@@ -84,57 +84,25 @@ setCorrectWorkspace screenId expectedWorkspace = do
         windows $ W.view expectedWorkspace
         logMessage $ "Set Screen " ++ show screenId ++ " to workspace " ++ expectedWorkspace
 
+-- Maps workspaces to screens
+assignWorkspacesToScreens :: [(ScreenId, WorkspaceId)] -> X ()
+assignWorkspacesToScreens assignments = mapM_ assignWorkspace assignments
+  where
+    assignWorkspace (screenId, workspaceId) = do
+      screenWorkspace screenId >>= \maybeWorkspaceId -> do
+        when (maybeWorkspaceId /= Just workspaceId) $ do
+          windows $ W.view workspaceId
+          -- Optional: Add a delay here if necessary
 
 myStartupHook = do
-    spawnOnce "dotfiles/autostart.sh &"
     logMessage "Starting XMonad"
 
-    -- Initial log of workspace state
     logCurrentWorkspaceState "Initial"
-
-    -- Delay for 5 seconds
-    liftIO $ threadDelay 5000000
-
-    -- Set the correct workspace for each screen
-    setCorrectWorkspace 0 "0_1"
-    setCorrectWorkspace 1 "1_1"
-
-    -- Delay for another 5 seconds
-    liftIO $ threadDelay 5000000
-
-    -- Re-check and re-set if necessary
-    setCorrectWorkspace 0 "0_1"
-    setCorrectWorkspace 1 "1_1"
-
-    -- Final delay and log
-    liftIO $ threadDelay 5000000
+    assignWorkspacesToScreens [(S 0, "0_1"), (S 1, "1_1")]
     logCurrentWorkspaceState "Final"
-
-    logMessage "XMonad startup completed"
 
     spawnOnce "dotfiles/autostart.sh &"
-    logMessage "Starting XMonad"
-
-    -- Initial log of workspace state
-    logCurrentWorkspaceState "Initial"
-
-    -- Delay for 2 seconds
-    liftIO $ threadDelay 2000000
-
-    -- Set the correct workspace for each screen
-    setCorrectWorkspace 0 "0_1"
-    setCorrectWorkspace 1 "1_1"
-
-    -- Delay for another 2 seconds
-    liftIO $ threadDelay 2000000
-
-    -- Log the final state of workspaces
-    logCurrentWorkspaceState "Final"
-
     logMessage "XMonad startup completed"
-
-
-
 
 -------------------------------------------
 -- Globals
