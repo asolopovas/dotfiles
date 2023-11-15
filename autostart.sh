@@ -7,5 +7,6 @@ nm-applet &
 blueman-applet > /tmp/blueman.log 2>&1 &
 set-wallpaper &
 dunst &
+setxkbmap -layout gb,ru -option 'grp:win_space_toggle'
 insync start
 

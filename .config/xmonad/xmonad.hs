@@ -4,6 +4,7 @@
 import XMonad
 import XMonad.ManageHook
 import XMonad.Config.Desktop
+import Control.Concurrent (threadDelay)
 import Graphics.X11.ExtraTypes.XF86
 
 -- Actions
@@ -57,6 +58,82 @@ import qualified Codec.Binary.UTF8.String as UTF8
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
+
+import System.IO (appendFile)
+import Control.Monad (when)
+
+
+-- Function to log messages
+logMessage :: String -> X ()
+logMessage msg = liftIO $ appendFile "/home/andrius/xmonad.log" (msg ++ "\n")
+
+-- Function to log the current state of workspaces and screens
+logCurrentWorkspaceState :: String -> X ()
+logCurrentWorkspaceState label = do
+    ws <- gets windowset
+    let screenWsInfo = map (\s -> (W.screen s, W.tag . W.workspace $ s)) $ W.current ws : W.visible ws
+    logMessage $ label ++ " Workspace assignments: " ++ show screenWsInfo
+
+
+-- Function to set the correct workspace
+setCorrectWorkspace :: ScreenId -> WorkspaceId -> X ()
+setCorrectWorkspace screenId expectedWorkspace = do
+    currentWorkspace <- screenWorkspace screenId
+    when (currentWorkspace /= Just expectedWorkspace) $ do
+        logMessage $ "Screen " ++ show screenId ++ " initial workspace: " ++ show currentWorkspace
+        windows $ W.view expectedWorkspace
+        logMessage $ "Set Screen " ++ show screenId ++ " to workspace " ++ expectedWorkspace
+
+
+myStartupHook = do
+    spawnOnce "dotfiles/autostart.sh &"
+    logMessage "Starting XMonad"
+
+    -- Initial log of workspace state
+    logCurrentWorkspaceState "Initial"
+
+    -- Delay for 5 seconds
+    liftIO $ threadDelay 5000000
+
+    -- Set the correct workspace for each screen
+    setCorrectWorkspace 0 "0_1"
+    setCorrectWorkspace 1 "1_1"
+
+    -- Delay for another 5 seconds
+    liftIO $ threadDelay 5000000
+
+    -- Re-check and re-set if necessary
+    setCorrectWorkspace 0 "0_1"
+    setCorrectWorkspace 1 "1_1"
+
+    -- Final delay and log
+    liftIO $ threadDelay 5000000
+    logCurrentWorkspaceState "Final"
+
+    logMessage "XMonad startup completed"
+
+    spawnOnce "dotfiles/autostart.sh &"
+    logMessage "Starting XMonad"
+
+    -- Initial log of workspace state
+    logCurrentWorkspaceState "Initial"
+
+    -- Delay for 2 seconds
+    liftIO $ threadDelay 2000000
+
+    -- Set the correct workspace for each screen
+    setCorrectWorkspace 0 "0_1"
+    setCorrectWorkspace 1 "1_1"
+
+    -- Delay for another 2 seconds
+    liftIO $ threadDelay 2000000
+
+    -- Log the final state of workspaces
+    logCurrentWorkspaceState "Final"
+
+    logMessage "XMonad startup completed"
+
+
 
 
 -------------------------------------------
@@ -290,9 +367,6 @@ myManageHook = composeAll
         className =? "Teamviewer"                 --> doShift "1_9"
     ] <+> namedScratchpadManageHook myScratchPads
 
-
-
-
 --------------------------------------------
 -- Mouse bindings
 --------------------------------------------
@@ -390,11 +464,6 @@ spawnToWorkspace :: String -> String -> X ()
 spawnToWorkspace workspace program = do
                                       spawnOnce program
                                       windows $ W.greedyView workspace
---------------------------------------------
--- Startup Hook
---------------------------------------------
-myStartupHook = do
-    spawnOnce            "dotfiles/autostart.sh &"
 
 -------------------------------------------
 -- Main
