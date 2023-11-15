@@ -169,6 +169,7 @@ myManageHook = composeAll
         appName   =? "fzf-menu"                    --> doCenterFloat,
         appName   =? "pcmanfmTerm"                --> doCenterFloat,
         appName   =? "gnome-tweaks"               --> doCenterFloat,
+        appName   =? "gnome-calculator"           --> doRectFloat smFloat,
         appName   =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
         title     =? "Media viewer"               --> doCenterFloat,
         className =? "Pavucontrol"                --> doCenterFloat,
