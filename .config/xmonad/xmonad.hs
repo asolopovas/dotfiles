@@ -250,12 +250,27 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
         | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
     ++
+    [((modm, xK_h), cycleScreens Prev)  -- Bind h to cycle backwards
+    ,((modm, xK_l), cycleScreens Next)] -- Bind l to cycle forwards
 
-    -- mod-{h,j}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{h,j}, Move client to screen 1, 2, or 3
-    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_h, xK_l] [0..]
-        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
+--------------------------------------------
+-- Functions and Configurations
+--------------------------------------------
+-- Enum to represent screen cycling direction
+data Direction = Prev | Next
+
+-- Function to cycle through screens
+cycleScreens :: Direction -> X ()
+cycleScreens dir = do
+    screens <- gets (W.screens . windowset)
+    screenCount <- countScreens
+    when (screenCount > 0) $ do
+        currentScreen <- gets (W.screen . W.current . windowset)
+        let offset = case dir of
+                        Prev -> -1
+                        Next -> 1
+        let nextScreen = (currentScreen + offset + screenCount) `mod` screenCount
+        screenWorkspace nextScreen >>= flip whenJust (windows . W.view)
 
 --------------------------------------------
 -- Startup
@@ -263,10 +278,6 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 myStartupHook = do
     fixWorkspaceAssignment
     spawnOnce "dotfiles/autostart.sh &"
-
---------------------------------------------
--- Functions and Configurations
---------------------------------------------
 -- Function to log messages
 logMessage :: String -> X ()
 logMessage msg = liftIO $ appendFile "/home/andrius/xmonad.log" (msg ++ "\n")
