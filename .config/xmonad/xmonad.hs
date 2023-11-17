@@ -282,7 +282,7 @@ logCurrentWorkspaceState label = do
 fixWorkspaceAssignment :: X ()
 fixWorkspaceAssignment = do
     nScreens <- countScreens
-    when (nScreens == 2) $ do
+    when (nScreens >= 2) $ do
         -- Logic for two screens
         screenWorkspace 1 >>= flip whenJust (windows . W.view)
         windows $ W.view "1_1"
