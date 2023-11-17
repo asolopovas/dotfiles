@@ -32,9 +32,17 @@ if type -q bass;
 end
 
 
-if type -q bass; and test -f $HOME/.nvm/nvm.sh
-    bass source $HOME/.nvm/nvm.sh
+if type -q bass
+    set nvm_path $HOME/.nvm/nvm.sh
+    if not test -f $nvm_path
+        set nvm_path $HOME/.config/nvm/nvm.sh
+    end
+
+    bass source $nvm_path
 end
+
+
+
 
 # FZF Settings
 set FZFARGS

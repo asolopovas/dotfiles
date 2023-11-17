@@ -21,7 +21,11 @@ if [ "$OS" = "alpine" ]; then
     sed -i '/nvm_get_arch() {/,/^}$/c\nvm_get_arch() { nvm_echo "x64-musl"; }' $NVM_DIR/nvm.sh
 fi
 
-source "$NVM_DIR/nvm.sh"
-nvm install $NODE_VERSION
+if [ -f "$NVM_DIR/nvm.sh" ]; then
+  source "$NVM_DIR/nvm.sh"
+  nvm install $NODE_VERSION
 
-npm -g install yarn pnpm
+  npm -g install yarn pnpm
+else 
+  print_color red "Node Install Failed"
+fi
