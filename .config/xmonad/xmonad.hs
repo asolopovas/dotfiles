@@ -69,7 +69,7 @@ myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#fff323"
 
 myTerminal           = "alacritty"
-myBrowser            = "google-chrome --no-default-browser-check --force-dark-mode"
+myBrowser            = "google-chrome --no-default-browser-check --enable-features=WebUIDarkMode --force-dark-mode"
 myFilebrowser        = "thunar"
 myModMask            = mod4Mask
 myWorkspaces         = ["1","2","3","4","5","6","7","8","9"]
@@ -171,6 +171,7 @@ myManageHook = composeAll
         appName   =? "gnome-tweaks"               --> doCenterFloat,
         appName   =? "gnome-calculator"           --> doRectFloat smFloat,
         appName   =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
+        title     =? "Picture-in-picture"         --> doRectFloat smFloat,
         title     =? "Media viewer"               --> doCenterFloat,
         className =? "Pavucontrol"                --> doCenterFloat,
         className =? "qt5ct"                      --> doCenterFloat,
@@ -250,15 +251,20 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
         | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
     ++
-    [((modm, xK_h), cycleScreens Prev)  -- Bind h to cycle backwards
-    ,((modm, xK_l), cycleScreens Next)] -- Bind l to cycle forwards
+    -- [((modm, xK_h), cycleScreens Prev)  -- Bind h to cycle backwards
+    -- ,((modm, xK_l), cycleScreens Next)] -- Bind l to cycle forwards
+    -- ++
+    -- mod-{h,l}, Switch to physical/Xinerama screens 1, 2, or 3
+    -- mod-shift-{h,l}, Move client to screen 1, 2, or 3
+    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
+        | (key, sc) <- zip [xK_h, xK_l] [0..]
+        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
 
 --------------------------------------------
 -- Functions and Configurations
 --------------------------------------------
 -- Enum to represent screen cycling direction
 data Direction = Prev | Next
-
 -- Function to cycle through screens
 cycleScreens :: Direction -> X ()
 cycleScreens dir = do
