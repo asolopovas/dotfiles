@@ -251,24 +251,23 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
         | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
     ++
-    -- [((modm, xK_h), cycleScreens Prev)  -- Bind h to cycle backwards
-    -- ,((modm, xK_l), cycleScreens Next)] -- Bind l to cycle forwards
-    -- ++
-    -- mod-{h,l}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{h,l}, Move client to screen 1, 2, or 3
-    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_h, xK_l] [0..]
-        , (f, m) <- [(W.view, 0), (shiftAndView, shiftMask)]]
+    -- Bind h and l to cycle through screens
+    [((modm, xK_h), cycleScreens Prev)  -- Bind h to cycle backwards
+    ,((modm, xK_l), cycleScreens Next)] -- Bind l to cycle forwards
+    ++
+    -- Bind mod-shift-h and mod-shift-l to shift and follow window to another screen
+    [((modm .|. shiftMask, xK_h), shiftAndFollowScreen Prev)  -- Bind M-S-h
+    ,((modm .|. shiftMask, xK_l), shiftAndFollowScreen Next)] -- Bind M-S-l
 
 --------------------------------------------
 -- Functions and Configurations
 --------------------------------------------
 -- Enum to represent screen cycling direction
 data Direction = Prev | Next
+
 -- Function to cycle through screens
 cycleScreens :: Direction -> X ()
 cycleScreens dir = do
-    screens <- gets (W.screens . windowset)
     screenCount <- countScreens
     when (screenCount > 0) $ do
         currentScreen <- gets (W.screen . W.current . windowset)
@@ -277,6 +276,24 @@ cycleScreens dir = do
                         Next -> 1
         let nextScreen = (currentScreen + offset + screenCount) `mod` screenCount
         screenWorkspace nextScreen >>= flip whenJust (windows . W.view)
+
+-- Function to shift the current window to the next or previous screen and then follow it
+shiftAndFollowScreen :: Direction -> X ()
+shiftAndFollowScreen dir = do
+    screenCount <- countScreens
+    when (screenCount > 0) $ do
+        currentScreen <- gets (W.screen . W.current . windowset)
+        let offset = case dir of
+                        Prev -> -1
+                        Next -> 1
+        let nextScreenId = (currentScreen + offset + screenCount) `mod` screenCount
+        screenWorkspace nextScreenId >>= flip whenJust (\ws -> do
+            win <- gets (W.peek . windowset)
+            case win of
+                Just w -> do
+                    windows $ W.shift ws
+                    windows $ W.view ws
+                Nothing -> return ())
 
 --------------------------------------------
 -- Startup

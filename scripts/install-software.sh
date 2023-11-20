@@ -19,6 +19,7 @@ packages=(
     "polybar"
     "playerctl"
     "ripgrep"
+    "pulsemixer"
     "rofi"
     "sqlite3"
     "btop"
