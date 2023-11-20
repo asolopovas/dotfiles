@@ -38,7 +38,6 @@ done
 
 pushd $HOME >/dev/null
 
-
 print_color() {
     declare -A colors=(
         ['red']='\033[31m'

@@ -25,6 +25,7 @@ fi
 CONFDIRS=(
     ".bashrc"
     ".gitconfig"
+    ".Xresources"
     ".gitignore"
     ".config/.func"
     ".config/.aliasrc"
