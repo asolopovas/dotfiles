@@ -38,16 +38,7 @@
 *pointerColorBackground:          #4B4D4B
 *pointerColorForeground:          #f8f8f0
 
-st.xfps: 300;
-!! Transparency (0-1):
-st.alpha: 0.90;
-
-!! Set a default font and font size as below:
-!! st.font:FuraCode Nerd Font Mono-16;
-!! st.termname: st-256color
-!! st.borderpx: 2
-
-Xft.dpi:       124
+Xft.dpi:       100
 Xft.antialias: true
 Xft.hinting:   true
 Xft.rgba:      rgb
@@ -58,15 +49,16 @@ Xft.lcdfilter: lcddefault
 XTerm*background:        #f1f6fb
 XTerm*foreground:        #14191f
 XTerm*pointerColor:      #1ABB9B
-XTerm*faceName:          Inconsolata for Powerline
+XTerm*faceName:          FiraMono Nerd Font
 XTerm*faceSize:          14
 XTerm*renderFont:	       true
 XTerm*reverseVideo:      on
 XTerm*selectToClipboard: true
 
-UXTerm*faceName:        Inconsolata for Powerline
+UXTerm*faceName:        FiraMono Nerd Font
 UXTerm*faceSize:        14
 UXTerm*renderFont:      true
-Xcursor.size:   				18
-Xcursor.theme:					DMZ-White
+
+Xcursor.size:   				14
+Xcursor.theme:					Bibata-Moden-Classic
 Xcursor.theme_core:     true
