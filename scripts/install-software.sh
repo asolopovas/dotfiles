@@ -21,6 +21,7 @@ packages=(
     "ripgrep"
     "pulsemixer"
     "rofi"
+    "picom"
     "sqlite3"
     "btop"
     "stacer"

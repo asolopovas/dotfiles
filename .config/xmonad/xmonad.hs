@@ -72,7 +72,7 @@ myTerminal           = "alacritty"
 myBrowser            = "google-chrome --no-default-browser-check --enable-features=WebUIDarkMode --force-dark-mode"
 myFilebrowser        = "thunar"
 myModMask            = mod4Mask
-myWorkspaces         = ["1","2","3","4","5","6","7","8","9"]
+myWorkspaces         = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 myBorderWidth        = 1
 
 myFocusFollowsMouse :: Bool
@@ -140,7 +140,6 @@ myKeyb =
     ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
     ("<XF86AudioStop>",        spawn "playerctl stop"                        ),
     ("<XF86AudioPrev>",        spawn "playerctl previous"                    ),
-
     ("<XF86AudioNext>",        spawn "playerctl next"                        ),
     ("<Print>",                spawn "flameshot gui"                         ),
     ("<XF86MenuPB>",           spawn "flameshot gui"                         )
@@ -200,7 +199,6 @@ myManageHook = composeAll
         className =? "Image Lounge"               --> doCenterFloat,
         className =? "Seahorse"                   --> doCenterFloat,
         className =? "Xarchiver"                  --> doCenterFloat,
-        className =? "File-roller"                --> doCenterFloat,
         className =? "jetbrains-phpstorm"         --> doShift "0_1",
         className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
         className =? "TelegramDesktop"            --> doShift "1_7",
@@ -209,13 +207,11 @@ myManageHook = composeAll
         className =? "Teamviewer"                 --> doShift "1_9"
     ] <+> namedScratchpadManageHook myScratchPads
 
-
 --------------------------------------------
 -- Layouts
 --------------------------------------------
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
-
 
 tiled   =    renamed [Replace "tiled"]
            $ smartBorders
@@ -295,28 +291,24 @@ shiftAndFollowScreen dir = do
 -- Startup
 --------------------------------------------
 myStartupHook = do
-    -- fixWorkspaceAssignment
+    fixWorkspaceAssignment
     spawnOnce "dotfiles/autostart.sh &"
--- -- Function to log messages
--- logMessage :: String -> X ()
--- logMessage msg = liftIO $ appendFile "/home/andrius/xmonad.log" (msg ++ "\n")
---
--- -- Function to log the current state of workspaces and screens
--- logCurrentWorkspaceState :: String -> X ()
--- logCurrentWorkspaceState label = do
---     ws <- gets windowset
---     let screenWsInfo = map (\s -> (W.screen s, W.tag . W.workspace $ s)) $ W.current ws : W.visible ws
---     logMessage $ label ++ " Workspace assignments: " ++ show screenWsInfo
---
--- -- Fixes Workspace Asignment S0 0_1 and S1 1_1
--- fixWorkspaceAssignment :: X ()
--- fixWorkspaceAssignment = do
---     nScreens <- countScreens
---     when (nScreens >= 2) $ do
---         -- Logic for two screens
---         screenWorkspace 1 >>= flip whenJust (windows . W.view)
---         windows $ W.view "1_1"
---         screenWorkspace 0 >>= flip whenJust (windows . W.view)
+
+fixWorkspaceAssignment :: X ()
+fixWorkspaceAssignment = do
+    nScreens <- countScreens
+    when (nScreens == 2) $ do
+        -- Logic for two screens
+        screenWorkspace 1 >>= flip whenJust (windows . W.view)
+        windows $ W.view "1_1"
+        screenWorkspace 0 >>= flip whenJust (windows . W.view)
+    when (nScreens == 3) $ do
+        -- Logic for three screens
+        screenWorkspace 1 >>= flip whenJust (windows . W.view)
+        windows $ W.view "1_1"
+        screenWorkspace 2 >>= flip whenJust (windows . W.view)
+        windows $ W.view "2_1"
+        screenWorkspace 0 >>= flip whenJust (windows . W.view)
 
 -------------------------------------------
 -- Floating functions
@@ -348,7 +340,6 @@ standardSize win = do
 -- Float and center a tiled window, sink a floating window
 toggleFloat = floatOrNot (withFocused $ windows . W.sink) (withFocused centerFloat')
 
-
 -- Utility Functions
 makeFloat :: Float -> W.RationalRect
 makeFloat dim = W.RationalRect
@@ -378,7 +369,6 @@ buildNS name cmd prop value floatTypeStr = NS name cmd (property =? value) (floa
         floatType "sm" = smFloatCustom
         floatType "md" = mdFloatCustom
         floatType "lg" = lgFloatCustom
-
 
 --------------------------------------------
 -- Mouse bindings
@@ -460,8 +450,6 @@ main = do
     $ docks
     $ ewmhFullscreen
     $ def {
-
-        -- simple stuff
         terminal           = myTerminal,
         focusFollowsMouse  = myFocusFollowsMouse,
         clickJustFocuses   = myClickJustFocuses,
