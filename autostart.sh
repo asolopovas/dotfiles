@@ -8,5 +8,7 @@ blueman-applet > /tmp/blueman.log 2>&1 &
 set-wallpaper &
 dunst &
 telegram-desktop &
-# setxkbmap -layout gb,ru -option 'grp:win_space_toggle'
 insync start
+xset r rate 300 50 &
+xsetroot -cursor_name left_ptr &
+# setxkbmap -layout gb,ru -option 'grp:win_space_toggle'
