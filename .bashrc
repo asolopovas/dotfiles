@@ -3,6 +3,8 @@ export NVM_DIR="$HOME/.nvm"
 source $DOTFILES/globals.sh
 source $DOTFILES/env/env-vars.sh
 source $DOTFILES/env/oh-my-bash.sh
+export LIBGUESTFS_DEBUG=1
+export LIBGUESTFS_TRACE=1
 
 for file in $DOTFILES/completions/bash/*.sh; do
     source $file
