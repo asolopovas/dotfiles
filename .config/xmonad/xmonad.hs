@@ -199,6 +199,8 @@ myManageHook = composeAll
         className =? "Gpg-crypter"                --> doCenterFloat,
         className =? "kcachegrind"                --> doCenterFloat,
         className =? "Qalculate-gtk"              --> doCenterFloat,
+        className =? "flameshot"                  --> doRectFloat lgFloat,
+        className =? "Anydesk"                    --> doRectFloat mdFloat,
         className =? "Psi"                        --> doCenterFloat,
         className =? "Image Lounge"               --> doCenterFloat,
         className =? "Seahorse"                   --> doCenterFloat,
@@ -207,7 +209,7 @@ myManageHook = composeAll
         className =? "TelegramDesktop"            --> doRectFloat lgFloat,
         className =? "Signal"                     --> doRectFloat lgFloat,
         className =? "Skype"                      --> doRectFloat lgFloat,
-        className =? "Teamviewer"                 --> doShift "1_9"
+        className =? "Teamviewer"                 --> doRectFloat lgFloat
     ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
