@@ -173,6 +173,7 @@ myManageHook = composeAll
         title     =? "Picture-in-picture"         --> doRectFloat smFloat,
         title     =? "Media viewer"               --> doCenterFloat,
         title     =? "Cryptomator"                --> doRectFloat mdFloat,
+        title     =? "Bitwarden"                  --> doRectFloat smFloat,
         className =? "Pavucontrol"                --> doCenterFloat,
         className =? "qt5ct"                      --> doCenterFloat,
         className =? "Nm-connection-editor"       --> doCenterFloat,
