@@ -172,6 +172,7 @@ myManageHook = composeAll
         appName   =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
         title     =? "Picture-in-picture"         --> doRectFloat smFloat,
         title     =? "Media viewer"               --> doCenterFloat,
+        title     =? "Cryptomator"                --> doCenterFloat,
         className =? "Pavucontrol"                --> doCenterFloat,
         className =? "qt5ct"                      --> doCenterFloat,
         className =? "Nm-connection-editor"       --> doCenterFloat,
