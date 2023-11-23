@@ -8,7 +8,7 @@ nm-applet &
 blueman-applet > /tmp/blueman.log 2>&1 &
 set-wallpaper &
 dunst &
-telegram-desktop &
+telegram-desktop -startintray -- %u &
 insync start
 xset r rate 300 50 &
 xsetroot -cursor_name left_ptr &
