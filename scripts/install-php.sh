@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VER=${$1:-"8.1"}
+VER=${1:-"8.1"}
 
 source $HOME/dotfiles/globals.sh
 
@@ -39,7 +39,7 @@ packages=$(
     echo "${phpPackages[*]}"
 )
 
-case "$1" in
+case "$2" in
 uninstall)
     removePackage $packages
     ;;
@@ -47,4 +47,3 @@ uninstall)
     installPackages $packages
     ;;
 esac
-

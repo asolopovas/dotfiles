@@ -87,7 +87,7 @@ installPackages() {
 
 removePackage() {
     print_color reed "Removing $1 package"
-    if cmd_exists $1 && is_sudoer; then
+    if cmd_exist $1 && is_sudoer; then
         case $OS in
         ubuntu)
             sudo apt remove -y "$@"
