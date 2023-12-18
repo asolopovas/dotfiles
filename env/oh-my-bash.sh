@@ -3,20 +3,9 @@
 DISABLE_AUTO_UPDATE="true"
 OSH_THEME="theme"
 
-completions=(
-    git
-    composer
-    ssh
-)
-
-aliases=(
-    general
-)
-
-plugins=(
-    git
-    bashmarks
-)
+completions=(git composer ssh)
+aliases=(general)
+plugins=(git bashmarks)
 
 ohmybash_dir="$HOME/.local/share/ohmybash"
 theme_dir="$ohmybash_dir/custom/themes/theme"
