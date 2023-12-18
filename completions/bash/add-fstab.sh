@@ -6,9 +6,9 @@ _add_fstab_completion() {
     local level2="ext4 ntfs ntfs-3g vfat xfs btrfs"
 
     if test_depth 1; then
-        COMPREPLY=" $(compgen -W "${info}" -- "${cur_word}") "
+        COMPREPLY="$(compgen -W "${info}" -- "${cur_word}")"
     elif test_depth 2; then
-        COMPREPLY=" $(compgen -W "${level2}" -- "${cur_word}") "
+        COMPREPLY="$(compgen -W "${level2}" -- "${cur_word}")"
     fi
 }
 
