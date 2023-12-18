@@ -30,10 +30,6 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
 export DOTFILES_DIR="$HOME/dotfiles"
 
-env_vars=(
-    env-vars
-    include-paths
-)
 
 source_script() {
     local script_name=$1
