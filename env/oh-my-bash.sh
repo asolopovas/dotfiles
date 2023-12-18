@@ -3,9 +3,9 @@
 DISABLE_AUTO_UPDATE="true"
 OSH_THEME="theme"
 
-completions=(git composer ssh)
-aliases=(general)
-plugins=(git bashmarks)
+completions="git composer ssh"
+aliases="general"
+plugins="git bashmarks"
 
 ohmybash_dir="$HOME/.local/share/ohmybash"
 theme_dir="$ohmybash_dir/custom/themes/theme"
@@ -18,7 +18,7 @@ if [ ! -d "$theme_dir" ] || [ ! -f "$theme_file" ]; then
 fi
 
 if [ ! -f "$ohmybash_dir/oh-my-bash.sh" ]; then
-    rm -rf $ohmybash_dir;
+    rm -rf $ohmybash_dir
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
     rm -rf "$HOME/.bashrc*"
     ln -sf "$HOME/dotfiles/.bashrc" "$HOME/.bashrc"
