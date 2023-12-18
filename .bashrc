@@ -1,4 +1,5 @@
 export NVM_DIR="$HOME/.nvm"
+export DOTFILES="$HOME/dotfiles"
 
 source $DOTFILES/globals.sh
 source $DOTFILES/env/env-vars.sh
@@ -17,12 +18,12 @@ if cmd_exist fzf; then
 fi
 
 if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
-  tmux attach-session -t ssh_tmux || tmux new-session -s ssh_tmux
+    tmux attach-session -t ssh_tmux || tmux new-session -s ssh_tmux
 fi
 
 add_paths_from_file $DOTFILES/.paths
 
 [ -f "$HOME/.config/.aliasrc" ] && source $HOME/.config/.aliasrc
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
-[ -f "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -f "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -f "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -f "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion" # This loads nvm bash_completion
