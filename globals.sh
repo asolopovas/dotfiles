@@ -85,6 +85,20 @@ installPackages() {
     esac
 }
 
+print_color() {
+    NC='\033[0m'
+
+    if [ "$1" = "red" ]; then
+        COLOR="\033[31m"
+    fi
+
+    if [ "$1" = "green" ]; then
+        COLOR="\033[0;32m"
+    fi
+
+    printf "${COLOR}$2${NC}\n"
+}
+
 removePackage() {
     print_color reed "Removing $1 package"
     if cmd_exist $1 && is_sudoer; then
@@ -102,16 +116,8 @@ removePackage() {
     fi
 }
 
-print_color() {
-    NC='\033[0m'
-
-    if [ "$1" = "red" ]; then
-        COLOR="\033[31m"
-    fi
-
-    if [ "$1" = "green" ]; then
-        COLOR="\033[0;32m"
-    fi
-
-    printf "${COLOR}$2${NC}\n"
+source_script() {
+    local script_name=$1
+    local script_path="$DOTFILES/env/$script_name.sh"
+    [[ -f $script_path ]] && source $script_path || echo "Failed to source $script_path"
 }

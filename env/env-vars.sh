@@ -30,9 +30,3 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
 export DOTFILES_DIR="$HOME/dotfiles"
 
-
-source_script() {
-    local script_name=$1
-    local script_path="$DOTFILES/env/$script_name.sh"
-    [[ -f $script_path ]] && source $script_path || echo "Failed to source $script_path"
-}
