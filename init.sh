@@ -4,7 +4,6 @@ OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
-export PI=$HOME/.tmp/p
 
 cmd_exist() {
     command -v $1 >/dev/null 2>&1
@@ -55,19 +54,36 @@ setup_locale() {
     echo "$LOCALE setup complete!"
 }
 
+install_package() {
+    print_color green "Installing the following packages for ${OS^}:"
+    for pkg in "$@"; do
+        print_color blue "  - $pkg"
+    done
+    case $OS in
+    ubuntu | debian | linuxmint)
+        sudo apt install -y "$@"
+        ;;
+    centos)
+        sudo yum install -y "$@"
+        ;;
+    arch)
+        sudo pacman -S --noconfirm "$@"
+        ;;
+    esac
+}
+
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
-    if [ "$OS" = "ubuntu"  ]; then
+    if [ "$OS" = "ubuntu" ]; then
         setup_locale
     fi
-    if ! cmd_exist python && ! cmd_exist python3 || ! cmd_exist git || [ ! -f $PI ]; then
-        curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/helpers/system/p >$PI
-        chmod +x $PI
-        $PI i python3 git >/dev/null
+
+    if ! cmd_exist python && ! cmd_exist python3 || ! cmd_exist git; then
+        install_package python3 git
 
         if [ "$OS" = "alpine" ]; then
             sudo ln -sf $(which python3) /usr/bin/python
-            $PI i newt >/dev/null
+            install_package newt >/dev/null
         fi
     fi
 
@@ -90,7 +106,6 @@ source_script() {
     print_color green "Sourcing $script_path"
     [[ -f $script_path ]] && source $script_path
 }
-
 
 # Serialize and export associative array
 export features_string=$(declare -p features)
@@ -139,7 +154,7 @@ fi
 
 if [ "${features[ZSH]}" = true ]; then
     print_color green "INSTALLING ZSH..."
-    $PI i zsh >/dev/null
+    install_package zsh >/dev/null
 fi
 
 if [ "${features[OHMYFISH]}" = true ]; then
