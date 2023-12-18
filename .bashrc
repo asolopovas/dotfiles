@@ -13,7 +13,7 @@ for file in $DOTFILES/completions/bash/*.sh; do
 done
 
 if cmd_exist fzf; then
-    source $DOTFILES/fzf/fzf-opts.sh
+    source $DOTFILES/fzf/fzf-opts.bash
     source $DOTFILES/fzf/completion.bash
     source $DOTFILES/fzf/key-bindings.bash
 fi
