@@ -6,7 +6,10 @@ export DOTFILES="$HOME/dotfiles"
 source $DOTFILES/globals.sh
 source $DOTFILES/env/env-vars.sh
 source $DOTFILES/env/include-paths.sh
-source $DOTFILES/env/oh-my-bash.sh
+
+if [ "$OHMYBASH" == true ]; then
+    source $DOTFILES/env/oh-my-bash.sh
+fi
 
 for file in $DOTFILES/completions/bash/*.sh; do
     source $file
@@ -28,7 +31,7 @@ add_paths_from_file $DOTFILES/.paths
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
+*":$PNPM_HOME:"*) ;;
+*) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
