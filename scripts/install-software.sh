@@ -16,6 +16,7 @@ packages=(
     "libguestfs-tools"
     "libnss3-tools"
     "lxappearance"
+    "subversion"
     "polybar"
     "playerctl"
     "ripgrep"
