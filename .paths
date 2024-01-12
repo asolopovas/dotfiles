@@ -19,3 +19,4 @@ go/bin
 dotfiles/scripts
 .cabal/bin
 .ghcup/bin
+/opt/cpanel/ea-nodejs20/bin/
