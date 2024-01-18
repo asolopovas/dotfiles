@@ -18,6 +18,4 @@ alpine)
     ;;
 esac
 
-if [ "$FORCE" = true ]; then
-    configure_fish
-fi
+configure_fish
