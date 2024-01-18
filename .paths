@@ -15,6 +15,7 @@ go/bin
 .config/composer/vendor/bin
 /usr/local/go/bin
 /var/opt/google/google-cloud-sdk/bin
+/opt/cpanel/ea-nodejs20/bin
 /usr/sbin
 dotfiles/scripts
 .cabal/bin
