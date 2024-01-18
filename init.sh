@@ -100,7 +100,7 @@ install_essentials() {
 
 install_essentials
 
-source_script() {
+load_script() {
     local script_name=$1
     local script_path="$SCRIPTS_DIR/install-$script_name.sh"
     print_color green "Sourcing $script_path"
@@ -129,7 +129,7 @@ source $DOTFILES_DIR/globals.sh
 source $SCRIPTS_DIR/default-dirs.sh
 
 if [ "${features[FISH]}" = true ]; then
-    source_script 'fish'
+    load_script 'fish'
 fi
 
 if [ "${features[CARGO]}" = true ]; then
@@ -137,19 +137,19 @@ if [ "${features[CARGO]}" = true ]; then
 fi
 
 if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-    source_script "fd"
+    load_script "fd"
 fi
 
 if [ "${features[FZF]}" = true ]; then
-    source_script "fzf"
+    load_script "fzf"
 fi
 
 if [ "${features[NODE]}" = true ]; then
-    source_script "node"
+    load_script "node"
 fi
 
 if [ "${features[NVIM]}" = true ]; then
-    source_script "nvim"
+    load_script "nvim"
 fi
 
 if [ "${features[ZSH]}" = true ]; then
@@ -158,15 +158,15 @@ if [ "${features[ZSH]}" = true ]; then
 fi
 
 if [ "${features[OHMYFISH]}" = true ]; then
-    source_script "ohmyfish"
+    load_script "ohmyfish"
 fi
 
 if [ "${features[OHMYZSH]}" = true ]; then
-    source_script "ohmyzsh"
+    load_script "ohmyzsh"
 fi
 
 if [ "${features[OHMYBASH]}" = true ]; then
-    source_script "ohmybash"
+    load_script "ohmybash"
 fi
 
 if [ "${features[CHANGE_SHELL]}" = true ] && [ "$UNATTENDED" = false ]; then
