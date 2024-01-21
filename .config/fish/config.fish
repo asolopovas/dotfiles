@@ -1,10 +1,5 @@
 #!/bin/fish
 
-# # Start Gnome Keyring
-# if set -q DESKTOP_SESSION
-#     set -x (gnome-keyring-daemon --start --components=pkcs11,secrets,ssh,gpg | string split "=")
-# end
-
 # Fish
 fish_default_key_bindings
 set fish_greeting
@@ -25,12 +20,9 @@ for line in (cat $HOME/dotfiles/.paths)
     add2path $line
 end
 
-# # Load Environment Variables
-# load_env_vars "$HOME/.env-vars"
 if type -q bass;
     bass source $HOME/dotfiles/env/env-vars.sh
 end
-
 
 if type -q bass
     set nvm_path $HOME/.nvm/nvm.sh
@@ -44,9 +36,6 @@ if type -q bass
     end
 end
 
-
-
-
 # FZF Settings
 set FZFARGS
 for pattern in (cat $HOME/dotfiles/fzf/fzf-exclude)
@@ -59,13 +48,6 @@ set -U FZF_ALT_C_COMMAND "fd -H -t d $FZFARGS"
 fzf_key_bindings
 
 load_env "$HOME/.env-vars"
-
-# #  TMUX
-# if status is-interactive
-#     and not set -q TMUX
-#     and set -q SSH_CONNECTION
-#     tmux attach-session -t ssh_tmux > /dev/null 2>&1; or tmux new-session -s ssh_tmux
-# end
 
 # pnpm
 set -gx PNPM_HOME "$HOME/.local/share/pnpm"
