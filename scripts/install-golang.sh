@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VER="1.21.3"
+VER="1.21.6"
 ARCH="linux-amd64"
 LOC="/usr/local"
 
