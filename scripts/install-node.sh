@@ -2,7 +2,7 @@
 
 source $HOME/dotfiles/globals.sh
 
-NODE_VERSION=${NODE_VERSION:-18.18.2}
+NODE_VERSION=${NODE_VERSION:-20.11.1}
 NVM_VERSION=${NVM_VERSION:-v0.39.7}
 NVM_DIR="$HOME/.nvm"
 FORCE=${FORCE:-false}
