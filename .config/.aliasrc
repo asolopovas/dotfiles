@@ -74,3 +74,4 @@ alias pwatch='pnpm watch'
 
 alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
+alias fb="fabric"
