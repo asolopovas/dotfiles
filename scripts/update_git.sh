@@ -18,6 +18,7 @@ for item in "$@"; do
     echo "Processing directory: $dir with user: $user"
 
     sudo -u $user bash -c "
+        git config --global --add safe.directory $dir
         cd $dir || { echo 'Failed to change directory to $dir'; exit 1; }
         git fetch --all || { echo 'Failed to fetch from remote'; exit 1; }
         git checkout $TAG || { echo 'Failed to checkout tag $TAG'; exit 1; }
@@ -27,7 +28,11 @@ for item in "$@"; do
         pnpm prod || { echo 'PNPM prod failed'; exit 1; }
     "
 
-    echo "Successfully updated $dir"
+    if [ $? -eq 0 ]; then
+        echo "Successfully updated $dir"
+    else
+        echo "Failed to update $dir"
+    fi
 done
 
 echo "All directories updated successfully"
