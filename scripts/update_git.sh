@@ -2,18 +2,19 @@
 
 # Ensure tag is passed as an argument
 if [ -z "$1" ]; then
-    echo "No tag specified. Usage: ./update_git.sh <tag> <dir1:user1> <dir2:user2> ..."
+    echo "No tag specified. Usage: ./update_git.sh <tag> <user:dir1> <user:dir2> ..."
     exit 1
 fi
 
 TAG=$1
 shift
 
-# Iterate over the remaining arguments which are directories and their respective users
+# Iterate over the remaining arguments which are user:directory pairs
 for item in "$@"; do
-    IFS=':' read -r dir user <<< "$item"
-    if [ -z "$user" ]; then
-        user=$(whoami)
+    IFS=':' read -r user dir <<< "$item"
+    if [ -z "$user" ] || [ -z "$dir" ]; then
+        echo "Invalid format. Usage: ./update_git.sh <tag> <user:dir1> <user:dir2> ..."
+        exit 1
     fi
     echo "Processing directory: $dir with user: $user"
 
