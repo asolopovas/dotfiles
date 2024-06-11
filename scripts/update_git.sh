@@ -12,6 +12,9 @@ shift
 # Iterate over the remaining arguments which are directories and their respective users
 for item in "$@"; do
     IFS=':' read -r dir user <<< "$item"
+    if [ -z "$user" ]; then
+        user=$(whoami)
+    fi
     echo "Processing directory: $dir with user: $user"
 
     sudo -u $user bash -c "
