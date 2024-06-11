@@ -24,9 +24,15 @@ for item in "$@"; do
         git fetch --all || { echo 'Failed to fetch from remote'; exit 1; }
         git checkout $TAG || { echo 'Failed to checkout tag $TAG'; exit 1; }
         git pull origin $TAG || { echo 'Failed to pull from origin'; exit 1; }
-        composer install || { echo 'Composer install failed'; exit 1; }
-        pnpm install || { echo 'PNPM install failed'; exit 1; }
-        pnpm prod || { echo 'PNPM prod failed'; exit 1; }
+        if ! composer install; then
+            echo 'Composer install failed'; exit 1
+        fi
+        if ! pnpm install; then
+            echo 'PNPM install failed'; exit 1
+        fi
+        if ! pnpm prod; then
+            echo 'PNPM prod failed'; exit 1
+        fi
     "
 
     if [ $? -eq 0 ]; then
