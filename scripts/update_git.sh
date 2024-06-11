@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Ensure tag is passed as an argument
 if [ -z "$1" ]; then
     echo "No tag specified. Usage: ./update_git.sh <tag> <user:dir1> <user:dir2> ..."
     exit 1
@@ -9,22 +8,24 @@ fi
 TAG=$1
 shift
 
-# Function to process each directory
+COMPOSER_PATH="/usr/local/bin/composer"
+
 process_directory() {
     local user=$1
     local dir=$2
+    local pnpm_path="/home/$user/.local/share/pnpm/pnpm"
 
     echo "Processing directory: $dir with user: $user"
 
-    sudo -u "$user" bash -c "
-        git config --global --add safe.directory '$dir' &&
+    sudo -H -u "$user" fish -c "
         cd '$dir' &&
+        git config --add safe.directory '$dir' &&
         git fetch --all &&
         git checkout '$TAG' &&
         git pull origin '$TAG' &&
-        composer install &&
-        pnpm install &&
-        pnpm prod
+        $COMPOSER_PATH install --working-dir='$dir' &&
+        $pnpm_path install &&
+        $pnpm_path run prod
     "
 
     if [ $? -eq 0 ]; then
@@ -34,7 +35,6 @@ process_directory() {
     fi
 }
 
-# Iterate over the remaining arguments which are user:directory pairs
 for item in "$@"; do
     IFS=':' read -r user dir <<< "$item"
     if [ -z "$user" ] || [ -z "$dir" ]; then
