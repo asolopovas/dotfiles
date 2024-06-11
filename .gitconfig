@@ -19,9 +19,3 @@
 	recurse = true
 [safe]
 	directory = /home/andrius/www/alisiagreen.test/wp-content/themes/alisiagreen_v4
-[credential "https://github.com"]
-	helper = 
-	helper = !/usr/bin/gh auth git-credential
-[credential "https://gist.github.com"]
-	helper = 
-	helper = !/usr/bin/gh auth git-credential
