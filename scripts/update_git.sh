@@ -22,9 +22,10 @@ process_directory() {
         sudo -u "$user" bash -c "cd $dir && git fetch --tags && git checkout $tag && git pull origin $tag"
     fi
 
-    if [ "$GIT_ACTION" == "checkout_latest" ]; then
+    if [ "$GIT_ACTION" == "checkout_latest_tag" ]; then
         git fetch --tags
         latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "")
+
         if [ -z "$latest_tag" ]; then
             echo "No tags found"
             exit 1
