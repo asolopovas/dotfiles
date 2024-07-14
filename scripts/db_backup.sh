@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if the correct number of arguments is provided
-if [ "$#" -ne 5 ]; then
-  echo "Usage: $0 <DB_HOST> <DB_USER> <DB_PASS> <DB_NAME> <OUTPUT_DIR>"
+if [ "$#" -ne 4 ]; then
+  echo "Usage: $0 <DB_HOST> <DB_USER> <DB_PASS> <DB_NAME>"
   exit 1
 fi
 
@@ -11,7 +11,9 @@ DB_HOST=$1
 DB_USER=$2
 DB_PASS=$3
 DB_NAME=$4
-OUTPUT_DIR=$5
+
+# Set the output directory to the current working directory
+OUTPUT_DIR=$(pwd)
 
 # Ensure the output directory exists
 mkdir -p "$OUTPUT_DIR"
