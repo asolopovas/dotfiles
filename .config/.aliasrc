@@ -1,5 +1,6 @@
 # Aliases
 alias pw='WP_TESTS_SKIP_INSTALL=1 phpunit-watcher watch'
+alias wn='wp acorn'
 
 # System
 alias xclip='xclip -selection c'
