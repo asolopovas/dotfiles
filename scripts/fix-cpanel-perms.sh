@@ -1,7 +1,4 @@
 #!/bin/bash
-# Script to fix permissions of accounts
-# Written by: Vanessa Vasile 5/13/10
-# http://thecpaneladmin.com
 
 if [ "$#" -lt "1" ];then
         echo "Must specify user"
