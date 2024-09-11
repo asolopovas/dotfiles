@@ -64,11 +64,12 @@ set --export PATH $BUN_INSTALL/bin $PATH
 
 # Start ssh-agent if not running
 if not set --query SSH_AGENT_PID
-    eval (ssh-agent -c)
+    eval (ssh-agent -c) > /dev/null 2>&1
 end
 
 # Add SSH key if not already added
-if ssh-add -l ^/dev/null
-    ssh-add ~/.ssh/id_rsa
+if ssh-add -l > /dev/null 2>&1
+    ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
 end
+
 
