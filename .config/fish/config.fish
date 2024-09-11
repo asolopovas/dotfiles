@@ -63,9 +63,6 @@ set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
 
 eval (ssh-agent -c) > /dev/null
-# if test -f ~/.ssh/id_rsa
-#     ssh-add ~/.ssh/id_rsa
-# end
 function on_exit --on-event fish_exit
     ssh-agent -k > /dev/null
 end
