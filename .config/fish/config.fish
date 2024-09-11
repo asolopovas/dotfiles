@@ -68,20 +68,14 @@ if not set --query SSH_AGENT_PID
         source ~/.ssh-agent-env
         if not kill -0 $SSH_AGENT_PID >/dev/null 2>&1
             echo "Stale agent file, starting new agent"
-            set -Ux SSH_AGENT_PID (ssh-agent | grep -oP 'SSH_AGENT_PID=\K\d+')
-            set -Ux SSH_AUTH_SOCK (ssh-agent | grep -oP 'SSH_AUTH_SOCK=\K\S+')
-            echo "set -Ux SSH_AGENT_PID $SSH_AGENT_PID" > ~/.ssh-agent-env
-            echo "set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK" >> ~/.ssh-agent-env
+            eval (ssh-agent -c | sed 's/^/set -x /') > ~/.ssh-agent-env
         end
     else
-        set -Ux SSH_AGENT_PID (ssh-agent | grep -oP 'SSH_AGENT_PID=\K\d+')
-        set -Ux SSH_AUTH_SOCK (ssh-agent | grep -oP 'SSH_AUTH_SOCK=\K\S+')
-        echo "set -Ux SSH_AGENT_PID $SSH_AGENT_PID" > ~/.ssh-agent-env
-        echo "set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK" >> ~/.ssh-agent-env
+        eval (ssh-agent -c | sed 's/^/set -x /') > ~/.ssh-agent-env
     end
 end
 
-# Add SSH key if not already added
+# Add SSH key with a timeout of 12 hours
 if not ssh-add -l >/dev/null 2>&1
-    ssh-add ~/.ssh/id_rsa >/dev/null 2>&1
+    ssh-add -t 12h ~/.ssh/id_rsa >/dev/null 2>&1
 end
