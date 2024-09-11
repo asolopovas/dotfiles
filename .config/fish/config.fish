@@ -61,3 +61,14 @@ if [ -f "$HOME/.local/google-cloud-sdk/path.fish.inc" ]; . "$HOME/.local/google-
 # bun
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
+
+# Start ssh-agent if not running
+if not set --query SSH_AGENT_PID
+    eval (ssh-agent -c)
+end
+
+# Add SSH key if not already added
+if ssh-add -l ^/dev/null
+    ssh-add ~/.ssh/id_rsa
+end
+
