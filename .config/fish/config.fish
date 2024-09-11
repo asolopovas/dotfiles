@@ -68,10 +68,16 @@ if not set --query SSH_AGENT_PID
         source ~/.ssh-agent-env
         if not kill -0 $SSH_AGENT_PID >/dev/null 2>&1
             echo "Stale agent file, starting new agent"
-            eval (ssh-agent -c | sed 's/^/set -x /') > ~/.ssh-agent-env
+            set -Ux SSH_AGENT_PID (ssh-agent | grep -oP 'SSH_AGENT_PID=\K\d+')
+            set -Ux SSH_AUTH_SOCK (ssh-agent | grep -oP 'SSH_AUTH_SOCK=\K\S+')
+            echo "set -Ux SSH_AGENT_PID $SSH_AGENT_PID" > ~/.ssh-agent-env
+            echo "set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK" >> ~/.ssh-agent-env
         end
     else
-        eval (ssh-agent -c | sed 's/^/set -x /') > ~/.ssh-agent-env
+        set -Ux SSH_AGENT_PID (ssh-agent | grep -oP 'SSH_AGENT_PID=\K\d+')
+        set -Ux SSH_AUTH_SOCK (ssh-agent | grep -oP 'SSH_AUTH_SOCK=\K\S+')
+        echo "set -Ux SSH_AGENT_PID $SSH_AGENT_PID" > ~/.ssh-agent-env
+        echo "set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK" >> ~/.ssh-agent-env
     end
 end
 
