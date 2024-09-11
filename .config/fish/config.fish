@@ -66,12 +66,12 @@ set --export PATH $BUN_INSTALL/bin $PATH
 if not set --query SSH_AGENT_PID
     if test -f ~/.ssh-agent-env
         source ~/.ssh-agent-env
-        if ! kill -0 $SSH_AGENT_PID >/dev/null 2>&1
+        if not kill -0 $SSH_AGENT_PID >/dev/null 2>&1
             echo "Stale agent file, starting new agent"
-            eval (ssh-agent -c) > ~/.ssh-agent-env
+            eval (ssh-agent -c | sed 's/^/set -x /') > ~/.ssh-agent-env
         end
     else
-        eval (ssh-agent -c) > ~/.ssh-agent-env
+        eval (ssh-agent -c | sed 's/^/set -x /') > ~/.ssh-agent-env
     end
 end
 
