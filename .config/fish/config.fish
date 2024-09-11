@@ -65,3 +65,7 @@ set --export PATH $BUN_INSTALL/bin $PATH
 if not pgrep ssh-agent > /dev/null
     eval (ssh-agent -c)
 end
+
+if test -f ~/.ssh/id_rsa
+    ssh-add ~/.ssh/id_rsa
+end
