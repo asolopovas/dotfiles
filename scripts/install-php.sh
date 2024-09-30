@@ -29,7 +29,6 @@ phpPackages=(
     "php$VER-opcache"
     "php$VER-phpdbg"
     "php$VER-redis"
-    "php$VER-redline"
     "php$VER-sqlite3"
     "php$VER-xdebug"
     "php$VER-xml"
