@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VER=${1:-"8.1"}
+VER=${1:-"8.2"}
 
 source $HOME/dotfiles/globals.sh
 
@@ -42,8 +42,10 @@ packages=$(
 case "$2" in
 uninstall)
     removePackage $packages
+    sudo apt-mark unhold $packages
     ;;
 *)
     installPackages $packages
+    sudo apt-mark hold $packages
     ;;
 esac
