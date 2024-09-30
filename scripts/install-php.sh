@@ -17,7 +17,7 @@ phpPackages=(
     "php$VER-gd"
     "php$VER-imagick"
     # "php$VER-imap"
-    "php$VER-json"
+    # "php$VER-json"
     # "php$VER-litespeed"
     "php$VER-mbstring"
     # "php$VER-memcache"
@@ -47,6 +47,7 @@ uninstall)
     sudo apt-mark unhold $packages
     ;;
 *)
+    sudo apt-mark unhold $packages
     installPackages $packages
     sudo apt-mark hold $packages
     ;;
