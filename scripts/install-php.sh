@@ -17,7 +17,7 @@ phpPackages=(
     "php$VER-gd"
     "php$VER-imagick"
     # "php$VER-imap"
-    "php-json"
+    "php$VER-json"
     # "php$VER-litespeed"
     "php$VER-mbstring"
     # "php$VER-memcache"
