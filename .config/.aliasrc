@@ -76,4 +76,4 @@ alias pwatch='pnpm watch'
 alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
 alias fb="fabric"
-alias liverel="docker run --rm -p 127.0.0.1:35729:35729 -v $(pwd):/app/public lyn-livereload"
+alias liverel="docker run --rm -p 127.0.0.1:35729:35729 -v (pwd):/app/public lyn-livereload"
