@@ -21,3 +21,5 @@ dotfiles/scripts
 .cabal/bin
 .ghcup/bin
 /opt/cpanel/ea-nodejs20/bin/
+$HOME/.config/composer/vendor/bin
+
