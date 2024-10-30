@@ -72,6 +72,7 @@ alias pu='pnpm update '
 alias pdev='pnpm dev'
 alias pprod='pnpm prod'
 alias pwatch='pnpm watch'
+alias bund='bun i -D '
 
 alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
