@@ -359,6 +359,9 @@ fun! <SID>StripTrailingWhitespaces()
   retab
 endfun
 
+
+nnoremap <expr> j (v:count > 4 ? "m'" . v:count . 'j' : 'gj')
+nnoremap <expr> k (v:count > 4 ? "m'" . v:count . 'k' : 'gk')
 " ------------------------------------------------------
 " Auto Commands
 " ------------------------------------------------------
