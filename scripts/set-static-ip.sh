@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root. Use: sudo $0 <IP_ADDRESS>"
     exit 1
@@ -16,11 +15,9 @@ set_static_ip() {
         return 1
     fi
 
-    # Determine the gateway based on the IP address
     local GATEWAY
     GATEWAY=$(echo "$IP_ADDRESS" | awk -F. '{print $1"."$2"."$3".1"}')
 
-    # Create a new Netplan configuration
     cat <<EOF > /etc/netplan/01-netcfg.yaml
 network:
   version: 2
@@ -35,11 +32,9 @@ network:
 EOF
     netplan apply
 
-    # Secure file permissions
-    chmod 600 /etc/netplan/*
     chown root:root /etc/netplan/*
+    chmod 600 /etc/netplan/*
 
-    # Configure the interface
     ip addr flush dev $INTERFACE
     ip addr add $IP_ADDRESS/$CIDR dev $INTERFACE
     ip link set $INTERFACE up
