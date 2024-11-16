@@ -16,8 +16,9 @@ set_static_ip() {
         return 1
     fi
 
-    # Backup existing Netplan configuration
-    cp /etc/netplan/*.yaml /etc/netplan/backup-$(date +%F-%H-%M-%S).yaml
+    # Determine the gateway based on the IP address
+    local GATEWAY
+    GATEWAY=$(echo "$IP_ADDRESS" | awk -F. '{print $1"."$2"."$3".1"}')
 
     # Create a new Netplan configuration
     cat <<EOF > /etc/netplan/01-netcfg.yaml
@@ -27,6 +28,9 @@ network:
     $INTERFACE:
       addresses:
         - $IP_ADDRESS/$CIDR
+      routes:
+        - to: 0.0.0.0/0
+          via: $GATEWAY
       dhcp4: false
 EOF
     netplan apply
@@ -40,7 +44,7 @@ EOF
     ip addr add $IP_ADDRESS/$CIDR dev $INTERFACE
     ip link set $INTERFACE up
 
-    echo "Static IP configured for $INTERFACE: $IP_ADDRESS/$CIDR"
+    echo "Static IP configured for $INTERFACE: $IP_ADDRESS/$CIDR with gateway $GATEWAY"
 }
 
 set_static_ip "$1"
