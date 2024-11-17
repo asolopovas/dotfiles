@@ -34,7 +34,7 @@ function add-repo-key
         set key (echo $response | jq -r '.key')
         set url (echo $response | jq -r '.url')
         set title (echo $response | jq -r '.title')
-        set verified (echo $response | jq -r '.verified')
+        set verified (echo $response | jq -r '.verified')dd
         set created_at (echo $response | jq -r '.created_at')
 
         echo "----------------------------------------"
