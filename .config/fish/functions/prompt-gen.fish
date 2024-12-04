@@ -4,22 +4,28 @@ function prompt-gen
         return 1
     end
 
-    echo "# Follow these important rules
-Do not include comments in the code
-Avoid ending lines with semicolons
-Strive for compactness, but maintain readability"
+    set output ""
 
     for file in $argv
         if test -e $file
-            echo ""
-            echo (basename $file)
-            set extension (string match -r '\.\w+$' $file | string sub -s 2)
-            echo '```'(string lower $extension)
-            cat $file
-            echo '```'
-            echo ""
+            set file_output "
+(basename $file)
+```(string lower (string match -r '\.\w+$' $file | string sub -s 2))
+(cat $file)
+```"
+            set output "$output$file_output\n"
         else
             echo "File not found: $file"
+            return 1
         end
     end
+
+    # Determine OS and copy to clipboard
+    echo $output | if test (uname) = "Linux"
+        command -v xclip >/dev/null; and xclip -selection clipboard; or echo "xclip not found. Install it using: sudo apt install xclip"
+    else
+        command -v clip.exe >/dev/null; and clip.exe; or echo "clip.exe not found. Ensure it's in your PATH."
+    end
+
+    echo "Output copied to clipboard."
 end
