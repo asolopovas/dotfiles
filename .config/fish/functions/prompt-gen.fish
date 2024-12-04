@@ -5,27 +5,28 @@ function prompt-gen
     end
 
     set output ""
-
     for file in $argv
         if test -e $file
-            set file_output "
-(basename $file)
-```(string lower (string match -r '\.\w+$' $file | string sub -s 2))
-(cat $file)
-```"
-            set output "$output$file_output\n"
+            set base (basename $file)
+            set ext (string match -r '\.\w+$' $file | string sub -s 2 | string lower)
+            set content (cat $file)
+            set output "$output\n$base\n\`\`\`$ext\n$content\n\`\`\`\n"
         else
             echo "File not found: $file"
             return 1
         end
     end
 
-    # Determine OS and copy to clipboard
-    echo $output | if test (uname) = "Linux"
-        command -v xclip >/dev/null; and xclip -selection clipboard; or echo "xclip not found. Install it using: sudo apt install xclip"
-    else
-        command -v clip.exe >/dev/null; and clip.exe; or echo "clip.exe not found. Ensure it's in your PATH."
+    set uname_full (uname -a)
+    if string match -q "*WSL2*" $uname_full
+        echo -e $output | clip.exe
+    else if test (uname_full) = "Linux"
+        if command -v xclip >/dev/null
+            echo -e $output | xclip -selection clipboard
+        else
+            echo "xclip not found. Install it using: sudo apt install xclip"
+            return 1
+        end
     end
-
     echo "Output copied to clipboard."
 end
