@@ -4,29 +4,41 @@ function prompt-gen
         return 1
     end
 
-    set output ""
+    echo "# Follow these important rules
+Do not include comments in the code
+Avoid ending lines with semicolons
+Strive for compactness, but maintain readability"
+
     for file in $argv
         if test -e $file
-            set base (basename $file)
-            set ext (string match -r '\.\w+$' $file | string sub -s 2 | string lower)
-            set content (cat $file)
-            set output "$output\n$base\n\`\`\`$ext\n$content\n\`\`\`\n"
+            echo ""
+            echo (basename $file)
+            set extension (string match -r '\.\w+$' $file | string sub -s 2)
+            echo '```'(string lower $extension)
+            cat $file
+            echo '```'
+            echo ""
         else
             echo "File not found: $file"
-            return 1
         end
     end
 
     set uname_full (uname -a)
     if string match -q "*WSL2*" $uname_full
-        echo -e $output | clip.exe
-    else if test (uname_full) = "Linux"
+        # WSL2: use clip.exe
+        cat | clip.exe
+    else if test (uname) = "Linux"
+        # Linux: use xclip
         if command -v xclip >/dev/null
-            echo -e $output | xclip -selection clipboard
+            cat | xclip -selection clipboard
         else
             echo "xclip not found. Install it using: sudo apt install xclip"
             return 1
         end
+    else
+        echo "Unsupported OS: Cannot copy to clipboard."
+        return 1
     end
+
     echo "Output copied to clipboard."
 end
