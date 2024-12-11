@@ -13,7 +13,6 @@ function prompt-gen
     if set -q _flag_rules
         echo "# Follow these important rules
 Do not include comments in the code
-Avoid ending lines with semicolons
 Use modern language features
 Strive for compactness, but maintain readability" > $output
     end
