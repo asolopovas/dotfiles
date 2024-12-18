@@ -23,9 +23,12 @@ function add-repo-key
         echo "GitHub CLI not authenticated. Run 'gh auth login'."; return 1
     end
 
+     # Extract the title from the key
+    set title (echo $key_content | awk '{print $NF}')
+
     # Send API request
     set response (gh api -X POST /repos/$repo_name/keys \
-        -F title="Fish Script Deploy Key" \
+        -F title="$title" \
         -F key="$key_content" \
         -F read_only="$read_only")
 
