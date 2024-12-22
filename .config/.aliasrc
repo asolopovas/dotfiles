@@ -51,7 +51,7 @@ alias ls='ls --color -ha --group-directories-first'
 alias xevkb='xev -event keyboard'
 
 # CD Directories
-alias dd='cd $HOME/www/dev'
+alias dv='cd $HOME/www/dev'
 alias dt='cd $HOME/dotfiles'
 alias wd='cd $HOME/www'
 alias gos='cd $HOME/go/src'
