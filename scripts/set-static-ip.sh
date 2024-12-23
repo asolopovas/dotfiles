@@ -22,7 +22,7 @@ set_dynamic_static_ip() {
     GATEWAY=$(echo "$IP_ADDRESS" | awk -F. '{print $1"."$2"."$3".1"}')
 
     # Define DNS servers (you can customize these)
-    local DNS_SERVERS="8.8.8.8,8.8.4.4"
+    local DNS_SERVERS="192.168.1.1,192.168.0.1,8.8.8.8,8.8.4.4"
 
     # Generate the netplan configuration file
     cat <<EOF > /etc/netplan/01-netcfg.yaml
