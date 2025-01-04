@@ -67,3 +67,5 @@ function on_exit --on-event fish_exit
     ssh-agent -k > /dev/null
 end
 
+set -gx VOLTA_HOME "$HOME/.volta"
+set -gx PATH "$VOLTA_HOME/bin" $PATH

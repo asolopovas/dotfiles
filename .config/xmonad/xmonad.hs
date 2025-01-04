@@ -44,7 +44,6 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (manageDocks, docks, avoidStruts)
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat, doCenterFloat, doRectFloat)
-
 import XMonad.Hooks.WindowSwallowing
 
 import Data.Monoid
@@ -69,7 +68,7 @@ myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#fff323"
 
 myTerminal           = "alacritty"
-myBrowser            = "google-chrome --no-default-browser-check --enable-features=WebUIDarkMode --force-dark-mode"
+myBrowser            = "brave-browser --no-default-browser-check --enable-features=WebUIDarkMode --force-dark-mode"
 myFilebrowser        = "thunar"
 myModMask            = mod4Mask
 myWorkspaces         = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -88,15 +87,15 @@ myKeyb :: [(String, X ())]
 myKeyb =
   [
     --Windows
-    ("M-q",           kill1                           ), -- Kill focused window
-    ("M-S-q",         killAll                         ), -- Kill all workspace windows
-    ("M-s",           windows W.focusMaster           ), -- Move focus to the master window
-    ("M-j",           windows W.focusDown             ), -- Move focus to the next window
-    ("M-k",           windows W.focusUp               ), -- Move focus to the prev window
-    ("M-S-j",         windows W.swapDown              ), -- Swap focused window with next window
-    ("M-S-k",         windows W.swapUp                ), -- Swap focused window with prev window
-    ("M-<Backspace>", promote                         ), -- Moves focused window to master
-    ("M-f",           sendMessage (T.Toggle "full")   ), -- Toggle layout full layout
+    ("M-q",            kill1                           ), -- Kill focused window
+    ("M-S-q",          killAll                         ), -- Kill all workspace windows
+    ("M-s",            windows W.focusMaster           ), -- Move focus to the master window
+    ("M-j",            windows W.focusDown             ), -- Move focus to the next window
+    ("M-k",            windows W.focusUp               ), -- Move focus to the prev window
+    ("M-S-j",          windows W.swapDown              ), -- Swap focused window with next window
+    ("M-S-k",          windows W.swapUp                ), -- Swap focused window with prev window
+    ("M-<Backspace>",  promote                         ), -- Moves focused window to master
+    ("M-f",            sendMessage (T.Toggle "full")   ), -- Toggle layout full layout
     ("M-S-<Space>",    sendMessage NextLayout          ), -- Toggle layout full layout
     ("M-S-y",          sendMessage Shrink              ), -- Expand Layout
     ("M-S-o",          sendMessage Expand              ), -- Shrink Layout
