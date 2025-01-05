@@ -164,7 +164,7 @@ myScratchPads =
 myManageHook = composeAll
     [
         stringProperty "WM_WINDOW_ROLE" =? "GtkFileChooserDialog"  -->doCenterFloat,
-        stringProperty "WM_WINDOW_ROLE" =? "pop-up" --> doRectFloat smFloat,
+        stringProperty "WM_WINDOW_ROLE" =? "pop-up" --> doCenterFloat,
         appName   =? "fzf-menu"                    --> doCenterFloat,
         appName   =? "pcmanfmTerm"                --> doCenterFloat,
         appName   =? "gnome-tweaks"               --> doCenterFloat,
