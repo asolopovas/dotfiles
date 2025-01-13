@@ -38,7 +38,7 @@
 *pointerColorBackground:          #4B4D4B
 *pointerColorForeground:          #f8f8f0
 
-Xft.dpi:       100
+Xft.dpi:       85
 Xft.antialias: true
 Xft.hinting:   true
 Xft.rgba:      rgb
@@ -50,15 +50,15 @@ XTerm*background:        #f1f6fb
 XTerm*foreground:        #14191f
 XTerm*pointerColor:      #1ABB9B
 XTerm*faceName:          FiraMono Nerd Font
-XTerm*faceSize:          14
+XTerm*faceSize:          13
 XTerm*renderFont:	       true
 XTerm*reverseVideo:      on
 XTerm*selectToClipboard: true
 
 UXTerm*faceName:        FiraMono Nerd Font
-UXTerm*faceSize:        14
+UXTerm*faceSize:        13
 UXTerm*renderFont:      true
 
-Xcursor.size:   				14
+Xcursor.size:   				13
 Xcursor.theme:					Bibata-Moden-Classic
 Xcursor.theme_core:     true
