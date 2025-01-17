@@ -13,7 +13,6 @@ if set -q __sdkman_custom_dir
 end
 # Guard: SDKMAN! needs to be installed
 if set -q SDKMAN_DIR; and not test -f "$SDKMAN_DIR/bin/sdkman-init.sh"
-    echo "WARNING: SDKMAN! installation path set to $SDKMAN_DIR, but no installation found there"
     exit 0
 end
 
