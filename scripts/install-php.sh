@@ -1,11 +1,11 @@
 #!/bin/bash
 
 VER=${1:-"8.3"}
-ACTION=${2:-"install"} # Default action is "install"
+ACTION=${2:-"install"}
 
 if [[ "$1" == "list" ]]; then
     ACTION="list"
-    VER="" # Clear VER since it's not needed for the "list" action
+    VER=""
 fi
 
 if [[ -f "$HOME/dotfiles/globals.sh" ]]; then
@@ -79,6 +79,17 @@ remove_php_packages() {
     print_color green "PHP Version $VER removed successfully."
 }
 
+update_php_packages() {
+    print_color yellow "Updating PHP Version: $VER..."
+    sudo apt-get update
+    for pkg in $packages; do
+        if dpkg-query -W -f='${Status}\n' "$pkg" 2>/dev/null | grep -q "installed"; then
+            sudo apt-get install --only-upgrade -y "$pkg"
+        fi
+    done
+    print_color green "PHP Version $VER updated successfully."
+}
+
 case "$ACTION" in
     uninstall)
         validate_php_version
@@ -96,8 +107,12 @@ case "$ACTION" in
     list)
         list_installed_php
         ;;
+    update)
+        validate_php_version
+        update_php_packages
+        ;;
     *)
-        echo "Error: Unsupported action '$ACTION'. Use 'install', 'uninstall', or 'list'."
+        echo "Error: Unsupported action '$ACTION'. Use 'install', 'uninstall', 'list', or 'update'."
         exit 1
         ;;
 esac
