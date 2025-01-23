@@ -1,16 +1,13 @@
 #!/bin/bash
 
-# Default PHP version and fallback to user-provided version
 VER=${1:-"8.3"}
 ACTION=${2:-"install"} # Default action is "install"
 
-# If the first argument is "list", set ACTION to "list" and ignore VER
 if [[ "$1" == "list" ]]; then
     ACTION="list"
     VER="" # Clear VER since it's not needed for the "list" action
 fi
 
-# Source global settings (validate the file exists)
 if [[ -f "$HOME/dotfiles/globals.sh" ]]; then
     source "$HOME/dotfiles/globals.sh"
 else
@@ -18,12 +15,10 @@ else
     exit 1
 fi
 
-# Only print the "Processing PHP Version" message if VER is not empty
 if [[ -n "$VER" ]]; then
     print_color green "Processing PHP Version: $VER for ${OS^}...\n"
 fi
 
-# Function to validate the PHP version format (basic check)
 validate_php_version() {
     if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+$ ]]; then
         echo "Error: Invalid PHP version format. Expected 'X.Y' (e.g., 8.3)."
@@ -31,7 +26,6 @@ validate_php_version() {
     fi
 }
 
-# Define an array of PHP packages
 phpPackages=(
     "php$VER"
     "php$VER-bcmath"
@@ -59,17 +53,14 @@ phpPackages=(
     "php$VER-zip"
 )
 
-# Convert the array to a space-separated list
 packages=$(IFS=' '; echo "${phpPackages[*]}")
 
-# Function to list installed PHP versions and packages
 list_installed_php() {
     print_color yellow "Listing all installed PHP versions and related packages..."
     dpkg -l | grep -E '^ii.*php[0-9]+\.[0-9]+' | awk '{print $2}' | sort
     print_color green "End of installed PHP versions and packages list."
 }
 
-# Function to unhold packages (only if they are held)
 unhold_packages() {
     for pkg in $packages; do
         if dpkg-query -W -f='${Status}\n' "$pkg" 2>/dev/null | grep -q "hold"; then
@@ -78,7 +69,6 @@ unhold_packages() {
     done
 }
 
-# Function to remove all PHP packages for a specific version
 remove_php_packages() {
     print_color yellow "Removing PHP Version: $VER..."
     for pkg in $packages; do
@@ -89,7 +79,6 @@ remove_php_packages() {
     print_color green "PHP Version $VER removed successfully."
 }
 
-# Main case to handle actions: install, uninstall, or list
 case "$ACTION" in
     uninstall)
         validate_php_version
@@ -113,7 +102,6 @@ case "$ACTION" in
         ;;
 esac
 
-# Only print the "Operation completed" message if VER is not empty
 if [[ -n "$VER" ]]; then
     print_color green "Operation completed for PHP Version: $VER."
 fi
