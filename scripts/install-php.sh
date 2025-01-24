@@ -54,10 +54,9 @@ packages=$(
 
 list_installed_php() {
     print_color yellow "Listing all installed PHP versions and related packages..."
-    dpkg -l | grep -E '^ii.*php[0-9]+\.[0-9]+' | awk '{print $2}' | sort
+    dpkg -l | awk '/^[ih]i.*php[0-9]+\.[0-9]+/ {printf "%-30s\t%s\n", $2, substr($0, index($0,$5))}' | sort
     print_color green "End of installed PHP versions and packages list."
 }
-
 unhold_packages() {
     for pkg in $packages; do
         if dpkg-query -W -f='${Status}\n' "$pkg" 2>/dev/null | grep -q "hold"; then
@@ -69,7 +68,7 @@ unhold_packages() {
 remove_php_packages() {
     print_color red "Removing PHP Version: $VER..."
     removePackage $packages
-    print_color blue "PHP Version $VER removed successfully."
+    print_color green "PHP Version $VER removed successfully."
 }
 
 update_php_packages() {
