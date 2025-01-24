@@ -86,25 +86,117 @@ installPackages() {
 }
 
 print_color() {
-    NC='\033[0m'
+    NC='\033[0m' # No Color
 
-    if [ "$1" = "red" ]; then
-        COLOR="\033[31m"
-    fi
-
-    if [ "$1" = "green" ]; then
-        COLOR="\033[0;32m"
-    fi
+    case "$1" in
+        "black")
+            COLOR='\033[0;30m'
+            ;;
+        "red")
+            COLOR='\033[0;31m'
+            ;;
+        "green")
+            COLOR='\033[0;32m'
+            ;;
+        "yellow")
+            COLOR='\033[0;33m'
+            ;;
+        "blue")
+            COLOR='\033[0;34m'
+            ;;
+        "magenta")
+            COLOR='\033[0;35m'
+            ;;
+        "cyan")
+            COLOR='\033[0;36m'
+            ;;
+        "white")
+            COLOR='\033[0;37m'
+            ;;
+        "bold_black")
+            COLOR='\033[1;30m'
+            ;;
+        "bold_red")
+            COLOR='\033[1;31m'
+            ;;
+        "bold_green")
+            COLOR='\033[1;32m'
+            ;;
+        "bold_yellow")
+            COLOR='\033[1;33m'
+            ;;
+        "bold_blue")
+            COLOR='\033[1;34m'
+            ;;
+        "bold_magenta")
+            COLOR='\033[1;35m'
+            ;;
+        "bold_cyan")
+            COLOR='\033[1;36m'
+            ;;
+        "bold_white")
+            COLOR='\033[1;37m'
+            ;;
+        "underline_black")
+            COLOR='\033[4;30m'
+            ;;
+        "underline_red")
+            COLOR='\033[4;31m'
+            ;;
+        "underline_green")
+            COLOR='\033[4;32m'
+            ;;
+        "underline_yellow")
+            COLOR='\033[4;33m'
+            ;;
+        "underline_blue")
+            COLOR='\033[4;34m'
+            ;;
+        "underline_magenta")
+            COLOR='\033[4;35m'
+            ;;
+        "underline_cyan")
+            COLOR='\033[4;36m'
+            ;;
+        "underline_white")
+            COLOR='\033[4;37m'
+            ;;
+        "background_black")
+            COLOR='\033[40m'
+            ;;
+        "background_red")
+            COLOR='\033[41m'
+            ;;
+        "background_green")
+            COLOR='\033[42m'
+            ;;
+        "background_yellow")
+            COLOR='\033[43m'
+            ;;
+        "background_blue")
+            COLOR='\033[44m'
+            ;;
+        "background_magenta")
+            COLOR='\033[45m'
+            ;;
+        "background_cyan")
+            COLOR='\033[46m'
+            ;;
+        "background_white")
+            COLOR='\033[47m'
+            ;;
+        *)
+            COLOR='\033[0m' # Default to no color
+            ;;
+    esac
 
     printf "${COLOR}$2${NC}\n"
 }
-
 removePackage() {
-    print_color reed "Removing $1 package"
-    if cmd_exist $1 && is_sudoer; then
+    if is_sudoer; then
         case $OS in
-        ubuntu)
-            sudo apt remove -y "$@"
+        ubuntu | debian | linuxmint)
+            sudo apt remove --purge --allow-change-held-packages -y "$@"
             ;;
         centos)
             sudo yum remove -y "$@"
@@ -112,7 +204,14 @@ removePackage() {
         arch)
             sudo pacman -Rns --noconfirm "$@"
             ;;
+        *)
+            echo "Unsupported OS: $OS"
+            exit 1
+            ;;
         esac
+    else
+        echo "Error: You do not have sudo privileges."
+        exit 1
     fi
 }
 

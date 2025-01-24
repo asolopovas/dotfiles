@@ -1,19 +1,13 @@
 #!/bin/bash
 
-VER=${1:-"8.3"}
-ACTION=${2:-"install"}
+ACTION=${1:-"install"}
+VER=${2:-"8.3"}
 
-if [[ "$1" == "list" ]]; then
-    ACTION="list"
+if [[ "$ACTION" == "list" || "$ACTION" == "update" ]]; then
     VER=""
 fi
 
-if [[ -f "$HOME/dotfiles/globals.sh" ]]; then
-    source "$HOME/dotfiles/globals.sh"
-else
-    echo "Error: globals.sh not found in $HOME/dotfiles"
-    exit 1
-fi
+source "$HOME/dotfiles/globals.sh"
 
 if [[ -n "$VER" ]]; then
     print_color green "Processing PHP Version: $VER for ${OS^}...\n"
@@ -53,7 +47,10 @@ phpPackages=(
     "php$VER-zip"
 )
 
-packages=$(IFS=' '; echo "${phpPackages[*]}")
+packages=$(
+    IFS=' '
+    echo "${phpPackages[*]}"
+)
 
 list_installed_php() {
     print_color yellow "Listing all installed PHP versions and related packages..."
@@ -70,51 +67,48 @@ unhold_packages() {
 }
 
 remove_php_packages() {
-    print_color yellow "Removing PHP Version: $VER..."
-    for pkg in $packages; do
-        if dpkg-query -W -f='${Status}\n' "$pkg" 2>/dev/null | grep -q "installed"; then
-            sudo apt-get remove --purge -y "$pkg"
-        fi
-    done
-    print_color green "PHP Version $VER removed successfully."
+    print_color red "Removing PHP Version: $VER..."
+    removePackage $packages
+    print_color blue "PHP Version $VER removed successfully."
 }
 
 update_php_packages() {
-    print_color yellow "Updating PHP Version: $VER..."
+    print_color yellow "Updating all installed PHP versions..."
     sudo apt-get update
-    for pkg in $packages; do
-        if dpkg-query -W -f='${Status}\n' "$pkg" 2>/dev/null | grep -q "installed"; then
-            sudo apt-get install --only-upgrade -y "$pkg"
-        fi
+    installed_php_packages=$(dpkg -l | grep -E '^ii.*php[0-9]+\.[0-9]+' | awk '{print $2}')
+    for pkg in $installed_php_packages; do
+        sudo apt-get install --only-upgrade --allow-change-held-packages -y "$pkg"
     done
-    print_color green "PHP Version $VER updated successfully."
+    print_color green "All PHP versions updated successfully."
 }
 
 case "$ACTION" in
-    uninstall)
-        validate_php_version
-        remove_php_packages
-        unhold_packages
-        ;;
-    install)
-        validate_php_version
-        print_color yellow "Installing PHP Version: $VER..."
-        unhold_packages
-        installPackages $packages || { echo "Failed to install packages"; exit 1; }
-        sudo apt-mark hold $packages
-        print_color green "PHP Version $VER installed and held successfully."
-        ;;
-    list)
-        list_installed_php
-        ;;
-    update)
-        validate_php_version
-        update_php_packages
-        ;;
-    *)
-        echo "Error: Unsupported action '$ACTION'. Use 'install', 'uninstall', 'list', or 'update'."
+uninstall)
+    validate_php_version
+    remove_php_packages
+    unhold_packages
+    ;;
+install)
+    validate_php_version
+    print_color yellow "Installing PHP Version: $VER..."
+    unhold_packages
+    installPackages $packages || {
+        echo "Failed to install packages"
         exit 1
-        ;;
+    }
+    sudo apt-mark hold $packages
+    print_color green "PHP Version $VER installed and held successfully."
+    ;;
+list)
+    list_installed_php
+    ;;
+update)
+    update_php_packages
+    ;;
+*)
+    echo "Error: Unsupported action '$ACTION'. Use 'install', 'uninstall', 'list', or 'update'."
+    exit 1
+    ;;
 esac
 
 if [[ -n "$VER" ]]; then
