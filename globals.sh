@@ -192,6 +192,43 @@ print_color() {
 
     printf "${COLOR}$2${NC}\n"
 }
+
+hold_packages() {
+    case $OS in
+    ubuntu | debian | linuxmint)
+        sudo apt-mark hold $packages > /dev/null
+        ;;
+    centos)
+        echo "Warning: CentOS does not support holding packages directly."
+        ;;
+    arch)
+        echo "Warning: Arch Linux does not support holding packages directly."
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        exit 1
+        ;;
+    esac
+}
+
+unhold_packages() {
+    case $OS in
+    ubuntu | debian | linuxmint)
+        sudo apt-mark unhold $packages > /dev/null
+        ;;
+    centos)
+        echo "Warning: CentOS does not support unholding packages directly."
+        ;;
+    arch)
+        echo "Warning: Arch Linux does not support unholding packages directly."
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        exit 1
+        ;;
+    esac
+}
+
 removePackage() {
     if is_sudoer; then
         case $OS in

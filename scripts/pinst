@@ -1,13 +1,13 @@
 #!/bin/bash
 
+source "$HOME/dotfiles/globals.sh"
+
 ACTION=${1:-"install"}
 VER=${2:-"8.3"}
 
 if [[ "$ACTION" == "list" || "$ACTION" == "update" ]]; then
     VER=""
 fi
-
-source "$HOME/dotfiles/globals.sh"
 
 if [[ -n "$VER" ]]; then
     print_color green "Processing PHP Version: $VER for ${OS^}...\n"
@@ -57,9 +57,6 @@ list_installed_php() {
     dpkg -l | awk '/^[ih]i.*php[0-9]+\.[0-9]+/ {printf "%-30s\t%s\n", $2, substr($0, index($0,$5))}' | sort
     print_color green "End of installed PHP versions and packages list."
 }
-unhold_packages() {
-    sudo apt-mark unhold $packages > /dev/null
-}
 
 remove_php_packages() {
     print_color red "Removing PHP Version: $VER..."
@@ -77,12 +74,12 @@ case "$ACTION" in
 uninstall)
     validate_php_version
     remove_php_packages
-    unhold_packages
+    unhold_packages $packages
     ;;
 install)
     validate_php_version
     print_color yellow "Installing PHP Version: $VER..."
-    unhold_packages
+    unhold_packages $packages
     installPackages $packages || {
         echo "Failed to install packages"
         exit 1
