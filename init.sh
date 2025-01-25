@@ -25,7 +25,7 @@ declare -A features=(
     [OHMYBASH]=${OHMYBASH:-false}
     [OHMYFISH]=${OHMYFISH:-false}
     [OHMYZSH]=${OHMYZSH:-false}
-    [UNATTENDED]=${UNATTENDED:-false}
+    [UNATTENDED]=${UNATTENDED:-true}
     [SYSTEM]=${SYSTEM:-false}
     [ZSH]=${ZSH:-false}
     [CHANGE_SHELL]=${CHANGE_SHELL:-false}
@@ -112,7 +112,7 @@ install_essentials() {
 
 install_essentials
 install_composer
-
+curl -fsSL https://bun.sh/install | bash
 load_script() {
     local script_name=$1
     local script_path="$SCRIPTS_DIR/install-$script_name.sh"
