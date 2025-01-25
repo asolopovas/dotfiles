@@ -54,6 +54,18 @@ setup_locale() {
     echo "$LOCALE setup complete!"
 }
 
+install_composer() {
+    COMPOSER_PATH="$HOME/.local/bin/composer"
+    if [ ! -f "$COMPOSER_PATH" ]; then
+        echo "Installing Composer..."
+        mkdir -p "$(dirname "$COMPOSER_PATH")"
+        curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o "$COMPOSER_PATH"
+        chmod +x "$COMPOSER_PATH"
+        echo "Composer installed successfully at $COMPOSER_PATH."
+    else
+        echo "Composer is already installed at $COMPOSER_PATH."
+    fi
+}
 install_package() {
     print_color green "Installing the following packages for ${OS^}:"
     for pkg in "$@"; do
@@ -99,6 +111,7 @@ install_essentials() {
 }
 
 install_essentials
+install_composer
 
 load_script() {
     local script_name=$1
