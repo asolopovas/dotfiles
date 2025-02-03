@@ -90,13 +90,12 @@ install_essentials() {
         setup_locale
     fi
 
-    if ! cmd_exist python && ! cmd_exist python3 || ! cmd_exist git; then
-        install_package python3 git
+    sudo add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
+    install_package fish python3 git
 
-        if [ "$OS" = "alpine" ]; then
-            sudo ln -sf $(which python3) /usr/bin/python
-            install_package newt >/dev/null
-        fi
+    if [ "$OS" = "alpine" ]; then
+        sudo ln -sf $(which python3) /usr/bin/python
+        install_package newt >/dev/null
     fi
 
     URL="https://github.com/asolopovas/dotfiles.git"
