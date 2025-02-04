@@ -42,7 +42,7 @@ for feature_name in "${!features[@]}"; do
     export ${feature_name}=${features[$feature_name]}
 done
 
-pushd $HOME >/dev/null
+pushd $HOME
 print_color() {
     declare -A colors=(
         ['red']='\033[31m'
@@ -179,7 +179,14 @@ if [ "${features[ZSH]}" = true ]; then
 fi
 
 if [ "${features[OHMYFISH]}" = true ]; then
-    load_script "ohmyfish"
+    if [ ! -d "$HOME/.local/share/omf" ]; then
+    print_color green "Installing OhMyFish for ${OS^} ..."
+    curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
+    fish install --noninteractive --path=$DEST_DIR --config=~/.config/omf
+    fish -c "omf install bass"
+    rm -f install
+fi
+
 fi
 
 if [ "${features[OHMYZSH]}" = true ]; then
