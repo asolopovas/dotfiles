@@ -2,18 +2,21 @@
 
 source $HOME/dotfiles/globals.sh
 
-AUTOLOAD_DIR="$HOME/.local/share/nvim/site/autoload"
 
-if ! cmd_exist nvim; then
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-    rm -rf /opt/nvim
-    tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+print_color green "Installing Neovim for ${OS^} ..."
+
+if [ "$FORCE" = true ]; then
+    print_color red "FORCE Enabled: Removing ${AUTOLOAD_DIR} ..."
+    rm -rf $AUTOLOAD_DIR
 fi
 
-if [ ! -d "$AUTOLOAD_DIR" ]; then
-    print_color green "Installing vim-plug ..."
-    curl -sfLo $AUTOLOAD_DIR/plug.vim --create-dirs \
-        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    bash -c "nvim +silent +PlugInstall +qall"
-fi
+case $OS in
+ubuntu | debian | linuxmint | pop)
+    removePackage vim
+    installPackages neovim python3-neovim
+    ;;
+alipne)
+    installPackages neovim py3-pynvim
+esac
+
 

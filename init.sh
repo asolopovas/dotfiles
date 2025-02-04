@@ -156,7 +156,22 @@ if [ "${features[NODE]}" = true ]; then
 fi
 
 if [ "${features[NVIM]}" = true ]; then
-    load_script "nvim"
+
+    if ! cmd_exist nvim; then
+        load_script "nvim"
+    fi
+
+    AUTOLOAD_DIR="$HOME/.local/share/nvim/site/autoload"
+
+    if [ ! -d "$AUTOLOAD_DIR" ] && cmd_exist nvim; then
+        print_color green "Installing vim-plug ..."
+        curl -sfLo $AUTOLOAD_DIR/plug.vim --create-dirs \
+            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+        bash -c "nvim +silent +PlugInstall +qall"
+    fi
+
+    ln -sf $(which nvim) $HOME/.local/bin
+    ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 
 if [ "${features[ZSH]}" = true ]; then
