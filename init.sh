@@ -91,7 +91,7 @@ install_essentials() {
     fi
 
     sudo add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
-    install_package fish python3 git
+    install_package fish python3 git jq
 
     if [ "$OS" = "alpine" ]; then
         sudo ln -sf $(which python3) /usr/bin/python
