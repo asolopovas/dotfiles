@@ -144,7 +144,12 @@ if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
 fi
 
 if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-    load_script "fd"
+    FILE="fd-v${VER}-x86_64-unknown-linux-gnu"
+    print_color green "Installing fd find for ${OS^} from ${URL}..."
+    curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$FILE.tar.gz
+    tar -xf $FILE.tar.gz -C . $FILE/fd
+    mv $FILE/fd /usr/local/bin
+    rm -rf $FILE $FILE.tar.gz
 fi
 
 if [ "${features[FZF]}" = true ]; then
