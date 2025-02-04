@@ -148,7 +148,7 @@ if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
     print_color green "Installing fd find for ${OS^} from ${URL}..."
     curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$FILE.tar.gz
     tar -xf $FILE.tar.gz -C . $FILE/fd
-    mv $FILE/fd /usr/local/bin
+    mv $FILE/fd $HOME/.local/bin
     rm -rf $FILE $FILE.tar.gz
 fi
 
