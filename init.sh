@@ -98,7 +98,8 @@ install_essentials() {
     fi
 
     rm -rf "$HOME/.config/fish" >/dev/null
-    ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config/" >/dev/null
+    mkdir -p "$HOME/.config" >/dev/null
+    ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config"
 }
 
 install_essentials
