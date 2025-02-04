@@ -170,7 +170,6 @@ if [ "${features[NVIM]}" = true ]; then
         bash -c "nvim +silent +PlugInstall +qall"
     fi
 
-    ln -sf $(which nvim) $HOME/.local/bin
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 
