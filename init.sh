@@ -96,6 +96,9 @@ install_essentials() {
         print_color green "DOWNLOADING DOTFILES..."
         git clone $URL $DOTFILES_DIR >/dev/null
     fi
+
+    rm -rf "$HOME/.config/fish" >/dev/null
+    ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config/" >/dev/null
 }
 
 install_essentials
@@ -132,16 +135,20 @@ if [ "${features[BUN]}" = true ]; then
     curl -fsSL https://bun.sh/install | bash
 fi
 
-if [ "${features[FISH]}" = true ]; then
-    load_script 'fish'
-fi
-
 if [ "${features[CARGO]}" = true ]; then
     curl https://sh.rustup.rs -sSf | sh
 fi
 
+if [ "${features[FISH]}" = true ]; then
+    if ! command -v fish &>/dev/null; then
+        load_script 'fish'
+    fi
+fi
+
 if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-    load_script "fd"
+    if ! command -v fd &>/dev/null; then
+        load_script "fd"
+    fi
 fi
 
 if [ "${features[FZF]}" = true ]; then
@@ -175,7 +182,12 @@ fi
 
 if [ "${features[CHANGE_SHELL]}" = true ]; then
     print_color green "CHANGING SHELL TO FISH"
-    chsh -s $(which fish)
+
+    if command -v fish &>/dev/null; then
+        chsh -s $(which fish)
+    else
+        print_color red "Fish not installed. Please install fish and run this script again."
+    fi
 fi
 
 popd >/dev/null

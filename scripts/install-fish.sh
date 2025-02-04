@@ -10,5 +10,3 @@ ubuntu | debian | linuxmint | pop)
     ;;
 esac
 
-rm -rf "$HOME/.config/fish"
-ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config/"
