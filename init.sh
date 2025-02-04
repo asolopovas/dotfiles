@@ -167,7 +167,7 @@ if [ "${features[NVIM]}" = true ]; then
         print_color green "Installing vim-plug ..."
         curl -sfLo $AUTOLOAD_DIR/plug.vim --create-dirs \
             https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        bash -c "nvim +silent +PlugInstall +qall"
+        bash -c "nvim +silent +PlugInstall +qall" >/dev/null 2>&1
     fi
 
     ln -sf $(which nvim) $HOME/.local/bin/vim
