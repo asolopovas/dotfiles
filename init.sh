@@ -15,7 +15,7 @@ cmd_exist() {
     command -v $1 >/dev/null 2>&1
 }
 
-mkdir -p $HOME/.tmp
+mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
 
 # Arguments
 declare -A features=(
@@ -98,7 +98,6 @@ install_essentials() {
     fi
 
     rm -rf "$HOME/.config/fish" >/dev/null
-    mkdir -p "$HOME/.config" >/dev/null
     ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config"
 }
 
@@ -140,16 +139,12 @@ if [ "${features[CARGO]}" = true ]; then
     curl https://sh.rustup.rs -sSf | sh
 fi
 
-if [ "${features[FISH]}" = true ]; then
-    if ! command -v fish &>/dev/null; then
-        load_script 'fish'
-    fi
+if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
+    load_script 'fish'
 fi
 
 if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-    if ! command -v fd &>/dev/null; then
-        load_script "fd"
-    fi
+    load_script "fd"
 fi
 
 if [ "${features[FZF]}" = true ]; then
