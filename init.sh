@@ -47,12 +47,21 @@ print_color() {
 
 setup_locale() {
     LOCALE=${1:-en_US.UTF-8}
-    sudo sed -i "s/# $LOCALE UTF-8/$LOCALE UTF-8/" /etc/locale.gen
-    sudo locale-gen $LOCALE
-    sudo update-locale LC_ALL=$LOCALE LANG=$LOCALE
+
+    if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
+        SUDO="sudo"
+    else
+        SUDO=""
+    fi
+
+    $SUDO sed -i "s/# $LOCALE UTF-8/$LOCALE UTF-8/" /etc/locale.gen
+    $SUDO locale-gen $LOCALE
+    $SUDO update-locale LC_ALL=$LOCALE LANG=$LOCALE
+
     source ~/.bashrc
     echo "$LOCALE setup complete!"
 }
+
 
 install_composer() {
     COMPOSER_PATH="$HOME/.local/bin/composer"
