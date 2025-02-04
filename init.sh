@@ -5,6 +5,12 @@ OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
+if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
+    SUDO="sudo"
+else
+    SUDO=""
+fi
+
 cmd_exist() {
     command -v $1 >/dev/null 2>&1
 }
@@ -48,11 +54,6 @@ print_color() {
 setup_locale() {
     LOCALE=${1:-en_US.UTF-8}
 
-    if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
-        SUDO="sudo"
-    else
-        SUDO=""
-    fi
 
     $SUDO sed -i "s/# $LOCALE UTF-8/$LOCALE UTF-8/" /etc/locale.gen
     $SUDO locale-gen $LOCALE
@@ -82,13 +83,13 @@ install_package() {
     done
     case $OS in
     ubuntu | debian | linuxmint)
-        sudo apt install -y "$@"
+        $SUDO apt install -y "$@"
         ;;
     centos)
-        sudo yum install -y "$@"
+        $SUDO yum install -y "$@"
         ;;
     arch)
-        sudo pacman -S --noconfirm "$@"
+        $SUDO pacman -S --noconfirm "$@"
         ;;
     esac
 }
@@ -99,11 +100,11 @@ install_essentials() {
         setup_locale
     fi
 
-    sudo add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
+    $SUDO add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
     install_package fish python3 git jq unzip
 
     if [ "$OS" = "alpine" ]; then
-        sudo ln -sf $(which python3) /usr/bin/python
+        $SUDO ln -sf $(which python3) /usr/bin/python
         install_package newt >/dev/null
     fi
 
