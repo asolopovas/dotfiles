@@ -19,13 +19,13 @@ mkdir -p $HOME/.tmp
 
 # Arguments
 declare -A features=(
-    [TYPE]=${TYPE:-https}
+    [BUN]=${BUN:-true}
     [CARGO]=${CARGO:-false}
     [FDFIND]=${FDFIND:-true}
     [FISH]=${FISH:-true}
     [FORCE]=${FORCE:-false}
     [FZF]=${FZF:-true}
-    [NODE]=${NODE:-false}
+    [NODE]=${NODE:-true}
     [NODE_VERSION]=${NODE_VERSION:-22.13.1}
     [NVIM]=${NVIM:-true}
     [OHMYBASH]=${OHMYBASH:-false}
@@ -33,6 +33,7 @@ declare -A features=(
     [OHMYZSH]=${OHMYZSH:-false}
     [UNATTENDED]=${UNATTENDED:-true}
     [SYSTEM]=${SYSTEM:-false}
+    [TYPE]=${TYPE:-https}
     [ZSH]=${ZSH:-false}
     [CHANGE_SHELL]=${CHANGE_SHELL:-false}
 )
@@ -48,17 +49,6 @@ print_color() {
         ['green']='\033[0;32m'
     )
     echo -e "${colors[$1]}$2\033[0m"
-}
-
-setup_locale() {
-    LOCALE=${1:-en_US.UTF-8}
-
-    $SUDO sed -i "s/# $LOCALE UTF-8/$LOCALE UTF-8/" /etc/locale.gen
-    $SUDO locale-gen $LOCALE
-    $SUDO update-locale LC_ALL=$LOCALE LANG=$LOCALE
-
-    source ~/.bashrc
-    echo "$LOCALE setup complete!"
 }
 
 install_composer() {
@@ -90,17 +80,12 @@ install_package() {
         ;;
     esac
 }
-
 install_packages() {
     $SUDO add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
     install_package fish python3 git jq unzip
 }
-
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
-    if [ "$OS" = "ubuntu" ]; then
-        setup_locale
-    fi
 
     URL="https://github.com/asolopovas/dotfiles.git"
     if [ "${features[TYPE]}" = "ssh" ]; then
@@ -115,7 +100,6 @@ install_essentials() {
 
 install_essentials
 install_composer
-curl -fsSL https://bun.sh/install | bash
 load_script() {
     local script_name=$1
     local script_path="$SCRIPTS_DIR/install-$script_name.sh"
@@ -143,6 +127,10 @@ echo -e "$separator\n"
 
 source $DOTFILES_DIR/globals.sh
 source $SCRIPTS_DIR/default-dirs.sh
+
+if [ "${features[BUN]}" = true ]; then
+    curl -fsSL https://bun.sh/install | bash
+fi
 
 if [ "${features[FISH]}" = true ]; then
     load_script 'fish'
@@ -185,7 +173,7 @@ if [ "${features[OHMYBASH]}" = true ]; then
     load_script "ohmybash"
 fi
 
-if [ "${features[CHANGE_SHELL]}" = true ] && [ "$UNATTENDED" = false ]; then
+if [ "${features[CHANGE_SHELL]}" = true ]; then
     print_color green "CHANGING SHELL TO FISH"
     chsh -s $(which fish)
 fi
