@@ -14,10 +14,10 @@ fi
 case $OS in
 ubuntu | debian | linuxmint | pop)
     removePackage vim
-    installPackages neovim python3-neovim
+    if ! cmd_exist nvim; then
+        installPackages neovim python3-neovim
+    fi
     ;;
-alipne)
-    installPackages neovim py3-pynvim
 esac
 
 if [ ! -d "$AUTOLOAD_DIR" ]; then
