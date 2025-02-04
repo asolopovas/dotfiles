@@ -173,28 +173,14 @@ if [ "${features[NVIM]}" = true ]; then
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 
-if [ "${features[ZSH]}" = true ]; then
-    print_color green "INSTALLING ZSH..."
-    install_package zsh >/dev/null
-fi
-
 if [ "${features[OHMYFISH]}" = true ]; then
     if [ ! -d "$HOME/.local/share/omf" ]; then
-    print_color green "Installing OhMyFish for ${OS^} ..."
-    curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
-    fish install --noninteractive --path=$DEST_DIR --config=~/.config/omf
-    fish -c "omf install bass"
-    rm -f install
-fi
-
-fi
-
-if [ "${features[OHMYZSH]}" = true ]; then
-    load_script "ohmyzsh"
-fi
-
-if [ "${features[OHMYBASH]}" = true ]; then
-    load_script "ohmybash"
+        print_color green "Installing OhMyFish for ${OS^} ..."
+        curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
+        fish install --noninteractive --path=$DEST_DIR --config=~/.config/omf
+        fish -c "omf install bass"
+        rm -f install
+    fi
 fi
 
 if [ "${features[CHANGE_SHELL]}" = true ]; then
