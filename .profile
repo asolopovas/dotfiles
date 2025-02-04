@@ -10,7 +10,7 @@ export HOSTALIASES="$HOME/.hosts"
 export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig/xorg-server.pc:$PKG_CONFIG_PATH
 export BROWSER="/usr/bin/brave-browser"
 
-. "$HOME/.cargo/env"
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
 

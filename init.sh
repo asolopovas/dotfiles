@@ -21,15 +21,15 @@ mkdir -p $HOME/.tmp
 declare -A features=(
     [TYPE]=${TYPE:-https}
     [CARGO]=${CARGO:-false}
-    [FDFIND]=${FDFIND:-false}
-    [FISH]=${FISH:-false}
+    [FDFIND]=${FDFIND:-true}
+    [FISH]=${FISH:-true}
     [FORCE]=${FORCE:-false}
-    [FZF]=${FZF:-false}
+    [FZF]=${FZF:-true}
     [NODE]=${NODE:-false}
-    [NODE_VERSION]=${NODE_VERSION:-18.16.1}
-    [NVIM]=${NVIM:-false}
+    [NODE_VERSION]=${NODE_VERSION:-22.13.1}
+    [NVIM]=${NVIM:-true}
     [OHMYBASH]=${OHMYBASH:-false}
-    [OHMYFISH]=${OHMYFISH:-false}
+    [OHMYFISH]=${OHMYFISH:-true}
     [OHMYZSH]=${OHMYZSH:-false}
     [UNATTENDED]=${UNATTENDED:-true}
     [SYSTEM]=${SYSTEM:-false}
@@ -42,7 +42,6 @@ for feature_name in "${!features[@]}"; do
 done
 
 pushd $HOME >/dev/null
-
 print_color() {
     declare -A colors=(
         ['red']='\033[31m'
@@ -54,7 +53,6 @@ print_color() {
 setup_locale() {
     LOCALE=${1:-en_US.UTF-8}
 
-
     $SUDO sed -i "s/# $LOCALE UTF-8/$LOCALE UTF-8/" /etc/locale.gen
     $SUDO locale-gen $LOCALE
     $SUDO update-locale LC_ALL=$LOCALE LANG=$LOCALE
@@ -62,7 +60,6 @@ setup_locale() {
     source ~/.bashrc
     echo "$LOCALE setup complete!"
 }
-
 
 install_composer() {
     COMPOSER_PATH="$HOME/.local/bin/composer"
@@ -94,18 +91,15 @@ install_package() {
     esac
 }
 
+install_packages() {
+    $SUDO add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
+    install_package fish python3 git jq unzip
+}
+
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
     if [ "$OS" = "ubuntu" ]; then
         setup_locale
-    fi
-
-    $SUDO add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
-    install_package fish python3 git jq unzip
-
-    if [ "$OS" = "alpine" ]; then
-        $SUDO ln -sf $(which python3) /usr/bin/python
-        install_package newt >/dev/null
     fi
 
     URL="https://github.com/asolopovas/dotfiles.git"
