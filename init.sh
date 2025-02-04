@@ -176,7 +176,7 @@ fi
 if [ "${features[OHMYFISH]}" = true ]; then
     DEST_DIR="$HOME/.local/share/omf"
     if [ ! -d "$DEST_DIR" ]; then
-        print_color green "Installing OhMyFish for ${OS^} ..."
+        print_color green "Installing OhMyFish for ${OS^} to $DEST_DIR ..."
         curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
         fish install --noninteractive --path=$DEST_DIR --config=$HOME/.config/omf
         fish -c "omf install bass"
