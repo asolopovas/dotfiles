@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # key-auth.sh
 #
 # Usage:
@@ -28,13 +28,15 @@ if [ "$1" = "-f" ]; then
   fi
 fi
 
-PUBLIC_KEY_FILE="$1" if [ ! -f "$PUBLIC_KEY_FILE" ]; then
-  echo "❌ No valid public key file found: $PUBLIC_KEY_FILE"
+public_key_file="$1"
+
+if [ ! -f "$public_key_file" ]; then
+  echo "❌ No valid public key file found: $public_key_file"
   exit 1
 fi
 
 # Read & trim any leading/trailing whitespace
-public_key="$(< "$PUBLIC_KEY_FILE")"
+public_key="$(< "$public_key_file")"
 public_key="$(echo -n "$public_key" | sed -e 's/^[[:space:]]*//; s/[[:space:]]*$//')"
 
 # Base64-encode into a single line
