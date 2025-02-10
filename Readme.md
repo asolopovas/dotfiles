@@ -30,35 +30,18 @@ F7              'reindent file
 ```
 
 ## Install
+### Default
+```
+UNATTENDED=true bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+```
 
 ### Menu
 ```
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
 
-### Default
-```
-FISH=true FZF=true FDFIND=true NVIM=true NVM=true OHMYFISH=true UNATTENDED=true bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
-```
-
-### Dotfiles for WordPress Environment (Gutenberg Block Editings) ([wp-env](https://www.npmjs.com/package/@wordpress/env?activeTab=readme))
-```
-NODEVER=16.20.0 FZF=true FDFIND=true NVM=true OHMYBASH=true UNATTENDED=true bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
-```
-
 ## No Cache Flag
-
 ### Menu
 ```
 bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
-```
-
-### Default
-```
-FISH=true FZF=true FDFIND=true NVIM=true NVM=true OHMYFISH=true UNATTENDED=true bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
-```
-
-### WordPress Environment (Gutenberg Block Editings) ([wp-env](https://www.npmjs.com/package/@wordpress/env?activeTab=readme))
-```
-NODEVER=16.20.0 FZF=true FDFIND=true NVM=true OHMYBASH=true UNATTENDED=true bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
