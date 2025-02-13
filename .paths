@@ -20,6 +20,7 @@ go/bin
 dotfiles/scripts
 .cabal/bin
 .ghcup/bin
+/opt/bin
 /opt/cpanel/ea-nodejs20/bin/
 $HOME/.config/composer/vendor/bin
 /mnt/c/Program Files/Google/Chrome/Application
