@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VER="8.7.0"
+VER="10.2.0"
 FILE="fd-musl_${VER}_amd64.deb"
 URL="https://github.com/sharkdp/fd/releases/download/v$VER/$FILE"
 
