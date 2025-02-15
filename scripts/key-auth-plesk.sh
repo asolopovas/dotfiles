@@ -71,7 +71,6 @@ while IFS=$'\t' read -r domain plesk_user; do
     continue
   fi
 
-
   # Confirm the user actually exists on the system
   if id "$plesk_user" &>/dev/null; then
 
@@ -91,13 +90,18 @@ while IFS=$'\t' read -r domain plesk_user; do
       chown "$plesk_user":"$plesk_user" "$ssh_dir"
     fi
 
-    # Overwrite or append the key
     if [ "$force" -eq 1 ]; then
+      # Overwrite authorized_keys
       echo "$public_key" > "$authorized_keys"
       echo "✅ Overwritten authorized_keys for user: $plesk_user ($domain)"
     else
-      echo "$public_key" >> "$authorized_keys"
-      echo "✅ Appended public key for user: $plesk_user ($domain)"
+      # Append only if the key is not already present
+      if [ -f "$authorized_keys" ] && grep -qxF "$public_key" "$authorized_keys"; then
+        echo "ℹ️  Key already present for user: $plesk_user ($domain). Skipping addition."
+      else
+        echo "$public_key" >> "$authorized_keys"
+        echo "✅ Appended public key for user: $plesk_user ($domain)"
+      fi
     fi
 
     chmod 600 "$authorized_keys"
