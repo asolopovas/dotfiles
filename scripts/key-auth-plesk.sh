@@ -49,7 +49,7 @@ public_key_b64="$(
 echo "🔄 Connecting to root to update authorized_keys for Plesk users..."
 
 # Pass the single-line base64 string to remote
-ssh root bash -s -- "$force" "$public_key_b64" << 'EOF'
+ssh root-new bash -s -- "$force" "$public_key_b64" << 'EOF'
 force="$1"
 public_key_b64="$2"
 
