@@ -1,6 +1,5 @@
 ## Install
-### Default
-```
+```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
 
