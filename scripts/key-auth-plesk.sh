@@ -48,7 +48,6 @@ public_key_b64="$(
 
 echo "🔄 Connecting to root-new to update authorized_keys for Plesk users..."
 
-# Pass the single-line base64 string to remote
 ssh root-new bash -s -- "$force" "$public_key_b64" << 'EOF'
 force="$1"
 public_key_b64="$2"
@@ -56,60 +55,60 @@ public_key_b64="$2"
 # Decode the base64-encoded key
 public_key="$(echo "$public_key_b64" | base64 -d)"
 
-# Fetch domain & user pairs in raw tab-separated format (no headers or ASCII table)
-plesk_users="$(plesk db -N -B -e "SELECT name, login
-                                  FROM domains
-                                  JOIN hosting ON domains.id=hosting.dom_id
-                                  JOIN sys_users ON hosting.sys_user_id=sys_users.id")"
+# Pull only real (virtual) hosting domains, retrieving domain name, user login, and the actual home dir:
+plesk_users="$(
+  plesk db -N -B -e "
+    SELECT d.name, s.login, s.home
+    FROM domains d
+    JOIN hosting h ON d.id = h.dom_id
+    JOIN sys_users s ON h.sys_user_id = s.id
+    WHERE d.htype = 'vrt_hst'
+  "
+)"
 
-# Loop through domain / user lines
-while IFS=$'\t' read -r domain plesk_user; do
+while IFS=$'\t' read -r domain plesk_user home_dir; do
 
-  # If either field is empty, skip
-  if [[ -z "$domain" || -z "$plesk_user" ]]; then
-    echo "⚠️  Skipping: Invalid domain: $domain or user: $plesk_user."
+  if [[ -z "$domain" || -z "$plesk_user" || -z "$home_dir" ]]; then
+    echo "⚠️  Skipping: Invalid domain: '$domain', user: '$plesk_user', home: '$home_dir'"
     continue
   fi
 
-  # Confirm the user actually exists on the system
-  if id "$plesk_user" &>/dev/null; then
-
-    user_home="/var/www/vhosts/$domain"
-    if [ ! -d "$user_home" ]; then
-      echo "⚠️  Skipping $plesk_user ($domain): Home directory $user_home does not exist."
-      continue
-    fi
-
-    ssh_dir="$user_home/.ssh"
-    authorized_keys="$ssh_dir/authorized_keys"
-
-    # Create .ssh if needed
-    if [ ! -d "$ssh_dir" ]; then
-      echo "📂 Creating .ssh directory for user: $plesk_user ($domain)"
-      mkdir -p "$ssh_dir"
-      chown "$plesk_user":"$plesk_user" "$ssh_dir"
-    fi
-
-    if [ "$force" -eq 1 ]; then
-      # Overwrite authorized_keys
-      echo "$public_key" > "$authorized_keys"
-      echo "✅ Overwritten authorized_keys for user: $plesk_user ($domain)"
-    else
-      # Append only if the key is not already present
-      if [ -f "$authorized_keys" ] && grep -qxF "$public_key" "$authorized_keys"; then
-        echo "ℹ️  Key already present for user: $plesk_user ($domain). Skipping addition."
-      else
-        echo "$public_key" >> "$authorized_keys"
-        echo "✅ Appended public key for user: $plesk_user ($domain)"
-      fi
-    fi
-
-    chmod 600 "$authorized_keys"
-    chown "$plesk_user":psacln "$authorized_keys"
-
-  else
+  if ! id "$plesk_user" &>/dev/null; then
     echo "⚠️  Skipping $plesk_user ($domain): Not a valid system user."
+    continue
   fi
+
+  if [ ! -d "$home_dir" ]; then
+    echo "⚠️  Skipping $plesk_user ($domain): Home directory $home_dir does not exist."
+    continue
+  fi
+
+  ssh_dir="$home_dir/.ssh"
+  authorized_keys="$ssh_dir/authorized_keys"
+
+  # Create .ssh if needed
+  if [ ! -d "$ssh_dir" ]; then
+    echo "📂 Creating .ssh directory for user: $plesk_user ($domain)"
+    mkdir -p "$ssh_dir"
+    chown "$plesk_user":"$plesk_user" "$ssh_dir"
+  fi
+
+  if [ "$force" -eq 1 ]; then
+    # Overwrite authorized_keys
+    echo "$public_key" > "$authorized_keys"
+    echo "✅ Overwritten authorized_keys for user: $plesk_user ($domain)"
+  else
+    # Append only if the key is not already there
+    if [ -f "$authorized_keys" ] && grep -qxF "$public_key" "$authorized_keys"; then
+      echo "ℹ️  Key already present for user: $plesk_user ($domain). Skipping addition."
+    else
+      echo "$public_key" >> "$authorized_keys"
+      echo "✅ Appended public key for user: $plesk_user ($domain)"
+    fi
+  fi
+
+  chmod 600 "$authorized_keys"
+  chown "$plesk_user":psacln "$authorized_keys"
 
 done <<< "$plesk_users"
 
