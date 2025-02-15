@@ -46,7 +46,7 @@ public_key_b64="$(
     | tr -d '\n'
 )"
 
-echo "🔄 Connecting to root to update authorized_keys for Plesk users..."
+echo "🔄 Connecting to root-new to update authorized_keys for Plesk users..."
 
 # Pass the single-line base64 string to remote
 ssh root-new bash -s -- "$force" "$public_key_b64" << 'EOF'
@@ -56,22 +56,29 @@ public_key_b64="$2"
 # Decode the base64-encoded key
 public_key="$(echo "$public_key_b64" | base64 -d)"
 
-# Fetch users and their domains from Plesk database
-plesk_users=$(plesk db "SELECT name, login FROM domains JOIN hosting ON domains.id=hosting.dom_id JOIN sys_users ON hosting.sys_user_id=sys_users.id" | tail -n +2)
+# Fetch domain & user pairs in raw tab-separated format (no headers or ASCII table)
+plesk_users="$(plesk db -N -B -e "SELECT name, login
+                                  FROM domains
+                                  JOIN hosting ON domains.id=hosting.dom_id
+                                  JOIN sys_users ON hosting.sys_user_id=sys_users.id")"
 
+# Loop through domain / user lines
 while IFS=$'\t' read -r domain plesk_user; do
-  # Ensure the username and domain are valid
+
+  # If either field is empty, skip
   if [[ -z "$domain" || -z "$plesk_user" ]]; then
-    echo "⚠️ Skipping: Invalid domain or user."
+    echo "⚠️  Skipping: Invalid domain: $domain or user: $plesk_user."
     continue
   fi
 
+  # Confirm the user actually exists on the system
   if id "$plesk_user" &>/dev/null; then
+
     user_home="/var/www/vhosts/$domain"
-    [ ! -d "$user_home" ] && {
-      echo "⚠️ Skipping $plesk_user ($domain): Home directory does not exist."
+    if [ ! -d "$user_home" ]; then
+      echo "⚠️  Skipping $plesk_user ($domain): Home directory $user_home does not exist."
       continue
-    }
+    fi
 
     ssh_dir="$user_home/.ssh"
     authorized_keys="$ssh_dir/authorized_keys"
@@ -80,7 +87,6 @@ while IFS=$'\t' read -r domain plesk_user; do
     if [ ! -d "$ssh_dir" ]; then
       echo "📂 Creating .ssh directory for user: $plesk_user ($domain)"
       mkdir -p "$ssh_dir"
-      chmod 700 "$ssh_dir"
       chown "$plesk_user":"$plesk_user" "$ssh_dir"
     fi
 
@@ -95,10 +101,13 @@ while IFS=$'\t' read -r domain plesk_user; do
 
     chmod 600 "$authorized_keys"
     chown "$plesk_user":"$plesk_user" "$authorized_keys"
+
   else
-    echo "⚠️ Skipping $plesk_user ($domain): Not a valid system user."
+    echo "⚠️  Skipping $plesk_user ($domain): Not a valid system user."
   fi
+
 done <<< "$plesk_users"
+
 EOF
 
 echo "✅ Finished updating authorized_keys for Plesk users!"
