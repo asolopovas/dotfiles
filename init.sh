@@ -2,6 +2,7 @@
 
 OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 
+DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
@@ -87,18 +88,18 @@ install_packages() {
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
 
-    URL="https://github.com/asolopovas/dotfiles.git"
     if [ "${features[TYPE]}" = "ssh" ]; then
-        URL="git@github.com:asolopovas/dotfiles.git"
+        DOTFILES_URL="git@github.com:asolopovas/dotfiles.git"
     fi
 
     if [ ! -d $DOTFILES_DIR ]; then
         print_color green "DOWNLOADING DOTFILES..."
-        git clone $URL $DOTFILES_DIR >/dev/null
+        git clone $DOTFILES_URL $DOTFILES_DIR >/dev/null
     fi
 
     rm -rf "$HOME/.config/fish" >/dev/null
     ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config"
+    ln -sf "$DOTFILES_DIR/.config/tmux" "$HOME/.config"
 }
 
 install_essentials
@@ -146,7 +147,7 @@ fi
 if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
     VER="10.2.0"
     FILE="fd-v${VER}-x86_64-unknown-linux-gnu"
-    print_color green "Installing fd find for ${OS^} from ${URL}..."
+    print_color green "Installing fd find for ${OS^} from ${DOTFILES_URL}..."
     curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$FILE.tar.gz
     tar -xf $FILE.tar.gz -C . $FILE/fd
     mv $FILE/fd $HOME/.local/bin
