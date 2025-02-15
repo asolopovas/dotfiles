@@ -6,6 +6,8 @@ alias wn='wp acorn'
 alias xclip='xclip -selection c'
 
 alias upd='sudo apt update -y; sudo apt upgrade -y'
+alias m='mosh --no-init'
+alias mosh='mosh --no-init'
 
 # Cleanup
 # alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
