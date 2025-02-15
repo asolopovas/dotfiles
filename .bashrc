@@ -27,7 +27,6 @@ add_paths_from_file $DOTFILES/.paths
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 [ -f "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -f "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
@@ -42,4 +41,3 @@ export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
-. "$HOME/.cargo/env"
