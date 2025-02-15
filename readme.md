@@ -1,5 +1,10 @@
+## Install
+### Default
+```
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ## Shortcuts
 
+```
 ### Terminal
 ```
 ctrl x e        'Edit command line
@@ -27,21 +32,4 @@ Ctrl + V        'Visual block mode
 Shift + >       'Indent line'
 Shift + n>      'Indent line n steps'
 F7              'reindent file
-```
-
-## Install
-### Default
-```
-UNATTENDED=true bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
-```
-
-### Menu
-```
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
-```
-
-## No Cache Flag
-### Menu
-```
-bash -c "$(curl -fsSLH 'Cache-Control: no-cache'  https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
