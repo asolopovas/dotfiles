@@ -2,6 +2,8 @@
 ### Default
 ```
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+```
+
 ## Shortcuts
 
 ```
