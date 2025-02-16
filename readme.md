@@ -1,12 +1,15 @@
 ## Install
+---
+
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
 ```
 
 ## Shortcuts
+---
 
-```
 ### Terminal
+
 ```
 ctrl x e        'Edit command line
 esc + b         'Word back
