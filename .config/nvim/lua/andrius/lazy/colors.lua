@@ -7,4 +7,5 @@ function ColorMyPencils(color)
 end
 
 return {
+    ColorMyPencils()
 }
