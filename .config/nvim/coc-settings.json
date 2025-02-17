@@ -1,12 +1,11 @@
 {
-  "emmet.includeLanguages": {
-    "vue": "html",
-    "markdown": "html",
-    "javascript": "javascriptreact",
-    "twig": "html",
-    "block.js": "html",
-    "php": "html",
-    "blade": "html"
-  },
+    "emmet.excludeLanguages": [],
+    "emmet.includeLanguages": {
+        "twig": "html",
+        "block.js": "html",
+        "blade": "html",
+        "vue-html": "html",
+        "javascript": "javascriptreact"
+    }
 }
 
