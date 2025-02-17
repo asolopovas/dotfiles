@@ -1,5 +1,4 @@
 {
-    "emmet.excludeLanguages": [],
     "emmet.includeLanguages": {
         "twig": "html",
         "block.js": "html",
