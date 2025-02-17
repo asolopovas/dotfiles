@@ -34,7 +34,7 @@ autocmd('TextYankPost', {
 autocmd('BufEnter', {
     group = AUGroup,
     callback = function()
-        vim.cmd.colorscheme("brightburn")
+        vim.cmd.colorscheme("legacy")
     end
 })
 
