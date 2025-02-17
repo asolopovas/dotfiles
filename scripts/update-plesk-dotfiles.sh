@@ -33,8 +33,7 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
     [ -d "$home_dir" ]
 
     echo "🚀 Running 'conf pull' for $plesk_user ($domain)..."
-    conf pull
-
+    fish -c "conf pull"
 done <<< "$plesk_users"
 
 echo "✅ Finished executing 'conf pull' for all Plesk users!"
