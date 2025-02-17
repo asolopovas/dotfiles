@@ -44,7 +44,7 @@ map('i', 'jk', '<Esc>', opts)
 
 -- Edit common files
 map('n', '<leader>er', ':e $HOME/.config/nvim/lua/andrius/remap.lua<CR>', opts)
-map('n', '<leader>ev', ':e $MYVIMRC<CR>', opts)
+map('n', '<leader>ev', ':e $HOME/.config/nvim/lua/andrius/init.lua<CR>', opts)
 map('n', '<leader>sv', ':so $MYVIMRC<CR>', opts)
 -- Open remap.lua instead of init.vim
 
