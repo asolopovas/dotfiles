@@ -1,1 +1,1 @@
-source "/home/andrius/.deno/env.fish"
+[ -f "$HOME/.deno/env.fish" ] && source "$HOME/.deno/env.fish"
