@@ -29,11 +29,22 @@ echo "✅ Found Plesk users. Executing 'conf pull' for each..."
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
     [[ -z "$domain" || -z "$plesk_user" || -z "$home_dir" ]] && continue
-    id "$plesk_user" &>/dev/null
-    [ -d "$home_dir" ]
+
+    if ! id "$plesk_user" &>/dev/null; then
+        echo "⚠️ User $plesk_user does not exist. Skipping..."
+        continue
+    fi
+
+    if [[ ! -d "$home_dir" ]]; then
+        echo "⚠️ Home directory $home_dir does not exist for $plesk_user. Skipping..."
+        continue
+    fi
 
     echo "🚀 Running 'conf pull' for $plesk_user ($domain)..."
-    fish -c "conf pull"
+
+    # Run conf pull with a login shell to ensure proper environment setup
+    sudo -u "$plesk_user" fish -l -c "conf pull" || echo "❌ Error running 'conf pull' for $plesk_user ($domain)"
+
 done <<< "$plesk_users"
 
 echo "✅ Finished executing 'conf pull' for all Plesk users!"
