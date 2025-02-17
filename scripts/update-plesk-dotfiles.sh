@@ -1,11 +1,4 @@
 #!/bin/bash
-# execute-conf-pull.sh
-#
-# This script runs "conf pull" for all Plesk virtual hosting users on a remote Plesk server.
-#
-# Usage:
-#   ./execute-conf-pull.sh
-#
 
 set -euo pipefail
 
@@ -36,14 +29,11 @@ echo "✅ Found Plesk users. Executing 'conf pull' for each..."
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
     [[ -z "$domain" || -z "$plesk_user" || -z "$home_dir" ]] && continue
-    id "$plesk_user" &>/dev/null || { echo "⚠️  Skipping $plesk_user: User does not exist."; continue; }
-    [ -d "$home_dir" ] || { echo "⚠️  Skipping $plesk_user: Home directory not found."; continue; }
+    id "$plesk_user" &>/dev/null
+    [ -d "$home_dir" ]
 
     echo "🚀 Running 'conf pull' for $plesk_user ($domain)..."
-
-    sudo -u "$plesk_user" -- bash -c 'conf pull' && \
-        echo "✅ Successfully executed 'conf pull' for $plesk_user ($domain)" || \
-        echo "❌ Failed to execute 'conf pull' for $plesk_user ($domain)"
+    conf pull
 
 done <<< "$plesk_users"
 
