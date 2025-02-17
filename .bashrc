@@ -25,6 +25,7 @@ add_paths_from_file $DOTFILES/.paths
 
 [ -f "$HOME/.config/.aliasrc" ] && source $HOME/.config/.aliasrc
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+[ -f "$HOME/.deno/env" ] && source "$HOME/.deno/env"
 [ -f "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -f "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
@@ -45,4 +46,3 @@ export PATH="$VOLTA_HOME/bin:$PATH"
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-. "/home/andrius/.deno/env"
