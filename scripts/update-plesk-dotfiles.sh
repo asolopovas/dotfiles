@@ -40,10 +40,11 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
         continue
     fi
 
-    echo "🚀 Running 'conf pull' for $plesk_user ($domain)..."
-
-    # Run conf pull with a login shell to ensure proper environment setup
-    sudo -u "$plesk_user" fish -l -c "conf pull" || echo "❌ Error running 'conf pull' for $plesk_user ($domain)"
+    sudo -u "$plesk_user" bash -c "
+        git -C \$HOME/dotfiles fetch origin main && \
+        git -C \$HOME/dotfiles reset --hard origin/main && \
+        git -C \$HOME/dotfiles clean -fd
+    " || echo "❌ Error resetting dotfiles for $plesk_user ($domain)"
 
 done <<< "$plesk_users"
 
