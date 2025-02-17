@@ -155,6 +155,10 @@ if [ "${features[NVIM]}" = true ]; then
         load_script "nvim"
     fi
 
+    if ! cmd_exist lua; then
+        sudo apt install -y lua5.1 luarocks
+    fi
+
     load_script "deno"
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
