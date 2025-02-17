@@ -156,7 +156,7 @@ if [ "${features[NVIM]}" = true ]; then
     fi
 
     if ! cmd_exist lua; then
-        sudo apt install -y lua5.1 luarocks
+        sudo apt install -y lua5.1 luarocks lua_ls
     fi
 
     load_script "deno"
