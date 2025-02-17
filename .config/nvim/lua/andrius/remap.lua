@@ -37,6 +37,8 @@ map('n', '<leader>sv', ':so $MYVIMRC<CR>', opts)
 -- Navigation improvements
 map('n', 'j', 'gj', opts)
 map('n', 'k', 'gk', opts)
+map('n', '<C-d>', '<C-d>zz', opts)
+map('n', '<C-u>', '<C-u>zz', opts)
 
 -- Remove search highlighting
 map('n', '<leader><space>', ':nohlsearch<CR>', opts)
