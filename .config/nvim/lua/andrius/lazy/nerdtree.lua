@@ -2,7 +2,6 @@
 
 return {
     "preservim/nerdtree",
-
     config = function()
         -- NERDTree Specific Settings
         vim.g.NERDTreeChDirMode = 2
