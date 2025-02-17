@@ -23,7 +23,7 @@ mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
 declare -A features=(
     [BUN]=${BUN:-true}
     [CARGO]=${CARGO:-false}
-    [DENO]=${DENO:-false}
+    [DENO]=${DENO:-treu}
     [FDFIND]=${FDFIND:-true}
     [FISH]=${FISH:-true}
     [FORCE]=${FORCE:-false}
@@ -154,16 +154,6 @@ if [ "${features[NVIM]}" = true ]; then
     if ! cmd_exist nvim; then
         load_script "nvim"
     fi
-
-    AUTOLOAD_DIR="$HOME/.local/share/nvim/site/autoload"
-
-    if [ ! -d "$AUTOLOAD_DIR" ] && cmd_exist nvim; then
-        print_color green "Installing vim-plug ..."
-        curl -sfLo $AUTOLOAD_DIR/plug.vim --create-dirs \
-            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        bash -c "nvim +silent +PlugInstall +qall"
-    fi
-
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 

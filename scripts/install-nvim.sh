@@ -1,22 +1,10 @@
 #!/bin/bash
-
-source $HOME/dotfiles/globals.sh
-
-
-print_color green "Installing Neovim for ${OS^} ..."
-
-if [ "$FORCE" = true ]; then
-    print_color red "FORCE Enabled: Removing ${AUTOLOAD_DIR} ..."
-    rm -rf $AUTOLOAD_DIR
+# check user has sudo else exit
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
+    exit 1
 fi
 
-case $OS in
-ubuntu | debian | linuxmint | pop)
-    removePackage vim
-    installPackages neovim python3-neovim
-    ;;
-alipne)
-    installPackages neovim py3-pynvim
-esac
-
-
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+sudo rm -rf /opt/nvim
+sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
