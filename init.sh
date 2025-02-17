@@ -82,10 +82,7 @@ install_package() {
         ;;
     esac
 }
-install_packages() {
-    $SUDO add-apt-repository -y ppa:fish-shell/release-3 >/dev/null 2>&1
-    install_package fish python3 git jq unzip
-}
+
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
 
