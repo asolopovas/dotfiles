@@ -1,3 +1,4 @@
 #!/bin/bash
 
-curl -fsSL https://deno.land/install.sh | DENO_INSTALL="$HOME/.deno" sh
+curl -fsSL https://deno.land/install.sh | sh -s -- -y
+
