@@ -46,9 +46,9 @@ public_key_b64="$(
         tr -d '\n'
 )"
 
-echo "🔄 Connecting to root-new to update authorized_keys for Plesk users..."
+echo "🔄 Connecting to root to update authorized_keys for Plesk users..."
 
-ssh root-new bash -s -- "$force" "$public_key_b64" <<'EOF'
+ssh root bash -s -- "$force" "$public_key_b64" <<'EOF'
 force="$1"
 public_key_b64="$2"
 
