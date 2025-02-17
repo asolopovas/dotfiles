@@ -22,6 +22,7 @@ mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
 declare -A features=(
     [BUN]=${BUN:-true}
     [CARGO]=${CARGO:-false}
+    [DENO]=${DENO:-false}
     [FDFIND]=${FDFIND:-true}
     [FISH]=${FISH:-true}
     [FORCE]=${FORCE:-false}
@@ -138,6 +139,10 @@ fi
 
 if [ "${features[CARGO]}" = true ]; then
     curl https://sh.rustup.rs -sSf | sh
+fi
+
+if [ "${features[DENO]}" = true ]; then
+    load_script 'deno'
 fi
 
 if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
