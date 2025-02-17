@@ -4,6 +4,14 @@ vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 -- Move Selected Bock of Text
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+vim.keymap.set("n", "J", "mzJ`z")
+
+-- Place next item in center of screen
+vim.keymap.set("n", "n", "nzzzv")
+vim.keymap.set("n", "N", "Nzzzv")
+
+-- paste while retaining clipboard current value
+vim.keymap.set("x", "<leader>p", [["_dP]])
 
 -- Key Mappings
 local map = vim.api.nvim_set_keymap
