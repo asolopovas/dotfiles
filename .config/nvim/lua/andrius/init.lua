@@ -8,7 +8,7 @@ local AUGroup = augroup('AUGroup', {})
 local autocmd = vim.api.nvim_create_autocmd
 local yank_group = augroup('HighlightYank', {})
 
-vim.api.nvim_set_option("clipboard","unnamed")
+vim.api.nvim_set_option("clipboard","unnamed,unnamedplus")
 
 function R(name)
     require("plenary.reload").reload_module(name)

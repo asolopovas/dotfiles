@@ -1,5 +1,5 @@
 function ColorMyPencils(color)
-	color = color
+	color = color or "brightburn"
 	vim.cmd.colorscheme(color)
 
 	vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
@@ -7,5 +7,8 @@ function ColorMyPencils(color)
 end
 
 return {
+    {
+        "erikbackman/brightburn.vim",
+    },
     ColorMyPencils()
 }
