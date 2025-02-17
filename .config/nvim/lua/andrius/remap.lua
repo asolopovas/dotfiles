@@ -1,6 +1,10 @@
 vim.g.mapleader = ","
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
+-- Move Selected Bock of Text
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+
 -- Key Mappings
 local map = vim.api.nvim_set_keymap
 local opts = { noremap = true, silent = true }
@@ -31,8 +35,10 @@ map('i', '<M-k>', '<C-T>', opts)
 map('i', 'jk', '<Esc>', opts)
 
 -- Edit common files
+map('n', '<leader>er', ':e $HOME/.config/nvim/lua/andrius/remap.lua<CR>', opts)
 map('n', '<leader>ev', ':e $MYVIMRC<CR>', opts)
 map('n', '<leader>sv', ':so $MYVIMRC<CR>', opts)
+-- Open remap.lua instead of init.vim
 
 -- Navigation improvements
 map('n', 'j', 'gj', opts)
