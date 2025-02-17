@@ -4,6 +4,7 @@ OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 
 DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
 export DOTFILES_DIR="$HOME/dotfiles"
+export CONFIG_DIR="$HOME/.config"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
 if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
@@ -65,23 +66,6 @@ install_composer() {
         echo "Composer is already installed at $COMPOSER_PATH."
     fi
 }
-install_package() {
-    print_color green "Installing the following packages for ${OS^}:"
-    for pkg in "$@"; do
-        print_color blue "  - $pkg"
-    done
-    case $OS in
-    ubuntu | debian | linuxmint)
-        $SUDO apt install -y "$@"
-        ;;
-    centos)
-        $SUDO yum install -y "$@"
-        ;;
-    arch)
-        $SUDO pacman -S --noconfirm "$@"
-        ;;
-    esac
-}
 
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
@@ -95,9 +79,11 @@ install_essentials() {
         git clone $DOTFILES_URL $DOTFILES_DIR >/dev/null
     fi
 
-    rm -rf "$HOME/.config/fish" >/dev/null
-    ln -sf "$DOTFILES_DIR/.config/fish" "$HOME/.config"
-    ln -sf "$DOTFILES_DIR/.config/tmux" "$HOME/.config"
+    rm -rf "$CONFIG_DIR/fish" >/dev/null
+    [ -d "$CONFIG_DIR/fish" ] && rm -rf "$CONFIG_DIR/fish"
+    [ -d "$CONFIG_DIR/tmux" ] && rm -rf "$CONFIG_DIR/tmux"
+    ln -sf "$DOTFILES_DIR/.config/fish" "$CONFIG_DIR"
+    ln -sf "$DOTFILES_DIR/.config/tmux" "$CONFIG_DIR"
 }
 
 install_essentials
