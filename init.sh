@@ -154,6 +154,8 @@ if [ "${features[NVIM]}" = true ]; then
     if ! cmd_exist nvim; then
         load_script "nvim"
     fi
+
+    load_script "deno"
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 
