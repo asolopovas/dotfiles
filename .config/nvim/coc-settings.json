@@ -1,16 +1,15 @@
 {
-  // Require .prettierrc
-  "prettier.requireConfig": true,
-
   // Tslint on save
   "tslint.enable": true,
   "tslint.autoFixOnSave": true,
 
   "emmet.includeLanguages": {
-    "vue-html": "html",
+    "vue": "html",
+    "markdown": "html",
     "javascript": "javascriptreact",
     "twig": "html",
     "block.js": "html",
+    "php": "html",
     "blade": "html"
   },
   // Run prettier (and others)
