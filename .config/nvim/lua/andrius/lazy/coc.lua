@@ -1,26 +1,24 @@
 return {
   {
     "neoclide/coc.nvim",
-    branch = "release", -- Use the recommended release branch
-    cond = function() return vim.fn.executable("npm") == 1 end, -- Only install if npm is available
+    branch = "release",
+    cond = function() return vim.fn.executable("npm") == 1 end, -- Ensure npm is available
 
     config = function()
-      -- Ensure CoC is initialized properly
-      vim.defer_fn(function()
-        -- Run CocInstall command if it's not already installed
-        local function install_coc_extension(extension)
-          local status = vim.fn.system("nvim --headless +':CocList extensions' +qa")
-          if not string.find(status, extension) then
-            vim.cmd("CocInstall " .. extension)
-          end
-        end
+      -- Define the path for a flag file to track installation
+      local install_flag = vim.fn.stdpath("data") .. "/coc_installed"
 
-        -- List of extensions to install
-        local coc_extensions = { "coc-emmet", "coc-json", "coc-tsserver" }
-        for _, ext in ipairs(coc_extensions) do
-          install_coc_extension(ext)
+      -- Function to install CoC extensions only if they are not already installed
+      local function install_coc_extensions()
+        if vim.fn.filereadable(install_flag) == 0 then
+          vim.cmd("CocInstall -sync coc-emmet coc-json coc-tsserver | q")
+          -- Create the flag file after installation
+          vim.fn.writefile({}, install_flag)
         end
-      end, 1000) -- Delay execution slightly to avoid issues
+      end
+
+      -- Delay execution to ensure `coc.nvim` is fully loaded
+      vim.defer_fn(install_coc_extensions, 1000)
     end
   },
 }
