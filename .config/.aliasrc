@@ -78,6 +78,8 @@ alias bund='bun i -D '
 alias pg='prompt-gen'
 
 alias pbcopy='xsel --clipboard --input'
+alias pcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
+alias ppaste='xsel --clipboard --output'
 alias fb="fabric"
 alias liverel="docker run --rm -p 127.0.0.1:35729:35729 -v (pwd):/app/public lyn-livereload"
