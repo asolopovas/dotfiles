@@ -9,3 +9,5 @@
 !.config/xmonad/stack.yaml
 !.config/nvim/autoload/.gitkeep
 .aider*
+.php-init
+.php-version
