@@ -24,7 +24,10 @@ if vim.fn.has("unix") == 1 and vim.fn.readfile("/proc/sys/kernel/osrelease")[1]:
     vim.g.clipboard = {
         name = "WSLClipboard",
         copy = {["+"] = "clip.exe", ["*"] = "clip.exe"},
-        paste = {["+"] = "powershell.exe -c Get-Clipboard", ["*"] = "powershell.exe -c Get-Clipboard"},
+        paste = {["+"] = "powershell.exe -c '[Console]::Out.Write($(Get-Clipboard) -replace \"\\r\", \"\")'",
+                 ["*"] = "powershell.exe -c '[Console]::Out.Write($(Get-Clipboard) -replace \"\\r\", \"\")'"},
         cache_enabled = 0,
     }
+else
+    vim.o.clipboard = "unnamedplus"
 end
