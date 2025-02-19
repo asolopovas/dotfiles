@@ -27,3 +27,11 @@ vim.opt.updatetime = 50
 
 vim.opt.colorcolumn = "90"
 
+if vim.fn.has("unix") == 1 and vim.fn.readfile("/proc/sys/kernel/osrelease")[1]:lower():match("microsoft") then
+    vim.g.clipboard = {
+        name = "WSLClipboard",
+        copy = {["+"] = "clip.exe", ["*"] = "clip.exe"},
+        paste = {["+"] = "powershell.exe -c Get-Clipboard", ["*"] = "powershell.exe -c Get-Clipboard"},
+        cache_enabled = 0,
+    }
+end
