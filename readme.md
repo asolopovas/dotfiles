@@ -41,6 +41,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `vib \| cib`     | Select visual or change selection inside block |
 | `ci} \| ci{`     | Select visual or change selection inside block |
 | `Shift + { \| }` | Select lines between curly brackets |
+| `m{letter}`      | Mark line (use capital letter for global marks) |
+| `'{letter}`      | Jump to marked line |
 
 ## Surround.vim plugin memo
 
