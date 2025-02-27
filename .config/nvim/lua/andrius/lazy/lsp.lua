@@ -32,30 +32,13 @@ return {
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls",
-                "rust_analyzer",
-                "gopls",
+                "intelephense"
             },
             handlers = {
                 function(server_name) -- default handler (optional)
                     require("lspconfig")[server_name].setup {
                         capabilities = capabilities
                     }
-                end,
-
-                zls = function()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.zls.setup({
-                        root_dir = lspconfig.util.root_pattern(".git", "build.zig", "zls.json"),
-                        settings = {
-                            zls = {
-                                enable_inlay_hints = true,
-                                enable_snippets = true,
-                                warn_style = true,
-                            },
-                        },
-                    })
-                    vim.g.zig_fmt_parse_errors = 0
-                    vim.g.zig_fmt_autosave = 0
                 end,
                 ["lua_ls"] = function()
                     local lspconfig = require("lspconfig")
@@ -71,6 +54,56 @@ return {
                         }
                     }
                 end,
+                ["intelephense"] = function()
+
+                    -- Get current working directory
+                    local project_root = vim.loop.cwd()
+
+                    local function is_wp_theme()
+                        -- Get parent folder name
+                        local parent_dir = vim.fn.fnamemodify(project_root, ":h:t")
+                        return parent_dir == "themes"
+                    end
+
+                    local include_paths = {}
+
+                    if is_wp_theme() then
+                        include_paths = {
+                            project_root .. "/../../../wp-includes",
+                            project_root .. "/../../../wp-admin",
+                            project_root .. "/../../plugins"
+                        }
+                    end
+
+                    require("lspconfig").intelephense.setup {
+                        capabilities = capabilities,
+                        settings = {
+                            intelephense = {
+                                licenceKey = "~/licenses/intelephense.txt",
+                                files = {
+                                    maxSize = 10000000,
+                                    associations = {
+                                        "**/*.php", "**/*.inc", "**/*.module", "**/*.theme"
+                                    },
+                                    includePaths = include_paths
+                                },
+                                diagnostics = {
+                                    -- undefinedConstants = false,
+                                    -- undefinedFunctions = false,
+                                },
+                                completion = {
+                                    fullyQualifyGlobalConstants = true,
+                                    triggerParameterHints = true
+                                },
+                                stubs = {
+                                    "wordpress", "core", "date", "json", "pcre", "spl", "standard"
+                                }
+                            }
+                        }
+                    }
+                end
+
+
             }
         })
 

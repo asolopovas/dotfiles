@@ -9,7 +9,6 @@ return {
 
         local builtin = require('telescope.builtin')
 
-        -- Function to check if a .git directory exists in the current or parent directories
         local function is_git_repo()
             local dir = vim.fn.getcwd()  -- Get current working directory
             while dir ~= "/" do
@@ -21,7 +20,6 @@ return {
             return false
         end
 
-        -- Smart file search: Git files if in a repo, otherwise find all files
         local function smart_find_files()
             if is_git_repo() then
                 builtin.git_files()
@@ -32,7 +30,7 @@ return {
 
         -- Key mappings
         vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-        vim.keymap.set('n', '<C-p>', smart_find_files, {}) -- Super fast Git check
+        vim.keymap.set('n', '<C-p>', smart_find_files, {})
         vim.keymap.set('n', '<leader>pws', function()
             local word = vim.fn.expand("<cword>")
             builtin.grep_string({ search = word })
