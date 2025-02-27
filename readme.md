@@ -1,39 +1,36 @@
-## Install
----
+# Dotfiles
+A collection of my personal configurations and scripts for terminal tools, Tmux, Neovim, and more.
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/master/init.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main/init.sh)"
 ```
 
-## Shortcuts
----
+## Terminal
+|Shortcut|Description|
+|---|---|
+| `Ctrl + X E` | Edit command line |
+| `Esc + B`    | Move one word back |
+| `Esc + F`    | Move one word forward |
 
-### Terminal
+## Tmux
+|Shortcut|Description|
+|---|---|
+| `Ctrl + A C`      | Create new window|
+| `Ctrl + A ,`      | Rename window|
+| `Ctrl + A P`      | Previous window|
+| `Ctrl + A N`      | Next window|
+| `Ctrl + A W`      | Select windows|
+| `Ctrl + A %`      | Split vertically|
+| `Ctrl + A :`      | Named commands|
+| `Ctrl + A D`      | Detach from session|
+| `Ctrl + A Alt+-`  | Horizontal Layout|
+| `Ctrl + A Alt+\|` | Vertical Layout|
 
-```
-ctrl x e        'Edit command line
-esc + b         'Word back
-esc + f         'Word forward
-```
-
-### Tmux
-```
-Ctrl+a c        'Create new window
-Ctrl+a ,        'Rename window
-Ctrl+a p        'Previous window
-Ctrl+a n        'Next window
-Ctrl+a w        'Select windows
-Ctrl+a %        'Split vertically
-Ctrl+a :        'Named commands
-Ctrl+a d        'Detach from the session
-Ctrl+a Alt + -  'Horizontal Layout
-Ctrl+a Alt + |  'Vertical Layout
-```
-
-### Vim
-```
-Ctrl + V        'Visual block mode
-Shift + >       'Indent line'
-Shift + n>      'Indent line n steps'
-F7              'reindent file
-```
+## Neovim
+|Shortcut|Action|
+|---|---|
+| `Ctrl + V`      | Visual block mode         |
+| `Shift + >`     | Indent line               |
+| `Shift + N >`   | Indent line N steps       |
+| `F7`            | Reindent file             |
+| `Shift + {` / `}` | Select lines between curly brackets |
