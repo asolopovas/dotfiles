@@ -1,4 +1,5 @@
 # Dotfiles
+
 A collection of my personal configurations and scripts for terminal tools, Tmux, Neovim, and more.
 
 ```bash
@@ -6,6 +7,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 ```
 
 ## Terminal
+
 |Shortcut|Description|
 |---|---|
 | `Ctrl + X E` | Edit command line |
@@ -13,6 +15,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `Esc + F`    | Move one word forward |
 
 ## Tmux
+
 |Shortcut|Description|
 |---|---|
 | `Ctrl + A C`      | Create new window |
@@ -27,6 +30,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `Ctrl + A Alt+\|` | Vertical Layout |
 
 ## Neovim
+
 |Shortcut|Action|
 |---|---|
 | `Ctrl + V`       | Visual block mode |
@@ -49,4 +53,3 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `'change quot*es'`           | `cs'"`       | `"change quotes"` |
 | `<b>or tag* types</b>`       | `csth1<CR>`  | `<h1>or tag types</h1>` |
 | `delete(functi*on calls)`    | `dsf`        | `function calls` |
-
