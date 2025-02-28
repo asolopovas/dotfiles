@@ -11,7 +11,7 @@ vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 
 -- paste while retaining clipboard current value
-vim.keymap.set("x", "<leader>p", [["_dP]])
+-- vim.keymap.set("x", "<leader>p", [["_dP]])
 
 -- Key Mappings
 local map = vim.api.nvim_set_keymap
@@ -60,13 +60,13 @@ map('n', '<C-u>', '<C-u>zz', opts)
 map('n', '<leader><space>', ':nohlsearch<CR>', opts)
 
 -- Manage buffers
-map('n', '<leader>bda', ':bufdo bd!<CR>', opts)
+map('n', '<leader>q', ':bufdo bd!<CR>', opts)
 map('n', '<leader>bd', ':bd<CR>', opts)
 map('n', '<leader>bq', ':bp | bd #<CR>', opts)
 
 -- Tab management
 map('n', '<leader>to', ':tabonly<CR>', opts)
-map('n', '<leader>tw', ':tabclose<CR>', opts)
+map('n', 'C-w', ':tabclose<CR>', opts)
 map('n', '<leader>tn', ':tabnew<CR>', opts)
 map('n', '<F2>', ':tabprevious<CR>', opts)
 map('n', '<F3>', ':tabnext<CR>', opts)
@@ -92,6 +92,7 @@ end
 vim.api.nvim_create_user_command('QuickfixToggle', quickfix_toggle, {})
 map('n', '<leader>q', ':QuickfixToggle<CR>', opts)
 
+
 -- Splits Management
 vim.o.splitbelow = true
 vim.o.splitright = true
@@ -99,8 +100,8 @@ map('n', '<C-h>', '<C-w>h', opts)
 map('n', '<C-j>', '<C-w>j', opts)
 map('n', '<C-k>', '<C-w>k', opts)
 map('n', '<C-l>', '<C-w>l', opts)
-map('n', '<leader>g', ':split<CR>', opts)
-map('n', '<leader>v', ':vsplit<CR>', opts)
+-- map('n', '<leader>g', ':split<CR>', opts)
+-- map('n', '<leader>v', ':vsplit<CR>', opts)
 
 -- Resize split windows
 map('n', '<C-Up>', '<C-w>-', opts)
@@ -110,16 +111,3 @@ map('n', '<C-Right>', '<C-w><', opts)
 
 vim.keymap.set("n", "<leader>fml", "<cmd>CellularAutomaton make_it_rain<CR>")
 
-function _G.set_terminal_keymaps()
-    local opts = {buffer = 0}
-    vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], opts)
-    vim.keymap.set('t', 'jk', [[<C-\><C-n>]], opts)
-    vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], opts)
-    vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], opts)
-    vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
-    vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
-    vim.keymap.set('t', '<C-w>', [[<C-\><C-n><C-w>]], opts)
-end
-
--- if you only want these mappings for toggle term use term://*toggleterm#* instead
-vim.cmd('autocmd! TermOpen term://* lua set_terminal_keymaps()')
