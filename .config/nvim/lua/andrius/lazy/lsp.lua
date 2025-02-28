@@ -15,24 +15,45 @@ return {
     },
 
     config = function()
+        -- ======================
+        --        Conform
+        -- ======================
         require("conform").setup({
             formatters_by_ft = {
+                -- add formatters if needed
             }
         })
+
+        -- ======================
+        --         CMP
+        -- ======================
         local cmp = require('cmp')
         local cmp_lsp = require("cmp_nvim_lsp")
         local capabilities = vim.tbl_deep_extend(
             "force",
             {},
             vim.lsp.protocol.make_client_capabilities(),
-            cmp_lsp.default_capabilities())
+            cmp_lsp.default_capabilities()
+        )
 
+        -- ======================
+        --       Fidget
+        -- ======================
         require("fidget").setup({})
+
+        -- ======================
+        --       Mason
+        -- ======================
         require("mason").setup()
+
+        -- ======================
+        --   Mason LSP Config
+        -- ======================
         require("mason-lspconfig").setup({
             ensure_installed = {
                 "lua_ls",
-                "intelephense"
+                "intelephense",
+                "jsonls",         -- <-- Add JSON LS here
             },
             handlers = {
                 function(server_name) -- default handler (optional)
@@ -40,9 +61,10 @@ return {
                         capabilities = capabilities
                     }
                 end,
+
+                -- Lua
                 ["lua_ls"] = function()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.lua_ls.setup {
+                    require("lspconfig").lua_ls.setup {
                         capabilities = capabilities,
                         settings = {
                             Lua = {
@@ -54,27 +76,9 @@ return {
                         }
                     }
                 end,
+
+                -- PHP
                 ["intelephense"] = function()
-
-                    -- Get current working directory
-                    local project_root = vim.loop.cwd()
-
-                    local function is_wp_theme()
-                        -- Get parent folder name
-                        local parent_dir = vim.fn.fnamemodify(project_root, ":h:t")
-                        return parent_dir == "themes"
-                    end
-
-                    local include_paths = {}
-
-                    if is_wp_theme() then
-                        include_paths = {
-                            project_root .. "../../../wp-includes",
-                            project_root .. "../../../wp-admin",
-                            project_root .. "../../plugins"
-                        }
-                    end
-
                     require("lspconfig").intelephense.setup {
                         capabilities = capabilities,
                         settings = {
@@ -83,36 +87,57 @@ return {
                                 files = {
                                     maxSize = 10000000,
                                     associations = {
-                                        "**/*.php", "**/*.inc", "**/*.module", "**/*.theme"
+                                        "**/*.php",
                                     },
-                                    includePaths = include_paths
-                                },
-                                diagnostics = {
-                                    -- undefinedConstants = false,
-                                    -- undefinedFunctions = false,
                                 },
                                 completion = {
                                     fullyQualifyGlobalConstants = true,
                                     triggerParameterHints = true
                                 },
                                 stubs = {
-                                    "wordpress", "core", "date", "json", "pcre", "spl", "standard"
+                                    "wordpress",
+                                    "core",
+                                    "date",
+                                    "json",
+                                    "pcre",
+                                    "spl",
+                                    "standard"
                                 }
                             }
                         }
                     }
+                end,
+
+                -- JSON
+                ["jsonls"] = function()
+                    require("lspconfig").jsonls.setup {
+                        capabilities = capabilities,
+                        settings = {
+                            json = {
+                                -- This associates `composer.json` with the correct schema
+                                schemas = {
+                                    {
+                                        description = "Composer configuration file",
+                                        fileMatch = { "composer.json" },
+                                        url = "https://raw.githubusercontent.com/composer/composer/master/composer-schema.json"
+                                    },
+                                },
+                                validate = { enable = true },
+                            },
+                        },
+                    }
                 end
-
-
             }
         })
 
+        -- ======================
+        --       CMP Setup
+        -- ======================
         local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
         cmp.setup({
             snippet = {
                 expand = function(args)
-                    require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+                    require('luasnip').lsp_expand(args.body)
                 end,
             },
             mapping = cmp.mapping.preset.insert({
@@ -123,14 +148,16 @@ return {
             }),
             sources = cmp.config.sources({
                 { name = 'nvim_lsp' },
-                { name = 'luasnip' }, -- For luasnip users.
+                { name = 'luasnip' },
             }, {
                 { name = 'buffer' },
             })
         })
 
+        -- ======================
+        -- Diagnostic settings
+        -- ======================
         vim.diagnostic.config({
-            -- update_in_insert = true,
             float = {
                 focusable = false,
                 style = "minimal",
