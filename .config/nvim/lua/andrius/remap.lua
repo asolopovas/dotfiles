@@ -28,6 +28,11 @@ map('c', '<S-Insert>', '<C-R>+', {})
 -- Save as sudo when needed
 map('c', 'w!!', 'SudaWrite', {})
 
+-- Toggle hidden characters
+map('n', '<F5>', ':set list!<CR>', opts)
+map('i', '<F5>', '<C-o>:set list!<CR>', opts)
+map('c', '<F5>', '<C-c>:set list!<CR>', opts)
+
 -- Indentation
 map('x', '<', '<gv', opts)
 map('x', '>', '>gv', opts)
@@ -45,6 +50,7 @@ map('n', '<leader>ev', ':e $HOME/.config/nvim/lua/andrius/init.lua<CR>', opts)
 map('n', '<leader>es', ':e $HOME/.config/nvim/lua/andrius/set.lua<CR>', opts)
 map('n', '<leader>ea', ':e $HOME/.config/.aliasrc<CR>', opts)
 map('n', '<leader>sv', ':so $MYVIMRC<CR>', opts)
+-- Open remap.lua instead of init.vim
 
 -- Navigation improvements
 map('n', 'j', 'gj', opts)
@@ -62,7 +68,7 @@ map('n', '<leader>bq', ':bp | bd #<CR>', opts)
 
 -- Tab management
 map('n', '<leader>to', ':tabonly<CR>', opts)
-map('n', '<M-w>', ':tabclose<CR>', opts)
+map('n', '<leader>tw', ':tabclose<CR>', opts)
 map('n', '<M-t>', ':tabnew<CR>', opts)
 map('n', '<M-h>', ':tabprevious<CR>', opts)
 map('n', '<M-l>', ':tabnext<CR>', opts)
@@ -74,6 +80,21 @@ map('n', '<leader>T', ':enew<CR>', opts)
 map('n', '<leader>l', ':bnext<CR>', opts)
 map('n', '<leader>h', ':bprevious<CR>', opts)
 
+-- -- Quickfix Toggle
+-- local quickfix_toggle = function()
+--     if vim.g.quickfix_is_open then
+--         vim.cmd('cclose')
+--         vim.g.quickfix_is_open = 0
+--     else
+--         vim.g.quickfix_is_open = 1
+--         vim.cmd('copen')
+--     end
+-- end
+--
+-- vim.api.nvim_create_user_command('QuickfixToggle', quickfix_toggle, {})
+-- map('n', '<leader>q', ':QuickfixToggle<CR>', opts)
+
+
 -- Splits Management
 vim.o.splitbelow = true
 vim.o.splitright = true
@@ -81,8 +102,8 @@ map('n', '<C-h>', '<C-w>h', opts)
 map('n', '<C-j>', '<C-w>j', opts)
 map('n', '<C-k>', '<C-w>k', opts)
 map('n', '<C-l>', '<C-w>l', opts)
-map('n', '<leader>sh', ':split<CR>', opts)
-map('n', '<leader>sv', ':vsplit<CR>', opts)
+map('n', '<leader>vh', ':split<CR>', opts)
+map('n', '<leader>vv', ':vsplit<CR>', opts)
 
 -- Resize split windows
 map('n', '<C-Up>', '<C-w>-', opts)
@@ -92,6 +113,3 @@ map('n', '<C-Right>', '<C-w><', opts)
 
 vim.keymap.set("n", "<leader>fml", "<cmd>CellularAutomaton make_it_rain<CR>")
 vim.keymap.set("n", "<M-`>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
-vim.keymap.set("n", "", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
-
-
