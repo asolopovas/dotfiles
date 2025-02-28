@@ -69,9 +69,9 @@ return {
 
                     if is_wp_theme() then
                         include_paths = {
-                            project_root .. "/../../../wp-includes",
-                            project_root .. "/../../../wp-admin",
-                            project_root .. "/../../plugins"
+                            project_root .. "../../../wp-includes",
+                            project_root .. "../../../wp-admin",
+                            project_root .. "../../plugins"
                         }
                     end
 
