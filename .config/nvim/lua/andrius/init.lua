@@ -8,8 +8,6 @@ local AUGroup = augroup('AUGroup', {})
 local autocmd = vim.api.nvim_create_autocmd
 local yank_group = augroup('HighlightYank', {})
 
-vim.api.nvim_set_option("clipboard","unnamed,unnamedplus")
-
 function R(name)
     require("plenary.reload").reload_module(name)
 end
@@ -54,7 +52,7 @@ autocmd('LspAttach', {
         vim.keymap.set("n", "<leader>vca", function() vim.lsp.buf.code_action() end, opts)
         vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, opts)
         vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
-        vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
+        vim.keymap.set("i", "<M-h>", function() vim.lsp.buf.signature_help() end, opts)
         vim.keymap.set("n", "[d", function() vim.diagnostic.goto_next() end, opts)
         vim.keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end, opts)
     end
@@ -66,7 +64,6 @@ vim.g.netrw_winsize = 25
 vim.g.nvim_tree_auto_open = 0
 
 
-local treesiter = require("nvim-treesitter.configs")
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
 parser_config.blade = {
     install_info = {
@@ -84,6 +81,7 @@ vim.filetype.add({
 })
 local bladeGrp
 vim.api.nvim_create_augroup("BladeFiltypeRelated", { clear = true })
+
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
     pattern = "*.blade.php",
     group = bladeGrp,
@@ -91,3 +89,5 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
         vim.opt.filetype = "blade"
     end,
 })
+vim.api.nvim_set_option("clipboard","unnamed,unnamedplus")
+
