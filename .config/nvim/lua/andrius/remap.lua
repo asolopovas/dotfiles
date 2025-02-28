@@ -1,4 +1,7 @@
 vim.g.mapleader = " "
+
+local map = vim.api.nvim_set_keymap
+
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
 -- Move Selected Bock of Text
@@ -11,10 +14,9 @@ vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 
 -- paste while retaining clipboard current value
--- vim.keymap.set("x", "<leader>p", [["_dP]])
+vim.keymap.set("x", "<leader>p", [["_dP]])
 
 -- Key Mappings
-local map = vim.api.nvim_set_keymap
 local opts = { noremap = true, silent = true }
 
 -- Auto format file
@@ -66,10 +68,10 @@ map('n', '<leader>bq', ':bp | bd #<CR>', opts)
 
 -- Tab management
 map('n', '<leader>to', ':tabonly<CR>', opts)
-map('n', 'C-w', ':tabclose<CR>', opts)
-map('n', '<leader>tn', ':tabnew<CR>', opts)
-map('n', '<F2>', ':tabprevious<CR>', opts)
-map('n', '<F3>', ':tabnext<CR>', opts)
+map('n', '<leader>tw', ':tabclose<CR>', opts)
+map('n', '<M-j>', ':tabnew<CR>', opts)
+map('n', '<leader>tj', ':tabprevious<CR>', opts)
+map('n', '<leader>tk', ':tabnext<CR>', opts)
 
 -- Open a new empty buffer
 map('n', '<leader>T', ':enew<CR>', opts)
@@ -78,19 +80,19 @@ map('n', '<leader>T', ':enew<CR>', opts)
 map('n', '<leader>l', ':bnext<CR>', opts)
 map('n', '<leader>h', ':bprevious<CR>', opts)
 
--- Quickfix Toggle
-local quickfix_toggle = function()
-    if vim.g.quickfix_is_open then
-        vim.cmd('cclose')
-        vim.g.quickfix_is_open = 0
-    else
-        vim.g.quickfix_is_open = 1
-        vim.cmd('copen')
-    end
-end
-
-vim.api.nvim_create_user_command('QuickfixToggle', quickfix_toggle, {})
-map('n', '<leader>q', ':QuickfixToggle<CR>', opts)
+-- -- Quickfix Toggle
+-- local quickfix_toggle = function()
+--     if vim.g.quickfix_is_open then
+--         vim.cmd('cclose')
+--         vim.g.quickfix_is_open = 0
+--     else
+--         vim.g.quickfix_is_open = 1
+--         vim.cmd('copen')
+--     end
+-- end
+--
+-- vim.api.nvim_create_user_command('QuickfixToggle', quickfix_toggle, {})
+-- map('n', '<leader>q', ':QuickfixToggle<CR>', opts)
 
 
 -- Splits Management

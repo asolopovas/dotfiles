@@ -3,13 +3,10 @@ return {
     tag = "*",
     config = function()
         require("toggleterm").setup {
-            start_in_insert = true,  -- Automatically enter insert mode
-            direction = "float",     -- Use floating terminal (optional)
-            open_mapping = [[<leader>t]],  -- This automatically maps <leader>t
+            -- Map <leader>t in normal mode to toggle the terminal
+            open_mapping = [[<leader>j]],
+            -- Optional: automatically enter insert mode when terminal opens
+            start_in_insert = true,
         }
-
-        -- Ensure <leader>t toggles the terminal (open/close)
-        vim.keymap.set("n", "<leader>t", "<cmd>ToggleTermToggleAll<CR>", { noremap = true, silent = true })
     end
 }
-
