@@ -163,6 +163,7 @@ if [ "${features[NVIM]}" = true ]; then
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 
+
 if [ "${features[OHMYFISH]}" = true ]; then
     DEST_DIR="$HOME/.local/share/omf"
     if [ ! -d "$DEST_DIR" ]; then
