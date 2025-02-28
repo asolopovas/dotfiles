@@ -100,8 +100,8 @@ map('n', '<C-h>', '<C-w>h', opts)
 map('n', '<C-j>', '<C-w>j', opts)
 map('n', '<C-k>', '<C-w>k', opts)
 map('n', '<C-l>', '<C-w>l', opts)
--- map('n', '<leader>g', ':split<CR>', opts)
--- map('n', '<leader>v', ':vsplit<CR>', opts)
+map('n', '<leader>vh', ':split<CR>', opts)
+map('n', '<leader>vv', ':vsplit<CR>', opts)
 
 -- Resize split windows
 map('n', '<C-Up>', '<C-w>-', opts)
