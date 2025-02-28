@@ -15,3 +15,4 @@ require("lazy").setup({
     spec = "andrius.lazy",
     change_detection = { notify = false }
 })
+

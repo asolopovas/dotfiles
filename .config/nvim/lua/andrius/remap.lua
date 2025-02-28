@@ -110,4 +110,6 @@ map('n', '<C-Left>', '<C-w>>', opts)
 map('n', '<C-Right>', '<C-w><', opts)
 
 vim.keymap.set("n", "<leader>fml", "<cmd>CellularAutomaton make_it_rain<CR>")
+vim.keymap.set("n", "<M-`>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
+
 
