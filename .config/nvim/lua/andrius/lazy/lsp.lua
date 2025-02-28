@@ -79,6 +79,24 @@ return {
 
                 -- PHP
                 ["intelephense"] = function()
+                    -- Get current working directory
+                    local project_root = vim.loop.cwd()
+
+                    local function is_wp_theme()
+                        -- Get parent folder name
+                        local parent_dir = vim.fn.fnamemodify(project_root, ":h:t")
+                        return parent_dir == "themes"
+                    end
+
+                    local include_paths = {}
+                    if is_wp_theme() then
+                        include_paths = {
+                            project_root .. "/../../../wp-includes",
+                            project_root .. "/../../../wp-admin",
+                            project_root .. "/../../plugins"
+                        }
+                    end
+
                     require("lspconfig").intelephense.setup {
                         capabilities = capabilities,
                         settings = {
@@ -90,10 +108,13 @@ return {
                                         "**/*.php",
                                     },
                                 },
-                                completion = {
-                                    fullyQualifyGlobalConstants = true,
-                                    triggerParameterHints = true
+                                environment ={
+                                    includePaths = include_paths
                                 },
+                                -- completion = {
+                                --     fullyQualifyGlobalConstants = true,
+                                --     triggerParameterHints = true
+                                -- },
                                 stubs = {
                                     "wordpress",
                                     "core",
