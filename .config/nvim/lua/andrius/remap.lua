@@ -80,21 +80,6 @@ map('n', '<leader>T', ':enew<CR>', opts)
 map('n', '<leader>l', ':bnext<CR>', opts)
 map('n', '<leader>h', ':bprevious<CR>', opts)
 
--- -- Quickfix Toggle
--- local quickfix_toggle = function()
---     if vim.g.quickfix_is_open then
---         vim.cmd('cclose')
---         vim.g.quickfix_is_open = 0
---     else
---         vim.g.quickfix_is_open = 1
---         vim.cmd('copen')
---     end
--- end
---
--- vim.api.nvim_create_user_command('QuickfixToggle', quickfix_toggle, {})
--- map('n', '<leader>q', ':QuickfixToggle<CR>', opts)
-
-
 -- Splits Management
 vim.o.splitbelow = true
 vim.o.splitright = true
