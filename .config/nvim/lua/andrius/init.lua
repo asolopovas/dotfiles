@@ -1,6 +1,7 @@
 require("andrius.set")
 require("andrius.remap")
 require("andrius.lazy_init")
+require('sg').setup()
 
 local augroup = vim.api.nvim_create_augroup
 local AUGroup = augroup('AUGroup', {})
@@ -63,7 +64,6 @@ vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 25
 vim.g.nvim_tree_auto_open = 0
 
-
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
 parser_config.blade = {
     install_info = {
@@ -90,4 +90,22 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
     end,
 })
 vim.api.nvim_set_option("clipboard","unnamed,unnamedplus")
+
+
+local function detect_browser()
+  local is_wsl = vim.fn.has("wsl") == 1
+
+  if is_wsl then
+    return "wslview"  -- Windows browser for WSL
+  elseif vim.fn.executable("xdg-open") == 1 then
+    return "xdg-open"  -- Linux GUI
+  else
+    return nil  -- No browser available
+  end
+end
+
+local browser = detect_browser()
+if browser then
+  vim.env.BROWSER = browser
+end
 
