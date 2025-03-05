@@ -22,7 +22,9 @@ if [[ -z $selected_command ]]; then
     exit 0
 fi
 
-command=$(echo "$selected_command" | cut -d'=>' -f2- | xargs)
+# Corrected extraction with awk to handle multi-character delimiter
+command=$(echo "$selected_command" | awk -F ' => ' '{print $2}')
 
+# Execute command with less for scrolling convenience
 eval "$command" | less -R
 
