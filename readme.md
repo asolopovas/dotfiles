@@ -56,18 +56,3 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `<b>or tag* types</b>`       | `csth1<CR>`  | `<h1>or tag types</h1>` |
 | `delete(functi*on calls)`    | `dsf`        | `function calls` |
 
-## NerdTree
-m opens context menu
-
-| Shortcut | Action |
-|---|---|
-| `m`  | opens context menu |
-| `(a)`  | add a child node |
-| `(m)`  | move the current node |
-| `(d)`  | delete the current node |
-| `(c)`  | copy the current node  |
-| `(p)`  | copy path to clipboard |
-| `(l)`  | list the current node  |
-| `(C)`  | change node permissions |
-| `(s)`  | run system command in this directory |
-
