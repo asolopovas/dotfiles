@@ -76,6 +76,8 @@ alias pprod='pnpm prod'
 alias pwatch='pnpm watch'
 alias bund='bun i -D '
 alias pg='prompt-gen'
+alias checklogs="sudo journalctl -p 3 -xb"
+
 
 alias pbcopy='xsel --clipboard --input'
 alias pcopy='xsel --clipboard --input'
