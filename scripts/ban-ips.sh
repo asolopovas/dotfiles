@@ -17,12 +17,14 @@ if [ ! -f "$LOG_FILE" ] || [ ! -r "$LOG_FILE" ]; then
     exit 1
 fi
 
-# Detect format: check for "client:" vs common log format
-if grep -q "client:" "$LOG_FILE"; then
-    # Extract IP from error logs
+if grep -q "client: " "$LOG_FILE"; then
+    # NGINX-style error log
     RAW_IPS=$(grep "$PATTERN" "$LOG_FILE" | sed -n 's/.*client: \([0-9.]*\).*/\1/p')
+elif grep -q "\[client " "$LOG_FILE"; then
+    # Apache error log
+    RAW_IPS=$(grep "$PATTERN" "$LOG_FILE" | sed -n 's/.*\[client \([0-9.]*\):[0-9]*\].*/\1/p')
 else
-    # Extract IP from access logs (first field)
+    # Apache access log or similar
     RAW_IPS=$(grep "$PATTERN" "$LOG_FILE" | awk '{print $1}')
 fi
 
