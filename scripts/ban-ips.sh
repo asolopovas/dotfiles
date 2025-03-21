@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# Define the correct Fail2Ban jail (adjust as needed)
-JAIL="plesk-wordpress"  # Change to plesk-permanent-ban if needed
+JAIL="plesk-permanent-ban"  # Change to plesk-permanent-ban if needed
 
-# Check if the user provided an input file
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <ip_list_file>"
     exit 1
