@@ -51,9 +51,9 @@ if [ "$MODE" = "dir" ]; then
         exit 1
     fi
 
-    # Recursively grep. The output form is "filename:matched_line"
-    # We'll strip off "filename:" so that the IP parsing logic remains the same.
-    MATCHED_LINES=$(grep -r "$PATTERN" "$SEARCH_DIR" 2>/dev/null | sed 's|^[^:]*:||')
+    # Recursively grep. The output form is "filename:the_line_itself".
+    # We do NOT strip the filename here, because we’ll just parse the entire line for IPs anyway.
+    MATCHED_LINES=$(grep -r "$PATTERN" "$SEARCH_DIR" 2>/dev/null)
     if [ -z "$MATCHED_LINES" ]; then
         echo "No lines found matching pattern '$PATTERN' in directory '$SEARCH_DIR'."
         exit 0
@@ -73,19 +73,15 @@ else
 fi
 
 # ------------------------------------------------------------
-# Detect possible log formats and extract IP addresses
+# Extract *all* IPv4 addresses from the matched lines
+#   (Even if they're not the first token or in [client ...] format)
 # ------------------------------------------------------------
-if echo "$MATCHED_LINES" | grep -q "\[client "; then
-    # Apache error log format: [client x.x.x.x:port]
-    RAW_IPS=$(echo "$MATCHED_LINES" \
-        | sed -nE 's/.*\[client ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+\].*/\1/p')
-elif echo "$MATCHED_LINES" | grep -q "client:"; then
-    # NGINX error log format: client: x.x.x.x
-    RAW_IPS=$(echo "$MATCHED_LINES" \
-        | sed -nE 's/.*client: ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
-else
-    # Generic: assume IP is first token (e.g. Apache access log)
-    RAW_IPS=$(echo "$MATCHED_LINES" | awk '{print $1}')
+RAW_IPS=$(echo "$MATCHED_LINES" \
+    | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
+
+if [ -z "$RAW_IPS" ]; then
+    echo "No IP addresses found in matching lines!"
+    exit 0
 fi
 
 # ------------------------------------------------------------
