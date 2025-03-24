@@ -55,7 +55,7 @@ alias xevkb='xev -event keyboard'
 # CD Directories
 alias dv='cd $HOME/www/dev'
 alias dt='cd $HOME/dotfiles'
-alias wd='cd $HOME/www'
+alias www='cd $HOME/www'
 alias gos='cd $HOME/go/src'
 alias scr='cd $HOME/dotfiles/scripts'
 alias hlp='cd $HOME/dotfiles/helpers'
@@ -76,12 +76,10 @@ alias pprod='pnpm prod'
 alias pwatch='pnpm watch'
 alias bund='bun i -D '
 alias pg='prompt-gen'
-alias checklogs="sudo journalctl -p 3 -xb"
-
 
 alias pbcopy='xsel --clipboard --input'
 alias pcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
 alias ppaste='xsel --clipboard --output'
+
 alias fb="fabric"
-alias liverel="docker run --rm -p 127.0.0.1:35729:35729 -v (pwd):/app/public lyn-livereload"
