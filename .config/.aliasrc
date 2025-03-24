@@ -12,15 +12,14 @@ alias mosh='mosh --no-init'
 # Cleanup
 # alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
 alias tm='tmux -f $HOME/.config/tmux/tmux.conf'
-alias gpg2='gpg2 --homedir "$XDG_DATA_HOME"/gnupg'
+alias tx='tmux a -t '
+alias ts='tmux list-sessions'
 
-# ssh with google
-alias sshg='ssh -i ~/.ssh/google_compute_engine'
+alias gpg2='gpg2 --homedir "$XDG_DATA_HOME"/gnupg'
 
 # Docker
 alias dk='docker '
 alias dc='docker compose '
-alias dcd='docker compose -f docker-compose.dev.yml '
 alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
 alias sys='systemctl'
 
