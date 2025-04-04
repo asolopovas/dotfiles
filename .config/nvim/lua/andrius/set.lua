@@ -18,7 +18,7 @@ vim.opt.scrolloff = 8
 vim.opt.signcolumn = "yes"
 vim.opt.isfname:append("@-@")
 vim.opt.updatetime = 50
-vim.opt.colorcolumn = "90"
+vim.opt.colorcolumn = "100"
 
 if vim.fn.has("unix") == 1
    and vim.fn.readfile("/proc/sys/kernel/osrelease")[1]:lower():match("microsoft")
