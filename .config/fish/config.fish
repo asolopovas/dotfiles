@@ -52,7 +52,7 @@ load_env "$HOME/.env-vars"
 # pnpm
 set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 if not string match -q -- $PNPM_HOME $PATH
-  set -gx PATH "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
 # The next line updates PATH for the Google Cloud SDK.
