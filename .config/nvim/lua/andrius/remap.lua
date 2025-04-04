@@ -68,7 +68,7 @@ map('n', '<leader>bq', ':bp | bd #<CR>', opts)
 
 -- Tab management
 map('n', '<leader>to', ':tabonly<CR>', opts)
-map('n', '<leader>tw', ':tabclose<CR>', opts)
+map('n', '<M-q>', ':tabclose<CR>', opts)
 map('n', '<M-t>', ':tabnew<CR>', opts)
 map('n', '<M-h>', ':tabprevious<CR>', opts)
 map('n', '<M-l>', ':tabnext<CR>', opts)
