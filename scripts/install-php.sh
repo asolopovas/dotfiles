@@ -23,7 +23,7 @@ phpPackages=(
     # "php$VER-memcache"
     # "php$VER-memcached"
     "php$VER-mongodb"
-    "php$VER-igbinarud "
+    "php$VER-igbinary"
     "php$VER-mysql"
     "php$VER-pcov"
     "php$VER-pgsql"
