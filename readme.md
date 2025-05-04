@@ -44,6 +44,17 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `m{letter}`      | Mark line (use capital letter for global marks) |
 | `'{letter}`      | Jump to marked line |
 
+<!-- Telescope -->
+| Shortcut         | Action                                      |
+|------------------|---------------------------------------------|
+| `<C-p>`          | Smart file finder (`smart_find_files`) |
+| `<leader>ff`     | Find files using Telescope's `find_files` |
+| `<leader>fh`     | Search help tags |
+| `<leader>fb`     | Open Telescope file browser |
+| `<leader>fd`     | List document symbols from LSP |
+| `<leader>fs`     | List workspace symbols from LSP |
+| `<leader>fg`     | Live grep with arguments (`live_grep_args`) |
+
 ## Surround.vim plugin memo
 
 | Old Text                     | Command       | New Text |

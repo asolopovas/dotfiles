@@ -54,8 +54,8 @@ return {
         end
 
         -- Key mappings
-        vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
         vim.keymap.set('n', '<C-p>', smart_find_files, {})
+        vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
         vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
         vim.keymap.set('n', '<leader>fb', ":Telescope file_browser<cr>", {})
         vim.keymap.set('n', '<leader>fd', builtin.lsp_document_symbols, {})

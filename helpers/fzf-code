@@ -7,7 +7,7 @@ STORE=()
 detect_wsl() { [ -n "$WSL_DISTRO_NAME" ]; }
 
 get_windows_username() {
-    powershell.exe '$env:USERNAME' | tr -d '\r'
+    wslvar USERNAME
 }
 
 get_vscode_data() {
