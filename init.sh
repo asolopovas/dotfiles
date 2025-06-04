@@ -23,12 +23,12 @@ mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
 declare -A features=(
     [BUN]=${BUN:-true}
     [CARGO]=${CARGO:-false}
-    [DENO]=${DENO:-treu}
+    [DENO]=${DENO:-true}
     [FDFIND]=${FDFIND:-true}
     [FISH]=${FISH:-true}
     [FORCE]=${FORCE:-false}
     [FZF]=${FZF:-true}
-    [NODE]=${NODE:-false}
+    [NODE]=${NODE:-true}
     [NODE_VERSION]=${NODE_VERSION:-22.13.1}
     [NVIM]=${NVIM:-true}
     [OHMYBASH]=${OHMYBASH:-false}
@@ -167,7 +167,6 @@ if [ "${features[NVIM]}" = true ]; then
 
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
-
 
 if [ "${features[OHMYFISH]}" = true ]; then
     DEST_DIR="$HOME/.local/share/omf"
