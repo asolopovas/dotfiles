@@ -164,8 +164,6 @@ fi
 
 if [ "${features[NVIM]}" = true ]; then
 
-    load_script "deno"
-
     if ! cmd_exist nvim; then
         load_script "nvim" --sudo
     fi
