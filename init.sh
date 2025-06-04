@@ -88,23 +88,12 @@ install_essentials() {
 
 install_essentials
 install_composer
+
 load_script() {
-    script_name=$1
-    shift
-
-    script_path="$SCRIPTS_DIR/install-$script_name.sh"
-    print_color green "Loading $script_path"
-
-    if [ -f "$script_path" ]; then
-        if [ "$1" = "--sudo" ]; then
-            $SUDO sh "$script_path"
-        else
-            # shellcheck source=/dev/null
-            . "$script_path"
-        fi
-    else
-        print_color red "Script $script_path not found."
-    fi
+    local script_name=$1
+    local script_path="$SCRIPTS_DIR/install-$script_name.sh"
+    print_color green "Sourcing $script_path"
+    [[ -f $script_path ]] && source $script_path
 }
 
 # Serialize and export associative array
@@ -165,7 +154,7 @@ fi
 if [ "${features[NVIM]}" = true ]; then
 
     if ! cmd_exist nvim; then
-        load_script "nvim" --sudo
+        load_script "nvim"
     fi
 
     if ! cmd_exist lua; then
