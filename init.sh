@@ -29,7 +29,7 @@ declare -A features=(
     [FORCE]=${FORCE:-false}
     [FZF]=${FZF:-true}
     [NODE]=${NODE:-true}
-    [NODE_VERSION]=${NODE_VERSION:-22.13.1}
+    [NODE_VERSION]=${NODE_VERSION:-22.16.0}
     [NVIM]=${NVIM:-true}
     [OHMYBASH]=${OHMYBASH:-false}
     [OHMYFISH]=${OHMYFISH:-true}
@@ -89,10 +89,22 @@ install_essentials() {
 install_essentials
 install_composer
 load_script() {
-    local script_name=$1
-    local script_path="$SCRIPTS_DIR/install-$script_name.sh"
-    print_color green "Sourcing $script_path"
-    [[ -f $script_path ]] && source $script_path
+    script_name=$1
+    shift
+
+    script_path="$SCRIPTS_DIR/install-$script_name.sh"
+    print_color green "Loading $script_path"
+
+    if [ -f "$script_path" ]; then
+        if [ "$1" = "--sudo" ]; then
+            $SUDO sh "$script_path"
+        else
+            # shellcheck source=/dev/null
+            . "$script_path"
+        fi
+    else
+        print_color red "Script $script_path not found."
+    fi
 }
 
 # Serialize and export associative array
@@ -151,14 +163,11 @@ if [ "${features[NODE]}" = true ]; then
 fi
 
 if [ "${features[NVIM]}" = true ]; then
+
     load_script "deno"
 
     if ! cmd_exist nvim; then
-        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-        sudo rm -rf /opt/nvim
-        sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
-        rm -f nvim-linux-x86_64.tar.gz
-        ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/bin/vim
+        load_script "nvim"
     fi
 
     if ! cmd_exist lua; then
@@ -167,6 +176,7 @@ if [ "${features[NVIM]}" = true ]; then
 
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
+
 
 if [ "${features[OHMYFISH]}" = true ]; then
     DEST_DIR="$HOME/.local/share/omf"
