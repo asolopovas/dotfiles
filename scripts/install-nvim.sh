@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 INSTALL_ARCHIVE=nvim-linux-x86_64.tar.gz
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
