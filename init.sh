@@ -30,7 +30,7 @@ declare -A features=(
     [FZF]=${FZF:-true}
     [NODE]=${NODE:-false}
     [NODE_VERSION]=${NODE_VERSION:-22.13.1}
-    [NVIM]=${NVIM:-true}
+    [NVIM]=${NVIM:-false}
     [OHMYBASH]=${OHMYBASH:-false}
     [OHMYFISH]=${OHMYFISH:-true}
     [OHMYZSH]=${OHMYZSH:-false}
@@ -151,6 +151,8 @@ if [ "${features[NODE]}" = true ]; then
 fi
 
 if [ "${features[NVIM]}" = true ]; then
+    load_script "deno"
+
     if ! cmd_exist nvim; then
         load_script "nvim"
     fi
@@ -159,7 +161,6 @@ if [ "${features[NVIM]}" = true ]; then
         sudo apt install -y lua5.1 luarocks lua_ls
     fi
 
-    load_script "deno"
     ln -sf $(which nvim) $HOME/.local/bin/vim
 fi
 
