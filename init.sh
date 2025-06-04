@@ -30,7 +30,7 @@ declare -A features=(
     [FZF]=${FZF:-true}
     [NODE]=${NODE:-false}
     [NODE_VERSION]=${NODE_VERSION:-22.13.1}
-    [NVIM]=${NVIM:-false}
+    [NVIM]=${NVIM:-true}
     [OHMYBASH]=${OHMYBASH:-false}
     [OHMYFISH]=${OHMYFISH:-true}
     [OHMYZSH]=${OHMYZSH:-false}
@@ -154,7 +154,11 @@ if [ "${features[NVIM]}" = true ]; then
     load_script "deno"
 
     if ! cmd_exist nvim; then
-        load_script "nvim"
+        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+        sudo rm -rf /opt/nvim
+        sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+        rm -f nvim-linux-x86_64.tar.gz
+        ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/bin/vim
     fi
 
     if ! cmd_exist lua; then
