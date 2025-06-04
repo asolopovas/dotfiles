@@ -10,6 +10,3 @@ rm -rf /opt/nvim
 tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 rm -f nvim-linux-x86_64.tar.gz
 ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/bin/vim
-
-/opt/nvim-linux-x86_64/bin/nvim --headless "+Lazy! sync" +qa
-
