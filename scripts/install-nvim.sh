@@ -11,5 +11,5 @@ tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 rm -f nvim-linux-x86_64.tar.gz
 ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/bin/vim
 
-nvim --headless +"Lazy! sync" +qa
-nvim --headless -c 'autocmd User MasonToolsUpdateCompleted qa' -c 'MasonToolsUpdate'
+/opt/nvim-linux-x86_64/bin/nvim --headless +"Lazy! sync" +qa
+/opt/nvim-linux-x86_64/bin/nvim --headless -c 'autocmd User MasonToolsUpdateCompleted qa' -c 'MasonToolsUpdate'
