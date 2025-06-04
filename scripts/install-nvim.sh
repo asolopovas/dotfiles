@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if command -v nvim >/dev/null 2>&1; then
+    exit 0
+fi
+
 INSTALL_ARCHIVE=nvim-linux-x86_64.tar.gz
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
 
@@ -20,3 +24,5 @@ else
 fi
 
 rm -f "$INSTALL_ARCHIVE"
+
+$DIR/nvim/bin/nvim --headless "+Lazy! sync" +qa
