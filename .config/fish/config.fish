@@ -69,3 +69,18 @@ set --export PATH $BUN_INSTALL/bin $PATH
 
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+if test -f $HOME/miniconda3/bin/conda
+    eval $HOME/miniconda3/bin/conda "shell.fish" "hook" $argv | source
+else
+    if test -f "$HOME/miniconda3/etc/fish/conf.d/conda.fish"
+        . "$HOME/miniconda3/etc/fish/conf.d/conda.fish"
+    else
+        set -x PATH "$HOME/miniconda3/bin" $PATH
+    end
+end
+# <<< conda initialize <<<
+
+
