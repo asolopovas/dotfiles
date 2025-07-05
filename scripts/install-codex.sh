@@ -3,10 +3,35 @@ set -euo pipefail
 
 # OpenAI Codex CLI installer
 # Downloads and installs the latest Codex CLI binary
+# Usage: install-codex.sh [--root]
+#   --root: Install to /usr/local/bin (requires sudo)
+#   default: Install to ~/.local/bin
 
 # Configuration
 REPO="openai/codex"
 TAG="rust-v0.2.0"
+
+# Parse arguments
+USE_ROOT=false
+for arg in "$@"; do
+    case $arg in
+        --root)
+            USE_ROOT=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [--root]"
+            echo "  --root: Install to /usr/local/bin (requires sudo)"
+            echo "  default: Install to ~/.local/bin"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $arg"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 # Detect CPU architecture
 arch="$(uname -m)"
@@ -39,6 +64,17 @@ case "$(uname -s)" in
         ;;
 esac
 
+# Set install directory
+if [[ "$USE_ROOT" == "true" ]]; then
+    INSTALL_DIR="/usr/local/bin"
+    INSTALL_CMD="sudo install"
+else
+    INSTALL_DIR="$HOME/.local/bin"
+    INSTALL_CMD="install"
+    # Ensure ~/.local/bin exists
+    mkdir -p "$HOME/.local/bin"
+fi
+
 # Construct download URL
 asset="codex-${arch}-${os}.tar.gz"
 url="https://github.com/${REPO}/releases/download/${TAG}/${asset}"
@@ -47,10 +83,18 @@ echo "Installing Codex CLI..."
 echo "Architecture: $arch"
 echo "OS: $os"
 echo "Asset: $asset"
+echo "Install directory: $INSTALL_DIR"
 echo
 
-# Create temporary directory
-tmp=$(mktemp -d)
+# Create temporary directory for testing or use /tmp/install-codex/
+if [[ "${TMPDIR:-}" == "/tmp/install-codex/" ]] || [[ "${PWD}" == "/tmp/install-codex"* ]]; then
+    tmp="/tmp/install-codex/download"
+    mkdir -p "$tmp"
+else
+    tmp=$(mktemp -d)
+fi
+
+# Ensure cleanup on exit
 trap 'rm -rf "$tmp"' EXIT
 cd "$tmp"
 
@@ -63,17 +107,27 @@ fi
 
 # Extract binary
 echo "➜ Extracting binary..."
-if ! tar -xzf "$asset" codex; then
+binary_name="codex-${arch}-${os}"
+if ! tar -xzf "$asset" "$binary_name"; then
     echo "✖ Failed to extract binary"
     exit 1
 fi
 
 # Install binary
-echo "➜ Installing to /usr/local/bin..."
-if ! sudo install -m755 codex /usr/local/bin/; then
-    echo "✖ Failed to install binary"
+echo "➜ Installing to $INSTALL_DIR..."
+if ! $INSTALL_CMD -m755 "$binary_name" "$INSTALL_DIR/codex"; then
+    echo "✖ Failed to install binary to $INSTALL_DIR"
     exit 1
 fi
 
 echo "✔ Codex CLI installed successfully!"
+echo "  Location: $INSTALL_DIR/codex"
 echo "  Try: codex --help"
+
+# Check if ~/.local/bin is in PATH
+if [[ "$USE_ROOT" == "false" ]] && [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    echo
+    echo "⚠ Warning: $HOME/.local/bin is not in your PATH"
+    echo "  Add this to your shell profile (.bashrc, .zshrc, etc.):"
+    echo "  export PATH=\"$HOME/.local/bin:\$PATH\""
+fi

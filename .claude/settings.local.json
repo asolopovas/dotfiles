@@ -5,7 +5,16 @@
       "Bash(mv:*)",
       "Bash(chmod:*)",
       "Bash(./tests/run-tests.sh:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(./scripts/install-codex.sh:*)",
+      "Bash(./tests/test-install-modes.sh:*)",
+      "Bash(curl:*)",
+      "Bash(tar:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(~/.local/bin/codex:*)",
+      "Bash(codex:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
