@@ -55,17 +55,11 @@ if not string match -q -- $PNPM_HOME $PATH
     set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
-# The next line updates PATH for the Google Cloud SDK.
+
 if [ -f "$HOME/.local/google-cloud-sdk/path.fish.inc" ]; . "$HOME/.local/google-cloud-sdk/path.fish.inc"; end
 
-# bun
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
-
-# eval (ssh-agent -c) > /dev/null
-# function on_exit --on-event fish_exit
-#     ssh-agent -k > /dev/null
-# end
 
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
