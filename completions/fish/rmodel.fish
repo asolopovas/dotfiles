@@ -1,0 +1,1 @@
+/home/andrius/src/rmodel/completions/rmodel.fish

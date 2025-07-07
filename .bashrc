@@ -50,3 +50,5 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+source ~/.rmodel_cuda_setup.sh  # rmodel CUDA setup
