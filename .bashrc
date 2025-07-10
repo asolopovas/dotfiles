@@ -52,3 +52,10 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 source ~/.rmodel_cuda_setup.sh  # rmodel CUDA setup
+export PATH="$HOME/.local/bin:$PATH"
+source /home/andrius/.bash_completion.d/clean-data
+source /home/andrius/.bash_completion.d/clean-data
+source /home/andrius/.bash_completion.d/clean-data
+source /home/andrius/.bash_completion.d/clean-data
+source /home/andrius/.bash_completion.d/clean-data
+source /home/andrius/dotfiles/completions/bash/clean-data
