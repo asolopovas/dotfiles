@@ -47,12 +47,21 @@ msg title
 
 [ -f .env ] && export $(grep -v '^#' .env | xargs)
 
-for cmd in node npm claude git gh; do
+# Check required dependencies
+for cmd in node npm claude git; do
     command -v $cmd >/dev/null 2>&1 || {
         msg fail "$cmd"
         exit 1
     }
 done
+
+# Check optional dependencies
+gh_available=false
+command -v gh >/dev/null 2>&1 && gh_available=true
+
+if [ "$gh_available" = false ]; then
+    msg warn "GitHub CLI (gh) not found - git MCP server features may be limited"
+fi
 
 # Install MCP servers
 printf "%s\n" "$MCP_SERVERS" |
@@ -71,10 +80,15 @@ printf "%s\n" "$MCP_SERVERS" |
 } || msg warn "Skipping brave-search (no API key)"
 
 # Git setup
-gh auth status >/dev/null 2>&1 || {
-    msg fail "gh auth login required"
-    exit 1
-}
+if [ "$gh_available" = true ]; then
+    gh auth status >/dev/null 2>&1 || {
+        msg fail "gh auth login required"
+        exit 1
+    }
+else
+    msg warn "Skipping GitHub auth check (gh not available)"
+fi
+
 [ -n "$(git config --global user.name)" ] &&
     [ -n "$(git config --global user.email)" ] || {
     msg fail "git config --global user.name/email required"
