@@ -104,6 +104,16 @@ show_summary() {
     done
     
     echo "+----------------------+-------------+-------------------+"
+    
+    # Show shared filesystem paths if enabled
+    if [ "$FILESYSTEM_ENABLED" = true ]; then
+        echo ""
+        print_color cyan "📂 Shared Filesystem Paths:"
+        echo ""
+        cat "$FILESYSTEM_PERMISSIONS_FILE" | while read -r path; do
+            [ -n "$path" ] && echo "  • $path"
+        done
+    fi
 }
 
 # Check if server is already correctly configured
@@ -240,7 +250,7 @@ printf "%s\n" "$MCP_SERVERS" |
     fi
 } || {
     printf "⚠️  [brave-search] skipped (no API key)\n"
-    INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key
+    INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key      
 "
 }
 
