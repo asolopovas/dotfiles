@@ -106,6 +106,22 @@ show_summary() {
     echo "+----------------------+-------------+-------------------+"
 }
 
+# Check if server is already correctly configured
+check_server_config() {
+    local server_name="$1"
+    shift 1
+    local expected_command="npx -y $*"
+    
+    # Get current server configuration
+    local current_config=$(claude mcp list 2>/dev/null | grep "^$server_name:" | cut -d: -f2- | sed 's/^ *//')
+    
+    if [ "$current_config" = "$expected_command" ]; then
+        return 0  # Already correctly configured
+    else
+        return 1  # Needs update
+    fi
+}
+
 # Messages
 msg() {
     case $1 in
@@ -123,6 +139,14 @@ msg() {
 add_mcp_server() {
     server_name=$1
     shift 1
+
+    # Check if server is already correctly configured
+    if check_server_config "$server_name" "$@"; then
+        printf "✅ [%s] already configured\n" "$server_name"
+        INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SKIPPED:already configured
+"
+        return 0
+    fi
 
     show_spinner "$server_name" "setup" \
         "claude mcp remove '$server_name' >/dev/null 2>&1; claude mcp add '$server_name' -- npx -y $* >/dev/null 2>&1"
@@ -202,8 +226,18 @@ printf "%s\n" "$MCP_SERVERS" |
 
 # Brave search
 [ -n "$BRAVE_API_KEY" ] && {
-    show_spinner "brave-search" "setup" \
-        "claude mcp remove brave-search >/dev/null 2>&1; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1"
+    # Check if brave-search is already correctly configured
+    expected_brave_cmd="env BRAVE_API_KEY=$BRAVE_API_KEY npx -y @modelcontextprotocol/server-brave-search"
+    current_brave_config=$(claude mcp list 2>/dev/null | grep "^brave-search:" | cut -d: -f2- | sed 's/^ *//')
+    
+    if [ "$current_brave_config" = "$expected_brave_cmd" ]; then
+        printf "✅ [brave-search] already configured\n"
+        INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:already configured
+"
+    else
+        show_spinner "brave-search" "setup" \
+            "claude mcp remove brave-search >/dev/null 2>&1; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1"
+    fi
 } || {
     printf "⚠️  [brave-search] skipped (no API key)\n"
     INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key
@@ -226,8 +260,15 @@ fi
     exit 1
 }
 
-show_spinner "git" "setup" \
-    "npm install -g @cyanheads/git-mcp-server >/dev/null 2>&1; claude mcp remove git >/dev/null 2>&1; claude mcp add git -- npx -y @cyanheads/git-mcp-server >/dev/null 2>&1"
+# Check if git server is already correctly configured
+if check_server_config "git" "@cyanheads/git-mcp-server"; then
+    printf "✅ [git] already configured\n"
+    INSTALL_RESULTS="${INSTALL_RESULTS}git:SKIPPED:already configured
+"
+else
+    show_spinner "git" "setup" \
+        "npm install -g @cyanheads/git-mcp-server >/dev/null 2>&1; claude mcp remove git >/dev/null 2>&1; claude mcp add git -- npx -y @cyanheads/git-mcp-server >/dev/null 2>&1"
+fi
 
 show_summary
 
