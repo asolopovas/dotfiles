@@ -14,7 +14,10 @@
       "Bash(@cyanheads/git-mcp-server:*)",
       "Bash(npx:*)",
       "Bash(claude mcp remove git)",
-      "Bash(claude mcp add git -- npx -y @cyanheads/git-mcp-server)"
+      "Bash(claude mcp add git -- npx -y @cyanheads/git-mcp-server)",
+      "Bash(chmod:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

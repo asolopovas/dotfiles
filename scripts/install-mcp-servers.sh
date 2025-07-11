@@ -3,8 +3,26 @@
 . $HOME/dotfiles/globals.sh
 
 # Configuration
-FILESYSTEM_PATHS="$HOME/www $HOME/src $HOME/dotfiles \
-/mnt/c/Users/asolo/winconf"
+FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
+
+# Create filesystem paths from permissions file
+if [ -f "$FILESYSTEM_PERMISSIONS_FILE" ]; then
+    FILESYSTEM_PATHS=$(cat "$FILESYSTEM_PERMISSIONS_FILE" | tr '\n' ' ')
+else
+    # Create permissions file with default paths if it doesn't exist
+    cat > "$FILESYSTEM_PERMISSIONS_FILE" << 'EOF'
+/home/andrius/www
+/home/andrius/src
+/home/andrius/dotfiles
+/mnt/c/Users/asolo/winconf
+/tmp
+/home/andrius/Downloads
+/home/andrius/Documents
+EOF
+    chmod 600 "$FILESYSTEM_PERMISSIONS_FILE"
+    print_color yellow "Created $FILESYSTEM_PERMISSIONS_FILE with default paths"
+    FILESYSTEM_PATHS=$(cat "$FILESYSTEM_PERMISSIONS_FILE" | tr '\n' ' ')
+fi
 
 # Server configs (name:package format)
 MCP_SERVERS="
