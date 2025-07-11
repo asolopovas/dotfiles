@@ -5,34 +5,28 @@
 # Configuration
 FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
 
-# Create filesystem paths from permissions file
-if [ -f "$FILESYSTEM_PERMISSIONS_FILE" ]; then
+# Check if filesystem permissions file exists and has content
+if [ -f "$FILESYSTEM_PERMISSIONS_FILE" ] && [ -s "$FILESYSTEM_PERMISSIONS_FILE" ]; then
     FILESYSTEM_PATHS=$(cat "$FILESYSTEM_PERMISSIONS_FILE" | tr '\n' ' ')
+    FILESYSTEM_ENABLED=true
 else
-    # Create permissions file with default paths if it doesn't exist
-    cat > "$FILESYSTEM_PERMISSIONS_FILE" << 'EOF'
-/home/andrius/www
-/home/andrius/src
-/home/andrius/dotfiles
-/mnt/c/Users/asolo/winconf
-/tmp
-/home/andrius/Downloads
-/home/andrius/Documents
-EOF
-    chmod 600 "$FILESYSTEM_PERMISSIONS_FILE"
-    print_color yellow "Created $FILESYSTEM_PERMISSIONS_FILE with default paths"
-    FILESYSTEM_PATHS=$(cat "$FILESYSTEM_PERMISSIONS_FILE" | tr '\n' ' ')
+    FILESYSTEM_ENABLED=false
+    FILESYSTEM_PATHS=""
 fi
 
-# Server configs (name:package format)
+# Server configs (name:package format) - filesystem only included if enabled
 MCP_SERVERS="
 sequential-thinking:@modelcontextprotocol/server-sequential-thinking
-filesystem:@modelcontextprotocol/server-filesystem \
-$FILESYSTEM_PATHS
 fetch:@kazuph/mcp-fetch
 browser-tools:@agentdeskai/browser-tools-mcp@1.2.1
 playwright:@playwright/mcp
 "
+
+# Add filesystem server only if permissions file exists and has content
+if [ "$FILESYSTEM_ENABLED" = true ]; then
+    MCP_SERVERS="$MCP_SERVERS
+filesystem:@modelcontextprotocol/server-filesystem $FILESYSTEM_PATHS"
+fi
 
 # Result tracking
 INSTALL_RESULTS=""
@@ -43,13 +37,14 @@ show_spinner() {
     local action="$2"
     local command="$3"
     
-    printf "[$server_name] - $action "
+    printf "\r\033[K" # Clear line
+    printf " [%s] %s" "$server_name" "$action"
     
     # Run command in background and show spinner
     eval "$command" &
     local pid=$!
     
-    # Show spinning animation with ASCII characters
+    # Show spinning animation with ASCII characters at the beginning
     local spin_chars="|/-\\"
     local i=0
     while kill -0 $pid 2>/dev/null; do
@@ -59,7 +54,7 @@ show_spinner() {
             2) char="-" ;;
             3) char="\\" ;;
         esac
-        printf "\b%s" "$char"
+        printf "\r%s [%s] %s" "$char" "$server_name" "$action"
         sleep 0.2
         i=$(( (i + 1) % 4 ))
     done
@@ -67,15 +62,15 @@ show_spinner() {
     wait $pid
     local exit_code=$?
     
-    # Clear spinner and show result
-    printf "\b"
+    # Clear line and show result
+    printf "\r\033[K"
     
     if [ $exit_code -eq 0 ]; then
-        printf "✅\n"
+        printf "✅ [%s] %s\n" "$server_name" "$action"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:${action}
 "
     else
-        printf "❌\n"
+        printf "❌ [%s] %s\n" "$server_name" "$action"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:FAILED:${action}
 "
     fi
@@ -90,25 +85,25 @@ show_summary() {
     echo ""
     
     # MySQL-style table
-    echo "+----------------------+----------+-------------------+"
-    echo "| Server               | Status   | Action            |"
-    echo "+----------------------+----------+-------------------+"
+    echo "+----------------------+-------------+-------------------+"
+    echo "| Server               | Status      | Action            |"
+    echo "+----------------------+-------------+-------------------+"
     
     printf "%s" "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
         [ -z "$server" ] && continue
         
         case $status in
-            SUCCESS) status_display="✅ SUCCESS" ;;
-            FAILED)  status_display="❌ FAILED " ;;
-            REMOVED) status_display="🗑️ REMOVED" ;;
+            SUCCESS) status_display="✅ SUCCESS " ;;
+            FAILED)  status_display="❌ FAILED  " ;;
+            REMOVED) status_display="🗑️ REMOVED " ;;
             SKIPPED) status_display="⚠️  SKIPPED" ;;
             *) status_display="$status" ;;
         esac
         
-        printf "| %-20s | %-10s | %-17s |\n" "$server" "$status_display" "$action"
+        printf "| %-20s | %-11s | %-17s |\n" "$server" "$status_display" "$action"
     done
     
-    echo "+----------------------+----------+-------------------+"
+    echo "+----------------------+-------------+-------------------+"
 }
 
 # Messages
@@ -129,7 +124,7 @@ add_mcp_server() {
     server_name=$1
     shift 1
 
-    show_spinner "$server_name" "installing" \
+    show_spinner "$server_name" "setup" \
         "claude mcp remove '$server_name' >/dev/null 2>&1; claude mcp add '$server_name' -- npx -y '$*' >/dev/null 2>&1"
 }
 
@@ -144,6 +139,9 @@ remove_unlisted_servers() {
         # Check if it's brave-search or git (always keep)
         if [ "$server" = "brave-search" ] || [ "$server" = "git" ]; then
             should_keep=true
+        # Special handling for filesystem - remove if permissions file is empty
+        elif [ "$server" = "filesystem" ] && [ "$FILESYSTEM_ENABLED" = false ]; then
+            should_keep=false
         else
             # Check if server is in MCP_SERVERS list
             while IFS=: read -r name package; do
@@ -159,16 +157,10 @@ EOF
         fi
         
         if [ "$should_keep" = false ]; then
-            printf "[$server] - removing "
-            claude mcp remove "$server" >/dev/null 2>&1 && {
-                printf "🗑️\n"
-                INSTALL_RESULTS="${INSTALL_RESULTS}${server}:REMOVED:removing
+            printf "🗑️  [%s] removed\n" "$server"
+            claude mcp remove "$server" >/dev/null 2>&1
+            INSTALL_RESULTS="${INSTALL_RESULTS}${server}:REMOVED:removed
 "
-            } || {
-                printf "❌\n"
-                INSTALL_RESULTS="${INSTALL_RESULTS}${server}:FAILED:removing
-"
-            }
         fi
     done
 }
@@ -210,10 +202,10 @@ printf "%s\n" "$MCP_SERVERS" |
 
 # Brave search
 [ -n "$BRAVE_API_KEY" ] && {
-    show_spinner "brave-search" "installing" \
+    show_spinner "brave-search" "setup" \
         "claude mcp remove brave-search >/dev/null 2>&1; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1"
 } || {
-    printf "[brave-search] - skipped (no API key) ⚠️\n"
+    printf "⚠️  [brave-search] skipped (no API key)\n"
     INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key
 "
 }
@@ -234,11 +226,8 @@ fi
     exit 1
 }
 
-show_spinner "git" "installing package" \
-    "npm install -g @cyanheads/git-mcp-server >/dev/null 2>&1"
-
-show_spinner "git" "configuring" \
-    "claude mcp remove git >/dev/null 2>&1; claude mcp add git -- npx -y @cyanheads/git-mcp-server >/dev/null 2>&1"
+show_spinner "git" "setup" \
+    "npm install -g @cyanheads/git-mcp-server >/dev/null 2>&1; claude mcp remove git >/dev/null 2>&1; claude mcp add git -- npx -y @cyanheads/git-mcp-server >/dev/null 2>&1"
 
 show_summary
 
