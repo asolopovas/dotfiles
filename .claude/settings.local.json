@@ -5,7 +5,9 @@
       "mcp__filesystem__search_files",
       "mcp__filesystem__read_file",
       "mcp__filesystem__list_directory",
-      "mcp__filesystem__read_multiple_files"
+      "mcp__filesystem__read_multiple_files",
+      "Bash(find:*)",
+      "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": []
   }

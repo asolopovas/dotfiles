@@ -35,15 +35,18 @@ add_mcp_server() {
     server_name=$1
     shift 1
 
-    msg add "$server_name"
-    claude mcp add "$server_name" -s user -- npx -y "$@" >/dev/null 2>&1 &&
-        msg ok "$server_name" || {
-        msg fail "$server_name"
+    printf "  %-20s " "$server_name"
+    claude mcp add "$server_name" -s user -- npx -y "$@" >/dev/null 2>&1 && {
+        printf "\033[0;32m✅\033[0m\n"
+    } || {
+        printf "\033[0;31m❌\033[0m\n"
         return 1
     }
 }
 
 msg title
+printf "  %-20s %s\n" "Server" "Status"
+printf "  %-20s %s\n" "------" "------"
 
 [ -f .env ] && export $(grep -v '^#' .env | xargs)
 
@@ -72,12 +75,15 @@ printf "%s\n" "$MCP_SERVERS" |
 
 # Brave search
 [ -n "$BRAVE_API_KEY" ] && {
-    msg add "brave-search"
+    printf "  %-20s " "brave-search"
     claude mcp add brave-search -s user -- \
         env BRAVE_API_KEY="$BRAVE_API_KEY" \
-        npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1 &&
-        msg ok "brave-search" || msg fail "brave-search"
-} || msg warn "Skipping brave-search (no API key)"
+        npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1 && {
+        printf "\033[0;32m✅\033[0m\n"
+    } || {
+        printf "\033[0;31m❌\033[0m\n"
+    }
+} || printf "  %-20s \033[0;33m⚠️  Skipped (no API key)\033[0m\n" "brave-search"
 
 # Git setup
 if [ "$gh_available" = true ]; then
