@@ -125,7 +125,7 @@ add_mcp_server() {
     shift 1
 
     show_spinner "$server_name" "setup" \
-        "claude mcp remove '$server_name' >/dev/null 2>&1; claude mcp add '$server_name' -- npx -y '$*' >/dev/null 2>&1"
+        "claude mcp remove '$server_name' >/dev/null 2>&1; claude mcp add '$server_name' -- npx -y $* >/dev/null 2>&1"
 }
 
 remove_unlisted_servers() {
