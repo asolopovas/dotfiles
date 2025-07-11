@@ -20,24 +20,27 @@ playwright:@microsoft/playwright-mcp
 # Messages
 msg() {
     case $1 in
-        title) print_color green "Installing MCP Servers..." ;;
-        add) print_color blue "Adding: $2" ;;
-        ok) print_color green "✅ $2" ;;
-        fail) print_color red "❌ $2" ;;
-        warn) print_color yellow "⚠️  $2" ;;
-        complete) print_color green "🎉 Setup complete!" ;;
-        restart) print_color yellow \
-            "⚠️  Restart Claude to activate servers" ;;
+    title) print_color green "Installing MCP Servers..." ;;
+    add) print_color blue "Adding: $2" ;;
+    ok) print_color green "✅ $2" ;;
+    fail) print_color red "❌ $2" ;;
+    warn) print_color yellow "⚠️  $2" ;;
+    complete) print_color green "🎉 Setup complete!" ;;
+    restart) print_color yellow \
+        "⚠️  Restart Claude to activate servers" ;;
     esac
 }
 
 add_mcp_server() {
     server_name=$1
     shift 1
-    
+
     msg add "$server_name"
-    claude mcp add "$server_name" -s user -- npx -y "$@" >/dev/null 2>&1 && \
-        msg ok "$server_name" || { msg fail "$server_name"; return 1; }
+    claude mcp add "$server_name" -s user -- npx -y "$@" >/dev/null 2>&1 &&
+        msg ok "$server_name" || {
+        msg fail "$server_name"
+        return 1
+    }
 }
 
 msg title
@@ -45,38 +48,38 @@ msg title
 [ -f .env ] && export $(grep -v '^#' .env | xargs)
 
 for cmd in node npm claude git gh; do
-    command -v $cmd >/dev/null 2>&1 || { 
+    command -v $cmd >/dev/null 2>&1 || {
         msg fail "$cmd"
         exit 1
     }
 done
 
 # Install MCP servers
-printf "%s\n" "$MCP_SERVERS" | \
+printf "%s\n" "$MCP_SERVERS" |
     while IFS=: read -r name package; do
-    [ -z "$name" ] && continue
-    add_mcp_server "$name" $package
-done
+        [ -z "$name" ] && continue
+        add_mcp_server "$name" $package
+    done
 
 # Brave search
 [ -n "$BRAVE_API_KEY" ] && {
     msg add "brave-search"
     claude mcp add brave-search -s user -- \
         env BRAVE_API_KEY="$BRAVE_API_KEY" \
-        npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1 && \
+        npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1 &&
         msg ok "brave-search" || msg fail "brave-search"
 } || msg warn "Skipping brave-search (no API key)"
 
 # Git setup
-gh auth status >/dev/null 2>&1 || { 
+gh auth status >/dev/null 2>&1 || {
     msg fail "gh auth login required"
     exit 1
 }
-[ -n "$(git config --global user.name)" ] && \
-    [ -n "$(git config --global user.email)" ] || { 
-        msg fail "git config --global user.name/email required"
-        exit 1
-    }
+[ -n "$(git config --global user.name)" ] &&
+    [ -n "$(git config --global user.email)" ] || {
+    msg fail "git config --global user.name/email required"
+    exit 1
+}
 
 npm install -g @cyanheads/git-mcp-server >/dev/null 2>&1
 add_mcp_server "git" "@cyanheads/git-mcp-server"
