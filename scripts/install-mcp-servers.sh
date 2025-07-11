@@ -14,7 +14,7 @@ $FILESYSTEM_PATHS
 puppeteer:@modelcontextprotocol/server-puppeteer
 fetch:@kazuph/mcp-fetch
 browser-tools:@agentdeskai/browser-tools-mcp@1.2.1
-playwright:@microsoft/playwright-mcp
+playwright:@playwright/mcp
 "
 
 # Messages
