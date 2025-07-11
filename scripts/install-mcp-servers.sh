@@ -45,6 +45,7 @@ add_mcp_server() {
 }
 
 msg title
+echo ""
 printf "  %-20s %s\n" "Server" "Status"
 printf "  %-20s %s\n" "------" "------"
 
