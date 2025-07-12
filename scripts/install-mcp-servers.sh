@@ -8,7 +8,7 @@ FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
 START_TIME=$(date +%s)
 
 if [ -s "$FILESYSTEM_PERMISSIONS_FILE" ]; then
-    FILESYSTEM_PATHS=$(tr '\n' ' ' < "$FILESYSTEM_PERMISSIONS_FILE")
+    FILESYSTEM_PATHS=$(tr '\n' ' ' <"$FILESYSTEM_PERMISSIONS_FILE")
     FILESYSTEM_ENABLED=true
 else
     FILESYSTEM_ENABLED=false
@@ -49,38 +49,38 @@ show_summary() {
     ELAPSED_FORMATTED=$(printf "%02d:%02d" $((ELAPSED / 60)) $((ELAPSED % 60)))
 
     SUCCESS_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SUCCESS")
-    FAILED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "FAILED") 
+    FAILED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "FAILED")
     SKIPPED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SKIPPED")
     REMOVED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "REMOVED")
 
     echo ""
-    echo "┌─────────────────────────────────────────────────────────────────┐"
-    echo "│                        🎉 Installation Results                  │"
-    echo "├─────────────────────────────────────────────────────────────────┤"
-    echo "│ Server               │ Status      │ Action                     │"
-    echo "├─────────────────────────────────────────────────────────────────┤"
-    
+    echo "┌───────────────────────────────────────────────────────────────┐"
+    echo "│                   🎉 Installation Results                     │"
+    echo "├───────────────────────┬─────────────┬─────────────────────────┤"
+    echo "│ Server                │ Status      │ Action                  │"
+    echo "├───────────────────────┼─────────────┼─────────────────────────┤"
+
     echo "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
         [ -z "$server" ] && continue
-        
+
         case "$status" in
-            "SUCCESS") status_icon="✅" ;;
-            "FAILED") status_icon="❌" ;;
-            "SKIPPED") status_icon="⚠️ " ;;
-            "REMOVED") status_icon="🗑️ " ;;
-            *) status_icon="  " ;;
+        "SUCCESS") status_icon="✅" ;;
+        "FAILED") status_icon="❌" ;;
+        "SKIPPED") status_icon="⚠️ " ;;
+        "REMOVED") status_icon="🗑️ " ;;
+        *) status_icon="  " ;;
         esac
-        
-        printf "│ %-20s │ %s %-8s │ %-26s │\n" \
+
+        printf "│ %-21s │ %-2s %-8s │ %-23s │\n" \
             "${server}" "${status_icon}" "${status}" "${action}"
     done
-    
-    echo "├─────────────────────────────────────────────────────────────────┤"
-    printf "│ %-63s │\n" "⏱️  ${ELAPSED_FORMATTED} | ✅ ${SUCCESS_COUNT} | ❌ ${FAILED_COUNT} | ⚠️ ${SKIPPED_COUNT} | 🗑️ ${REMOVED_COUNT}"
-    echo "└─────────────────────────────────────────────────────────────────┘"
+
+    echo "├───────────────────────┴─────────────┴─────────────────────────┤"
+    printf "│ %-79s │\n" "⏱️  ${ELAPSED_FORMATTED} | ✅ ${SUCCESS_COUNT} | ❌ ${FAILED_COUNT} | ⚠️ ${SKIPPED_COUNT} | 🗑️ ${REMOVED_COUNT}"
+    echo "└───────────────────────────────────────────────────────────────┘"
 
     if [ "$FILESYSTEM_ENABLED" = true ]; then
-        PATHS_COUNT=$(wc -l < "$FILESYSTEM_PERMISSIONS_FILE" 2>/dev/null || echo "0")
+        PATHS_COUNT=$(wc -l <"$FILESYSTEM_PERMISSIONS_FILE" 2>/dev/null || echo "0")
         echo "📂 Filesystem: $PATHS_COUNT paths configured"
     fi
 }
@@ -118,20 +118,20 @@ remove_unlisted_servers() {
         should_keep=false
 
         case "$server" in
-            "brave-search"|"git") should_keep=true ;;
-            "filesystem") [ "$FILESYSTEM_ENABLED" = true ] && should_keep=true ;;
-            *)
-                while IFS=: read -r name package; do
-                    [ -z "$name" ] && continue
-                    name=$(echo "$name" | tr -d ' ')
-                    if [ "$server" = "$name" ]; then
-                        should_keep=true
-                        break
-                    fi
-                done << EOF
+        "brave-search" | "git") should_keep=true ;;
+        "filesystem") [ "$FILESYSTEM_ENABLED" = true ] && should_keep=true ;;
+        *)
+            while IFS=: read -r name package; do
+                [ -z "$name" ] && continue
+                name=$(echo "$name" | tr -d ' ')
+                if [ "$server" = "$name" ]; then
+                    should_keep=true
+                    break
+                fi
+            done <<EOF
 $MCP_SERVERS
 EOF
-                ;;
+            ;;
         esac
 
         if [ "$should_keep" = false ]; then
@@ -165,7 +165,7 @@ command -v gh >/dev/null 2>&1 && gh_available=true
 while IFS=: read -r name package; do
     [ -z "$name" ] && continue
     add_mcp_server "$name" $package
-done << EOF
+done <<EOF
 $MCP_SERVERS
 EOF
 
@@ -187,7 +187,7 @@ else
 fi
 
 if [ "$gh_available" = true ]; then
-    gh auth status >/dev/null 2>&1 || { 
+    gh auth status >/dev/null 2>&1 || {
         gum style --foreground 31 "❌ gh auth login required"
         exit 1
     }
