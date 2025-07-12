@@ -18,8 +18,8 @@
       "Bash(chmod:*)",
       "Bash(rm:*)",
       "Bash(ls:*)",
-      "Bash(ls:*)",
-      "Bash(truncate:*)"
+      "Bash(truncate:*)",
+      "Bash(bash:*)"
     ],
     "deny": []
   }

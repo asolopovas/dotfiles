@@ -80,14 +80,19 @@ show_spinner() {
 
 # Summary function
 show_summary() {
+    # Only show summary if there are results to display
+    if [ -z "$INSTALL_RESULTS" ]; then
+        return 0
+    fi
+    
     echo ""
     print_color cyan "📊 Installation Summary:"
     echo ""
     
-    # MySQL-style table
-    echo "+----------------------+-------------+-------------------+"
-    echo "| Server               | Status      | Action            |"
-    echo "+----------------------+-------------+-------------------+"
+    # Wider table with better alignment
+    echo "+----------------------+-------------+-------------------------+"
+    echo "| Server               | Status      | Action                  |"
+    echo "+----------------------+-------------+-------------------------+"
     
     printf "%s" "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
         [ -z "$server" ] && continue
@@ -100,10 +105,10 @@ show_summary() {
             *) status_display="$status" ;;
         esac
         
-        printf "| %-20s | %-11s | %-17s |\n" "$server" "$status_display" "$action"
+        printf "| %-20s | %-11s | %-23s |\n" "$server" "$status_display" "$action"
     done
     
-    echo "+----------------------+-------------+-------------------+"
+    echo "+----------------------+-------------+-------------------------+"
     
     # Show shared filesystem paths if enabled
     if [ "$FILESYSTEM_ENABLED" = true ]; then
@@ -153,7 +158,7 @@ add_mcp_server() {
     # Check if server is already correctly configured
     if check_server_config "$server_name" "$@"; then
         printf "✅ [%s] already configured\n" "$server_name"
-        INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SKIPPED:already configured
+        INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:already configured
 "
         return 0
     fi
@@ -163,11 +168,23 @@ add_mcp_server() {
 }
 
 remove_unlisted_servers() {
-    # Get list of current MCP servers
-    current_servers=$(claude mcp list 2>/dev/null | awk -F: '{print $1}' || true)
+    # Get list of current MCP servers - check if claude mcp list returns anything
+    if ! current_servers_output=$(claude mcp list 2>/dev/null); then
+        return 0  # If command fails, nothing to remove
+    fi
+    
+    # Skip if no servers configured or only header text
+    if [ -z "$current_servers_output" ] || ! echo "$current_servers_output" | grep -q ":"; then
+        return 0
+    fi
+    
+    # Extract server names from the output (everything before the first colon on each line)
+    current_servers=$(echo "$current_servers_output" | awk -F: '{if (NF > 1) print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//')
     
     # Remove servers not in our list
-    for server in $current_servers; do
+    echo "$current_servers" | while read -r server; do
+        [ -z "$server" ] && continue
+        
         should_keep=false
         
         # Check if it's brave-search or git (always keep)
@@ -205,10 +222,6 @@ echo ""
 # Remove unlisted servers first
 remove_unlisted_servers
 
-echo ""
-print_color cyan "📦 Installing MCP Servers:"
-echo ""
-
 [ -f .env ] && export $(grep -v '^#' .env | xargs)
 
 # Check required dependencies
@@ -242,7 +255,7 @@ printf "%s\n" "$MCP_SERVERS" |
     
     if [ "$current_brave_config" = "$expected_brave_cmd" ]; then
         printf "✅ [brave-search] already configured\n"
-        INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:already configured
+        INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SUCCESS:already configured
 "
     else
         show_spinner "brave-search" "setup" \
@@ -250,7 +263,7 @@ printf "%s\n" "$MCP_SERVERS" |
     fi
 } || {
     printf "⚠️  [brave-search] skipped (no API key)\n"
-    INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key      
+    INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key
 "
 }
 
@@ -273,7 +286,7 @@ fi
 # Check if git server is already correctly configured
 if check_server_config "git" "@cyanheads/git-mcp-server"; then
     printf "✅ [git] already configured\n"
-    INSTALL_RESULTS="${INSTALL_RESULTS}git:SKIPPED:already configured
+    INSTALL_RESULTS="${INSTALL_RESULTS}git:SUCCESS:already configured
 "
 else
     show_spinner "git" "setup" \
