@@ -48,10 +48,10 @@ show_summary() {
     ELAPSED=$((END_TIME - START_TIME))
     ELAPSED_FORMATTED=$(printf "%02d:%02d" $((ELAPSED / 60)) $((ELAPSED % 60)))
 
-    SUCCESS_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SUCCESS" || echo "0")
-    FAILED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "FAILED" || echo "0")
-    SKIPPED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SKIPPED" || echo "0")
-    REMOVED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "REMOVED" || echo "0")
+    SUCCESS_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SUCCESS")
+    FAILED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "FAILED") 
+    SKIPPED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SKIPPED")
+    REMOVED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "REMOVED")
 
     echo ""
     echo "┌─────────────────────────────────────────────────────────────────┐"
@@ -76,8 +76,7 @@ show_summary() {
     done
     
     echo "├─────────────────────────────────────────────────────────────────┤"
-    printf "│ ⏱️  Time: %s  │  ✅ %s  │  ❌ %s  │  ⚠️  %s  │  🗑️  %s  │\n" \
-        "${ELAPSED_FORMATTED}" "${SUCCESS_COUNT}" "${FAILED_COUNT}" "${SKIPPED_COUNT}" "${REMOVED_COUNT}"
+    printf "│ %-63s │\n" "⏱️  ${ELAPSED_FORMATTED} | ✅ ${SUCCESS_COUNT} | ❌ ${FAILED_COUNT} | ⚠️ ${SKIPPED_COUNT} | 🗑️ ${REMOVED_COUNT}"
     echo "└─────────────────────────────────────────────────────────────────┘"
 
     if [ "$FILESYSTEM_ENABLED" = true ]; then
