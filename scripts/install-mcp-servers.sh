@@ -2,14 +2,11 @@
 
 . $HOME/dotfiles/globals.sh
 
-# Configuration
 FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
 [ ! -f "$FILESYSTEM_PERMISSIONS_FILE" ] && touch "$FILESYSTEM_PERMISSIONS_FILE"
 
-# Time tracking
 START_TIME=$(date +%s)
 
-# Check filesystem permissions
 if [ -s "$FILESYSTEM_PERMISSIONS_FILE" ]; then
     FILESYSTEM_PATHS=$(tr '\n' ' ' < "$FILESYSTEM_PERMISSIONS_FILE")
     FILESYSTEM_ENABLED=true
@@ -18,46 +15,38 @@ else
     FILESYSTEM_PATHS=""
 fi
 
-# Server configs (name:package format)
 MCP_SERVERS="sequential-thinking:@modelcontextprotocol/server-sequential-thinking
 fetch:@kazuph/mcp-fetch
 browser-tools:@agentdeskai/browser-tools-mcp@1.2.1
 playwright:@playwright/mcp"
 
-# Add filesystem server if enabled
 [ "$FILESYSTEM_ENABLED" = true ] && MCP_SERVERS="$MCP_SERVERS
 filesystem:@modelcontextprotocol/server-filesystem $FILESYSTEM_PATHS"
 
-# Result tracking
 INSTALL_RESULTS=""
 TABLE_FILE="/tmp/mcp_table_$$"
 
-# Initialize table display
 init_table() {
     echo "+----------------------+--------------+" > "$TABLE_FILE"
     echo "| Server               | Status       |" >> "$TABLE_FILE"
     echo "+----------------------+--------------+" >> "$TABLE_FILE"
 
-    # Add rows for each server with initial pending status
     echo "$MCP_SERVERS" | while IFS=: read -r name package; do
         [ -z "$name" ] && continue
         printf "| %-20s | %-13s |\n" "$name" "⏳ Wait" >> "$TABLE_FILE"
     done
 
-    # Add additional servers
     [ -n "$BRAVE_API_KEY" ] && printf "| %-20s | %-12s |\n" "brave-search" "⏳ Wait" >> "$TABLE_FILE"
     printf "| %-20s | %-13s |\n" "git" "⏳ Wait" >> "$TABLE_FILE"
 
     echo "+----------------------+--------------+" >> "$TABLE_FILE"
 }
 
-# Update table row with spinner or final status
 update_table_row() {
     local server_name="$1"
     local status="$2"
     local temp_file="/tmp/mcp_table_temp_$$"
 
-    # Replace the line for this server
     while IFS= read -r line; do
         if echo "$line" | grep -q "| $server_name "; then
             printf "| %-20s | %-13s |\n" "$server_name" "$status"
@@ -69,25 +58,22 @@ update_table_row() {
     mv "$temp_file" "$TABLE_FILE"
 }
 
-# Display current table
 show_table() {
-    printf "\r\033[K"  # Clear current line
-    printf "\033[s"    # Save cursor position
-    printf "\033[H"    # Move to top
+    printf "\r\033[K"
+    printf "\033[s"
+    printf "\033[H"
     gum style --foreground 32 "Installing MCP Servers..."
     echo ""
     cat "$TABLE_FILE"
     echo ""
-    printf "\033[u"    # Restore cursor position
+    printf "\033[u"
 }
 
-# Execute with table updates
 run_with_table() {
     local server_name="$1"
     local action="$2"
     local command="$3"
 
-    # Show spinner in table
     update_table_row "$server_name" "🔄 Setup"
     show_table
 
@@ -104,22 +90,18 @@ run_with_table() {
     fi
 }
 
-# Show summary with stats
 show_summary() {
     [ -z "$INSTALL_RESULTS" ] && return 0
 
-    # Calculate elapsed time
     END_TIME=$(date +%s)
     ELAPSED=$((END_TIME - START_TIME))
     ELAPSED_FORMATTED=$(printf "%02d:%02d" $((ELAPSED / 60)) $((ELAPSED % 60)))
 
-    # Count results by iterating through INSTALL_RESULTS
     SUCCESS_COUNT=0
     FAILED_COUNT=0
     SKIPPED_COUNT=0
     REMOVED_COUNT=0
 
-    # Save to temp file to avoid subshell variable issues
     echo "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
         [ -z "$server" ] && continue
         case $status in
@@ -130,7 +112,6 @@ show_summary() {
         esac
     done > /tmp/mcp_status_count
 
-    # Count each status type
     if [ -f /tmp/mcp_status_count ]; then
         SUCCESS_COUNT=$(grep -c "SUCCESS" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
         FAILED_COUNT=$(grep -c "FAILED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
@@ -143,14 +124,12 @@ show_summary() {
     gum style --foreground 32 "🎉 Installation Complete!"
     gum style --foreground 244 "⏱️ $ELAPSED_FORMATTED | ✅ $SUCCESS_COUNT | ❌ $FAILED_COUNT | ⚠️ $SKIPPED_COUNT | 🗑️ $REMOVED_COUNT"
 
-    # Show filesystem paths if enabled
     if [ "$FILESYSTEM_ENABLED" = true ]; then
         PATHS_COUNT=$(wc -l < "$FILESYSTEM_PERMISSIONS_FILE" 2>/dev/null || echo "0")
         gum style --foreground 244 "📂 Filesystem: $PATHS_COUNT paths configured"
     fi
 }
 
-# Check if server is configured correctly
 check_server_config() {
     local server_name="$1"
     shift 1
@@ -159,7 +138,6 @@ check_server_config() {
     [ "$current_config" = "$expected_command" ]
 }
 
-# Messages
 msg() {
     case $1 in
     title) gum style --foreground 32 "Installing MCP Servers..." ;;
@@ -190,10 +168,8 @@ add_mcp_server() {
 remove_unlisted_servers() {
     current_servers_output=$(claude mcp list 2>/dev/null) || return 0
 
-    # Skip if no servers or no colons
     [ -z "$current_servers_output" ] || ! echo "$current_servers_output" | grep -q ":" && return 0
 
-    # Extract server names
     current_servers=$(echo "$current_servers_output" | awk -F: '{if (NF > 1) print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//')
 
     for server in $current_servers; do
@@ -201,12 +177,10 @@ remove_unlisted_servers() {
 
         should_keep=false
 
-        # Always keep brave-search and git
         case "$server" in
             "brave-search"|"git") should_keep=true ;;
             "filesystem") [ "$FILESYSTEM_ENABLED" = true ] && should_keep=true ;;
             *)
-                # Check if in MCP_SERVERS list
                 while IFS=: read -r name package; do
                     [ -z "$name" ] && continue
                     name=$(echo "$name" | tr -d ' ')
@@ -230,10 +204,8 @@ EOF
 
 msg title
 
-
 remove_unlisted_servers
 
-# Initialize table
 init_table
 clear
 gum style --foreground 32 "Installing MCP Servers..."
@@ -243,7 +215,6 @@ echo ""
 
 [ -f "$HOME/.env" ] && export $(grep -v '^#' "$HOME/.env" | xargs)
 
-# Check dependencies
 missing_deps=""
 for cmd in node npm claude git; do
     command -v "$cmd" >/dev/null 2>&1 || missing_deps="$missing_deps $cmd"
@@ -258,7 +229,6 @@ gh_available=false
 command -v gh >/dev/null 2>&1 && gh_available=true
 [ "$gh_available" = false ] && msg warn "GitHub CLI (gh) not found - git features limited"
 
-# Install MCP servers
 while IFS=: read -r name package; do
     [ -z "$name" ] && continue
     add_mcp_server "$name" $package
@@ -266,7 +236,6 @@ done << EOF
 $MCP_SERVERS
 EOF
 
-# Brave search
 if [ -n "$BRAVE_API_KEY" ]; then
     expected_brave_cmd="env BRAVE_API_KEY=$BRAVE_API_KEY npx -y @modelcontextprotocol/server-brave-search"
     current_brave_config=$(claude mcp list 2>/dev/null | grep "^brave-search:" | cut -d: -f2- | sed 's/^ *//')
@@ -288,7 +257,6 @@ else
 "
 fi
 
-# Git setup
 if [ "$gh_available" = true ]; then
     gh auth status >/dev/null 2>&1 || { msg fail "gh auth login required"; exit 1; }
 else
@@ -300,7 +268,6 @@ fi
     exit 1
 }
 
-# Git server
 if check_server_config "git" "@cyanheads/git-mcp-server"; then
     update_table_row "git" "✅ OK"
     show_table
@@ -312,7 +279,6 @@ else
     show_table
 fi
 
-# Final table display
 show_table
 
 show_summary
@@ -321,5 +287,4 @@ echo ""
 msg complete
 msg restart
 
-# Cleanup
 rm -f "$TABLE_FILE"
