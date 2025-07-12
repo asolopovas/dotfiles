@@ -22,7 +22,9 @@
       "Bash(bash:*)",
       "Bash(./install-gum.sh)",
       "Bash(command -v:*)",
-      "Bash(sh:*)"
+      "Bash(sh:*)",
+      "Bash(claude mcp:*)",
+      "Bash(gum spin:*)"
     ],
     "deny": []
   }

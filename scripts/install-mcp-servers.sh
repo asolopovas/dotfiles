@@ -30,7 +30,7 @@ run_with_spinner() {
     local action="$2"
     local command="$3"
 
-    if gum spin --spinner dot --title "Installing $server_name..." -- sh -c "$command" 2>/dev/null; then
+    if gum spin --spinner dot --title "Installing $server_name..." -- sh -c "$command"; then
         gum style --foreground 32 "✅ $server_name installed"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:${action}
 "
