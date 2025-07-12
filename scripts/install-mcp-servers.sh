@@ -230,13 +230,6 @@ EOF
 
 msg title
 
-# Interactive confirmation (skip if not interactive)
-if [ -t 0 ] && [ -t 1 ]; then
-    if ! gum confirm "Continue with MCP server installation?"; then
-        gum style --foreground 33 "Installation cancelled."
-        exit 0
-    fi
-fi
 
 remove_unlisted_servers
 
