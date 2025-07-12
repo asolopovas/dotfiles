@@ -28,12 +28,35 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
 
 install_gum
 
+MCP_SERVERS_FILE="$HOME/.mcp_servers"
 FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
 [ -f "$FILESYSTEM_PERMISSIONS_FILE" ] || touch "$FILESYSTEM_PERMISSIONS_FILE"
 [ -s "$FILESYSTEM_PERMISSIONS_FILE" ] && FILESYSTEM_ENABLED=true || FILESYSTEM_ENABLED=false
 FILESYSTEM_PATHS=$(tr '\n' ' ' <"$FILESYSTEM_PERMISSIONS_FILE")
-MCP_SERVERS="sequential-thinking:@modelcontextprotocol/server-sequential-thinking fetch:@kazuph/mcp-fetch playwright:@playwright/mcp"
-[ "$FILESYSTEM_ENABLED" = true ] && MCP_SERVERS="$MCP_SERVERS filesystem:@modelcontextprotocol/server-filesystem"
+
+# Create default .mcp_servers file if it doesn't exist
+if [ ! -f "$MCP_SERVERS_FILE" ]; then
+    cat > "$MCP_SERVERS_FILE" << EOF
+sequential-thinking
+fetch
+playwright
+git
+EOF
+    [ "$FILESYSTEM_ENABLED" = true ] && echo "filesystem" >> "$MCP_SERVERS_FILE"
+fi
+
+# Read servers from config file and build MCP_SERVERS string
+MCP_SERVERS=""
+while IFS= read -r server; do
+    [ -z "$server" ] && continue
+    case "$server" in
+        sequential-thinking) MCP_SERVERS="$MCP_SERVERS sequential-thinking:@modelcontextprotocol/server-sequential-thinking" ;;
+        fetch) MCP_SERVERS="$MCP_SERVERS fetch:@kazuph/mcp-fetch" ;;
+        playwright) MCP_SERVERS="$MCP_SERVERS playwright:@playwright/mcp" ;;
+        git) MCP_SERVERS="$MCP_SERVERS git:@cyanheads/git-mcp-server" ;;
+        filesystem) [ "$FILESYSTEM_ENABLED" = true ] && MCP_SERVERS="$MCP_SERVERS filesystem:@modelcontextprotocol/server-filesystem" ;;
+    esac
+done < "$MCP_SERVERS_FILE"
 START_TIME=$(date +%s)
 INSTALL_RESULTS=""
 spin() { gum spin --spinner dot --title "$1..." -- sh -c "$2"; }
@@ -63,8 +86,16 @@ add_server() {
     spin "Installing $1" "claude mcp remove '$1' 2>/dev/null; claude mcp add '$1' -- npx -y $2" && update_result "$1" "SUCCESS" "setup" || update_result "$1" "FAILED" "setup"
 }
 remove_unlisted() {
-    listed="sequential-thinking fetch playwright brave-search git"
-    [ "$FILESYSTEM_ENABLED" = true ] && listed="$listed filesystem"
+    # Read allowed servers from config file
+    listed=""
+    while IFS= read -r server; do
+        [ -z "$server" ] && continue
+        listed="$listed $server"
+    done < "$MCP_SERVERS_FILE"
+    
+    # Add brave-search to allowed list (it's conditionally installed)
+    listed="$listed brave-search"
+    
     current_servers=$(claude mcp list 2>/dev/null | cut -d: -f1)
     for srv in $current_servers; do
         case " $listed " in
