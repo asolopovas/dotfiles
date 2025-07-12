@@ -63,7 +63,7 @@ add_server() {
     spin "Installing $1" "claude mcp remove '$1' 2>/dev/null; claude mcp add '$1' -- npx -y $2" && update_result "$1" "SUCCESS" "setup" || update_result "$1" "FAILED" "setup"
 }
 remove_unlisted() {
-    listed="sequential-thinking fetch browser-tools playwright brave-search git"
+    listed="sequential-thinking fetch playwright brave-search git"
     [ "$FILESYSTEM_ENABLED" = true ] && listed="$listed filesystem"
     current_servers=$(claude mcp list 2>/dev/null | cut -d: -f1)
     for srv in $current_servers; do
