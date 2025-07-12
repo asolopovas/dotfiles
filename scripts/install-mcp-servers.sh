@@ -152,7 +152,7 @@ msg() {
     warn) print_color yellow "⚠️  $2" ;;
     complete) print_color green "🎉 Setup complete!" ;;
     restart) print_color yellow \
-        "⚠️  Restart Claude to activate servers" ;;
+        "⚠️ Restart Claude to activate servers" ;;
     esac
 }
 
