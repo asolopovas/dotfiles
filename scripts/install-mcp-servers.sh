@@ -227,7 +227,7 @@ echo ""
 # Remove unlisted servers first
 remove_unlisted_servers
 
-[ -f .env ] && export $(grep -v '^#' .env | xargs)
+[ -f $HOME/.env ] && export $(grep -v '^#' $HOME/.env | xargs)
 
 # Check required dependencies
 for cmd in node npm claude git; do
