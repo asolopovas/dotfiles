@@ -24,6 +24,15 @@ fi
 add_paths_from_file $DOTFILES/.paths
 
 [ -f "$HOME/.config/.aliasrc" ] && source $HOME/.config/.aliasrc
+
+# Colors and prompt
+export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+export LS_COLORS='di=1;34:ln=1;36:so=1;35:pi=1;33:ex=1;32:bd=1;33:cd=1;33:su=1;31:sg=1;31:tw=1;34:ow=1;34'
+export GREP_COLORS='mt=1;31'
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 [ -f "$HOME/.deno/env" ] && source "$HOME/.deno/env"
 [ -f "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"                   # This loads nvm
@@ -47,15 +56,6 @@ export PATH="$VOLTA_HOME/bin:$PATH"
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-source ~/.rmodel_cuda_setup.sh  # rmodel CUDA setup
+[ -f ~/.rmodel_cuda_setup.sh ] && source ~/.rmodel_cuda_setup.sh  # rmodel CUDA setup
 export PATH="$HOME/.local/bin:$PATH"
-source /home/andrius/.bash_completion.d/clean-data
-source /home/andrius/.bash_completion.d/clean-data
-source /home/andrius/.bash_completion.d/clean-data
-source /home/andrius/.bash_completion.d/clean-data
-source /home/andrius/.bash_completion.d/clean-data
-source /home/andrius/dotfiles/completions/bash/clean-data
+[ -f "$HOME/dotfiles/completions/bash/clean-data" ] && source "$HOME/dotfiles/completions/bash/clean-data"
