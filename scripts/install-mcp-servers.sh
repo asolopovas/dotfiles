@@ -4,216 +4,223 @@
 
 # Configuration
 FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
+[ ! -f "$FILESYSTEM_PERMISSIONS_FILE" ] && touch "$FILESYSTEM_PERMISSIONS_FILE"
 
-# Create empty permissions file if it doesn't exist
-if [ ! -f "$FILESYSTEM_PERMISSIONS_FILE" ]; then
-    touch "$FILESYSTEM_PERMISSIONS_FILE"
-fi
+# Time tracking
+START_TIME=$(date +%s)
 
-# Check if filesystem permissions file exists and has content
-if [ -f "$FILESYSTEM_PERMISSIONS_FILE" ] && [ -s "$FILESYSTEM_PERMISSIONS_FILE" ]; then
-    FILESYSTEM_PATHS=$(cat "$FILESYSTEM_PERMISSIONS_FILE" | tr '\n' ' ')
+# Check filesystem permissions
+if [ -s "$FILESYSTEM_PERMISSIONS_FILE" ]; then
+    FILESYSTEM_PATHS=$(tr '\n' ' ' < "$FILESYSTEM_PERMISSIONS_FILE")
     FILESYSTEM_ENABLED=true
 else
     FILESYSTEM_ENABLED=false
     FILESYSTEM_PATHS=""
 fi
 
-# Server configs (name:package format) - filesystem only included if enabled
-MCP_SERVERS="
-sequential-thinking:@modelcontextprotocol/server-sequential-thinking
+# Server configs (name:package format)
+MCP_SERVERS="sequential-thinking:@modelcontextprotocol/server-sequential-thinking
 fetch:@kazuph/mcp-fetch
 browser-tools:@agentdeskai/browser-tools-mcp@1.2.1
-playwright:@playwright/mcp
-"
+playwright:@playwright/mcp"
 
-# Add filesystem server only if permissions file exists and has content
-if [ "$FILESYSTEM_ENABLED" = true ]; then
-    MCP_SERVERS="$MCP_SERVERS
+# Add filesystem server if enabled
+[ "$FILESYSTEM_ENABLED" = true ] && MCP_SERVERS="$MCP_SERVERS
 filesystem:@modelcontextprotocol/server-filesystem $FILESYSTEM_PATHS"
-fi
 
 # Result tracking
 INSTALL_RESULTS=""
+TABLE_FILE="/tmp/mcp_table_$$"
 
-# Spinner functions
-show_spinner() {
+# Initialize table display
+init_table() {
+    echo "+----------------------+--------------+" > "$TABLE_FILE"
+    echo "| Server               | Status       |" >> "$TABLE_FILE"
+    echo "+----------------------+--------------+" >> "$TABLE_FILE"
+    
+    # Add rows for each server with initial pending status
+    echo "$MCP_SERVERS" | while IFS=: read -r name package; do
+        [ -z "$name" ] && continue
+        printf "| %-20s | %-12s |\n" "$name" "⏳ Wait" >> "$TABLE_FILE"
+    done
+    
+    # Add additional servers
+    [ -n "$BRAVE_API_KEY" ] && printf "| %-20s | %-12s |\n" "brave-search" "⏳ Wait" >> "$TABLE_FILE"
+    printf "| %-20s | %-12s |\n" "git" "⏳ Wait" >> "$TABLE_FILE"
+    
+    echo "+----------------------+--------------+" >> "$TABLE_FILE"
+}
+
+# Update table row with spinner or final status
+update_table_row() {
+    local server_name="$1"
+    local status="$2"
+    local temp_file="/tmp/mcp_table_temp_$$"
+    
+    # Replace the line for this server
+    while IFS= read -r line; do
+        if echo "$line" | grep -q "| $server_name "; then
+            printf "| %-20s | %-12s |\n" "$server_name" "$status"
+        else
+            echo "$line"
+        fi
+    done < "$TABLE_FILE" > "$temp_file"
+    
+    mv "$temp_file" "$TABLE_FILE"
+}
+
+# Display current table
+show_table() {
+    printf "\r\033[K"  # Clear current line
+    printf "\033[s"    # Save cursor position
+    printf "\033[H"    # Move to top
+    gum style --foreground 32 "Installing MCP Servers..."
+    echo ""
+    cat "$TABLE_FILE"
+    echo ""
+    printf "\033[u"    # Restore cursor position
+}
+
+# Execute with table updates
+run_with_table() {
     local server_name="$1"
     local action="$2"
     local command="$3"
     
-    printf "\r\033[K" # Clear line
-    printf " [%s] %s" "$server_name" "$action"
+    # Show spinner in table
+    update_table_row "$server_name" "🔄 Setup"
+    show_table
     
-    # Run command in background and show spinner
-    eval "$command" &
-    local pid=$!
-    
-    # Show spinning animation with ASCII characters at the beginning
-    local spin_chars="|/-\\"
-    local i=0
-    while kill -0 $pid 2>/dev/null; do
-        case $i in
-            0) char="|" ;;
-            1) char="/" ;;
-            2) char="-" ;;
-            3) char="\\" ;;
-        esac
-        printf "\r%s [%s] %s" "$char" "$server_name" "$action"
-        sleep 0.2
-        i=$(( (i + 1) % 4 ))
-    done
-    
-    wait $pid
-    local exit_code=$?
-    
-    # Clear line and show result
-    printf "\r\033[K"
-    
-    if [ $exit_code -eq 0 ]; then
-        printf "✅ [%s] %s\n" "$server_name" "$action"
+    if sh -c "$command" >/dev/null 2>&1; then
+        update_table_row "$server_name" "✅ OK"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:${action}
 "
+        return 0
     else
-        printf "❌ [%s] %s\n" "$server_name" "$action"
+        update_table_row "$server_name" "❌ Failed"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:FAILED:${action}
 "
+        return 1
     fi
-    
-    return $exit_code
 }
 
-# Summary function
+# Show summary with stats
 show_summary() {
-    # Only show summary if there are results to display
-    if [ -z "$INSTALL_RESULTS" ]; then
-        return 0
+    [ -z "$INSTALL_RESULTS" ] && return 0
+    
+    # Calculate elapsed time
+    END_TIME=$(date +%s)
+    ELAPSED=$((END_TIME - START_TIME))
+    ELAPSED_FORMATTED=$(printf "%02d:%02d" $((ELAPSED / 60)) $((ELAPSED % 60)))
+    
+    # Count results by iterating through INSTALL_RESULTS
+    SUCCESS_COUNT=0
+    FAILED_COUNT=0
+    SKIPPED_COUNT=0
+    REMOVED_COUNT=0
+    
+    # Save to temp file to avoid subshell variable issues
+    echo "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
+        [ -z "$server" ] && continue
+        case $status in
+            SUCCESS) echo "SUCCESS" ;;
+            FAILED) echo "FAILED" ;;
+            REMOVED) echo "REMOVED" ;;
+            SKIPPED) echo "SKIPPED" ;;
+        esac
+    done > /tmp/mcp_status_count
+    
+    # Count each status type
+    if [ -f /tmp/mcp_status_count ]; then
+        SUCCESS_COUNT=$(grep -c "SUCCESS" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
+        FAILED_COUNT=$(grep -c "FAILED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
+        REMOVED_COUNT=$(grep -c "REMOVED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
+        SKIPPED_COUNT=$(grep -c "SKIPPED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
+        rm -f /tmp/mcp_status_count
     fi
     
     echo ""
-    print_color cyan "📊 Installation Summary:"
-    echo ""
+    gum style --foreground 32 "🎉 Installation Complete!"
+    gum style --foreground 244 "⏱️ $ELAPSED_FORMATTED | ✅ $SUCCESS_COUNT | ❌ $FAILED_COUNT | ⚠️ $SKIPPED_COUNT | 🗑️ $REMOVED_COUNT"
     
-    # Wider table with better alignment
-    echo "+----------------------+-------------+-------------------------+"
-    echo "| Server               | Status      | Action                  |"
-    echo "+----------------------+-------------+-------------------------+"
-    
-    printf "%s" "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
-        [ -z "$server" ] && continue
-        
-        case $status in
-            SUCCESS) status_display="✅ SUCCESS " ;;
-            FAILED)  status_display="❌ FAILED  " ;;
-            REMOVED) status_display="🗑️ REMOVED " ;;
-            SKIPPED) status_display="⚠️  SKIPPED" ;;
-            *) status_display="$status" ;;
-        esac
-        
-        printf "| %-20s | %-11s | %-23s |\n" "$server" "$status_display" "$action"
-    done
-    
-    echo "+----------------------+-------------+-------------------------+"
-    
-    # Show shared filesystem paths if enabled
+    # Show filesystem paths if enabled
     if [ "$FILESYSTEM_ENABLED" = true ]; then
-        echo ""
-        print_color cyan "📂 Shared Filesystem Paths:"
-        echo ""
-        cat "$FILESYSTEM_PERMISSIONS_FILE" | while read -r path; do
-            [ -n "$path" ] && echo "  • $path"
-        done
+        PATHS_COUNT=$(wc -l < "$FILESYSTEM_PERMISSIONS_FILE" 2>/dev/null || echo "0")
+        gum style --foreground 244 "📂 Filesystem: $PATHS_COUNT paths configured"
     fi
 }
 
-# Check if server is already correctly configured
+# Check if server is configured correctly
 check_server_config() {
     local server_name="$1"
     shift 1
     local expected_command="npx -y $*"
-    
-    # Get current server configuration
     local current_config=$(claude mcp list 2>/dev/null | grep "^$server_name:" | cut -d: -f2- | sed 's/^ *//')
-    
-    if [ "$current_config" = "$expected_command" ]; then
-        return 0  # Already correctly configured
-    else
-        return 1  # Needs update
-    fi
+    [ "$current_config" = "$expected_command" ]
 }
 
 # Messages
 msg() {
     case $1 in
-    title) print_color green "Installing MCP Servers..." ;;
-    add) print_color blue "Adding: $2" ;;
-    ok) print_color green "✅ $2" ;;
-    fail) print_color red "❌ $2" ;;
-    warn) print_color yellow "⚠️  $2" ;;
-    complete) print_color green "🎉 Setup complete!" ;;
-    restart) print_color yellow \
-        "⚠️ Restart Claude to activate servers" ;;
+    title) gum style --foreground 32 "Installing MCP Servers..." ;;
+    complete) gum style --foreground 32 "🎉 Setup complete!" ;;
+    restart) gum style --foreground 33 "⚠️ Restart Claude to activate servers" ;;
+    fail) gum style --foreground 31 "❌ $2" ;;
+    warn) gum style --foreground 33 "⚠️  $2" ;;
     esac
 }
 
 add_mcp_server() {
-    server_name=$1
+    local server_name=$1
     shift 1
 
-    # Check if server is already correctly configured
     if check_server_config "$server_name" "$@"; then
-        printf "✅ [%s] already configured\n" "$server_name"
+        update_table_row "$server_name" "✅ OK"
+        show_table
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:already configured
 "
         return 0
     fi
 
-    show_spinner "$server_name" "setup" \
-        "claude mcp remove '$server_name' >/dev/null 2>&1; claude mcp add '$server_name' -- npx -y $* >/dev/null 2>&1"
+    run_with_table "$server_name" "setup" \
+        "claude mcp remove '$server_name' 2>/dev/null; claude mcp add '$server_name' -- npx -y $*"
+    show_table
 }
 
 remove_unlisted_servers() {
-    # Get list of current MCP servers - check if claude mcp list returns anything
-    if ! current_servers_output=$(claude mcp list 2>/dev/null); then
-        return 0  # If command fails, nothing to remove
-    fi
+    current_servers_output=$(claude mcp list 2>/dev/null) || return 0
     
-    # Skip if no servers configured or only header text
-    if [ -z "$current_servers_output" ] || ! echo "$current_servers_output" | grep -q ":"; then
-        return 0
-    fi
+    # Skip if no servers or no colons
+    [ -z "$current_servers_output" ] || ! echo "$current_servers_output" | grep -q ":" && return 0
     
-    # Extract server names from the output (everything before the first colon on each line)
+    # Extract server names
     current_servers=$(echo "$current_servers_output" | awk -F: '{if (NF > 1) print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//')
     
-    # Remove servers not in our list
-    echo "$current_servers" | while read -r server; do
+    for server in $current_servers; do
         [ -z "$server" ] && continue
         
         should_keep=false
         
-        # Check if it's brave-search or git (always keep)
-        if [ "$server" = "brave-search" ] || [ "$server" = "git" ]; then
-            should_keep=true
-        # Special handling for filesystem - remove if permissions file is empty
-        elif [ "$server" = "filesystem" ] && [ "$FILESYSTEM_ENABLED" = false ]; then
-            should_keep=false
-        else
-            # Check if server is in MCP_SERVERS list
-            while IFS=: read -r name package; do
-                [ -z "$name" ] && continue
-                name=$(echo "$name" | tr -d ' ')  # Remove any whitespace
-                if [ "$server" = "$name" ]; then
-                    should_keep=true
-                    break
-                fi
-            done << EOF
+        # Always keep brave-search and git
+        case "$server" in
+            "brave-search"|"git") should_keep=true ;;
+            "filesystem") [ "$FILESYSTEM_ENABLED" = true ] && should_keep=true ;;
+            *) 
+                # Check if in MCP_SERVERS list
+                while IFS=: read -r name package; do
+                    [ -z "$name" ] && continue
+                    name=$(echo "$name" | tr -d ' ')
+                    if [ "$server" = "$name" ]; then
+                        should_keep=true
+                        break
+                    fi
+                done << EOF
 $MCP_SERVERS
 EOF
-        fi
+                ;;
+        esac
         
         if [ "$should_keep" = false ]; then
-            printf "🗑️  [%s] removed\n" "$server"
             claude mcp remove "$server" >/dev/null 2>&1
             INSTALL_RESULTS="${INSTALL_RESULTS}${server}:REMOVED:removed
 "
@@ -222,84 +229,104 @@ EOF
 }
 
 msg title
-echo ""
 
-# Remove unlisted servers first
-remove_unlisted_servers
-
-[ -f $HOME/.env ] && export $(grep -v '^#' $HOME/.env | xargs)
-
-# Check required dependencies
-for cmd in node npm claude git; do
-    command -v $cmd >/dev/null 2>&1 || {
-        msg fail "$cmd"
-        exit 1
-    }
-done
-
-# Check optional dependencies
-gh_available=false
-command -v gh >/dev/null 2>&1 && gh_available=true
-
-if [ "$gh_available" = false ]; then
-    msg warn "GitHub CLI (gh) not found - git MCP server features may be limited"
+# Interactive confirmation (skip if not interactive)
+if [ -t 0 ] && [ -t 1 ]; then
+    if ! gum confirm "Continue with MCP server installation?"; then
+        gum style --foreground 33 "Installation cancelled."
+        exit 0
+    fi
 fi
 
-# Install MCP servers
-printf "%s\n" "$MCP_SERVERS" |
-    while IFS=: read -r name package; do
-        [ -z "$name" ] && continue
-        add_mcp_server "$name" $package
-    done
+remove_unlisted_servers
+
+# Initialize table
+init_table
+clear
+gum style --foreground 32 "Installing MCP Servers..."
+echo ""
+cat "$TABLE_FILE"
+echo ""
+
+[ -f "$HOME/.env" ] && export $(grep -v '^#' "$HOME/.env" | xargs)
+
+# Check dependencies
+missing_deps=""
+for cmd in node npm claude git; do
+    command -v "$cmd" >/dev/null 2>&1 || missing_deps="$missing_deps $cmd"
+done
+
+if [ -n "$missing_deps" ]; then
+    msg fail "Missing dependencies:$missing_deps"
+    exit 1
+fi
+
+gh_available=false
+command -v gh >/dev/null 2>&1 && gh_available=true
+[ "$gh_available" = false ] && msg warn "GitHub CLI (gh) not found - git features limited"
+
+# Install MCP servers  
+while IFS=: read -r name package; do
+    [ -z "$name" ] && continue
+    add_mcp_server "$name" $package
+done << EOF
+$MCP_SERVERS
+EOF
 
 # Brave search
-[ -n "$BRAVE_API_KEY" ] && {
-    # Check if brave-search is already correctly configured
+if [ -n "$BRAVE_API_KEY" ]; then
     expected_brave_cmd="env BRAVE_API_KEY=$BRAVE_API_KEY npx -y @modelcontextprotocol/server-brave-search"
     current_brave_config=$(claude mcp list 2>/dev/null | grep "^brave-search:" | cut -d: -f2- | sed 's/^ *//')
     
     if [ "$current_brave_config" = "$expected_brave_cmd" ]; then
-        printf "✅ [brave-search] already configured\n"
+        update_table_row "brave-search" "✅ OK"
+        show_table
         INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SUCCESS:already configured
 "
     else
-        show_spinner "brave-search" "setup" \
-            "claude mcp remove brave-search >/dev/null 2>&1; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search >/dev/null 2>&1"
+        run_with_table "brave-search" "setup" \
+            "claude mcp remove brave-search 2>/dev/null; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search"
+        show_table
     fi
-} || {
-    printf "⚠️  [brave-search] skipped (no API key)\n"
+else
+    update_table_row "brave-search" "⚠️ Skip"
+    show_table
     INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key
 "
-}
+fi
 
 # Git setup
 if [ "$gh_available" = true ]; then
-    gh auth status >/dev/null 2>&1 || {
-        msg fail "gh auth login required"
-        exit 1
-    }
+    gh auth status >/dev/null 2>&1 || { msg fail "gh auth login required"; exit 1; }
 else
     msg warn "Skipping GitHub auth check (gh not available)"
 fi
 
-[ -n "$(git config --global user.name)" ] &&
-    [ -n "$(git config --global user.email)" ] || {
+[ -n "$(git config --global user.name)" ] && [ -n "$(git config --global user.email)" ] || {
     msg fail "git config --global user.name/email required"
     exit 1
 }
 
-# Check if git server is already correctly configured
+# Git server
 if check_server_config "git" "@cyanheads/git-mcp-server"; then
-    printf "✅ [git] already configured\n"
+    update_table_row "git" "✅ OK"
+    show_table
     INSTALL_RESULTS="${INSTALL_RESULTS}git:SUCCESS:already configured
 "
 else
-    show_spinner "git" "setup" \
-        "npm install -g @cyanheads/git-mcp-server >/dev/null 2>&1; claude mcp remove git >/dev/null 2>&1; claude mcp add git -- npx -y @cyanheads/git-mcp-server >/dev/null 2>&1"
+    run_with_table "git" "setup" \
+        "npm install -g @cyanheads/git-mcp-server; claude mcp remove git 2>/dev/null; claude mcp add git -- npx -y @cyanheads/git-mcp-server"
+    show_table
 fi
+
+# Final table display
+show_table
 
 show_summary
 
 echo ""
 msg complete
 msg restart
+
+# Cleanup
+rm -f "$TABLE_FILE"
