@@ -59,11 +59,11 @@ echo "$INSTALL_RESULTS" | while IFS=: read -r srv status action; do
     case "$status" in
     SUCCESS) icon="✅" ;; FAILED) icon="❌" ;; SKIPPED) icon="⚠️ " ;; REMOVED) icon="🗑️ " ;; *) icon="  " ;;
     esac
-    printf "│ %-23s │ %s %-8s │ %-20s │\n" "$srv" "$icon" "$status" "$action"
+    printf "│ %-23s │ %s %-8s │ %-24s │\n" "$srv" "$icon" "$status" "$action"
 done
 printf "├─────────────────────────┴─────────────┴──────────────────────────┤\n"
-printf "│ ⏱️  %s | ✅ %s | ❌ %s | ⚠️  %s | 🗑️  %s%*s│\n" "$ELAPSED" "$(counts SUCCESS)" "$(counts FAILED)" "$(counts SKIPPED)" "$(counts REMOVED)" $((47 - ${#ELAPSED} - $(counts SUCCESS) - $(counts FAILED) - $(counts SKIPPED) - $(counts REMOVED))) ""
-printf "└───────────────────────────────────────────────────────────────────┘\n"
+printf "│ ⏱️  %s | ✅ %s | ❌ %s | ⚠️  %s | 🗑️  %s%*s│\n" "$ELAPSED" "$(counts SUCCESS)" "$(counts FAILED)" "$(counts SKIPPED)" "$(counts REMOVED)" $((38 - ${#ELAPSED} - $(counts SUCCESS) - $(counts FAILED) - $(counts SKIPPED) - $(counts REMOVED))) ""
+printf "└──────────────────────────────────────────────────────────────────┘\n"
 [ "$FILESYSTEM_ENABLED" = true ] && printf "📂 %s filesystem paths\n" "$(wc -l <"$FILESYSTEM_PERMISSIONS_FILE")"
 gum style --foreground 32 "🎉 Setup complete!"
 gum style --foreground 33 "⚠️ Restart Claude to activate servers"
