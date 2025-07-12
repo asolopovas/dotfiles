@@ -143,7 +143,6 @@ EOF
     done
 }
 
-clear
 echo "🚀 Installing MCP Servers..."
 
 remove_unlisted_servers
