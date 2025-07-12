@@ -24,7 +24,10 @@
       "Bash(command -v:*)",
       "Bash(sh:*)",
       "Bash(claude mcp:*)",
-      "Bash(gum spin:*)"
+      "Bash(gum spin:*)",
+      "mcp__git__git_status",
+      "mcp__git__git_set_working_dir",
+      "mcp__git__git_diff"
     ],
     "deny": []
   }
