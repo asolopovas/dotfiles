@@ -14,16 +14,36 @@ update_result() { INSTALL_RESULTS="$INSTALL_RESULTS$1:$2:$3
 "; }
 check_config() {
     current=$(claude mcp list 2>/dev/null | awk -F: -v s="$1" '$1==s{print substr($0,length($1)+2)}' | sed 's/^ *//')
-    [ "$current" = "npx -y $2" ]
+    case "$1" in
+        brave-search) expected="env BRAVE_API_KEY=$BRAVE_API_KEY npx -y @modelcontextprotocol/server-brave-search" ;;
+        filesystem) 
+            expanded_paths=""
+            for path in $FILESYSTEM_PATHS; do
+                case "$path" in
+                    "~") expanded_paths="$expanded_paths /home/andrius" ;;
+                    "~/"*) expanded_paths="$expanded_paths /home/andrius/${path#~/}" ;;
+                    *) expanded_paths="$expanded_paths $path" ;;
+                esac
+            done
+            expected="npx -y @modelcontextprotocol/server-filesystem$expanded_paths"
+            ;;
+        *) expected="npx -y $2" ;;
+    esac
+    [ "$current" = "$expected" ]
 }
 add_server() {
     check_config "$1" "$2" && update_result "$1" "SUCCESS" "already configured" && return
     spin "Installing $1" "claude mcp remove '$1' 2>/dev/null; claude mcp add '$1' -- npx -y $2" && update_result "$1" "SUCCESS" "setup" || update_result "$1" "FAILED" "setup"
 }
 remove_unlisted() {
-    listed=$(echo "$MCP_SERVERS brave-search git filesystem" | tr ' ' '\n')
-    claude mcp list 2>/dev/null | cut -d: -f1 | while read -r srv; do
-        echo "$listed" | grep -qxF "$srv" || { spin "Removing $srv" "claude mcp remove '$srv' 2>/dev/null" && update_result "$srv" "REMOVED" "removed"; }
+    listed="sequential-thinking fetch browser-tools playwright brave-search git"
+    [ "$FILESYSTEM_ENABLED" = true ] && listed="$listed filesystem"
+    current_servers=$(claude mcp list 2>/dev/null | cut -d: -f1)
+    for srv in $current_servers; do
+        case " $listed " in
+            *" $srv "*) ;;
+            *) spin "Removing $srv" "claude mcp remove '$srv' 2>/dev/null" && update_result "$srv" "REMOVED" "removed" ;;
+        esac
     done
 }
 missing=$(for c in node npm claude git; do command -v $c >/dev/null || echo "$c"; done)
@@ -37,11 +57,14 @@ remove_unlisted
 for srv in $MCP_SERVERS; do
     name="${srv%%:*}"
     package="${srv#*:}"
-    [ "$name" = "filesystem" ] && [ "$FILESYSTEM_ENABLED" = true ] && add_server "$name" "$package $FILESYSTEM_PATHS" || add_server "$name" "$package"
+    if [ "$name" = "filesystem" ] && [ "$FILESYSTEM_ENABLED" = true ]; then
+        add_server "$name" "$package $FILESYSTEM_PATHS"
+    elif [ "$name" != "filesystem" ]; then
+        add_server "$name" "$package"
+    fi
 done
 if [ -n "$BRAVE_API_KEY" ]; then
-    brave_cmd="env BRAVE_API_KEY=$BRAVE_API_KEY npx -y @modelcontextprotocol/server-brave-search"
-    check_config "brave-search" "$brave_cmd" && update_result "brave-search" "SUCCESS" "already configured" || { spin "Installing brave-search" "claude mcp remove brave-search 2>/dev/null; claude mcp add brave-search -- $brave_cmd" && update_result "brave-search" "SUCCESS" "setup" || update_result "brave-search" "FAILED" "setup"; }
+    check_config "brave-search" "@modelcontextprotocol/server-brave-search" && update_result "brave-search" "SUCCESS" "already configured" || { spin "Installing brave-search" "claude mcp remove brave-search 2>/dev/null; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search" && update_result "brave-search" "SUCCESS" "setup" || update_result "brave-search" "FAILED" "setup"; }
 else
     gum style --foreground 33 "⚠️ Brave-search skipped (no API key)" && update_result "brave-search" "SKIPPED" "no API key"
 fi
