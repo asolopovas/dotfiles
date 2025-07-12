@@ -16,7 +16,7 @@ check_config() {
     current=$(claude mcp list 2>/dev/null | awk -F: -v s="$1" '$1==s{print substr($0,length($1)+2)}' | sed 's/^ *//')
     case "$1" in
         brave-search) expected="env BRAVE_API_KEY=$BRAVE_API_KEY npx -y @modelcontextprotocol/server-brave-search" ;;
-        filesystem) 
+        filesystem)
             expanded_paths=""
             for path in $FILESYSTEM_PATHS; do
                 case "$path" in
@@ -85,7 +85,7 @@ echo "$INSTALL_RESULTS" | while IFS=: read -r srv status action; do
     printf "│ %-23s │ %s %-8s │ %-24s │\n" "$srv" "$icon" "$status" "$action"
 done
 printf "├─────────────────────────┴─────────────┴──────────────────────────┤\n"
-printf "│ ⏱️  %s | ✅ %s | ❌ %s | ⚠️  %s | 🗑️  %s%*s│\n" "$ELAPSED" "$(counts SUCCESS)" "$(counts FAILED)" "$(counts SKIPPED)" "$(counts REMOVED)" $((38 - ${#ELAPSED} - $(counts SUCCESS) - $(counts FAILED) - $(counts SKIPPED) - $(counts REMOVED))) ""
+printf "│ ⏱️  %s | ✅ %s | ❌ %s | ⚠️  %s | 🗑️  %s%*s│\n" "$ELAPSED" "$(counts SUCCESS)" "$(counts FAILED)" "$(counts SKIPPED)" "$(counts REMOVED)" $((41 - ${#ELAPSED} - $(counts SUCCESS) - $(counts FAILED) - $(counts SKIPPED) - $(counts REMOVED))) ""
 printf "└──────────────────────────────────────────────────────────────────┘\n"
 [ "$FILESYSTEM_ENABLED" = true ] && printf "📂 %s filesystem paths\n" "$(wc -l <"$FILESYSTEM_PERMISSIONS_FILE")"
 gum style --foreground 32 "🎉 Setup complete!"
