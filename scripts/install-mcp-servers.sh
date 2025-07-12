@@ -31,12 +31,10 @@ run_with_spinner() {
     local command="$3"
 
     if gum spin --spinner dot --title "Installing $server_name..." -- sh -c "$command"; then
-        gum style --foreground 32 "✅ $server_name installed"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:${action}
 "
         return 0
     else
-        gum style --foreground 31 "❌ $server_name failed"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:FAILED:${action}
 "
         return 1
@@ -56,13 +54,35 @@ show_summary() {
     REMOVED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "REMOVED" || echo "0")
 
     echo ""
-    gum style --border double --border-foreground 32 --padding "1 2" --margin "1 0" \
-        "🎉 Installation Complete!" \
-        "⏱️ ${ELAPSED_FORMATTED} | ✅ ${SUCCESS_COUNT} | ❌ ${FAILED_COUNT} | ⚠️ ${SKIPPED_COUNT} | 🗑️ ${REMOVED_COUNT}"
+    echo "┌─────────────────────────────────────────────────────────────────┐"
+    echo "│                        🎉 Installation Results                  │"
+    echo "├─────────────────────────────────────────────────────────────────┤"
+    echo "│ Server               │ Status      │ Action                     │"
+    echo "├─────────────────────────────────────────────────────────────────┤"
+    
+    echo "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
+        [ -z "$server" ] && continue
+        
+        case "$status" in
+            "SUCCESS") status_icon="✅" ;;
+            "FAILED") status_icon="❌" ;;
+            "SKIPPED") status_icon="⚠️ " ;;
+            "REMOVED") status_icon="🗑️ " ;;
+            *) status_icon="  " ;;
+        esac
+        
+        printf "│ %-20s │ %s %-8s │ %-26s │\n" \
+            "${server}" "${status_icon}" "${status}" "${action}"
+    done
+    
+    echo "├─────────────────────────────────────────────────────────────────┤"
+    printf "│ ⏱️  Time: %s  │  ✅ %s  │  ❌ %s  │  ⚠️  %s  │  🗑️  %s  │\n" \
+        "${ELAPSED_FORMATTED}" "${SUCCESS_COUNT}" "${FAILED_COUNT}" "${SKIPPED_COUNT}" "${REMOVED_COUNT}"
+    echo "└─────────────────────────────────────────────────────────────────┘"
 
     if [ "$FILESYSTEM_ENABLED" = true ]; then
         PATHS_COUNT=$(wc -l < "$FILESYSTEM_PERMISSIONS_FILE" 2>/dev/null || echo "0")
-        gum style --foreground 244 "📂 Filesystem: $PATHS_COUNT paths configured"
+        echo "📂 Filesystem: $PATHS_COUNT paths configured"
     fi
 }
 
@@ -79,7 +99,6 @@ add_mcp_server() {
     shift 1
 
     if check_server_config "$server_name" "$@"; then
-        gum style --foreground 244 "✅ $server_name already configured"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:already configured
 "
         return 0
@@ -118,7 +137,6 @@ EOF
 
         if [ "$should_keep" = false ]; then
             gum spin --spinner dot --title "Removing $server..." -- claude mcp remove "$server" 2>/dev/null
-            gum style --foreground 33 "🗑️ $server removed"
             INSTALL_RESULTS="${INSTALL_RESULTS}${server}:REMOVED:removed
 "
         fi
@@ -126,7 +144,7 @@ EOF
 }
 
 clear
-gum style --border rounded --border-foreground 32 --padding "1 2" --margin "1 0" "🚀 Installing MCP Servers"
+echo "🚀 Installing MCP Servers..."
 
 remove_unlisted_servers
 
@@ -158,7 +176,6 @@ if [ -n "$BRAVE_API_KEY" ]; then
     current_brave_config=$(claude mcp list 2>/dev/null | grep "^brave-search:" | cut -d: -f2- | sed 's/^ *//')
 
     if [ "$current_brave_config" = "$expected_brave_cmd" ]; then
-        gum style --foreground 244 "✅ brave-search already configured"
         INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SUCCESS:already configured
 "
     else
@@ -186,7 +203,6 @@ fi
 }
 
 if check_server_config "git" "@cyanheads/git-mcp-server"; then
-    gum style --foreground 244 "✅ git already configured"
     INSTALL_RESULTS="${INSTALL_RESULTS}git:SUCCESS:already configured
 "
 else
