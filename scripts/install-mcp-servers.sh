@@ -2,31 +2,8 @@
 . "$HOME/dotfiles/globals.sh"
 [ -f "$HOME/.env" ] && . "$HOME/.env"
 
-install_gum() {
-    command -v gum >/dev/null && return 0
-    echo "Installing gum..."
-    if command -v brew >/dev/null; then
-        brew install gum
-    elif command -v apt-get >/dev/null; then
-        sudo mkdir -p /etc/apt/keyrings
-        curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-        sudo apt update && sudo apt install gum
-    elif command -v yum >/dev/null; then
-        echo '[charm]
-name=Charm
-baseurl=https://repo.charm.sh/yum/
-enabled=1
-gpgcheck=1
-gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
-        sudo yum install gum
-    else
-        echo "❌ Cannot install gum automatically. Please install it manually."
-        exit 1
-    fi
-}
 
-install_gum
+"$HOME/dotfiles/scripts/install-gum.sh"
 
 MCP_SERVERS_FILE="$HOME/.mcp_servers"
 FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
