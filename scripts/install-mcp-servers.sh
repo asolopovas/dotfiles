@@ -60,7 +60,7 @@ update_table_row() {
     # Replace the line for this server
     while IFS= read -r line; do
         if echo "$line" | grep -q "| $server_name "; then
-            printf "| %-20s | %-12s |\n" "$server_name" "$status"
+            printf "| %-20s | %-13s |\n" "$server_name" "$status"
         else
             echo "$line"
         fi
