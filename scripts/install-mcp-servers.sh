@@ -24,66 +24,19 @@ playwright:@playwright/mcp"
 filesystem:@modelcontextprotocol/server-filesystem $FILESYSTEM_PATHS"
 
 INSTALL_RESULTS=""
-TABLE_FILE="/tmp/mcp_table_$$"
 
-init_table() {
-    echo "+----------------------+--------------+" > "$TABLE_FILE"
-    echo "| Server               | Status       |" >> "$TABLE_FILE"
-    echo "+----------------------+--------------+" >> "$TABLE_FILE"
-
-    echo "$MCP_SERVERS" | while IFS=: read -r name package; do
-        [ -z "$name" ] && continue
-        printf "| %-20s | %-13s |\n" "$name" "⏳ Wait" >> "$TABLE_FILE"
-    done
-
-    [ -n "$BRAVE_API_KEY" ] && printf "| %-20s | %-12s |\n" "brave-search" "⏳ Wait" >> "$TABLE_FILE"
-    printf "| %-20s | %-13s |\n" "git" "⏳ Wait" >> "$TABLE_FILE"
-
-    echo "+----------------------+--------------+" >> "$TABLE_FILE"
-}
-
-update_table_row() {
-    local server_name="$1"
-    local status="$2"
-    local temp_file="/tmp/mcp_table_temp_$$"
-
-    while IFS= read -r line; do
-        if echo "$line" | grep -q "| $server_name "; then
-            printf "| %-20s | %-13s |\n" "$server_name" "$status"
-        else
-            echo "$line"
-        fi
-    done < "$TABLE_FILE" > "$temp_file"
-
-    mv "$temp_file" "$TABLE_FILE"
-}
-
-show_table() {
-    printf "\r\033[K"
-    printf "\033[s"
-    printf "\033[H"
-    gum style --foreground 32 "Installing MCP Servers..."
-    echo ""
-    cat "$TABLE_FILE"
-    echo ""
-    printf "\033[u"
-}
-
-run_with_table() {
+run_with_spinner() {
     local server_name="$1"
     local action="$2"
     local command="$3"
 
-    update_table_row "$server_name" "🔄 Setup"
-    show_table
-
-    if sh -c "$command" >/dev/null 2>&1; then
-        update_table_row "$server_name" "✅ OK"
+    if gum spin --spinner dot --title "Installing $server_name..." -- sh -c "$command" 2>/dev/null; then
+        gum style --foreground 32 "✅ $server_name installed"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:${action}
 "
         return 0
     else
-        update_table_row "$server_name" "❌ Failed"
+        gum style --foreground 31 "❌ $server_name failed"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:FAILED:${action}
 "
         return 1
@@ -97,32 +50,15 @@ show_summary() {
     ELAPSED=$((END_TIME - START_TIME))
     ELAPSED_FORMATTED=$(printf "%02d:%02d" $((ELAPSED / 60)) $((ELAPSED % 60)))
 
-    SUCCESS_COUNT=0
-    FAILED_COUNT=0
-    SKIPPED_COUNT=0
-    REMOVED_COUNT=0
-
-    echo "$INSTALL_RESULTS" | while IFS=: read -r server status action; do
-        [ -z "$server" ] && continue
-        case $status in
-            SUCCESS) echo "SUCCESS" ;;
-            FAILED) echo "FAILED" ;;
-            REMOVED) echo "REMOVED" ;;
-            SKIPPED) echo "SKIPPED" ;;
-        esac
-    done > /tmp/mcp_status_count
-
-    if [ -f /tmp/mcp_status_count ]; then
-        SUCCESS_COUNT=$(grep -c "SUCCESS" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
-        FAILED_COUNT=$(grep -c "FAILED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
-        REMOVED_COUNT=$(grep -c "REMOVED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
-        SKIPPED_COUNT=$(grep -c "SKIPPED" /tmp/mcp_status_count 2>/dev/null | head -1 || echo "0")
-        rm -f /tmp/mcp_status_count
-    fi
+    SUCCESS_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SUCCESS" || echo "0")
+    FAILED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "FAILED" || echo "0")
+    SKIPPED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "SKIPPED" || echo "0")
+    REMOVED_COUNT=$(echo "$INSTALL_RESULTS" | grep -c "REMOVED" || echo "0")
 
     echo ""
-    gum style --foreground 32 "🎉 Installation Complete!"
-    gum style --foreground 244 "⏱️ $ELAPSED_FORMATTED | ✅ $SUCCESS_COUNT | ❌ $FAILED_COUNT | ⚠️ $SKIPPED_COUNT | 🗑️ $REMOVED_COUNT"
+    gum style --border double --border-foreground 32 --padding "1 2" --margin "1 0" \
+        "🎉 Installation Complete!" \
+        "⏱️ ${ELAPSED_FORMATTED} | ✅ ${SUCCESS_COUNT} | ❌ ${FAILED_COUNT} | ⚠️ ${SKIPPED_COUNT} | 🗑️ ${REMOVED_COUNT}"
 
     if [ "$FILESYSTEM_ENABLED" = true ]; then
         PATHS_COUNT=$(wc -l < "$FILESYSTEM_PERMISSIONS_FILE" 2>/dev/null || echo "0")
@@ -138,43 +74,29 @@ check_server_config() {
     [ "$current_config" = "$expected_command" ]
 }
 
-msg() {
-    case $1 in
-    title) gum style --foreground 32 "Installing MCP Servers..." ;;
-    complete) gum style --foreground 32 "🎉 Setup complete!" ;;
-    restart) gum style --foreground 33 "⚠️ Restart Claude to activate servers" ;;
-    fail) gum style --foreground 31 "❌ $2" ;;
-    warn) gum style --foreground 33 "⚠️  $2" ;;
-    esac
-}
-
 add_mcp_server() {
     local server_name=$1
     shift 1
 
     if check_server_config "$server_name" "$@"; then
-        update_table_row "$server_name" "✅ OK"
-        show_table
+        gum style --foreground 244 "✅ $server_name already configured"
         INSTALL_RESULTS="${INSTALL_RESULTS}${server_name}:SUCCESS:already configured
 "
         return 0
     fi
 
-    run_with_table "$server_name" "setup" \
+    run_with_spinner "$server_name" "setup" \
         "claude mcp remove '$server_name' 2>/dev/null; claude mcp add '$server_name' -- npx -y $*"
-    show_table
 }
 
 remove_unlisted_servers() {
     current_servers_output=$(claude mcp list 2>/dev/null) || return 0
-
     [ -z "$current_servers_output" ] || ! echo "$current_servers_output" | grep -q ":" && return 0
 
     current_servers=$(echo "$current_servers_output" | awk -F: '{if (NF > 1) print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//')
 
     for server in $current_servers; do
         [ -z "$server" ] && continue
-
         should_keep=false
 
         case "$server" in
@@ -195,23 +117,18 @@ EOF
         esac
 
         if [ "$should_keep" = false ]; then
-            claude mcp remove "$server" >/dev/null 2>&1
+            gum spin --spinner dot --title "Removing $server..." -- claude mcp remove "$server" 2>/dev/null
+            gum style --foreground 33 "🗑️ $server removed"
             INSTALL_RESULTS="${INSTALL_RESULTS}${server}:REMOVED:removed
 "
         fi
     done
 }
 
-msg title
+clear
+gum style --border rounded --border-foreground 32 --padding "1 2" --margin "1 0" "🚀 Installing MCP Servers"
 
 remove_unlisted_servers
-
-init_table
-clear
-gum style --foreground 32 "Installing MCP Servers..."
-echo ""
-cat "$TABLE_FILE"
-echo ""
 
 [ -f "$HOME/.env" ] && export $(grep -v '^#' "$HOME/.env" | xargs)
 
@@ -221,13 +138,13 @@ for cmd in node npm claude git; do
 done
 
 if [ -n "$missing_deps" ]; then
-    msg fail "Missing dependencies:$missing_deps"
+    gum style --foreground 31 "❌ Missing dependencies:$missing_deps"
     exit 1
 fi
 
 gh_available=false
 command -v gh >/dev/null 2>&1 && gh_available=true
-[ "$gh_available" = false ] && msg warn "GitHub CLI (gh) not found - git features limited"
+[ "$gh_available" = false ] && gum style --foreground 33 "⚠️ GitHub CLI (gh) not found - git features limited"
 
 while IFS=: read -r name package; do
     [ -z "$name" ] && continue
@@ -241,50 +158,44 @@ if [ -n "$BRAVE_API_KEY" ]; then
     current_brave_config=$(claude mcp list 2>/dev/null | grep "^brave-search:" | cut -d: -f2- | sed 's/^ *//')
 
     if [ "$current_brave_config" = "$expected_brave_cmd" ]; then
-        update_table_row "brave-search" "✅ OK"
-        show_table
+        gum style --foreground 244 "✅ brave-search already configured"
         INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SUCCESS:already configured
 "
     else
-        run_with_table "brave-search" "setup" \
+        run_with_spinner "brave-search" "setup" \
             "claude mcp remove brave-search 2>/dev/null; claude mcp add brave-search -- env BRAVE_API_KEY='$BRAVE_API_KEY' npx -y @modelcontextprotocol/server-brave-search"
-        show_table
     fi
 else
-    update_table_row "brave-search" "⚠️ Skip"
-    show_table
+    gum style --foreground 33 "⚠️ brave-search skipped (no API key)"
     INSTALL_RESULTS="${INSTALL_RESULTS}brave-search:SKIPPED:no API key
 "
 fi
 
 if [ "$gh_available" = true ]; then
-    gh auth status >/dev/null 2>&1 || { msg fail "gh auth login required"; exit 1; }
+    gh auth status >/dev/null 2>&1 || { 
+        gum style --foreground 31 "❌ gh auth login required"
+        exit 1
+    }
 else
-    msg warn "Skipping GitHub auth check (gh not available)"
+    gum style --foreground 33 "⚠️ Skipping GitHub auth check (gh not available)"
 fi
 
 [ -n "$(git config --global user.name)" ] && [ -n "$(git config --global user.email)" ] || {
-    msg fail "git config --global user.name/email required"
+    gum style --foreground 31 "❌ git config --global user.name/email required"
     exit 1
 }
 
 if check_server_config "git" "@cyanheads/git-mcp-server"; then
-    update_table_row "git" "✅ OK"
-    show_table
+    gum style --foreground 244 "✅ git already configured"
     INSTALL_RESULTS="${INSTALL_RESULTS}git:SUCCESS:already configured
 "
 else
-    run_with_table "git" "setup" \
+    run_with_spinner "git" "setup" \
         "npm install -g @cyanheads/git-mcp-server; claude mcp remove git 2>/dev/null; claude mcp add git -- npx -y @cyanheads/git-mcp-server"
-    show_table
 fi
-
-show_table
 
 show_summary
 
 echo ""
-msg complete
-msg restart
-
-rm -f "$TABLE_FILE"
+gum style --foreground 32 "🎉 Setup complete!"
+gum style --foreground 33 "⚠️ Restart Claude to activate servers"

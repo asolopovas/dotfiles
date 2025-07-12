@@ -21,7 +21,8 @@
       "Bash(truncate:*)",
       "Bash(bash:*)",
       "Bash(./install-gum.sh)",
-      "Bash(command -v:*)"
+      "Bash(command -v:*)",
+      "Bash(sh:*)"
     ],
     "deny": []
   }
