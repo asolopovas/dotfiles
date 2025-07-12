@@ -5,6 +5,11 @@
 # Configuration
 FILESYSTEM_PERMISSIONS_FILE="$HOME/.mcp_folder_permissions"
 
+# Create empty permissions file if it doesn't exist
+if [ ! -f "$FILESYSTEM_PERMISSIONS_FILE" ]; then
+    touch "$FILESYSTEM_PERMISSIONS_FILE"
+fi
+
 # Check if filesystem permissions file exists and has content
 if [ -f "$FILESYSTEM_PERMISSIONS_FILE" ] && [ -s "$FILESYSTEM_PERMISSIONS_FILE" ]; then
     FILESYSTEM_PATHS=$(cat "$FILESYSTEM_PERMISSIONS_FILE" | tr '\n' ' ')
