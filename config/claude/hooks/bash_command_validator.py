@@ -18,6 +18,14 @@ _VALIDATION_RULES = [
         r"^find\s+\S+\s+-name\b",
         "Use 'fd' instead of 'find -name' for better performance and cleaner syntax"
     ),
+    (
+        r"^npm\b",
+        "Use 'bun' instead of 'npm' for better performance"
+    ),
+    (
+        r"^npx\b",
+        "Use 'bunx' instead of 'npx' for better performance"
+    ),
 ]
 
 def _validate_command(command: str) -> list[str]:
