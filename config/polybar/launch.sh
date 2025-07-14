@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CONFIG_DIR=$HOME/dotfiles/.config/polybar
+CONFIG_DIR=$HOME/dotfiles/config/polybar
 THEME=minimal
 CONFIG=$CONFIG_DIR/themes/$THEME/config.ini
 
