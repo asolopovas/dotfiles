@@ -1,0 +1,32 @@
+#!/bin/bash
+
+GITPATHS=("$HOME/dotfiles" "$HOME/www/dev")
+
+print_color() {
+    declare -A colors=(['red']='\033[31m' ['green']='\033[0;32m')
+    echo -e "${colors[$1]}$2\033[0m"
+}
+
+[ $# -eq 0 ] && {
+    echo "Usage: $0 [push|pull]"
+    exit 1
+}
+
+POWERSHELL_CMD=$(which powershell.exe 2>/dev/null)
+
+case $1 in
+push | pull)
+    for path in "${GITPATHS[@]}"; do
+        if [ -d $path ]; then
+            print_color green "${1^}ing $path ..."
+            git -C $path ${1}
+        fi
+    done
+
+    [ -n "$POWERSHELL_CMD" ] && $POWERSHELL_CMD -Command "conf $1"
+    ;;
+*)
+    echo "Invalid argument. Please provide 'push' or 'pull'."
+    exit 1
+    ;;
+esac

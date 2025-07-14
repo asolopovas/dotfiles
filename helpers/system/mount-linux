@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]; then
+    echo "Requesting elevated privileges..."
+    sudo "$0" "$@"   # Run the script as root
+    exit $?
+fi
+
+powershell.exe -Command 'wsl --mount \\.\PHYSICALDRIVE2 --bare'
+
+if cryptsetup status cryptdata | grep -qwi "is active"; then
+    read -p "LUKS container is already open. Do you want to unmount it? (yes/no): " choice
+    case "$choice" in
+        y|Y|yes|YES )
+            umount /dev/mapper/cryptdata
+            cryptsetup luksClose cryptdata
+            echo "Unmounted successfully."
+            ;;
+        * )
+            echo "Exiting."
+            exit 1
+            ;;
+    esac
+else
+    cryptsetup luksOpen /dev/sdd3 cryptdata
+    mount -a
+fi

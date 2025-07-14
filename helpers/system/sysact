@@ -1,0 +1,34 @@
+#!/bin/bash
+
+cmds="\
+leave
+suspend
+reboot
+halt
+shutdown
+"
+
+choice="$(echo "$cmds" | cut -d' ' -f 1 | dmenu)"
+
+case $choice in
+leave)
+    $cryptomatorPID = $(pgrep Cryptomator)
+    if pgrep -x "Cryptomator" >/dev/null; then
+        kill -TERM $cryptomatorPID
+    fi
+    fusermount -uz /home/$USER/safestore
+    kill -TERM $(pidof -s xmonad-x86_64-linux)
+    ;;
+suspend)
+      systemctl suspend
+    ;;
+halt)
+      systemctl halt
+    ;;
+reboot)
+    systemctl reboot
+    ;;
+shutdown)
+    systemctl poweroff
+    ;;
+esac

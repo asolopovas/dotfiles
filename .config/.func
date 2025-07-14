@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Build conainer and start it;
+function dcrb() {
+	docker-compose build $1; docker-compose up -d $1;
+}
+
+
+# List contents of the volume
+function dvls() {
+  docker run --rm -i --mount "src=$1,target=/volume" alpine:3.11 ls -la "/volume/$2"
+}
+
+# Run command on the volume
+function dvcmd() {
+  docker run --rm -i --mount "src=$1,target=/volume" alpine:3.11 "/volume"
+}
+ 
+# Edit .local/bin/*script...
+function v() { 
+	vim $(which $1)
+}
+
+# Backup docker volume
+function dvbackup() {
+	container=$1
+	backup_name=$2
+	container_path=$3
+	docker run --rm --volumes-from $container -v $(pwd):/backup alpine:3.11 tar cvf "/backup/$backup_name.tar" $3
+}
+
+# Restore docker volume
+function dvrestore() {
+	docker run --rm --volumes-from $container -v $(pwd):/backup alpine:3.11 sh -c "cd / && tar xvf /backup/$3 --strip 1"
+}
+
+
+hidden() { ls -a "$@" | grep '^\.'; }
+
+_systemctl_unit_state() {
+  typeset -gA _sys_unit_state
+  _sys_unit_state=( $(__systemctl list-unit-files "$PREFIX*" | awk '{print $1, $2}') ) 
+}
+
+

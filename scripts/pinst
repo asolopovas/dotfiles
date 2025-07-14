@@ -1,0 +1,104 @@
+#!/bin/bash
+
+source "$HOME/dotfiles/globals.sh"
+
+ACTION=${1:-"install"}
+VER=${2:-"8.3"}
+
+if [[ "$ACTION" == "list" || "$ACTION" == "update" ]]; then
+    VER=""
+fi
+
+if [[ -n "$VER" ]]; then
+    print_color green "Processing PHP Version: $VER for ${OS^}...\n"
+fi
+
+validate_php_version() {
+    if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: Invalid PHP version format. Expected 'X.Y' (e.g., 8.3)."
+        exit 1
+    fi
+}
+
+phpPackages=(
+    "php$VER"
+    "php$VER-bcmath"
+    "php$VER-bz2"
+    "php$VER-cli"
+    "php$VER-common"
+    "php$VER-curl"
+    "php$VER-fpm"
+    "php$VER-gd"
+    "php$VER-igbinary"
+    "php$VER-imagick"
+    "php$VER-mbstring"
+    "php$VER-mongodb"
+    "php$VER-mysql"
+    "php$VER-opcache"
+    "php$VER-pcov"
+    "php$VER-pgsql"
+    "php$VER-phpdbg"
+    "php$VER-readline"
+    "php$VER-redis"
+    "php$VER-sqlite3"
+    "php$VER-xdebug"
+    "php$VER-xml"
+    "php$VER-yaml"
+    "php$VER-zip"
+)
+
+packages=$(
+    IFS=' '
+    echo "${phpPackages[*]}"
+)
+
+list_installed_php() {
+    print_color yellow "Listing all installed PHP versions and related packages..."
+    dpkg -l | awk '/^[ih]i.*php[0-9]+\.[0-9]+/ {printf "%-30s\t%s\n", $2, substr($0, index($0,$5))}' | sort
+    print_color green "End of installed PHP versions and packages list."
+}
+
+remove_php_packages() {
+    print_color red "Removing PHP Version: $VER..."
+    removePackage $packages
+    print_color green "PHP Version $VER removed successfully."
+}
+
+update_php_packages() {
+    print_color yellow "Updating all installed PHP versions..."
+    sudo apt-get install --only-upgrade --allow-change-held-packages -y $packages
+    print_color green "All PHP versions updated successfully."
+}
+
+case "$ACTION" in
+uninstall)
+    validate_php_version
+    remove_php_packages
+    unhold_packages $packages
+    ;;
+install)
+    validate_php_version
+    print_color yellow "Installing PHP Version: $VER..."
+    unhold_packages $packages
+    installPackages $packages || {
+        echo "Failed to install packages"
+        exit 1
+    }
+    sudo apt-mark hold $packages > /dev/null
+    print_color green "PHP Version $VER installed and held successfully."
+    ;;
+list)
+    list_installed_php
+    ;;
+update)
+    update_php_packages
+    ;;
+*)
+    echo "Error: Unsupported action '$ACTION'. Use 'install', 'uninstall', 'list', or 'update'."
+    exit 1
+    ;;
+esac
+
+if [[ -n "$VER" ]]; then
+    print_color green "Operation completed for PHP Version: $VER."
+fi

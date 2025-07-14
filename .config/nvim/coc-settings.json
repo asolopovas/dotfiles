@@ -1,0 +1,10 @@
+{
+    "emmet.includeLanguages": {
+        "html.twig.js.css": "html",
+        "block.js": "html",
+        "blade": "html",
+        "vue-html": "html",
+        "javascript": "javascriptreact"
+    }
+}
+

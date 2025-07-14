@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# For the named volume, change ownership from within a temporary container
+docker run --rm \
+    -v vscode_server:/home/nvm/.vscode-server \
+    ubuntu \
+    chown -R 1000:1000 /home/nvm/.vscode-server
+
+# Run the main container with volumes mounted
+docker run --rm \
+    -w /home/nvm/nvm \
+    -v "vscode_server:/home/nvm/.vscode-server" \
+    -v "$HOME/dotfiles/helpers/tools/urchin-test:/usr/local/bin/urchin-test" \
+    -v "$1:/home/nvm/nvm" \
+    -h nvm-dev \
+    -it nvm-dev

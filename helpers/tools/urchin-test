@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for v in $(set | awk -F'=' '$1 ~ "^NVM_" { print $1 }'); do unset $v; done && unset v
+
+urchin -f -s bash $1

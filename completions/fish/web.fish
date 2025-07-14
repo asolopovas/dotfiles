@@ -1,0 +1,1 @@
+/home/andrius/www/dev/web.completions.fish

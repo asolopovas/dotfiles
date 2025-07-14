@@ -1,0 +1,13 @@
+.config/nvim/plugged
+.config/nvim/plugged/**
+.config/nvim/autoload/**
+.config/fish/fish_variables
+.config/fish/completions/web.fish
+.config/zsh/.zcompdump
+.config/xmonad/**
+!.config/xmonad/xmonad.hs
+!.config/xmonad/stack.yaml
+!.config/nvim/autoload/.gitkeep
+.aider*
+.php-ini
+.php-version

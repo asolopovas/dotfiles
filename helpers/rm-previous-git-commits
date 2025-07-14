@@ -1,0 +1,22 @@
+#!/bin/bash
+
+function deletePreviousGithubCommits {
+  if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then exit 1; fi
+  originUrl=$(git remote get-url origin)
+  if [ -z "$originUrl" ]; then exit 1; fi
+  rm -rf .git
+  git init
+  git add .
+  git commit -m 'initial commit'
+  git remote add origin $originUrl
+  git branch -M main
+  git push --force -u origin main
+}
+
+read -p "This will delete all previous commits in the current repository. Are you sure you want to proceed? (yes/no) " yn
+
+case $yn in
+  y* ) deletePreviousGithubCommits;;
+  n* ) echo "Exiting..."; exit;;
+  * ) echo "Invalid response."; exit 1;;
+esac

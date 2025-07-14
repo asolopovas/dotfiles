@@ -1,0 +1,5 @@
+#!/bin/bash
+
+read -e -p "Enter commit message (default: save): " commit_message
+commit_message=${commit_message:-"save"}
+git add -A && git commit -m "$commit_message"

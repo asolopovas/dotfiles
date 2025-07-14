@@ -1,0 +1,43 @@
+#!/bin/bash
+
+display_help() {
+    echo "Usage: $0 <device_name> <filesystem_type> <mount_path>"
+    echo "Example: $0 sdb1 ext4 mydrive"
+    exit 1
+}
+
+# Check if no arguments passed or help option provided
+if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    display_help
+fi
+
+# Check for the correct number of arguments
+if [ $# -ne 3 ]; then
+    echo "Error: Incorrect number of arguments."
+    display_help
+fi
+
+device_name="$1"
+filesystem_type="$2"
+mount_path="$3"
+device="$device_name"
+uuid=$(lsblk $device -o UUID --noheadings)
+
+if grep -q "UUID=$uuid" /etc/fstab; then
+    echo "UUID $uuid is already present in /etc/fstab. Exiting."
+    exit 1
+fi
+
+fstab_entry="UUID=$uuid $mount_path $filesystem_type defaults 0 0"
+if [ "$filesystem_type" == "ntfs-3g" ]; then
+    fstab_entry="UUID=$uuid $mount_path $filesystem_type defaults,uid=1000,gid=1000 0 0"
+fi
+echo "$fstab_entry"
+
+read -p "Do you want to add this entry to /etc/fstab? (y/N): " response
+if [[ "$response" =~ ^[Yy]$ ]]; then
+    echo "$fstab_entry" | sudo tee -a /etc/fstab >/dev/null
+    echo "Entry added to /etc/fstab."
+else
+    echo "Operation cancelled by user."
+fi

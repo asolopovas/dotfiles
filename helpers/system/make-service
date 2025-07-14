@@ -1,0 +1,31 @@
+#!/bin/bash
+
+read -p "Enter service name (example: nginx)" service_name
+
+read -p "Enter description (example: Lightweight HTTP server and IMAP/POP3 proxy server
+ )" service_description
+[ -z "$service_target" ] && service_description="No Description"
+
+read -p "Enter Executatable (example: /var/bin/nginx)" service_executable
+
+read -p "Enter Target (default: 'multi-user.target')" service_target
+[ -z "$service_target" ] && service_target="multi-user.target"
+
+    
+[ -z "$service_executable" ] && exit 0 
+
+[ -f /lib/systemd/system/$service_name.service ] && echo "service /lib/systemd/system/$service_name.service exist. Delete before continue."
+
+echo $service_name
+sudo bash -c "cat <<EOT >> /lib/systemd/system/$service_name.service
+[Unit]
+Description=$service_description
+
+[Service]
+Type=simple
+ExecStart=/bin/bash  $service_executable
+
+[Install]
+WantedBy=$service_target
+EOT"
+

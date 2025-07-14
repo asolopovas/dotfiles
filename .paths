@@ -1,0 +1,26 @@
+go/bin
+.local/bin
+.local/bin/helpers
+.local/bin/helpers/apps
+.local/bin/helpers/statusbar
+.local/bin/helpers/system
+.local/bin/helpers/tools
+.local/bin/helpers/web
+.local/share/gem/bin
+.yarn/bin
+.nvm/bin
+.bun/bin
+.cargo/bin
+.config/composer/vendor/bin
+.config/composer/vendor/bin
+.cabal/bin
+.ghcup/bin
+dotfiles/scripts
+/usr/local/go/bin
+/var/opt/google/google-cloud-sdk/bin
+/opt/cpanel/ea-nodejs20/bin
+/usr/sbin
+/opt/bin
+/opt/nvim-linux-x86_64/bin
+/opt/cpanel/ea-nodejs20/bin
+/mnt/c/Program Files/Google/Chrome/Application

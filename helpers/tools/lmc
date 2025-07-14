@@ -1,0 +1,28 @@
+#!/bin/sh
+
+
+[ -z "$2" ] && num="2" || num="$2"
+
+case "$1" in
+	u*)
+      volume=$(pulsemixer --get-volume | awk '{print $1}')
+	    if [ $volume -lt 150 ]; then
+	        pulsemixer --change-volume +"$num" 
+        fi
+	    ;;
+	d*) pulsemixer --change-volume -"$num" ;;
+	m*) pulsemixer --toggle-mute ;;
+	truemute) pulsemixer --mute ;;
+	*) cat << EOF
+lmc: pulsemixer helper commands.
+
+Allowed options:
+  up NUM	Increase volume (2 secs default)
+  down NUM	Decrease volume (2 secs default)
+  mute		Toggle mute
+  truemute	Mute
+
+EOF
+esac
+
+pkill -RTMIN+10 i3blocks
