@@ -82,8 +82,8 @@ install_essentials() {
     rm -rf "$CONFIG_DIR/fish" >/dev/null
     [ -d "$CONFIG_DIR/fish" ] && rm -rf "$CONFIG_DIR/fish"
     [ -d "$CONFIG_DIR/tmux" ] && rm -rf "$CONFIG_DIR/tmux"
-    ln -sf "$DOTFILES_DIR/.config/fish" "$CONFIG_DIR"
-    ln -sf "$DOTFILES_DIR/.config/tmux" "$CONFIG_DIR"
+    ln -sf "$DOTFILES_DIR/config/fish" "$CONFIG_DIR"
+    ln -sf "$DOTFILES_DIR/config/tmux" "$CONFIG_DIR"
 }
 
 install_essentials
