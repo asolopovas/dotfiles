@@ -1,0 +1,5 @@
+#!/bin/sh
+
+make -C ~/src/dwm
+sudo -A make -C ~/src/dwm install
+kill -HUP $(pidof -s dwm)

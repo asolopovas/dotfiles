@@ -1,0 +1,35 @@
+#!/bin/bash
+
+result=$(fd -d 4 -H -t d \
+    --base-directory ~ \
+    --search-path . \
+    --search-path ./www \
+    --search-path ./git \
+    -E .cache \
+    -E .config \
+    -E .local \
+    -E .npm \
+    -E .vscode-server \
+    -E node_modules \
+    -E wp-includes \
+    -E vendor \
+    -E uploads \
+    -E .git | fzf)
+if [ -z $result ]; then
+    printf "something isnt's working as it should..."
+    exit
+fi
+
+result=$(echo $result | cut -c 2-)
+
+if [ $1 == "phpstorm64.exe" ]; then
+    winPath='\\wsl$\Ubuntu'
+    result=$(echo "${winPath}${HOME}${result}" | sed 's/\//\\/g')
+    result=${result::-1}
+    $1 $result >/dev/null 2>&1 &
+    sleep 2
+    exit
+fi
+
+$1 ${HOME}${result}
+exit

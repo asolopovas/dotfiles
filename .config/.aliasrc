@@ -1,0 +1,86 @@
+# Aliases
+alias pw='WP_TESTS_SKIP_INSTALL=1 phpunit-watcher watch'
+alias wn='wp acorn'
+
+# System
+alias xclip='xclip -selection c'
+
+alias upd='sudo apt update -y; sudo apt upgrade -y'
+alias m='mosh --no-init'
+alias mosh='mosh --no-init'
+
+# Cleanup
+# alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
+alias tm='tmux -f $HOME/.config/tmux/tmux.conf'
+alias tx='tmux a -t '
+alias ts='tmux list-sessions'
+
+alias gpg2='gpg2 --homedir "$XDG_DATA_HOME"/gnupg'
+
+# Docker
+alias dk='docker '
+alias dc='docker compose '
+alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
+alias sys='systemctl'
+
+# Github
+alias ga='git commit --amend'
+alias gs='git status '
+alias gb='git branch '
+alias gc='git add -A && git commit -m'
+alias gg='git log'
+alias gd='git diff '
+alias gp='git push'
+alias gpo='git push origin'
+alias gundo='git reset -- HEAD~1'
+alias gpf='git push --force'
+alias gl='git pull'
+alias gk='git checkout '
+alias gsclone='git clone git@github.com:asolopovas/'
+alias ghclone='git clone https://github.com:asolopovas/'
+alias bfg='java -jar ~/.local/bin/bfg.jar '
+alias nah='git reset --hard; git clean -fd'
+alias gt='git tag'
+
+alias fc='fzf-code'
+
+# System
+alias dir-size='du -hd 1  2> /dev/null | sort -h'
+alias art='php artisan'
+alias rs='rsync -azr --info=progress2 '
+alias l='ls --color -lha --group-directories-first'
+alias ll='ls --color -lh --group-directories-first'
+alias ls='ls --color -ha --group-directories-first'
+alias xevkb='xev -event keyboard'
+
+# CD Directories
+alias dv='cd $HOME/www/dev'
+alias dt='cd $HOME/dotfiles'
+alias www='cd $HOME/www'
+alias gos='cd $HOME/go/src'
+alias scr='cd $HOME/dotfiles/scripts'
+alias hlp='cd $HOME/dotfiles/helpers'
+
+alias ..='cd ..'
+alias ..2='cd ../..'
+alias ..3='cd ../../..'
+alias ..4='cd ../../../..'
+alias ..5='cd ../../../../..'
+alias ci='composer install'
+alias cu='composer update'
+alias cdump='composer dumpautoload'
+alias pn='pnpm'
+alias pi='pnpm i '
+alias pu='pnpm update '
+alias pdev='pnpm dev'
+alias pprod='pnpm prod'
+alias pwatch='pnpm watch'
+alias bund='bun i -D '
+alias pg='prompt-gen'
+
+alias pbcopy='xsel --clipboard --input'
+alias pcopy='xsel --clipboard --input'
+alias pbpaste='xsel --clipboard --output'
+alias ppaste='xsel --clipboard --output'
+
+alias fb="fabric"

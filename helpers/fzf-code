@@ -1,0 +1,66 @@
+#!/bin/bash
+
+declare -A STORE_MAP
+INCLUDE=()
+STORE=()
+
+detect_wsl() { [ -n "$WSL_DISTRO_NAME" ]; }
+
+get_windows_username() {
+    wslvar USERNAME
+}
+
+get_vscode_data() {
+    local db_path
+    if detect_wsl; then
+        local username
+        username=$(get_windows_username)
+        db_path=$(wslpath -u "C:/Users/$username/AppData/Roaming/Code/User/globalStorage/state.vscdb")
+    else
+        db_path="$HOME/.config/Code/User/globalStorage/state.vscdb"
+    fi
+
+    if [ ! -f "$db_path" ]; then
+        echo "Error: Visual Studio Code database not found at $db_path" >&2
+        return 1
+    fi
+
+    sqlite3 "$db_path" "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'" 2>/dev/null
+}
+
+JSON_DATA=$(get_vscode_data) || exit 1
+RECENT_FOLDERS=$(echo "$JSON_DATA" | jq -r '.entries[] | .folderUri // .workspace.configPath | select(type == "string" and startswith("file://")) | sub("^file://"; "")')
+
+for folder in $RECENT_FOLDERS; do
+    STORE_MAP["$(basename "$folder")"]="$folder"
+done
+
+while IFS= read -r line; do INCLUDE+=("$line"); done <$HOME/dotfiles/bookmarks.txt
+
+for i in "${INCLUDE[@]}"; do
+    P="$HOME/$i"
+    for dir in "$P"/*; do
+        if [ -d "$dir" ]; then
+            STORE_MAP["$(basename "$dir")"]="$dir"
+        fi
+    done
+done
+
+STORE_MAP["$(basename "$HOME/dotfiles")"]="$HOME/dotfiles"
+
+RESULT_KEY=$(printf "%s\n" "${!STORE_MAP[@]}" | fzf)
+
+# Check if a result was selected
+if [ -z "$RESULT_KEY" ]; then
+  echo "No selection made. Exiting."
+  exit 1
+fi
+
+RESULT=${STORE_MAP["$RESULT_KEY"]}
+
+if detect_wsl; then
+    RESULT=$(echo $RESULT | sed 's|wsl.localhost/Ubuntu||')
+fi
+
+# code "$RESULT" >/dev/null 2>&1
+code "$RESULT"

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+result=$(fd --full-path $HOME -d 4 -t d \
+    -E "node_modules" \
+    -E "vendor" \
+    -E "go" \
+    -E "share" \
+    -E ".git" |
+    fzf)
+
+[ ! -z $result ] && thunar $result
+
+pkill -f fzf-menu

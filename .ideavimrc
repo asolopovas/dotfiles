@@ -1,0 +1,50 @@
+set clipboard           'cb'    "clipboard options
+set gdefault            'gd'    "the :substitute flag g is default on
+set hlsearch            'hls'   "highlight matches with last search pattern
+set ignorecase          'ic'    "ignore case in search patterns
+set incsearch           'is'    "show where search pattern typed so far matches
+set scroll              'scr'   "lines to scroll with CTRL-U and CTRL-D
+set scrolljump          'sj'    "minimum number of lines to scroll
+set scrolloff           'so'    "minimum nr. of lines above and below cursor
+set selection           'sel'   "what type of selection to use
+set showmode            'smd'   "message on status line to show current mode
+set smartcase           'scs'   "no ignore case when pattern has uppercase
+set timeout             'to'    "use timeout for mapped key sequences
+set timeoutlen          'tm'    "time that is waited for a mapped key sequence
+set history=1000        'hi'    "number of command-lines that are remembered
+set undolevels=1000     'ul'    "maximum number of changes that can be undone
+set viminfo             'vi'    "information to remember after restart
+set visualbell          'vb'    "use visual bell instead of beeping
+set wrapscan            'ws'    "searches wrap around the end of the file
+set number              'nu'    "print the line number in front of each line
+set rnu                         "relative numbers
+let mapleader = ","
+set surround
+set NERDTree
+set clipboard+=unnamed
+
+imap jk <Esc><Space>
+nmap <leader>f :action FileChooser<cr>
+nmap <leader>t :action NERDTree<cr>
+nmap <leader>vs :source ~/.ideavimrc<cr>
+nmap <leader>ev :e ~/.ideavimrc<cr>
+nmap <leader>er :e README.md<cr>
+nmap <leader><space> :nohlsearch<cr>
+
+
+"------------------------------------------------------
+" Notes
+"------------------------------------------------------
+" Press zz to center to cursor line
+" Press Ctrl + ] to navigate to the method and Ctrl + ^ to get back
+" Press G to go to end of the file
+" Press gg to go to the top of the file
+" (v - visual mode | c - change | d - del) + (i - inside, a - around) +
+" Press J to join the current and the bottom line
+
+" To mark code section m + char, to access it press ' + char, Capital Char "
+" Global, ` + char return to particular place where mark was done
+" You also can use d'm to delete until mark
+"
+" . repeats your last operation
+"------------------------------------------------------

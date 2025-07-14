@@ -1,0 +1,31 @@
+#!/bin/bash
+
+REPO_URL=""
+USE_HTTPS=false
+
+for arg in "$@"; do
+    if [ "$arg" == "--https" ]; then
+        USE_HTTPS=true
+    elif [ -z "$REPO_URL" ]; then
+        REPO_URL="$arg"
+    else
+        echo "Unrecognized argument: $arg"
+        exit 1
+    fi
+done
+
+if [ -z "$REPO_URL" ]; then
+    echo "No Repo Url provided"
+    exit 1
+elif [ -d "$REPO_URL" ]; then
+    echo "REPO $REPO_URL already exists"
+    exit 1
+else
+    REPO_URL="git@github.com:asolopovas/$REPO_URL.git"
+    if [ "$USE_HTTPS" = true ]; then
+        REPO_URL="https://github.com/asolopovas/$REPO_URL.git"
+    fi
+fi
+
+git clone $REPO_URL
+

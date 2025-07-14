@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/dotfiles/.config/claude/hooks/bash_command_validator.py"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/dotfiles/.config/claude/hooks/gcp_git_hook.py"
+          }
+        ]
+      }
+    ]
+  }
+}

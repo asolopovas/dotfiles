@@ -1,0 +1,28 @@
+#!/bin/bash
+
+eval $(gnome-keyring-daemon --start)
+export GNOME_KEYRING_SOCKET
+export GNOME_KEYRING_PID
+export DOTFILES="$HOME/dotfiles"
+
+env_vars=(
+    env-vars
+    include-paths
+    xmonad-vars
+)
+
+source_script() {
+    local script_name=$1
+    local script_path="$DOTFILES/env/$script_name.sh"
+    source $script_path
+}
+
+[ ! -d $XMONAD_DATA_HOME ] && mkdir $XMONAD_DATA_HOME
+
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
+for env_var in "${env_vars[@]}"; do
+    source_script $env_var
+done
+
+

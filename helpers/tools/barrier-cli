@@ -1,0 +1,238 @@
+#!/bin/bash
+
+# Constants
+SERVICE_BASE_NAME="barrier"
+SERVICE_PATH="$HOME/.config/systemd/user/"
+
+LOG_DIR="$HOME/logs/"
+LOG_PATH="${LOG_DIR}barrier.log"
+SSL_PATH="$HOME/.local/share/barrier/SSL/"
+SSL_CERT="${SSL_PATH}Barrier.pem"
+DEFAULT_HOST="192.168.1.10:24800"
+
+[ ! -d "${SERVICE_PATH}" ] && mkdir -p "${SERVICE_PATH}"
+[ ! -d "${SSL_PATH}" ] && mkdir -p "${SSL_PATH}"
+[ ! -d "${LOG_DIR}" ] && mkdir -p "${LOG_DIR}"
+
+if [ ! -f "${SSL_CERT}" ]; then
+    openssl req -x509 -nodes -days 365 -subj /CN=Barrier -newkey rsa:4096 -keyout "${SSL_CERT}" -out "${SSL_CERT}"
+    echo "SSL certificate generated at ${SSL_CERT}."
+fi
+
+# Create directories if not present
+mkdir -p "${LOG_DIR}"
+mkdir -p "${SSL_PATH}"
+
+function generate_config() {
+    CONFIG_PATH=$1
+
+    # Check if a path was provided
+    if [[ -z "$CONFIG_PATH" ]]; then
+        echo "Error: No path provided."
+        return 1
+    fi
+
+    # Generate the config file
+    cat >"${CONFIG_PATH}" <<EOL
+section: screens
+	main:
+		halfDuplexCapsLock = false
+		halfDuplexNumLock = false
+		halfDuplexScrollLock = false
+		xtestIsXineramaUnaware = false
+		preserveFocus = false
+		switchCorners = none
+		switchCornerSize = 0
+	pop-os:
+		halfDuplexCapsLock = false
+		halfDuplexNumLock = false
+		halfDuplexScrollLock = false
+		xtestIsXineramaUnaware = false
+		preserveFocus = false
+		switchCorners = none
+		switchCornerSize = 0
+end
+
+section: aliases
+end
+
+section: links
+	main:
+		down = pop-os
+	pop-os:
+		up = main
+end
+
+section: options
+	relativeMouseMoves = false
+	screenSaverSync = true
+	win32KeepForeground = false
+	clipboardSharing = true
+	switchCorners = none
+	switchCornerSize = 0
+end
+EOL
+
+    # Check if the file was generated successfully
+    if [[ $? -eq 0 ]]; then
+        echo "Config generated successfully at ${CONFIG_PATH}."
+    else
+        echo "Error generating config at ${CONFIG_PATH}."
+    fi
+}
+
+function install_service() {
+    local mode="$1"
+    local host="$2"
+    local service_name="${SERVICE_BASE_NAME}-${mode}.service"
+    local service_file="${SERVICE_PATH}${service_name}"
+
+    if [ "${mode}" == "server" ]; then
+        CONFIG_DIR="$HOME/.config/barrier"
+        [ ! -d $CONFIG_DIR ] && mkdir -p $CONFIG_DIR
+        CONFIG_PATH="$CONFIG_DIR/barrier-server.conf"
+        if [ ! -f $CONFIG_PATH ]; then
+            generate_config $CONFIG_PATH
+            echo "Barrier server config generated at ${CONFIG_PATH}."
+        fi
+
+        cat >"${service_file}" <<EOL
+[Unit]
+Description=Barrier Server Service
+
+[Service]
+ExecStart=/usr/bin/barriers -f --no-tray --debug INFO --name main --disable-client-cert-checking -c ${CONFIG_PATH} --address :24800
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOL
+
+        echo "Barrier server has been set up."
+
+    elif [ "${mode}" == "client" ]; then
+
+        cat >"${service_file}" <<EOL
+[Unit]
+Description=Barrier Client Service
+
+[Service]
+ExecStart=/usr/bin/barrierc -f --no-tray --debug INFO --name pop-os -l ${LOG_PATH} ${host}
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOL
+
+        echo "Barrier client has been set up."
+
+    else
+        echo "Invalid mode. Please use either 'server' or 'client'."
+        exit 1
+    fi
+
+    systemctl --user daemon-reload
+    systemctl --user enable "${service_name}"
+    systemctl --user start "${service_name}"
+
+    echo "Barrier ${mode} service has been created, enabled, and started."
+}
+
+function manage_service() {
+    local action="$1"
+    local mode="$2"
+    local service_name="${SERVICE_BASE_NAME}-${mode}.service"
+
+    if ! systemctl --user --no-pager show "${service_name}" >/dev/null 2>&1; then
+        echo "Barrier ${mode} service is not installed. Install it first with 'install' command."
+        exit 1
+    fi
+
+    if [ "${action}" == "start" ] || [ "${action}" == "stop" ] || [ "${action}" == "status" ]; then
+        systemctl --user "${action}" "${service_name}"
+    else
+        echo "Invalid action. Use 'start', 'stop', or 'status'."
+        exit 1
+    fi
+}
+
+function remove_service() {
+    local mode="$1"
+    local service_name="${SERVICE_BASE_NAME}-${mode}.service"
+    local service_file="${SERVICE_PATH}${service_name}"
+
+    if [ ! -f "${service_file}" ]; then
+        echo "Barrier ${mode} service does not appear to be installed."
+        return
+    fi
+
+    systemctl --user is-active --quiet "${service_name}" && systemctl --user stop "${service_name}"
+    systemctl --user disable "${service_name}"
+
+    rm -f "${service_file}"
+
+    echo "Barrier ${mode} service removed."
+}
+
+# Main Execution
+command="$1"
+shift
+
+case "${command}" in
+install)
+    mode="$1"
+    shift
+    host="${DEFAULT_HOST}"
+
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+        --host)
+            host="$2"
+            shift
+            ;;
+        *)
+            echo "Unknown parameter passed: $1"
+            exit 1
+            ;;
+        esac
+        shift
+    done
+
+    if [ "${mode}" != "server" ] && [ "${mode}" != "client" ]; then
+        echo "Usage: $0 install [server|client] [--host <hostname:port>]"
+        exit 1
+    fi
+
+    install_service "${mode}" "${host}"
+    ;;
+
+start | stop | status)
+    mode="$1"
+    if [ "${mode}" != "server" ] && [ "${mode}" != "client" ]; then
+        echo "Usage: $0 ${command} [server|client]"
+        exit 1
+    fi
+    manage_service "${command}" "${mode}"
+    ;;
+
+remove | rm)
+    mode="$1"
+    if [ -z "${mode}" ]; then
+        remove_service "server"
+        remove_service "client"
+    elif [ "${mode}" == "server" ] || [ "${mode}" == "client" ]; then
+        remove_service "${mode}"
+    else
+        echo "Usage: $0 remove|rm [server|client]"
+        exit 1
+    fi
+    ;;
+
+*)
+    echo "Usage:"
+    echo "1. $0 install server|client [--host <hostname:port>]"
+    echo "2. $0 start|stop|status server|client"
+    echo "3. $0 remove|rm [server|client]"
+    exit 1
+    ;;
+esac

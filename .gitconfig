@@ -1,0 +1,27 @@
+[user]
+	email = andrius.solopovas@gmail.com
+	name = andrius
+[alias]
+	tag-push = "!f() { git tag \"$1\" && git push origin \"$1\"; }; f"
+	tag-del = "!f() { git tag -d \"$1\" && git push origin :refs/tags/\"$1\"; }; f"
+	tag-replace = "!f() { git tag -d \"$1\" && git push origin :refs/tags/\"$1\" && git tag \"$1\" && git push origin \"$1\"; }; f"
+
+[core]
+	excludesfile = ~/.globignore
+
+[pull]
+	rebase = true
+
+[init]
+	defaultBranch = master
+
+[submodule]
+	recurse = true
+[safe]
+	directory = /home/andrius/www/alisiagreen.test/wp-content/themes/alisiagreen_v4
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential

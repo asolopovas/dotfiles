@@ -1,0 +1,64 @@
+
+!! black dark/light
+*color0:                          #14191f
+*color8:                          #585858
+
+!! red dark/light
+*color1:                          #FF410D
+*color9:                          #FF410D
+
+!! green dark/light
+*color2:                          #A6E22E
+*color10:                         #A6E22E
+
+!! yellow dark/light
+*color3:                          #FFD80D
+*color11:                         #E9AD0C
+!! blue dark/light
+*color4:                          #2643B1
+*color12:                         #267fb5
+
+!! magenta dark/light
+*color5:                          #C061CB
+*color13:                         #823F72
+
+!! cyan dark/light
+*color6:                          #267fb5
+*color14:                         #267fb5
+
+!! white dark/light
+*color7:                          #d8d8d8
+*color15:                         #f8f8f8
+
+*background:                      #14191f
+*foreground:                      #f1f6fb
+*fading:                          8
+*fadeColor:                       black
+*cursorColor:                     #f8f8f0
+*pointerColorBackground:          #4B4D4B
+*pointerColorForeground:          #f8f8f0
+
+Xft.dpi:       85
+Xft.antialias: true
+Xft.hinting:   true
+Xft.rgba:      rgb
+Xft.autohint:  false
+Xft.hintstyle: hintslight
+Xft.lcdfilter: lcddefault
+
+XTerm*background:        #f1f6fb
+XTerm*foreground:        #14191f
+XTerm*pointerColor:      #1ABB9B
+XTerm*faceName:          FiraMono Nerd Font
+XTerm*faceSize:          13
+XTerm*renderFont:	       true
+XTerm*reverseVideo:      on
+XTerm*selectToClipboard: true
+
+UXTerm*faceName:        FiraMono Nerd Font
+UXTerm*faceSize:        13
+UXTerm*renderFont:      true
+
+Xcursor.size:   				13
+Xcursor.theme:					Bibata-Moden-Classic
+Xcursor.theme_core:     true

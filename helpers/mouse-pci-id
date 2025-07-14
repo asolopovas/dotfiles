@@ -1,0 +1,3 @@
+#!/bin/bash
+
+grep `ls /dev/input/by-path/*-mouse | head -1 | cut -d- -f 3` /proc/acpi/wakeup

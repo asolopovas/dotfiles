@@ -1,0 +1,114 @@
+[global]
+    ### Display ###
+
+    monitor = 0
+    follow = none
+    geometry = "400x20-20-50"
+    indicate_hidden = yes
+    shrink = no
+    transparency = 0.8
+    notification_height = 50
+    separator_height = 3
+    padding = 16
+    horizontal_padding = 16
+    frame_width = 1
+    frame_color = "#fff323"
+    separator_color = frame
+    sort = yes
+    idle_threshold = 120
+    font = Monospace 11
+    line_height = 0
+    markup = full
+
+    # The format of the message.  Possible variables are:
+    #   %a  appname
+    #   %s  summary
+    #   %b  body
+    #   %i  iconname (including its path)
+    #   %I  iconname (without its path)
+    #   %p  progress value if set ([  0%] to [100%]) or nothing
+    #   %n  progress value if set without any extra characters
+    #   %%  Literal %
+    # Markup is allowed
+    format = "<b>%s</b>\n%b"
+
+    # Alignment of message text.
+    # Possible values are "left", "center" and "right".
+    alignment = "right"
+
+    # Show age of message if message is older than show_age_threshold
+    # seconds.
+    # Set to -1 to disable.
+    show_age_threshold = 60
+
+    # Split notifications into multiple lines if they don't fit into
+    # geometry.
+    word_wrap = yes
+
+    # When word_wrap is set to no, specify where to make an ellipsis in long lines.
+    # Possible values are "start", "middle" and "end".
+    ellipsize = middle
+
+    # Ignore newlines '\n' in notifications.
+    ignore_newline = no
+
+    # Stack together notifications with the same content
+    stack_duplicates = true
+
+    # Hide the count of stacked notifications with the same content
+    hide_duplicate_count = false
+
+    # Display indicators for URLs (U) and actions (A).
+    show_indicators = yes
+
+    ### Icons ###
+
+    # Align icons left/right/off
+    icon_position = left
+
+    # Scale larger icons down to this size, set to 0 to disable
+    max_icon_size = 32
+
+    # Paths to default icons.
+    icon_path = /usr/share/icons/gnome/16x16/status/:/usr/share/icons/breeze/devices/16/
+    ### History ###
+    sticky_history = yes
+    history_length = 20
+    dmenu = /usr/bin/dmenu -p dunst:
+    browser = /usr/bin/chrome
+    always_run_script = true
+    title = Dunst
+    class = Dunst
+    startup_notification = false
+    verbosity = mesg
+    corner_radius = 0
+    mouse_left_click = close_current
+    mouse_middle_click = do_action
+    mouse_right_click = close_all
+
+[experimental]
+    per_monitor_dpi = false
+
+[shortcuts]
+    close = ctrl+space
+    close_all = ctrl+shift+space
+    history = ctrl+grave
+    context = ctrl+shift+period
+
+[urgency_low]
+    background = "#222222"
+    foreground = "#888888"
+    timeout = 3
+    #icon = /path/to/icon
+
+[urgency_normal]
+    background = "#14191f"
+    foreground = "#ffffff"
+    timeout = 3
+    #icon = /path/to/icon
+
+[urgency_critical]
+    background = "#900000"
+    foreground = "#ffffff"
+    frame_color = "#ff0000"
+    timeout = 0

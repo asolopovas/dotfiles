@@ -1,0 +1,20 @@
+#!/bin/bash
+
+execute_query() {
+    local db_user="$1"
+    local db_pass="$2"
+
+    mysql -u"$db_user" -p"$db_pass" -e "
+        -- Create user if not exists
+        CREATE USER IF NOT EXISTS '$db_user'@'%' IDENTIFIED BY 'your_password';
+
+        -- Set privileges
+        GRANT USAGE, ALL PRIVILEGES ON \`$db_user\`.* TO '$db_user'@'%';
+        GRANT ALL PRIVILEGES ON \`$db_user\_%\`.* TO '$db_user'@'%';
+
+        -- Create database if not exists
+        CREATE DATABASE IF NOT EXISTS \`$db_user\`;
+    "
+}
+
+execute_query $1 $2

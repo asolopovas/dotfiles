@@ -1,0 +1,29 @@
+#!/bin/bash
+
+blockAccess() {
+    directoryToBlock="$1"
+
+    htaccessPath="./.htaccess"
+    if [[ ! -f "$htaccessPath" ]]; then
+        echo "Error: .htaccess file not found in the current directory."
+        exit 1
+    fi
+
+    if [[ -z "$directoryToBlock" ]]; then
+        echo "Error: Directory to block is required."
+        exit 1
+    fi
+
+    directoryToBlock="$(realpath "$directoryToBlock")"
+
+    cat <<EOL >> "$htaccessPath"
+<Directory "$directoryToBlock">
+    Order deny,allow
+    Deny from all
+</Directory>
+EOL
+
+    echo "Access to $directoryToBlock has been blocked."
+}
+
+blockAccess "$@"

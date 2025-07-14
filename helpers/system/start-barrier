@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/usr/bin/barrierc -f --no-tray --debug INFO --name pop-os --enable-crypto --log /var/log/barrier.log 192.168.1.10:24800

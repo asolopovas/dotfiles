@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo guestmount --add /mnt/c/Users/asolo/AppData/Local/Packages/CanonicalGroupLimited.Ubuntu_79rhkp1fndgsc/LocalState/ext4.vhdx --inspector --rw /mnt/wsl -o allow_other

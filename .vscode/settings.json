@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        ".config/nvim/plugged/*": true,
+    }
+
+}
