@@ -14,7 +14,7 @@ set -x GOPATH $HOME/go
 set -x GOBIN $HOME/go/bin
 
 # Aliases
-source $HOME/dotfiles/.config/.aliasrc
+source $HOME/dotfiles/config/.aliasrc
 
 for line in (cat $HOME/dotfiles/.paths)
     add2path $line
