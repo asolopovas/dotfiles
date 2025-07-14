@@ -33,7 +33,7 @@ clone_repo_if_not_exists() {
 
 # Variables
 OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
-XMONAD_SRC="$HOME/dotfiles/.config/xmonad"
+XMONAD_SRC="$HOME/dotfiles/config/xmonad"
 XMONAD_DEST="$HOME/.config/xmonad"
 XMONAD_LOG="$GOPATH/src/github.com/xintron"
 
