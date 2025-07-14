@@ -14,6 +14,37 @@ return {
         local builtin = require('telescope.builtin')
 
         telescope.setup({
+            defaults = {
+                file_ignore_patterns = {
+                    "node_modules/",
+                    "vendor/",
+                    "%.git/",
+                    "wp-admin/",
+                    "wp-includes/",
+                    "wp-content/themes/twentytwentyone/",
+                    "wp-content/themes/twentytwentytwo/",
+                    "wp-content/themes/twentytwentythree/",
+                    "wp-content/themes/twentytwentyfour/",
+                    "wp-content/plugins/akismet/",
+                    "wp-content/plugins/hello%.php",
+                    "storage/framework/",
+                    "storage/logs/",
+                    "storage/app/",
+                    "bootstrap/cache/",
+                    "public/storage/",
+                    "%.min%.js",
+                    "%.min%.css",
+                    "%.lock",
+                    "composer%.lock",
+                    "package%-lock%.json",
+                    "yarn%.lock",
+                    "%.log",
+                    "%.tmp",
+                    "%.cache",
+                    "%.DS_Store",
+                    "Thumbs%.db",
+                },
+            },
             extensions = {
                 live_grep_args = {
                     auto_quoting = true,
