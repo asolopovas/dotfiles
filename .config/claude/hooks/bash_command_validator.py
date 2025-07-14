@@ -16,7 +16,7 @@ _VALIDATION_RULES = [
     ),
     (
         r"^find\s+\S+\s+-name\b",
-        "Use 'rg --files | rg pattern' or 'rg --files -g pattern' instead of 'find -name' for better performance"
+        "Use 'fd' instead of 'find -name' for better performance and cleaner syntax"
     ),
 ]
 
