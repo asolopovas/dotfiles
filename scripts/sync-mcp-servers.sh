@@ -48,7 +48,7 @@ add_server() {
 }
 
 # Get current Claude servers
-claude_servers=$(claude mcp list 2>/dev/null | cut -d: -f1)
+claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
 
 # Build enabled servers list
 enabled_servers=""
@@ -64,7 +64,7 @@ for server in $claude_servers; do
 done
 
 # Refresh server list
-claude_servers=$(claude mcp list 2>/dev/null | cut -d: -f1)
+claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
 
 # Add enabled servers
 if [ "${mcp_servers[brave-search]}" = "true" ]; then
