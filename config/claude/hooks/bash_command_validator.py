@@ -12,11 +12,11 @@ import sys
 _VALIDATION_RULES = [
     (
         r"^grep\b(?!.*\|)",
-        "Use 'rg' (ripgrep) instead of 'grep' for better performance and features"
+        "Use 'rg' (ripgrep) instead of 'grep' for better performance"
     ),
     (
         r"^find\s+\S+\s+-name\b",
-        "Use 'fd' instead of 'find -name' for better performance and cleaner syntax"
+        "Use 'fd' instead of 'find -name' for better performance"
     ),
     (
         r"^npm\b",

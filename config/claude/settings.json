@@ -2,6 +2,7 @@
   "additionalDirectories": [
     "~/www",
     "~/dotfiles",
+    "/mnt/c/Users/asolo/winconf",
     "~/src"
   ],
   "hooks": {
