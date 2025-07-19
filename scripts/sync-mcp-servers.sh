@@ -7,6 +7,7 @@ command -v gum >/dev/null || "$HOME/dotfiles/scripts/install-gum.sh"
 # MCP servers configuration
 declare -A mcp_servers=(
     [brave-search]=${BRAVE_SEARCH:-true}
+    [context7]=${CONTEXT7:-true}
     [fetch]=${FETCH:-true}
     [filesystem]=${FILESYSTEM:-false}
     [git]=${GIT:-true}
@@ -25,6 +26,7 @@ get_server_package() {
     brave-search) echo "@modelcontextprotocol/server-brave-search" ;;
     github) echo "@modelcontextprotocol/server-github" ;;
     sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
+    context7) echo "mcp-context7" ;;
     *) echo "@modelcontextprotocol/server-$1" ;;
     esac
 }
@@ -100,6 +102,10 @@ fi
 
 if [ "${mcp_servers[sequential-thinking]}" = "true" ]; then
     is_server_configured "sequential-thinking" || add_server "sequential-thinking"
+fi
+
+if [ "${mcp_servers[context7]}" = "true" ]; then
+    is_server_configured "context7" || add_server "context7"
 fi
 
 gum style --foreground 32 "✅ MCP sync complete"
