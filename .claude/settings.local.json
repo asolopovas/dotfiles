@@ -66,7 +66,10 @@
       "Bash(bunx mcp-context7:*)",
       "Bash(bun search:*)",
       "Bash(~/dotfiles/scripts/sync-mcp-servers.sh:*)",
-      "Bash(BRAVE_API_KEY=BSA3Dszn46RY7YqY-SYJC5BZPnsxyAW timeout 5 npx -y @modelcontextprotocol/server-brave-search)"
+      "Bash(BRAVE_API_KEY=BSA3Dszn46RY7YqY-SYJC5BZPnsxyAW timeout 5 npx -y @modelcontextprotocol/server-brave-search)",
+      "Bash(bun add:*)",
+      "Bash(bun remove:*)",
+      "Bash(context7-mcp:*)"
     ],
     "deny": []
   }
