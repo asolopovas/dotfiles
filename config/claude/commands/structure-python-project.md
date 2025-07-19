@@ -1,16 +1,15 @@
-# Python Project Structure Guidance (Compact)
+# Restucture Current Project following guidlines where applicable
 
 ## Recommended Structure
 
-* Root folder clearly showing main modules/files.
-* `LICENSE`: specify clearly, see [choosealicense.com](https://choosealicense.com/).
-* `README`: brief description and quick-start instructions.
-* `setup.py`: at root, for packaging and distribution.
-* `requirements.txt`: dev/test dependencies clearly stated.
-* `/docs`: standalone documentation.
-* `/tests`: separate folder, avoid embedding tests in modules.
-* `Makefile`: automate common tasks (tests, init, build).
-* `pdm`: use pdm for package management
+* Root clearly displays main modules/files
+* `LICENSE`: choose explicitly ([choosealicense.com](https://choosealicense.com))
+* `README`: brief description and setup
+* `setup.py`: package/distribution management
+* `requirements.txt`: explicit dev/test dependencies
+* `/docs`: standalone documentation
+* `/tests`: tests separated from production code
+* `Makefile`: automate tasks (`make test`, `make init`)
 
 **Example layout:**
 
@@ -20,46 +19,73 @@ project/
 ├── README.rst
 ├── setup.py
 ├── requirements.txt
-├── src/
-├── sample/
-│   ├── __init__.py (minimal or empty)
-│   ├── core.py
+├── core/
+│   ├── __init__.py (minimal/empty)
+│   ├── main.py
 │   └── helpers.py
+├── cli/
+│   └── entrypoint.py (delegates only, ≤50 lines)
+├── utils/
+│   └── common.py
 ├── docs/
 │   ├── conf.py
 │   └── index.rst
 └── tests/
-    ├── context.py (sys.path adjustments)
-    ├── test_basic.py
-    └── test_advanced.py
+    ├── context.py (for imports)
+    ├── test_core.py
+    └── test_cli.py
 ```
 
 ## Key Practices
 
-* **Explicit Imports**: Prefer `import module`, avoid `from module import *`.
-* **Namespace Clarity**: Avoid ambiguity, no special characters in filenames.
-* **No Circular Dependencies**: Clearly separate module responsibilities.
-* **Minimal Global State**: Pass parameters explicitly.
-* **Short, Meaningful Names**: Avoid reuse or reassignment of variable names.
-* **Immutable vs Mutable**: Use immutables (tuples) for keys/stable data, mutables (lists) for dynamic accumulation.
-* **Context Managers (`with`)**: Manage resources (files, DB connections) cleanly.
-* **Decorators**: Separate concerns like caching or logging.
-* **Pure Functions**: Favor deterministic, side-effect-free functions for easier testing/refactoring.
-* **String Concatenation**: Use list comprehensions and `.join()` for efficiency.
-* **Avoid Nested Django Structures**: Run `django-admin.py startproject projectname .` to flatten paths.
+* **Explicit imports**: prefer `import module`, avoid `from module import *`
+* **Namespace clarity**: short, descriptive filenames; avoid special chars
+* **No circular dependencies**: clearly isolate module responsibilities
+* **Minimal global state**: explicitly pass parameters
+* **Immutable vs Mutable**: immutables for keys, mutables for dynamic data
+* **Context managers (`with`)**: handle resources safely
+* **Decorators**: isolate secondary logic (caching, logging)
+* **Pure functions**: deterministic, no side effects
+* **Efficient string concatenation**: use list comprehensions and `.join()`
+* **Flat Django structures**: `django-admin.py startproject projectname .`
 
-## Anti-Patterns to Avoid
+## Anti-Patterns
 
-* Deeply nested directories (`/src/python` ambiguous subdirs).
-* Spaghetti code (nested loops/conditionals).
-* Ravioli code (over-fragmented logic).
-* Hidden coupling (changes in one place breaking unrelated tests).
+* Deep nested dirs (`src/python`)
+* Spaghetti code (deep nesting)
+* Ravioli code (too fragmented)
+* Hidden coupling (unrelated breakage)
 
 ## Tools and References
 
-* [Kenneth Reitz’s Python Guide (GitHub)](https://github.com/kennethreitz/samplemod)
-* [Python’s Contextlib](https://docs.python.org/3/library/contextlib.html)
-* [PEP 3101](https://www.python.org/dev/peps/pep-3101) (String formatting)
-* Makefiles for automation (`make test`, `make init`).
+* [Kenneth Reitz’s samplemod](https://github.com/kennethreitz/samplemod)
+* [Contextlib](https://docs.python.org/3/library/contextlib.html)
+* [PEP 3101](https://www.python.org/dev/peps/pep-3101) (string formatting)
+* Automation with Makefiles
 
-**Essence**: Keep Python projects simple, explicit, and structured clearly for maintainability and ease of collaboration.
+---
+
+## Clean Project Instructions
+
+* ≤200 lines per file
+* ≤40 lines per function
+* Folder depth ≤3 levels
+* Entry point delegates only (≤50 lines)
+* Organize into modules: `core`, `cli`, `utils`, `tests`
+* Remove duplicated logic/code
+* Eliminate unused/dead code
+* Replace magic values with constants/config
+* Consistent descriptive naming (files/functions/variables)
+* Standardize imports
+* Tests ≤100 lines, each tests one behavior
+* Remove redundant tests
+* Test suite runs ≤30 seconds
+* Find duplicate functions:
+  ```
+  rg "^def " src | cut -d: -f2 | sort | uniq -d
+  ```
+
+* Check file sizes:
+  ```
+  fd -e py src | xargs wc -l | sort -nr
+  ```
