@@ -8,3 +8,11 @@
 - Always Oprimize Code Performance
 - No comments in the code
 - Use CUDA device where possible its 100% available and WSL-compatible
+
+
+## TOOLS
+
+- **always use** bun over npm
+- **always use** bunx over npx
+- **always use** fd over find
+- **always use** rg over grep
