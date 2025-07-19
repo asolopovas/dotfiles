@@ -6,7 +6,7 @@ command -v gum >/dev/null || "$HOME/dotfiles/scripts/install-gum.sh"
 
 # MCP servers configuration
 declare -A mcp_servers=(
-    [brave-search]=${BRAVE_SEARCH:-true}
+    [duckduckgo]=${DUCKDUCKGO:-true}
     [context7]=${CONTEXT7:-true}
     [fetch]=${FETCH:-true}
     [filesystem]=${FILESYSTEM:-false}
@@ -23,10 +23,10 @@ get_server_package() {
     fetch) echo "@kazuph/mcp-fetch" ;;
     git) echo "@cyanheads/git-mcp-server" ;;
     playwright) echo "@playwright/mcp" ;;
-    brave-search) echo "@modelcontextprotocol/server-brave-search" ;;
+    duckduckgo) echo "@oevortex/ddg_search" ;;
     github) echo "@modelcontextprotocol/server-github" ;;
     sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
-    context7) echo "mcp-context7" ;;
+    context7) echo "@upstash/context7-mcp" ;;
     *) echo "@modelcontextprotocol/server-$1" ;;
     esac
 }
@@ -43,9 +43,9 @@ add_server() {
     package=$(get_server_package "$server")
 
     if [ -n "$env_vars" ]; then
-        claude mcp add "$server" -- $env_vars npx -y $package && echo "Added $server"
+        claude mcp add "$server" -- $env_vars npx $package && echo "Added $server"
     else
-        claude mcp add "$server" -- npx -y $package && echo "Added $server"
+        claude mcp add "$server" -- npx $package && echo "Added $server"
     fi
 }
 
@@ -69,13 +69,8 @@ done
 claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
 
 # Add enabled servers
-if [ "${mcp_servers[brave-search]}" = "true" ]; then
-    is_server_configured "brave-search" || {
-        if grep -q "^BRAVE_API_KEY=" ~/.env 2>/dev/null; then
-            BRAVE_API_KEY=$(grep "^BRAVE_API_KEY=" ~/.env | cut -d= -f2)
-            add_server "brave-search" "BRAVE_API_KEY=$BRAVE_API_KEY"
-        fi
-    }
+if [ "${mcp_servers[duckduckgo]}" = "true" ]; then
+    is_server_configured "duckduckgo" || add_server "duckduckgo"
 fi
 
 if [ "${mcp_servers[fetch]}" = "true" ]; then
