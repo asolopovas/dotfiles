@@ -59,3 +59,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 [ -f ~/.rmodel_cuda_setup.sh ] && source ~/.rmodel_cuda_setup.sh  # rmodel CUDA setup
 export PATH="$HOME/.local/bin:$PATH"
 [ -f "$HOME/dotfiles/completions/bash/clean-data" ] && source "$HOME/dotfiles/completions/bash/clean-data"
+
+# wp-seo completion
+source /home/andrius/.bash_completion.d/wp-seo
