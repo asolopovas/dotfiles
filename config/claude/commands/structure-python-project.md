@@ -3,7 +3,6 @@
 ## Recommended Structure
 
 * Root clearly displays main modules/files
-* `LICENSE`: choose explicitly ([choosealicense.com](https://choosealicense.com))
 * `README`: brief description and setup
 * `setup.py`: package/distribution management
 * `requirements.txt`: explicit dev/test dependencies
@@ -15,7 +14,6 @@
 
 ```
 project/
-├── LICENSE
 ├── README.rst
 ├── setup.py
 ├── requirements.txt
