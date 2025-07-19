@@ -1,4 +1,9 @@
 {
+  "additionalDirectories": [
+    "~/www",
+    "~/dotfiles",
+    "~/src"
+  ],
   "hooks": {
     "PreToolUse": [
       {
