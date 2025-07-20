@@ -62,3 +62,4 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # wp-seo completion
 source /home/andrius/.bash_completion.d/wp-seo
+export PATH="/home/andrius/.pixi/bin:$PATH"
