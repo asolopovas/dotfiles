@@ -67,3 +67,5 @@ export LD_LIBRARY_PATH="/home/andrius/.rye/tools/rmodel/lib/python3.12/site-pack
 
 # rmodel CUDA environment
 export LD_LIBRARY_PATH="/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
+
+source '/home/andrius/.bash_completions/rmodel.sh'
