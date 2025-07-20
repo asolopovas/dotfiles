@@ -64,3 +64,6 @@ set --export PATH $BUN_INSTALL/bin $PATH
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
 
+
+# rmodel CUDA environment
+set -x LD_LIBRARY_PATH "/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
