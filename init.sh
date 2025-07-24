@@ -13,6 +13,11 @@ else
     SUDO=""
 fi
 
+if ! command -v unzip &> /dev/null; then
+    sudo apt update
+    sudo apt install -y unzip
+fi
+
 cmd_exist() {
     command -v $1 >/dev/null 2>&1
 }
