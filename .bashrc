@@ -59,17 +59,35 @@ export PATH="$HOME/.local/bin:$PATH"
 [ -f "$HOME/dotfiles/completions/bash/clean-data" ] && source "$HOME/dotfiles/completions/bash/clean-data"
 
 # wp-seo completion
-source /home/andrius/.bash_completion.d/wp-seo
+[ -f "/home/andrius/.bash_completion.d/wp-seo" ] && source /home/andrius/.bash_completion.d/wp-seo
 export PATH="/home/andrius/.pixi/bin:$PATH"
 export LD_LIBRARY_PATH="/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
 
 # rmodel CUDA environment
 export LD_LIBRARY_PATH="/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
 
-source '/home/andrius/.bash_completions/rmodel.sh'
+[ -f '/home/andrius/.bash_completions/rmodel.sh' ] && source '/home/andrius/.bash_completions/rmodel.sh'
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+if [ -d "/home/andrius/miniconda3" ] && [ -f "/home/andrius/miniconda3/bin/conda" ]; then
+    __conda_setup="$('/home/andrius/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
+    else
+        if [ -f "/home/andrius/miniconda3/etc/profile.d/conda.sh" ]; then
+            . "/home/andrius/miniconda3/etc/profile.d/conda.sh"
+        else
+            export PATH="/home/andrius/miniconda3/bin:$PATH"
+        fi
+    fi
+    unset __conda_setup
+fi
+# <<< conda initialize <<<
+

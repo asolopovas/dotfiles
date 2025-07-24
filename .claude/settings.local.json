@@ -71,7 +71,8 @@
       "Bash(bun remove:*)",
       "Bash(context7-mcp:*)",
       "Bash(node:*)",
-      "Bash(pipx uninstall-all:*)"
+      "Bash(pipx uninstall-all:*)",
+      "Bash(source ~/.bashrc)"
     ],
     "deny": []
   }
