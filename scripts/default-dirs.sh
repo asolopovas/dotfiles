@@ -27,27 +27,27 @@ CONFDIRS=(
     ".gitconfig"
     ".Xresources"
     ".gitignore"
-    ".config/.func"
-    ".config/.aliasrc"
+    "config/.func"
+    "config/.aliasrc"
 )
 
 if [ "$SYSTEM" = true ]; then
     CONFDIRS+=(
         ".xsessionrc"
-        ".config/alacritty"
-        ".config/Dharkael"
-        ".config/dunst"
-        ".config/gtk-2.0"
-        ".config/gtk-3.0"
-        ".config/pcmanfm"
-        ".config/polybar"
-        ".config/rofi"
-        ".config/tmux"
-        ".config/inputrc"
-        ".config/mimeapps.list"
-        ".config/picom.conf"
-        ".config/wall.jpg"
-        ".config/Xresources"
+        "config/alacritty"
+        "config/Dharkael"
+        "config/dunst"
+        "config/gtk-2.0"
+        "config/gtk-3.0"
+        "config/pcmanfm"
+        "config/polybar"
+        "config/rofi"
+        "config/tmux"
+        "config/inputrc"
+        "config/mimeapps.list"
+        "config/picom.conf"
+        "config/wall.jpg"
+        "config/Xresources"
         ".profile"
         ".xprofile"
         ".xinitrc"
@@ -69,7 +69,7 @@ fi
 print_color green "Creating Symlinks ..."
 for src in "${CONFDIRS[@]}"; do
     srcPath="$DOTFILES_DIR/$src"
-    destPath="$HOME/$src"
+    destPath="$HOME/.$src"
 
     if [ -d "$destPath" ]; then
         rm -rf $destPath
