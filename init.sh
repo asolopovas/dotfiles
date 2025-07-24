@@ -27,23 +27,23 @@ mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
 # Arguments
 declare -A features=(
     [BUN]=${BUN:-true}
-    [CARGO]=${CARGO:-false}
     [DENO]=${DENO:-true}
     [FDFIND]=${FDFIND:-true}
     [FISH]=${FISH:-true}
-    [FORCE]=${FORCE:-false}
     [FZF]=${FZF:-true}
     [NODE]=${NODE:-true}
     [NODE_VERSION]=${NODE_VERSION:-22.16.0}
-    [NVIM]=${NVIM:-true}
-    [OHMYBASH]=${OHMYBASH:-false}
-    [OHMYFISH]=${OHMYFISH:-true}
-    [OHMYZSH]=${OHMYZSH:-false}
     [UNATTENDED]=${UNATTENDED:-true}
+    [OHMYFISH]=${OHMYFISH:-true}
+    [NVIM]=${NVIM:-true}
+    [CHANGE_SHELL]=${CHANGE_SHELL:-false}
+    [CARGO]=${CARGO:-false}
+    [FORCE]=${FORCE:-false}
+    [OHMYBASH]=${OHMYBASH:-false}
+    [OHMYZSH]=${OHMYZSH:-false}
     [SYSTEM]=${SYSTEM:-false}
     [TYPE]=${TYPE:-https}
     [ZSH]=${ZSH:-false}
-    [CHANGE_SHELL]=${CHANGE_SHELL:-false}
 )
 
 for feature_name in "${!features[@]}"; do
