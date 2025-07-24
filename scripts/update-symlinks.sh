@@ -9,6 +9,7 @@ echo "Updating symlinks from dotfiles/.config to dotfiles/config..."
 ln -sf "$HOME/dotfiles/config/claude/settings.json" "$HOME/.claude/settings.json"
 ln -sf "$HOME/dotfiles/config/claude/commands" "$HOME/.claude/commands"
 
+
 # Config directory symlinks
 ln -sf "$HOME/dotfiles/config/fish" "$HOME/.config/fish"
 ln -sf "$HOME/dotfiles/config/nvim" "$HOME/.config/nvim"
