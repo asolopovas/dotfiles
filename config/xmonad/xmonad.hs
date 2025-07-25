@@ -134,12 +134,12 @@ myKeyb =
     ("<XF86AudioLowerVolume>", spawn "lmc down" ),
     ("<XF86AudioRaiseVolume>", spawn "lmc up"   ),
     ("<XF86AudioMute>",        spawn "lmc mute" ),
-    ("<XF86AudioPlay>",        spawn "playerctl play-pause"                  ),
+    ("<XF86AudioPlay>",        spawn "quodlibet --play-pause"                ),
     ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                            ),
     ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
-    ("<XF86AudioStop>",        spawn "playerctl stop"                        ),
-    ("<XF86AudioPrev>",        spawn "playerctl previous"                    ),
-    ("<XF86AudioNext>",        spawn "playerctl next"                        ),
+    ("<XF86AudioStop>",        spawn "quodlibet --stop"                      ),
+    ("<XF86AudioPrev>",        spawn "quodlibet --previous"                  ),
+    ("<XF86AudioNext>",        spawn "quodlibet --next"                      ),
     ("<Print>",                spawn "flameshot gui"                         ),
     ("<XF86MenuPB>",           spawn "flameshot gui"                         )
 
