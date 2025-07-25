@@ -131,9 +131,9 @@ myKeyb =
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
 
     --Media Keys
-    ("<XF86AudioLowerVolume>", spawn "lmc down; kill -44 $(pidof dwmblocks)" ),
-    ("<XF86AudioRaiseVolume>", spawn "lmc up; kill -44 $(pidof dwmblocks)"   ),
-    ("<XF86AudioMute>",        spawn "lmc mute; kill -44 $(pidof dwmblocks)" ),  -- Bug prevents it from toggling correctly in 12.04.
+    ("<XF86AudioLowerVolume>", spawn "lmc down" ),
+    ("<XF86AudioRaiseVolume>", spawn "lmc up"   ),
+    ("<XF86AudioMute>",        spawn "lmc mute" ),
     ("<XF86AudioPlay>",        spawn "playerctl play-pause"                  ),
     ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                            ),
     ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
