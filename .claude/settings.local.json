@@ -76,7 +76,8 @@
       "Bash(xmonad:*)",
       "Bash(playerctl:*)",
       "Bash(pulsemixer:*)",
-      "Bash(pidof:*)"
+      "Bash(pidof:*)",
+      "Bash(quodlibet:*)"
     ],
     "deny": []
   }
