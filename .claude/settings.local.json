@@ -72,7 +72,11 @@
       "Bash(context7-mcp:*)",
       "Bash(node:*)",
       "Bash(pipx uninstall-all:*)",
-      "Bash(source ~/.bashrc)"
+      "Bash(source ~/.bashrc)",
+      "Bash(xmonad:*)",
+      "Bash(playerctl:*)",
+      "Bash(pulsemixer:*)",
+      "Bash(pidof:*)"
     ],
     "deny": []
   }
