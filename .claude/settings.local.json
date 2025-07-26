@@ -96,7 +96,10 @@
       "Bash(sudo rm:*)",
       "Bash(./scripts/install-fastcompmgr.sh:*)",
       "Bash(xprop:*)",
-      "Bash(killall:*)"
+      "Bash(killall:*)",
+      "Bash(polybar:*)",
+      "Bash(nvidia-smi:*)",
+      "Bash(/home/andrius/dotfiles/config/polybar/launch.sh:*)"
     ],
     "deny": []
   }
