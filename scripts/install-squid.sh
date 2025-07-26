@@ -21,9 +21,18 @@ remove_iptables() {
 }
 
 stop_squid() {
-    sudo pkill -9 squid 2>/dev/null || true
+    # Stop systemd service first
     sudo systemctl stop squid 2>/dev/null || true
     sudo systemctl disable squid 2>/dev/null || true
+    
+    # Kill only actual squid processes, not scripts
+    sudo pkill -f "^$PREFIX/sbin/squid" 2>/dev/null || true
+    sleep 1
+    
+    # Force kill if still running
+    if pgrep -f "^$PREFIX/sbin/squid" >/dev/null 2>&1; then
+        sudo pkill -9 -f "^$PREFIX/sbin/squid" 2>/dev/null || true
+    fi
 }
 
 remove_ca() {
@@ -37,7 +46,8 @@ clean_install() {
     echo "Step 2: Removed iptables rule 1" 
     sudo iptables -t nat -D OUTPUT -p tcp --dport 443 -m owner ! --uid-owner proxy -j REDIRECT --to-port 3130 2>/dev/null || true
     echo "Step 3: Removed iptables rule 2"
-    echo "Step 4: Skipping squid kill (causes termination)"
+    echo "Step 4: Stopping squid"
+    stop_squid
     id proxy >/dev/null 2>&1 && {
         echo "Step 5: Proxy user exists, removing..."
         sudo pkill -9 -u proxy 2>/dev/null || true
@@ -45,15 +55,15 @@ clean_install() {
         sudo groupdel proxy 2>/dev/null || true
         echo "Step 6: Proxy user removed"
     } || echo "Step 5: No proxy user"
-    sudo rm -rf "$PREFIX" "$CACHE_DIR" /etc/systemd/system/squid.service 2>/dev/null || true
-    echo "Step 7: Files removed"
-    sudo rm -f /usr/local/share/ca-certificates/squid-ca.crt 2>/dev/null || true
+    echo "Step 7: Removing system configuration (preserving binary)"
+    sudo rm -rf "$PREFIX/etc" "$PREFIX/var" "$CACHE_DIR" /etc/systemd/system/squid.service 2>/dev/null || true
     echo "Step 8: CA removed"
+    sudo rm -f /usr/local/share/ca-certificates/squid-ca.crt 2>/dev/null || true
     sudo update-ca-certificates >/dev/null 2>&1 || true
-    echo "Step 9: CA updated"
+    echo "Step 9: Daemon reloaded"
     sudo systemctl daemon-reload >/dev/null 2>&1 || true
-    echo "Step 10: Daemon reloaded"
-    echo "✔ Cleanup complete - proceeding with installation..."
+    echo "Step 10: Cleanup complete"
+    echo "✔ System configuration reset - keeping built binary"
 }
 
 disable_proxy() {
@@ -77,7 +87,7 @@ install_deps() {
     sudo apt-get update -y >/dev/null
     sudo apt-get install -y build-essential autoconf automake libtool libtool-bin \
         libltdl-dev openssl libssl-dev pkg-config wget libnss3-tools libcppunit-dev \
-        ldap-utils samba-common-bin >/dev/null
+        ldap-utils samba-common-bin winbind >/dev/null
     id proxy >/dev/null 2>&1 || sudo useradd -r -s /bin/false proxy
 }
 
@@ -447,12 +457,22 @@ main() {
         --disable) disable_proxy; exit 0 ;;
     esac
     
-    check_squid && {
-        log "Squid $VER already installed"
-    } || {
+    # Check if squid binary exists, if not build it
+    if [ ! -x "$PREFIX/sbin/squid" ]; then
+        log "Squid binary not found, building..."
         install_deps
         build_squid
-    }
+    else
+        current_ver=$("$PREFIX/sbin/squid" -v | grep -o 'Version [0-9.]*' | cut -d' ' -f2)
+        if [ "$current_ver" = "$VER" ]; then
+            log "Squid $VER binary already built"
+            install_deps  # Still need proxy user and deps for configuration
+        else
+            log "Squid version mismatch ($current_ver != $VER), rebuilding..."
+            install_deps
+            build_squid
+        fi
+    fi
     
     ssl="$PREFIX/etc/ssl_cert"
     create_ca
