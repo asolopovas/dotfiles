@@ -241,7 +241,7 @@ myLayout =   desktopLayoutModifiers
   where
     myDefaultLayout = tiled
 
-myKeys conf@ XConfig {XMonad.modMask = modm} = M.fromList $
+myKeys conf@XConfig {XMonad.modMask = modm} = M.fromList $
     -- mod-[1..9], Switch to workspace N
     -- mod-shift-[1..9], Move client to workspace N
     [((m .|. modm, k), windows $ onCurrentScreen f i)
