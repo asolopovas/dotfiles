@@ -82,7 +82,18 @@
       "Bash(alacritty:*)",
       "Bash(apt policy:*)",
       "Bash(cargo install:*)",
-      "Bash(rustup:*)"
+      "Bash(rustup:*)",
+      "Bash(picom:*)",
+      "Bash(systemctl:*)",
+      "Bash(sudo apt remove:*)",
+      "Bash(sudo apt autoremove:*)",
+      "Bash(git clone:*)",
+      "Bash(sudo apt:*)",
+      "Bash(sudo apt install:*)",
+      "Bash(make:*)",
+      "Bash(sudo make:*)",
+      "Bash(fastcompmgr:*)",
+      "Bash(sudo rm:*)"
     ],
     "deny": []
   }
