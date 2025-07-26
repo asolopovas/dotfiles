@@ -2,7 +2,7 @@
 gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
 # Start compositor (fastcompmgr preferred, fallback to picom)
 if command -v fastcompmgr &> /dev/null; then
-    nohup fastcompmgr -r 7 -o 0.75 -l -7 -t -7 -i 0.9 -c -C > /dev/null 2>&1 &
+    nohup fastcompmgr -r 7 -l -7 -t -7 -i 0.9 -c -C > /dev/null 2>&1 &
 fi
 .config/polybar/launch.sh > /tmp/polybar.log 2>&1 &
 nohup cryptomator > /tmp/cryptomator.log 2>&1 &
