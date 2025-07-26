@@ -1,0 +1,112 @@
+[colors.bright]
+black = "#555555"
+blue = "#4565AD"
+cyan = "#8BE9FD"
+green = "#50FA7B"
+magenta = "#FF79C6"
+red = "#FF5555"
+white = "#FFFFFF"
+yellow = "#FFF361"
+
+[colors.cursor]
+cursor = "#FFFFFF"
+text = "CellBackground"
+
+[colors.normal]
+black = "#000000"
+blue = "#0049A3"
+cyan = "#6272A4"
+green = "#269685"
+magenta = "#6272A4"
+red = "#FF5555"
+white = "#AEC2E0"
+yellow = "#FFB86C"
+
+[colors.primary]
+background = "#14191F"
+foreground = "#F8F8F2"
+
+[colors.selection]
+background = "#44475A"
+foreground = "#F8F8F2"
+
+[colors.vi_mode_cursor]
+cursor = "CellForeground"
+text = "CellBackground"
+
+[cursor]
+style = "Beam"
+
+[env]
+TERM = "xterm-256color"
+
+[font]
+size = 12.0
+
+[font.normal]
+family = "FiraMono Nerd Font"
+style = "Regular"
+
+[[keyboard.bindings]]
+action = "Paste"
+key = "V"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Copy"
+key = "C"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "PasteSelection"
+key = "Insert"
+mods = "Shift"
+
+[[keyboard.bindings]]
+action = "ResetFontSize"
+key = "Key0"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "IncreaseFontSize"
+key = "Equals"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "DecreaseFontSize"
+key = "Minus"
+mods = "Control"
+
+
+[[mouse.bindings]]
+action = "PasteSelection"
+mouse = "Middle"
+
+[[mouse.bindings]]
+action = "Paste"
+mouse = "Right"
+
+[scrolling]
+history = 10000
+
+[selection]
+save_to_clipboard = true
+
+[window]
+dynamic_padding = true
+opacity = 0.95
+title = "Alacritty"
+
+[window.class]
+general = "Alacritty"
+instance = "Alacritty"
+
+[window.dimensions]
+columns = 120
+lines = 30
+
+[window.padding]
+x = 10
+y = 10
+
+[keyboard]
