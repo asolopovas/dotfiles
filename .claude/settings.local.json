@@ -99,7 +99,18 @@
       "Bash(killall:*)",
       "Bash(polybar:*)",
       "Bash(nvidia-smi:*)",
-      "Bash(/home/andrius/dotfiles/config/polybar/launch.sh:*)"
+      "Bash(/home/andrius/dotfiles/config/polybar/launch.sh:*)",
+      "Bash(redis-server:*)",
+      "Bash(redis-cli:*)",
+      "Bash(sudo systemctl stop:*)",
+      "Bash(true)",
+      "Bash(sudo systemctl disable:*)",
+      "Bash(sudo userdel:*)",
+      "Bash(SKIP_TESTS=1 bash /home/andrius/dotfiles/scripts/install-redis.sh)",
+      "Bash(sudo systemctl:*)",
+      "Bash(sudo sed:*)",
+      "Bash(sudo journalctl:*)",
+      "Bash(sudo cat:*)"
     ],
     "deny": []
   }
