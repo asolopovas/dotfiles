@@ -93,7 +93,10 @@
       "Bash(make:*)",
       "Bash(sudo make:*)",
       "Bash(fastcompmgr:*)",
-      "Bash(sudo rm:*)"
+      "Bash(sudo rm:*)",
+      "Bash(./scripts/install-fastcompmgr.sh:*)",
+      "Bash(xprop:*)",
+      "Bash(killall:*)"
     ],
     "deny": []
   }
