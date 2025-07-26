@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-# Check if running as root, if so exit with error
-[ "$(id -u)" = "0" ] && {
+# Check if running as root without sudo user context
+[ "$(id -u)" = "0" ] && [ -z "${SUDO_USER:-}" ] && {
     echo "Error: Do not run this script as root. It will request sudo when needed."
     exit 1
 }
@@ -28,18 +28,32 @@ stop_squid() {
 
 remove_ca() {
     sudo rm -f /usr/local/share/ca-certificates/squid-ca.crt
-    sudo update-ca-certificates --fresh >/dev/null
+    sudo update-ca-certificates --fresh >/dev/null || true
 }
 
 clean_install() {
-    log "Cleaning complete Squid installation..."
-    remove_iptables
-    stop_squid
-    sudo rm -rf "$PREFIX" "$CACHE_DIR" /etc/systemd/system/squid.service
-    sudo systemctl daemon-reload 2>/dev/null || true
-    remove_ca
-    sudo userdel proxy 2>/dev/null || true
-    log "✔ Complete cleanup finished"
+    echo "Step 1: Starting cleanup"
+    sudo iptables -t nat -D OUTPUT -p tcp --dport 80 -m owner ! --uid-owner proxy -j REDIRECT --to-port 3129 2>/dev/null || true
+    echo "Step 2: Removed iptables rule 1" 
+    sudo iptables -t nat -D OUTPUT -p tcp --dport 443 -m owner ! --uid-owner proxy -j REDIRECT --to-port 3130 2>/dev/null || true
+    echo "Step 3: Removed iptables rule 2"
+    echo "Step 4: Skipping squid kill (causes termination)"
+    id proxy >/dev/null 2>&1 && {
+        echo "Step 5: Proxy user exists, removing..."
+        sudo pkill -9 -u proxy 2>/dev/null || true
+        sudo userdel -rf proxy 2>/dev/null || true
+        sudo groupdel proxy 2>/dev/null || true
+        echo "Step 6: Proxy user removed"
+    } || echo "Step 5: No proxy user"
+    sudo rm -rf "$PREFIX" "$CACHE_DIR" /etc/systemd/system/squid.service 2>/dev/null || true
+    echo "Step 7: Files removed"
+    sudo rm -f /usr/local/share/ca-certificates/squid-ca.crt 2>/dev/null || true
+    echo "Step 8: CA removed"
+    sudo update-ca-certificates >/dev/null 2>&1 || true
+    echo "Step 9: CA updated"
+    sudo systemctl daemon-reload >/dev/null 2>&1 || true
+    echo "Step 10: Daemon reloaded"
+    echo "✔ Cleanup complete - proceeding with installation..."
 }
 
 disable_proxy() {
@@ -251,11 +265,8 @@ EOF
 }
 
 test_internet_connectivity() {
-    # Test basic internet connectivity with multiple fallback sites
     for site in "https://google.com" "https://github.com" "https://httpbin.org/get"; do
-        if timeout 10 curl -s --connect-timeout 5 "$site" >/dev/null 2>&1; then
-            return 0
-        fi
+        curl -s --connect-timeout 5 --max-time 10 "$site" >/dev/null 2>&1 && return 0
     done
     return 1
 }
@@ -263,8 +274,7 @@ test_internet_connectivity() {
 test_proxy_functionality() {
     log "Testing proxy functionality..."
     
-    # Test 1: Proxy connectivity with CA certificate
-    if ! timeout 10 curl -s --connect-timeout 5 --proxy http://localhost:3128 --cacert "$ssl/ca.crt" \
+    if ! curl -s --connect-timeout 5 --max-time 10 --proxy http://localhost:3128 --cacert "$ssl/ca.crt" \
         "https://httpbin.org/get" >/dev/null 2>&1; then
         error "❌ Proxy connectivity failed - CA certificate or SSL bumping issue"
         return 1
@@ -276,9 +286,8 @@ test_proxy_functionality() {
         return 1
     fi
     
-    # Test 3: Basic cache test
     test_url="https://httpbin.org/json"
-    if timeout 10 curl -s --proxy http://localhost:3128 --cacert "$ssl/ca.crt" \
+    if curl -s --max-time 10 --proxy http://localhost:3128 --cacert "$ssl/ca.crt" \
         -H "Cache-Control: no-cache" "$test_url" >/dev/null 2>&1; then
         log "✔ Cache and SSL bumping functional"
     else
@@ -299,7 +308,7 @@ measure_download_speed() {
     rm -f "$output_file"
     
     start_time=$(date +%s.%N)
-    if timeout 30 curl -s -o "$output_file" "$url" 2>/dev/null; then
+    if curl -s --max-time 30 -o "$output_file" "$url" 2>/dev/null; then
         end_time=$(date +%s.%N)
         duration=$(echo "$end_time $start_time" | awk '{print $1 - $2}')
         size=$(stat -c%s "$output_file" 2>/dev/null || echo "0")
@@ -433,7 +442,7 @@ test_final_connectivity() {
 
 main() {
     case "${1:-}" in
-        --clean) clean_install; exit 0 ;;
+        --clean) clean_install ;;
         --disable) disable_proxy; exit 0 ;;
     esac
     
