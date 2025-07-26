@@ -80,3 +80,6 @@ else
     end
 end
 # <<< conda initialize <<<
+
+# opencode
+fish_add_path /home/andrius/.opencode/bin
