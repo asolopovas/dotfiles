@@ -24,7 +24,7 @@ yellow = "#FFB86C"
 
 [colors.primary]
 background = "#14191F"
-foreground = "#F8F8F2"
+foreground = "#FFFFFF"
 
 [colors.selection]
 background = "#44475A"
@@ -94,7 +94,7 @@ save_to_clipboard = true
 
 [window]
 dynamic_padding = true
-opacity = 0.95
+opacity = 0.85
 title = "Alacritty"
 
 [window.class]
