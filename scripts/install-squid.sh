@@ -76,7 +76,7 @@ install_deps() {
     log "Installing dependencies..."
     sudo apt-get update -y >/dev/null
     sudo apt-get install -y build-essential autoconf automake libtool libtool-bin \
-        libltdl-dev openssl libssl-dev pkg-config wget libnss3-tools >/dev/null
+        libltdl-dev openssl libssl-dev pkg-config wget libnss3-tools libcppunit-dev >/dev/null
     id proxy >/dev/null 2>&1 || sudo useradd -r -s /bin/false proxy
 }
 
