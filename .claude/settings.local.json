@@ -77,7 +77,12 @@
       "Bash(playerctl:*)",
       "Bash(pulsemixer:*)",
       "Bash(pidof:*)",
-      "Bash(quodlibet:*)"
+      "Bash(quodlibet:*)",
+      "WebFetch(domain:alacritty.org)",
+      "Bash(alacritty:*)",
+      "Bash(apt policy:*)",
+      "Bash(cargo install:*)",
+      "Bash(rustup:*)"
     ],
     "deny": []
   }
