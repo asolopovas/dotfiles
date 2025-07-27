@@ -44,13 +44,6 @@ cleanup() {
 remove_tool_proxy_configs() {
     log "Removing all proxy configurations from development tools..."
     
-    # Git proxy configuration
-    if run_as_user git config --global --get http.proxy >/dev/null 2>&1; then
-        run_as_user git config --global --unset http.proxy 2>/dev/null || true
-        run_as_user git config --global --unset https.proxy 2>/dev/null || true
-        run_as_user git config --global --unset http.sslverify 2>/dev/null || true
-        log "Git proxy configuration removed"
-    fi
     
     # NPM proxy configuration
     if run_as_user bash -c 'command -v npm' >/dev/null 2>&1; then
@@ -92,34 +85,6 @@ remove_tool_proxy_configs() {
     run_as_user rm -f "$USER_HOME/.curlrc" 2>/dev/null || true
     log "Curl proxy configuration removed"
     
-    # Docker client proxy configuration
-    if [ -f "$USER_HOME/.docker/config.json" ]; then
-        # Backup and remove proxies section
-        run_as_user cp "$USER_HOME/.docker/config.json" "$USER_HOME/.docker/config.json.bak" 2>/dev/null || true
-        # Use jq if available, otherwise manual removal
-        if command -v jq >/dev/null 2>&1; then
-            run_as_user jq 'del(.proxies)' "$USER_HOME/.docker/config.json" > "$USER_HOME/.docker/config.json.tmp" 2>/dev/null || true
-            run_as_user mv "$USER_HOME/.docker/config.json.tmp" "$USER_HOME/.docker/config.json" 2>/dev/null || true
-        else
-            # Fallback: remove entire file if it only contains proxy config
-            if grep -q '"proxies"' "$USER_HOME/.docker/config.json" 2>/dev/null; then
-                run_as_user rm -f "$USER_HOME/.docker/config.json" 2>/dev/null || true
-                log "Docker client config removed (contained only proxy settings)"
-            fi
-        fi
-        log "Docker client proxy configuration removed"
-    fi
-    
-    # Docker daemon proxy configuration
-    if [ -f /etc/systemd/system/docker.service.d/http-proxy.conf ]; then
-        rm -f /etc/systemd/system/docker.service.d/http-proxy.conf
-        # Remove directory if empty
-        rmdir /etc/systemd/system/docker.service.d 2>/dev/null || true
-        if command -v docker >/dev/null 2>&1; then
-            systemctl daemon-reload
-            log "Docker daemon proxy configuration removed"
-        fi
-    fi
     
     # Cargo proxy configuration
     run_as_user rm -f "$USER_HOME/.cargo/config.toml" 2>/dev/null || true
@@ -281,18 +246,9 @@ create_certs() {
     cp "$SSL_DIR/ca.pem" /usr/local/share/ca-certificates/squid-ca.crt
     update-ca-certificates >/dev/null 2>&1
     
-    # Install CA certificate for Docker registry
-    mkdir -p /etc/docker/certs.d/registry-1.docker.io/
-    cp "$SSL_DIR/ca.pem" /etc/docker/certs.d/registry-1.docker.io/ca.crt
-    
-    # Also copy to system SSL directory for Docker daemon
+    # Also copy to system SSL directory
     cp "$SSL_DIR/ca.crt" /etc/ssl/certs/squid-ca.crt
     c_rehash /etc/ssl/certs/ >/dev/null 2>&1 || true
-    
-    # Restart Docker to load new certificates if Docker is running
-    if systemctl is-active docker >/dev/null 2>&1; then
-        systemctl restart docker >/dev/null 2>&1 || true
-    fi
 }
 
 apply_config_substitutions() {
@@ -531,11 +487,6 @@ configure_tool_proxy() {
     local tool="$1" proxy_url="$2" no_proxy="$3"
     
     case "$tool" in
-        "git")
-            run_as_user git config --global http.proxy "$proxy_url"
-            run_as_user git config --global https.proxy "$proxy_url"
-            run_as_user git config --global http.sslverify false
-            ;;
         "npm")
             run_as_user npm config set proxy "$proxy_url"
             run_as_user npm config set https-proxy "$proxy_url"
@@ -565,22 +516,6 @@ no_proxy = $no_proxy"
             create_config_file "curl" "$USER_HOME/.curlrc" "proxy = \"$proxy_url\"
 noproxy = \"$no_proxy\""
             ;;
-        "docker")
-            if [ -d "$USER_HOME/.docker" ] || run_as_user mkdir -p "$USER_HOME/.docker" 2>/dev/null; then
-                create_config_file "Docker client" "$USER_HOME/.docker/config.json" "{
-  \"proxies\": {
-    \"default\": {
-      \"httpProxy\": \"$proxy_url\",
-      \"httpsProxy\": \"$proxy_url\",
-      \"noProxy\": \"$no_proxy\"
-    }
-  }
-}"
-            else
-                log "Docker client config directory could not be created"
-                return 1
-            fi
-            ;;
         "cargo")
             create_config_file "Cargo" "$USER_HOME/.cargo/config.toml" "
 [http]
@@ -601,7 +536,6 @@ configure_dev_tools() {
     local proxy_url="http://localhost:$PROXY_PORT"
     local no_proxy="localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 
-    configure_tool_proxy "git" "$proxy_url" "$no_proxy"
     configure_tool_proxy "pip" "$proxy_url" "$no_proxy"
     configure_tool_proxy "wget" "$proxy_url" "$no_proxy"
     configure_tool_proxy "curl" "$proxy_url" "$no_proxy"
@@ -615,20 +549,6 @@ configure_dev_tools() {
         configure_tool_proxy "yarn" "$proxy_url" "$no_proxy" || true
     fi
     
-    if command -v docker > /dev/null 2>&1; then
-        configure_tool_proxy "docker" "$proxy_url" "$no_proxy" || true
-        # Docker daemon configuration
-        if [ -w /etc/systemd/system/docker.service.d ] || mkdir -p /etc/systemd/system/docker.service.d 2>/dev/null; then
-            cat > /etc/systemd/system/docker.service.d/http-proxy.conf << EOF
-[Service]
-Environment="HTTP_PROXY=$proxy_url"
-Environment="HTTPS_PROXY=$proxy_url"
-Environment="NO_PROXY=$no_proxy"
-EOF
-            systemctl daemon-reload > /dev/null 2>&1
-            log "Docker daemon proxy configured"
-        fi
-    fi
     
     if command -v cargo > /dev/null 2>&1; then
         configure_tool_proxy "cargo" "$proxy_url" "$no_proxy"
@@ -714,16 +634,6 @@ test() {
         fi
     fi
 
-    # Test docker
-    if command -v docker > /dev/null 2>&1; then
-        local docker_path=$(command -v docker)
-        echo "• docker: $docker_path"
-        if [ -f "$USER_HOME/.docker/config.json" ] && grep -q "$PROXY_PORT" "$USER_HOME/.docker/config.json" 2>/dev/null; then
-            echo "  ✓ configured"
-        else
-            echo "  ⚠ not configured"
-        fi
-    fi
 
     echo ""
     if [ $failed -eq 0 ]; then

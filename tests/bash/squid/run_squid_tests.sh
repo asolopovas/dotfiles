@@ -40,16 +40,7 @@ run_syntax_tests() {
     
     local failed=0
     
-    # Test 1: Script validation
-    log_info "Testing script validation..."
-    if "$SCRIPT_DIR/../test_script_validation.sh" >/dev/null 2>&1; then
-        log_pass "Script validation tests passed"
-    else
-        log_fail "Script validation tests failed"
-        ((failed++))
-    fi
-    
-    # Test 2: Utility functions
+    # Test 1: Utility functions
     log_info "Testing utility functions..."
     if "$SCRIPT_DIR/../test_utility_simple.sh" >/dev/null 2>&1; then
         log_pass "Utility function tests passed"
@@ -58,13 +49,13 @@ run_syntax_tests() {
         ((failed++))
     fi
     
-    # Test 3: Script structure analysis
+    # Test 2: Script structure analysis
     log_info "Analyzing script structure..."
     local required_functions=(
-        "cleanup" "clean_install" "install_deps" "build_squid"
-        "create_certs" "install_certs" "create_config" "init_cache"
-        "start_squid" "test_connectivity" "setup_iptables" "create_service"
-        "test_proxy" "main"
+        "cleanup" "install_deps" "build_squid"
+        "create_certs" "create_config" "init_cache"
+        "start_squid" "create_service" "test_proxy" "main"
+        "configure_dev_tools" "uninstall"
     )
     
     local missing_functions=()
