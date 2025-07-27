@@ -7,6 +7,7 @@ help:
 	@echo ""
 	@echo "Testing:"
 	@echo "  test-bash           Run all bash script tests"
+	@echo "  test-bash-verbose   Run E2E tests with detailed output"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests         Clean up test artifacts"
@@ -19,6 +20,11 @@ test-bash: install-test-deps
 	@echo "Running bash script tests..."
 	@chmod +x ./tests/bash/squid/run_squid_tests.sh
 	@./tests/bash/squid/run_squid_tests.sh
+
+test-bash-verbose: install-test-deps
+	@echo "Running verbose E2E Squid tests..."
+	@chmod +x ./tests/bash/squid/test_squid_verbose.sh
+	@./tests/bash/squid/test_squid_verbose.sh
 
 # Maintenance targets
 clean-tests:
