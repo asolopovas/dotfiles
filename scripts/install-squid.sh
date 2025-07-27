@@ -275,8 +275,11 @@ create_certs() {
     rm -rf "$tmp"
 
     # Install CA certificate system-wide
+    # Remove any old certificates first to avoid duplicates
+    rm -f /usr/local/share/ca-certificates/ca.crt
+    rm -rf /usr/local/share/ca-certificates/docker
     cp "$SSL_DIR/ca.pem" /usr/local/share/ca-certificates/squid-ca.crt
-    update-ca-certificates >/dev/null
+    update-ca-certificates >/dev/null 2>&1
     
     # Install CA certificate for Docker registry
     mkdir -p /etc/docker/certs.d/registry-1.docker.io/
