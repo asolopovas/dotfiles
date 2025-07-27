@@ -1,0 +1,18 @@
+[Unit]
+Description=Squid Web Proxy Server
+After=network.target
+
+[Service]
+Type=forking
+PIDFile={{PREFIX}}/var/run/squid.pid
+ExecStart={{PREFIX}}/sbin/squid
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop={{PREFIX}}/sbin/squid -k shutdown
+TimeoutStop=30s
+Restart=on-failure
+RestartSec={{RESTART_DELAY}}
+User=proxy
+Group=proxy
+
+[Install]
+WantedBy=multi-user.target

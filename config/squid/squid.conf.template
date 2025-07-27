@@ -1,0 +1,43 @@
+acl intermediate_fetching transaction_initiator certificate-fetching
+http_access allow intermediate_fetching
+
+acl localnet src 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8
+acl SSL_ports port {{STD_HTTPS_PORT}}
+acl Safe_ports port {{STD_HTTP_PORT}} 21 {{STD_HTTPS_PORT}} 70 210 1025-65535 280 488 591 777
+acl CONNECT method CONNECT
+
+acl step1 at_step SslBump1
+acl step2 at_step SslBump2
+acl step3 at_step SslBump3
+
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+http_access allow localhost manager
+http_access deny manager
+http_access allow localnet
+http_access allow localhost
+http_access deny all
+
+http_port {{PROXY_PORT}} tcpkeepalive={{TCP_KEEPALIVE}} ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size={{SSL_CERT_CACHE_SIZE}} tls-cert={{SSL_DIR}}/squid-self-signed.crt tls-key={{SSL_DIR}}/squid-self-signed.key cipher=HIGH:MEDIUM:!LOW:!RC4:!SEED:!IDEA:!3DES:!MD5:!EXP:!PSK:!DSS options=NO_TLSv1,NO_SSLv3 tls-dh={{SSL_DIR}}/squid-self-signed_dhparam.pem
+http_port {{HTTP_INTERCEPT_PORT}} intercept
+https_port {{HTTPS_INTERCEPT_PORT}} intercept ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size={{SSL_CERT_CACHE_SIZE}} tls-cert={{SSL_DIR}}/ca.crt tls-key={{SSL_DIR}}/ca.key
+
+sslcrtd_program {{PREFIX}}/libexec/security_file_certgen -s {{PREFIX}}/var/logs/ssl_db -M {{SQUID_SSL_DB_SIZE}}
+sslcrtd_children {{SSLCRTD_CHILDREN}}
+
+ssl_bump server-first all
+ssl_bump stare all
+sslproxy_cert_error deny all
+
+maximum_object_size {{CACHE_MAX_OBJECT_SIZE}}
+cache_mem {{CACHE_MEM_SIZE}}
+cache_dir ufs {{CACHE_DIR}} {{CACHE_DIR_SIZE}} {{CACHE_L1_DIRS}} {{CACHE_L2_DIRS}}
+cache_replacement_policy heap LFUDA
+cache_swap_low {{CACHE_SWAP_LOW}}
+cache_swap_high {{CACHE_SWAP_HIGH}}
+
+refresh_pattern -i \.(jar|zip|whl|gz|bz2|tar|tgz|deb|rpm|exe|msi|dmg|iso)$ {{CACHE_REFRESH_LARGE_SECONDS}} {{CACHE_PERCENTAGE}}% {{CACHE_REFRESH_LARGE_SECONDS}}
+refresh_pattern -i conda.anaconda.org/.* {{CACHE_REFRESH_CONDA_SECONDS}} {{CACHE_PERCENTAGE}}% {{CACHE_REFRESH_CONDA_SECONDS}}
+refresh_pattern -i \.(jpg|jpeg|png|gif|ico|webp|svg|mp4|mp3|avi|mov|mkv|pdf)$ {{CACHE_REFRESH_MEDIA_SECONDS}} {{CACHE_PERCENTAGE}}% {{CACHE_REFRESH_MEDIA_SECONDS}}
+refresh_pattern -i github.com/.*/releases/.* {{CACHE_REFRESH_GITHUB_SECONDS}} {{CACHE_PERCENTAGE}}% {{CACHE_REFRESH_GITHUB_SECONDS}}
+refresh_pattern . 0 {{CACHE_PERCENTAGE}}% {{CACHE_REFRESH_DEFAULT_SECONDS}}
