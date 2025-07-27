@@ -11,7 +11,13 @@ install_git_cache() {
     run_as_user mkdir -p "/home/$SUDO_USER/.local/bin"
     run_as_user wget -q "https://github.com/seeraven/gitcache/releases/download/v1.0.28/gitcache_v1.0.28_Ubuntu22.04_x86_64" -O "/home/$SUDO_USER/.local/bin/gitcache"
     run_as_user chmod +x "/home/$SUDO_USER/.local/bin/gitcache"
+    
+    # Set cache directory via environment variable
     run_as_user bash -c "echo 'export GITCACHE_DIR=\"$CACHE_DIR\"' >> /home/$SUDO_USER/.bashrc"
+    
+    # Initialize gitcache with proper cache directory
+    run_as_user env GITCACHE_DIR="$CACHE_DIR" "/home/$SUDO_USER/.local/bin/gitcache" --help >/dev/null 2>&1 || true
+    
     log "Gitcache installed"
 }
 
