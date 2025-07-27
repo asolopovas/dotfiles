@@ -170,7 +170,7 @@ create_certs() {
     
     # Convert formats
     openssl x509 -in "$tmp/ca.crt" -outform PEM -out "$tmp/ca.pem" 2>/dev/null
-    openssl dhparam -outform PEM -out "$tmp/squid-self-signed_dhparam.pem" 2048 2>/dev/null
+    openssl dhparam -outform PEM -out "$tmp/dhparam.pem" 2048 2>/dev/null
     
     # Install
     mkdir -p "$SSL_DIR"
