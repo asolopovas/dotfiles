@@ -170,42 +170,44 @@ create_certs() {
     update-ca-certificates >/dev/null
 }
 
+apply_config_substitutions() {
+    local file="$1"
+    # Process all template variables in a single pass
+    sed -i \
+        -e "s|{{PREFIX}}|$PREFIX|g" \
+        -e "s|{{PROXY_PORT}}|$PROXY_PORT|g" \
+        -e "s|{{CACHE_DIR}}|$CACHE_DIR|g" \
+        -e "s|{{SSL_DIR}}|$SSL_DIR|g" \
+        -e "s|{{STD_HTTP_PORT}}|80|g" \
+        -e "s|{{STD_HTTPS_PORT}}|443|g" \
+        -e "s|{{HTTP_INTERCEPT_PORT}}|3129|g" \
+        -e "s|{{HTTPS_INTERCEPT_PORT}}|3130|g" \
+        -e "s|{{TCP_KEEPALIVE}}|60,30,3|g" \
+        -e "s|{{SSL_CERT_CACHE_SIZE}}|20MB|g" \
+        -e "s|{{SSLCRTD_CHILDREN}}|5|g" \
+        -e "s|{{SQUID_SSL_DB_SIZE}}|20MB|g" \
+        -e "s|{{CACHE_MAX_OBJECT_SIZE}}|50 GB|g" \
+        -e "s|{{CACHE_MEM_SIZE}}|8192 MB|g" \
+        -e "s|{{CACHE_DIR_SIZE}}|100000|g" \
+        -e "s|{{CACHE_L1_DIRS}}|16|g" \
+        -e "s|{{CACHE_L2_DIRS}}|256|g" \
+        -e "s|{{CACHE_SWAP_LOW}}|90|g" \
+        -e "s|{{CACHE_SWAP_HIGH}}|95|g" \
+        -e "s|{{CACHE_PERCENTAGE}}|20|g" \
+        -e "s|{{CACHE_REFRESH_LARGE_SECONDS}}|259200|g" \
+        -e "s|{{CACHE_REFRESH_CONDA_SECONDS}}|129600|g" \
+        -e "s|{{CACHE_REFRESH_MEDIA_SECONDS}}|86400|g" \
+        -e "s|{{CACHE_REFRESH_GITHUB_SECONDS}}|86400|g" \
+        -e "s|{{CACHE_REFRESH_DEFAULT_SECONDS}}|259200|g" \
+        -e "s|{{RESTART_DELAY}}|5s|g" \
+        "$file"
+}
+
 create_config() {
     log "Creating configuration..."
-
-    # Copy and process mime config
     cp "$CONFIG_DIR/mime.conf.template" "$PREFIX/etc/mime.conf"
-
-    # Copy and process squid config
     cp "$CONFIG_DIR/squid.conf.template" "$PREFIX/etc/squid.conf"
-
-    # Replace placeholders in squid.conf
-    sed -i "s|{{PREFIX}}|$PREFIX|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{PROXY_PORT}}|$PROXY_PORT|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_DIR}}|$CACHE_DIR|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{SSL_DIR}}|$SSL_DIR|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{STD_HTTP_PORT}}|80|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{STD_HTTPS_PORT}}|443|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{HTTP_INTERCEPT_PORT}}|3129|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{HTTPS_INTERCEPT_PORT}}|3130|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{TCP_KEEPALIVE}}|60,30,3|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{SSL_CERT_CACHE_SIZE}}|20MB|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{SSLCRTD_CHILDREN}}|5|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{SQUID_SSL_DB_SIZE}}|20MB|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_MAX_OBJECT_SIZE}}|50 GB|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_MEM_SIZE}}|8192 MB|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_DIR_SIZE}}|100000|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_L1_DIRS}}|16|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_L2_DIRS}}|256|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_SWAP_LOW}}|90|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_SWAP_HIGH}}|95|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_PERCENTAGE}}|20|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_REFRESH_LARGE_SECONDS}}|259200|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_REFRESH_CONDA_SECONDS}}|129600|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_REFRESH_MEDIA_SECONDS}}|86400|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_REFRESH_GITHUB_SECONDS}}|86400|g" "$PREFIX/etc/squid.conf"
-    sed -i "s|{{CACHE_REFRESH_DEFAULT_SECONDS}}|259200|g" "$PREFIX/etc/squid.conf"
-
+    apply_config_substitutions "$PREFIX/etc/squid.conf"
     chown proxy:proxy "$PREFIX/etc/mime.conf" "$PREFIX/etc/squid.conf"
 }
 
@@ -242,69 +244,66 @@ init_cache() {
     fi
 }
 
-setup_global_proxy() {
-    log "Setting up global proxy environment..."
-
-    # Remove any system-wide proxy environment file to avoid issues when squid is down
-    rm -f /etc/environment.d/99-proxy.conf
-
-    # Create shell profile for legacy support with fallback
-    cat > /etc/profile.d/proxy.sh << EOF
+create_proxy_env_content() {
+    local shell_type="$1"
+    local proxy_url="http://localhost:$PROXY_PORT"
+    local no_proxy="localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    
+    case "$shell_type" in
+        "bash")
+            cat << EOF
 # Proxy settings with fallback - only set if squid is running
 if command -v nc >/dev/null 2>&1 && nc -z localhost $PROXY_PORT 2>/dev/null; then
-    export HTTP_PROXY=http://localhost:$PROXY_PORT
-    export HTTPS_PROXY=http://localhost:$PROXY_PORT
-    export http_proxy=http://localhost:$PROXY_PORT
-    export https_proxy=http://localhost:$PROXY_PORT
+    export HTTP_PROXY=$proxy_url
+    export HTTPS_PROXY=$proxy_url
+    export http_proxy=$proxy_url
+    export https_proxy=$proxy_url
 fi
-export NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-export no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+export NO_PROXY=$no_proxy
+export no_proxy=$no_proxy
 EOF
-    chmod +x /etc/profile.d/proxy.sh
-
-    # Create Fish shell configuration with fallback
-    mkdir -p /etc/fish/conf.d
-    cat > /etc/fish/conf.d/proxy.fish << EOF
+            ;;
+        "fish")
+            cat << EOF
 # Proxy settings with fallback - only set if squid is running
 if command -s nc >/dev/null 2>&1; and nc -z localhost $PROXY_PORT 2>/dev/null
-    set -gx HTTP_PROXY http://localhost:$PROXY_PORT
-    set -gx HTTPS_PROXY http://localhost:$PROXY_PORT
-    set -gx http_proxy http://localhost:$PROXY_PORT
-    set -gx https_proxy http://localhost:$PROXY_PORT
+    set -gx HTTP_PROXY $proxy_url
+    set -gx HTTPS_PROXY $proxy_url
+    set -gx http_proxy $proxy_url
+    set -gx https_proxy $proxy_url
 end
-set -gx NO_PROXY localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-set -gx no_proxy localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+set -gx NO_PROXY $no_proxy
+set -gx no_proxy $no_proxy
 EOF
+            ;;
+    esac
+}
 
-    # Update user's .profile if it exists with fallback logic
+setup_global_proxy() {
+    log "Setting up global proxy environment..."
+    rm -f /etc/environment.d/99-proxy.conf
+
+    create_proxy_env_content "bash" > /etc/profile.d/proxy.sh
+    chmod +x /etc/profile.d/proxy.sh
+
+    mkdir -p /etc/fish/conf.d
+    create_proxy_env_content "fish" > /etc/fish/conf.d/proxy.fish
+
     if [ -f "$USER_HOME/.profile" ] && ! grep -q "HTTP_PROXY.*$PROXY_PORT" "$USER_HOME/.profile"; then
-        run_as_user tee -a "$USER_HOME/.profile" > /dev/null << EOF
-
-# Proxy settings with fallback (added by squid installer)
-# Only set proxy if squid is running, otherwise apps work without proxy
-if nc -z localhost $PROXY_PORT 2>/dev/null; then
-    export HTTP_PROXY=http://localhost:$PROXY_PORT
-    export HTTPS_PROXY=http://localhost:$PROXY_PORT
-    export http_proxy=http://localhost:$PROXY_PORT
-    export https_proxy=http://localhost:$PROXY_PORT
-fi
-export NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-export no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-EOF
+        {
+            echo ""
+            echo "# Proxy settings with fallback (added by squid installer)"
+            echo "# Only set proxy if squid is running, otherwise apps work without proxy"
+            create_proxy_env_content "bash"
+        } | run_as_user tee -a "$USER_HOME/.profile" > /dev/null
         log "Updated user's .profile with fallback proxy settings"
     fi
 }
 
 create_service() {
     log "Creating systemd service..."
-
-    # Copy and process service file
     cp "$CONFIG_DIR/squid.service.template" /etc/systemd/system/squid.service
-
-    # Replace placeholders
-    sed -i "s|{{PREFIX}}|$PREFIX|g" /etc/systemd/system/squid.service
-    sed -i "s|{{RESTART_DELAY}}|5s|g" /etc/systemd/system/squid.service
-
+    apply_config_substitutions /etc/systemd/system/squid.service
     systemctl daemon-reload
     systemctl enable squid.service
 }
@@ -405,78 +404,93 @@ test_proxy() {
     log "All development tools will now use caching proxy"
 }
 
+create_config_file() {
+    local tool="$1" config_path="$2" content="$3"
+    run_as_user mkdir -p "$(dirname "$config_path")" 
+    [ -f "$config_path" ] && run_as_user cp "$config_path" "$config_path.bak" 2>/dev/null || true
+    run_as_user tee "$config_path" > /dev/null << EOF
+$content
+EOF
+    log "$tool proxy configured"
+}
+
+configure_tool_proxy() {
+    local tool="$1" proxy_url="$2" no_proxy="$3"
+    
+    case "$tool" in
+        "git")
+            run_as_user git config --global http.proxy "$proxy_url"
+            run_as_user git config --global https.proxy "$proxy_url"
+            run_as_user git config --global http.sslverify false
+            ;;
+        "npm")
+            run_as_user npm config set proxy "$proxy_url"
+            run_as_user npm config set https-proxy "$proxy_url"
+            ;;
+        "yarn")
+            if run_as_user yarn config set proxy "$proxy_url" 2>/dev/null && run_as_user yarn config set https-proxy "$proxy_url" 2>/dev/null; then
+                return 0
+            else
+                log "yarn found but configuration failed (may need installation)"
+                return 1
+            fi
+            ;;
+        "pip")
+            create_config_file "pip" "$USER_HOME/.config/pip/pip.conf" "[global]
+proxy = $proxy_url
+trusted-host = pypi.org pypi.python.org files.pythonhosted.org"
+            run_as_user mkdir -p "$USER_HOME/.pip"
+            run_as_user cp "$USER_HOME/.config/pip/pip.conf" "$USER_HOME/.pip/pip.conf"
+            ;;
+        "wget")
+            create_config_file "wget" "$USER_HOME/.wgetrc" "use_proxy = yes
+http_proxy = $proxy_url
+https_proxy = $proxy_url
+no_proxy = $no_proxy"
+            ;;
+        "curl")
+            create_config_file "curl" "$USER_HOME/.curlrc" "proxy = \"$proxy_url\"
+noproxy = \"$no_proxy\""
+            ;;
+        "docker")
+            create_config_file "Docker client" "$USER_HOME/.docker/config.json" "{
+  \"proxies\": {
+    \"default\": {
+      \"httpProxy\": \"$proxy_url\",
+      \"httpsProxy\": \"$proxy_url\",
+      \"noProxy\": \"$no_proxy\"
+    }
+  }
+}"
+            ;;
+        "cargo")
+            create_config_file "Cargo" "$USER_HOME/.cargo/config.toml" "
+[http]
+proxy = \"$proxy_url\"
+
+[https]
+proxy = \"$proxy_url\""
+            ;;
+    esac
+    log "$tool proxy configured"
+}
+
 configure_dev_tools() {
     log "Configuring development tools to use proxy..."
     local proxy_url="http://localhost:$PROXY_PORT"
     local no_proxy="localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 
-    # Configure Git
-    run_as_user git config --global http.proxy "$proxy_url"
-    run_as_user git config --global https.proxy "$proxy_url"
-    run_as_user git config --global http.sslverify false
-    log "Git proxy configured"
+    configure_tool_proxy "git" "$proxy_url" "$no_proxy"
+    configure_tool_proxy "pip" "$proxy_url" "$no_proxy"
+    configure_tool_proxy "wget" "$proxy_url" "$no_proxy"
+    configure_tool_proxy "curl" "$proxy_url" "$no_proxy"
 
-    # Configure pip/Python
-    run_as_user mkdir -p "$USER_HOME/.config/pip"
-    run_as_user tee "$USER_HOME/.config/pip/pip.conf" > /dev/null << EOF
-[global]
-proxy = $proxy_url
-trusted-host = pypi.org pypi.python.org files.pythonhosted.org
-EOF
-    # Legacy location
-    run_as_user mkdir -p "$USER_HOME/.pip"
-    run_as_user cp "$USER_HOME/.config/pip/pip.conf" "$USER_HOME/.pip/pip.conf"
-    log "pip proxy configured"
-
-    # Configure npm/yarn
-    if run_as_user bash -c 'command -v npm' &> /dev/null; then
-        run_as_user npm config set proxy "$proxy_url"
-        run_as_user npm config set https-proxy "$proxy_url"
-        log "npm proxy configured"
-    fi
-
-    if run_as_user bash -c 'command -v yarn' &> /dev/null; then
-        if run_as_user yarn config set proxy "$proxy_url" 2>/dev/null && run_as_user yarn config set https-proxy "$proxy_url" 2>/dev/null; then
-            log "yarn proxy configured"
-        else
-            log "yarn found but configuration failed (may need installation)"
-        fi
-    fi
-
-    # Configure wget
-    run_as_user tee "$USER_HOME/.wgetrc" > /dev/null << EOF
-use_proxy = yes
-http_proxy = $proxy_url
-https_proxy = $proxy_url
-no_proxy = $no_proxy
-EOF
-    log "wget proxy configured"
-
-    # Configure curl
-    run_as_user tee "$USER_HOME/.curlrc" > /dev/null << EOF
-proxy = "$proxy_url"
-noproxy = "$no_proxy"
-EOF
-    log "curl proxy configured"
-
-    # Configure Docker
-    if command -v docker &> /dev/null; then
-        run_as_user mkdir -p "$USER_HOME/.docker"
-        [ -f "$USER_HOME/.docker/config.json" ] && run_as_user cp "$USER_HOME/.docker/config.json" "$USER_HOME/.docker/config.json.bak"
-        run_as_user tee "$USER_HOME/.docker/config.json" > /dev/null << EOF
-{
-  "proxies": {
-    "default": {
-      "httpProxy": "$proxy_url",
-      "httpsProxy": "$proxy_url",
-      "noProxy": "$no_proxy"
-    }
-  }
-}
-EOF
-        log "Docker client proxy configured"
-
-        # Docker daemon
+    # Configure tools that may not be installed
+    run_as_user bash -c 'command -v npm' &> /dev/null && configure_tool_proxy "npm" "$proxy_url" "$no_proxy"
+    run_as_user bash -c 'command -v yarn' &> /dev/null && configure_tool_proxy "yarn" "$proxy_url" "$no_proxy"
+    command -v docker &> /dev/null && {
+        configure_tool_proxy "docker" "$proxy_url" "$no_proxy"
+        # Docker daemon configuration
         if [ -w /etc/systemd/system/docker.service.d ] || true; then
             mkdir -p /etc/systemd/system/docker.service.d
             tee /etc/systemd/system/docker.service.d/http-proxy.conf > /dev/null << EOF
@@ -488,22 +502,8 @@ EOF
             systemctl daemon-reload
             log "Docker daemon proxy configured"
         fi
-    fi
-
-    # Configure Cargo/Rust
-    if command -v cargo &> /dev/null; then
-        run_as_user mkdir -p "$USER_HOME/.cargo"
-        [ -f "$USER_HOME/.cargo/config.toml" ] && run_as_user cp "$USER_HOME/.cargo/config.toml" "$USER_HOME/.cargo/config.toml.bak"
-        run_as_user tee -a "$USER_HOME/.cargo/config.toml" > /dev/null << EOF
-
-[http]
-proxy = "$proxy_url"
-
-[https]
-proxy = "$proxy_url"
-EOF
-        log "Cargo proxy configured"
-    fi
+    }
+    command -v cargo &> /dev/null && configure_tool_proxy "cargo" "$proxy_url" "$no_proxy"
 
     # Configure apt with fallback script
     if command -v apt &> /dev/null; then
@@ -512,8 +512,6 @@ EOF
 Acquire::http::ProxyAutoDetect "/usr/local/bin/apt-proxy-detect";
 Acquire::https::ProxyAutoDetect "/usr/local/bin/apt-proxy-detect";
 EOF
-
-        # Create proxy detection script for apt
         cat > /usr/local/bin/apt-proxy-detect << 'EOF'
 #!/bin/bash
 # Check if squid is running, return proxy URL or empty
@@ -531,7 +529,7 @@ EOF
 }
 
 
-test_dev_tools() {
+test() {
     log "Testing development tools with proxy..."
     echo ""
     local test_url="http://httpbin.org/get"
@@ -625,7 +623,7 @@ main() {
             exit 0
             ;;
         --test)
-            test_dev_tools
+            test
             exit 0
             ;;
         --help)
