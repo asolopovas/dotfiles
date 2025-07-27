@@ -20,14 +20,8 @@
 [safe]
 	directory = /home/andrius/www/alisiagreen.test/wp-content/themes/alisiagreen_v4
 [credential "https://github.com"]
-	helper = 
+	helper =
 	helper = !/usr/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/usr/bin/gh auth git-credential
-[http]
-	proxy = http://localhost:3128
-	sslCAInfo = /usr/local/squid/etc/ssl_cert/ca.pem
-	sslVerify = false
-[https]
-	proxy = http://localhost:3128
