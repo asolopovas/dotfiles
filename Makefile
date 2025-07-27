@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash clean-tests install-test-deps test-squid squid-uninstall
+.PHONY: help test-bash clean-tests install-test-deps install-squid test-squid squid-uninstall
 
 # Default target
 help:
@@ -11,7 +11,8 @@ help:
 	@echo "  test-squid          Install and test complete Squid proxy setup"
 	@echo ""
 	@echo "Squid Proxy:"
-	@echo "  test-squid          Install and test Squid with global proxy environment"
+	@echo "  install-squid       Install Squid proxy (never rebuilds if already built)"
+	@echo "  test-squid          Test complete Squid proxy setup and dev environment caching"
 	@echo "  squid-uninstall     Completely remove Squid and all traces from system"
 	@echo ""
 	@echo "Maintenance:"
@@ -48,7 +49,9 @@ install-test-deps:
 	@if ! command -v gum >/dev/null 2>&1; then \
 		echo "Installing gum for better output formatting..."; \
 		if command -v apt-get >/dev/null 2>&1; then \
-			sudo apt-get update -qq && sudo apt-get install -y gum; \
+			env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+			sudo -E env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+			apt-get update -qq && sudo apt-get install -y gum; \
 		elif command -v brew >/dev/null 2>&1; then \
 			brew install gum; \
 		else \
@@ -59,19 +62,113 @@ install-test-deps:
 	@echo "Dependencies ready"
 
 # Squid Proxy targets
-test-squid:
-	@echo "Installing and testing Squid proxy setup..."
-	@sudo ./scripts/install-squid.sh
+install-squid:
+	@echo "Installing Squid proxy (never rebuilds if already built)..."
+	@# Check if squid is already installed and working
+	@if [ -x /usr/local/squid/sbin/squid ] && systemctl is-active squid >/dev/null 2>&1 && \
+	   netstat -tlnp 2>/dev/null | grep -q ":3128.*LISTEN" && \
+	   timeout 5 curl -s --proxy http://localhost:3128 --connect-timeout 2 http://httpbin.org/get >/dev/null 2>&1; then \
+		echo "✓ Squid is already installed and working - skipping installation"; \
+	else \
+		echo "Installing/updating Squid..."; \
+		env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+			sudo -E env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+			./scripts/install-squid.sh; \
+		echo "✓ Squid proxy installation complete"; \
+	fi
+
+test-squid: install-squid
+	@echo "Testing complete Squid proxy setup and dev environment caching..."
 	@echo ""
-	@echo "Testing global proxy environment..."
-	@echo "Testing curl with proxy:"
-	@curl -s --proxy http://localhost:3128 http://httpbin.org/get | head -3 || echo "Proxy test failed"
+	@echo "=== Basic Proxy Tests ==="
+	@echo "Testing systemd service:"
+	@if systemctl is-active squid >/dev/null 2>&1; then \
+		echo "✓ Squid service is running"; \
+	else \
+		echo "❌ Squid service failed"; \
+		echo "Attempting to start squid..."; \
+		sudo systemctl start squid; \
+		sleep 3; \
+		if systemctl is-active squid >/dev/null 2>&1; then \
+			echo "✓ Squid service started successfully"; \
+		else \
+			echo "❌ Failed to start squid service"; \
+			sudo journalctl -u squid --no-pager -n 10; \
+			exit 1; \
+		fi \
+	fi
 	@echo ""
-	@echo "Checking systemd service:"
-	@systemctl is-active squid && echo "✓ Squid service is running" || echo "❌ Squid service failed"
+	@echo "Testing proxy connectivity:"
+	@# Wait for squid to be ready
+	@retries=0; while ! netstat -tlnp 2>/dev/null | grep -q ":3128.*LISTEN" && [ $$retries -lt 10 ]; do \
+		echo "Waiting for squid to listen on port 3128..."; \
+		sleep 1; \
+		retries=$$((retries + 1)); \
+	done
+	@if ! netstat -tlnp 2>/dev/null | grep -q ":3128.*LISTEN"; then \
+		echo "❌ Squid is not listening on port 3128"; \
+		exit 1; \
+	fi
+	@# Test HTTP proxy
+	@if timeout 10 curl -s --proxy http://localhost:3128 --connect-timeout 5 http://httpbin.org/get >/dev/null 2>&1; then \
+		echo "✓ HTTP proxy working"; \
+	else \
+		echo "❌ HTTP proxy test failed"; \
+		echo "Debug: Testing direct connection..."; \
+		if timeout 5 curl -s --connect-timeout 3 http://httpbin.org/get >/dev/null 2>&1; then \
+			echo "Direct connection works, proxy issue"; \
+		else \
+			echo "Network connectivity issue"; \
+		fi; \
+	fi
+	@# Test HTTPS proxy  
+	@if timeout 10 curl -s --proxy http://localhost:3128 --connect-timeout 5 https://httpbin.org/get >/dev/null 2>&1; then \
+		echo "✓ HTTPS proxy working"; \
+	else \
+		echo "❌ HTTPS proxy test failed"; \
+	fi
 	@echo ""
-	@echo "Checking proxy environment variables:"
+	@echo "=== Environment Configuration Tests ==="
+	@echo "Checking global proxy environment:"
 	@grep -q "HTTP_PROXY" /etc/environment.d/99-proxy.conf 2>/dev/null && echo "✓ Global proxy environment configured" || echo "❌ Global proxy environment missing"
+	@test -f /etc/profile.d/proxy.sh && echo "✓ Shell profile proxy configured" || echo "❌ Shell profile proxy missing"
+	@test -f /etc/fish/conf.d/proxy.fish && echo "✓ Fish shell proxy configured" || echo "❌ Fish shell proxy missing"
+	@echo ""
+	@echo "=== Development Tool Cache Tests ==="
+	@echo "Testing common development tools with proxy caching:"
+	@echo -n "• wget: "; wget -q --proxy=on -e use_proxy=yes -e http_proxy=http://localhost:3128 -O /dev/null http://httpbin.org/get 2>/dev/null && echo "✓ cached" || echo "❌ failed"
+	@echo -n "• curl with env: "; env http_proxy=http://localhost:3128 https_proxy=http://localhost:3128 curl -s http://httpbin.org/get >/dev/null 2>&1 && echo "✓ cached" || echo "❌ failed"
+	@if command -v npm >/dev/null 2>&1; then \
+		echo -n "• npm: "; npm config get proxy >/dev/null 2>&1 && echo "✓ proxy configured" || echo "⚠ run: npm config set proxy http://localhost:3128"; \
+	fi
+	@if command -v pip >/dev/null 2>&1; then \
+		echo -n "• pip: "; pip config list | grep -q proxy 2>/dev/null && echo "✓ proxy configured" || echo "⚠ add [global] proxy=http://localhost:3128 to ~/.pip/pip.conf"; \
+	fi
+	@if command -v docker >/dev/null 2>&1; then \
+		echo -n "• docker: "; test -f ~/.docker/config.json && grep -qi proxies ~/.docker/config.json 2>/dev/null && echo "✓ proxy configured" || echo "⚠ configure docker daemon proxy"; \
+	fi
+	@echo ""
+	@echo "=== Cache Performance Test ==="
+	@echo "Testing cache hit performance (downloading same file twice):"
+	@# Use a larger static file that's more likely to be cached
+	@cache_url="http://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"; \
+	echo "Downloading test file: $$cache_url"; \
+	start_time=$$(date +%s%N); \
+	timeout 15 curl -s --proxy http://localhost:3128 --connect-timeout 5 "$$cache_url" -o /tmp/cache-test-1.tmp 2>&1; \
+	first_time=$$(( ($$(date +%s%N) - $$start_time) / 1000000 )); \
+	sleep 1; \
+	start_time=$$(date +%s%N); \
+	timeout 15 curl -s --proxy http://localhost:3128 --connect-timeout 5 "$$cache_url" -o /tmp/cache-test-2.tmp 2>&1; \
+	second_time=$$(( ($$(date +%s%N) - $$start_time) / 1000000 )); \
+	rm -f /tmp/cache-test-*.tmp; \
+	echo "First request: $${first_time}ms, Second request: $${second_time}ms"; \
+	if [ $$second_time -lt $$((first_time / 2)) ]; then \
+		echo "✓ Cache acceleration working (>50% improvement)"; \
+	elif [ $$second_time -lt $$first_time ]; then \
+		echo "✓ Cache working ($$((100 - (second_time * 100 / first_time)))% improvement)"; \
+	else \
+		echo "⚠ Cache may not be accelerating requests (check squid logs)"; \
+	fi
 	@echo ""
 	@echo "✓ Squid proxy setup test complete"
 	@echo "Note: You may need to restart your session for global proxy to take effect"
