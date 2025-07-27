@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash clean-tests install-test-deps install-squid test-squid squid-uninstall
+.PHONY: help test-bash clean-tests install-test-deps install-squid test-squid uninstall-squid
 
 # Default target
 help:
@@ -8,12 +8,11 @@ help:
 	@echo "Testing:"
 	@echo "  test-bash           Run all bash script tests"
 	@echo "  test-bash-verbose   Run E2E tests with detailed output"
-	@echo "  test-squid          Install and test complete Squid proxy setup"
 	@echo ""
 	@echo "Squid Proxy:"
-	@echo "  install-squid       Install Squid proxy (never rebuilds if already built)"
+	@echo "  install-squid       Install Squid proxy and configure all dev tools"
 	@echo "  test-squid          Test complete Squid proxy setup and dev environment caching"
-	@echo "  squid-uninstall     Completely remove Squid and all traces from system"
+	@echo "  uninstall-squid     Completely remove Squid and all traces from system"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests         Clean up test artifacts"
@@ -170,10 +169,16 @@ test-squid: install-squid
 		echo "⚠ Cache may not be accelerating requests (check squid logs)"; \
 	fi
 	@echo ""
+	@echo "=== Development Tools Proxy Tests ==="
+	@sudo ./scripts/install-squid.sh --test-tools
+	@echo ""
+	@echo "=== Git Clone Test ==="
+	@sudo ./scripts/install-squid.sh --test-git-clone ~/src
+	@echo ""
 	@echo "✓ Squid proxy setup test complete"
 	@echo "Note: You may need to restart your session for global proxy to take effect"
 
-squid-uninstall:
+uninstall-squid:
 	@echo "Completely removing Squid proxy from system..."
 	@sudo ./scripts/install-squid.sh --clean
 	@echo "✓ Squid proxy completely removed from system"
