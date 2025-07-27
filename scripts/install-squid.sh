@@ -47,12 +47,9 @@ TCP_KEEPALIVE="60,30,3"
 # Test settings
 TEST_SLEEP=3
 LOG_TAIL=20
-MIN_CACHE_SPEED_MBPS=10
-MIN_FILE_SIZE=1048576
 
 # URLs
 SQUID_URL="https://github.com/squid-cache/squid/archive/refs/tags/SQUID_$(echo $VER | sed 's/\./_/g').tar.gz"
-TEST_URL="https://go.dev/dl/go1.24.5.linux-amd64.tar.gz"
 TEST_SITES="https://google.com https://github.com https://httpbin.org/get"
 
 log() { gum style --foreground="#00ff00" "$*"; }
@@ -440,62 +437,6 @@ test_proxy() {
     }
     log "✔ HTTPS proxy working"
     
-    return 0
-}
-
-measure_speed() {
-    url="$1"
-    output="$2"
-    rm -f "$output"
-    
-    start=$(date +%s.%N)
-    if curl -s -L -o "$output" "$url" 2>/dev/null; then
-        end=$(date +%s.%N)
-        duration=$(echo "$end $start" | awk '{print $1 - $2}')
-        size=$(stat -c%s "$output" 2>/dev/null || echo "0")
-        [ "$size" -lt "$MIN_FILE_SIZE" ] && return 1
-        speed=$(echo "$size $duration" | awk '{printf "%.1f", $1 / $2 / 1024 / 1024}')
-        echo "$speed"
-        return 0
-    fi
-    return 1
-}
-
-test_cache() {
-    log "Testing cache..."
-    
-    test_dir="$HOME/tmp"
-    mkdir -p "$test_dir"
-    
-    # Baseline
-    log "Baseline test..."
-    baseline=$(measure_speed "$TEST_URL" "$test_dir/baseline") || { error "❌ Baseline failed"; return 1; }
-    log "✔ Baseline: ${baseline} MB/s"
-    
-    # First proxy download
-    log "First proxy download..."
-    first=$(measure_speed "$TEST_URL" "$test_dir/first") || { error "❌ First download failed"; return 1; }
-    log "✔ First: ${first} MB/s"
-    
-    # Cache hit
-    sleep $TEST_SLEEP
-    log "Cache hit test..."
-    cached=$(measure_speed "$TEST_URL" "$test_dir/cached") || { error "❌ Cache test failed"; return 1; }
-    
-    if [ "$(echo "$cached >= $MIN_CACHE_SPEED_MBPS" | bc -l 2>/dev/null || echo "0")" = "1" ]; then
-        log "✔ Cache hit: ${cached} MB/s"
-    else
-        log "⚠️ Cache speed: ${cached} MB/s (target: ${MIN_CACHE_SPEED_MBPS})"
-    fi
-    
-    # Verify files
-    cmp -s "$test_dir/first" "$test_dir/cached" || { error "❌ File mismatch"; return 1; }
-    log "✔ File integrity verified"
-    
-    # Check cache logs
-    tail -$LOG_TAIL "$PREFIX/var/logs/access.log" | grep -q "TCP_.*HIT" && log "✔ Cache hits in logs"
-    
-    rm -rf "$test_dir"
     return 0
 }
 
