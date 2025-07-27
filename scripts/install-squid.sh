@@ -31,7 +31,7 @@ cleanup() {
     systemctl disable squid 2>/dev/null || true
     pkill -f "^$PREFIX/sbin/squid" 2>/dev/null || true
 
-    # Remove global proxy environment
+    # Remove global proxy environment (if any existed)
     rm -f /etc/environment.d/99-proxy.conf
     rm -f /etc/profile.d/proxy.sh
     rm -f /etc/fish/conf.d/proxy.fish
@@ -405,24 +405,14 @@ EOF
 }
 
 setup_global_proxy() {
-    log "Setting up global proxy environment..."
+    log "Skipping global proxy setup (tool-specific configuration only)..."
+    # Remove any existing global proxy configurations
     rm -f /etc/environment.d/99-proxy.conf
-
-    create_proxy_env_content "bash" > /etc/profile.d/proxy.sh
-    chmod +x /etc/profile.d/proxy.sh
-
-    mkdir -p /etc/fish/conf.d
-    create_proxy_env_content "fish" > /etc/fish/conf.d/proxy.fish
-
-    if [ -f "$USER_HOME/.profile" ] && ! grep -q "HTTP_PROXY.*$PROXY_PORT" "$USER_HOME/.profile"; then
-        {
-            echo ""
-            echo "# Proxy settings with fallback (added by squid installer)"
-            echo "# Only set proxy if squid is running, otherwise apps work without proxy"
-            create_proxy_env_content "bash"
-        } | run_as_user tee -a "$USER_HOME/.profile" > /dev/null
-        log "Updated user's .profile with fallback proxy settings"
-    fi
+    rm -f /etc/profile.d/proxy.sh
+    rm -f /etc/fish/conf.d/proxy.fish
+    
+    # Do not add proxy to user's .profile to avoid affecting other applications
+    # Each tool will be configured individually
 }
 
 create_service() {
@@ -525,18 +515,16 @@ test_proxy() {
     fi
 
     log "Proxy is working"
-    log "Global proxy environment configured"
-    log "All development tools will now use caching proxy"
+    log "Development tools will be configured individually"
+    log "No system-wide proxy to avoid interfering with other applications"
 }
 
 create_config_file() {
     local tool="$1" config_path="$2" content="$3"
-    run_as_user mkdir -p "$(dirname "$config_path")" 
+    run_as_user mkdir -p "$(dirname "$config_path")" 2>/dev/null || true
     [ -f "$config_path" ] && run_as_user cp "$config_path" "$config_path.bak" 2>/dev/null || true
-    run_as_user tee "$config_path" > /dev/null << EOF
-$content
-EOF
-    log "$tool proxy configured"
+    echo "$content" | run_as_user tee "$config_path" > /dev/null 2>&1
+    # Don't log here to avoid duplicates
 }
 
 configure_tool_proxy() {
@@ -578,7 +566,8 @@ no_proxy = $no_proxy"
 noproxy = \"$no_proxy\""
             ;;
         "docker")
-            create_config_file "Docker client" "$USER_HOME/.docker/config.json" "{
+            if [ -d "$USER_HOME/.docker" ] || run_as_user mkdir -p "$USER_HOME/.docker" 2>/dev/null; then
+                create_config_file "Docker client" "$USER_HOME/.docker/config.json" "{
   \"proxies\": {
     \"default\": {
       \"httpProxy\": \"$proxy_url\",
@@ -587,6 +576,10 @@ noproxy = \"$no_proxy\""
     }
   }
 }"
+            else
+                log "Docker client config directory could not be created"
+                return 1
+            fi
             ;;
         "cargo")
             create_config_file "Cargo" "$USER_HOME/.cargo/config.toml" "
@@ -597,7 +590,10 @@ proxy = \"$proxy_url\"
 proxy = \"$proxy_url\""
             ;;
     esac
-    log "$tool proxy configured"
+    # Only log success if not already logged
+    if [ "$tool" != "yarn" ]; then
+        log "$tool proxy configured"
+    fi
 }
 
 configure_dev_tools() {
@@ -611,31 +607,39 @@ configure_dev_tools() {
     configure_tool_proxy "curl" "$proxy_url" "$no_proxy"
 
     # Configure tools that may not be installed
-    run_as_user bash -c 'command -v npm' &> /dev/null && configure_tool_proxy "npm" "$proxy_url" "$no_proxy"
-    run_as_user bash -c 'command -v yarn' &> /dev/null && configure_tool_proxy "yarn" "$proxy_url" "$no_proxy" || true
-    command -v docker &> /dev/null && {
+    if run_as_user bash -c 'command -v npm' > /dev/null 2>&1; then
+        configure_tool_proxy "npm" "$proxy_url" "$no_proxy"
+    fi
+    
+    if run_as_user bash -c 'command -v yarn' > /dev/null 2>&1; then
+        configure_tool_proxy "yarn" "$proxy_url" "$no_proxy" || true
+    fi
+    
+    if command -v docker > /dev/null 2>&1; then
         configure_tool_proxy "docker" "$proxy_url" "$no_proxy" || true
         # Docker daemon configuration
-        if [ -w /etc/systemd/system/docker.service.d ] || true; then
-            mkdir -p /etc/systemd/system/docker.service.d
-            tee /etc/systemd/system/docker.service.d/http-proxy.conf > /dev/null << EOF
+        if [ -w /etc/systemd/system/docker.service.d ] || mkdir -p /etc/systemd/system/docker.service.d 2>/dev/null; then
+            cat > /etc/systemd/system/docker.service.d/http-proxy.conf << EOF
 [Service]
 Environment="HTTP_PROXY=$proxy_url"
 Environment="HTTPS_PROXY=$proxy_url"
 Environment="NO_PROXY=$no_proxy"
 EOF
-            systemctl daemon-reload
+            systemctl daemon-reload > /dev/null 2>&1
             log "Docker daemon proxy configured"
         fi
-    }
-    command -v cargo &> /dev/null && configure_tool_proxy "cargo" "$proxy_url" "$no_proxy"
+    fi
+    
+    if command -v cargo > /dev/null 2>&1; then
+        configure_tool_proxy "cargo" "$proxy_url" "$no_proxy"
+    fi
 
-    # Configure apt with fallback script
-    if command -v apt &> /dev/null; then
+    # Configure apt with fallback script (HTTP only to avoid SSL issues)
+    if command -v apt > /dev/null 2>&1; then
         cat > /etc/apt/apt.conf.d/99proxy << 'EOF'
-// Dynamic proxy configuration with fallback
+// Dynamic proxy configuration with fallback (HTTP only)
 Acquire::http::ProxyAutoDetect "/usr/local/bin/apt-proxy-detect";
-Acquire::https::ProxyAutoDetect "/usr/local/bin/apt-proxy-detect";
+// HTTPS disabled to avoid certificate issues - apt will connect directly
 EOF
         cat > /usr/local/bin/apt-proxy-detect << 'EOF'
 #!/bin/bash
@@ -647,7 +651,7 @@ else
 fi
 EOF
         chmod +x /usr/local/bin/apt-proxy-detect
-        log "apt proxy with fallback configured"
+        log "apt proxy with fallback configured (HTTP only)"
     fi
 
     log "Development tools proxy configuration complete"
@@ -689,32 +693,35 @@ test() {
     fi
 
     # Test pip
-    if run_as_user bash -c 'command -v pip' &> /dev/null; then
-        echo -n "• pip: "
+    if run_as_user bash -c 'command -v pip' > /dev/null 2>&1; then
+        local pip_path=$(run_as_user bash -c 'command -v pip')
+        echo "• pip: $pip_path"
         if run_as_user timeout 15 pip config list 2>&1 | grep -q proxy; then
-            echo "✓ configured"
+            echo "  ✓ configured"
         else
-            echo "⚠ not configured"
+            echo "  ⚠ not configured"
         fi
     fi
 
-    # Test npm
-    if run_as_user bash -c 'command -v npm' &> /dev/null; then
-        echo -n "• npm: "
-        if run_as_user npm config get proxy | grep -q "$PROXY_PORT"; then
-            echo "✓ configured"
+    # Test npm  
+    if run_as_user bash -c 'command -v npm' > /dev/null 2>&1; then
+        local npm_path=$(run_as_user bash -c 'command -v npm')
+        echo "• npm: $npm_path"
+        if run_as_user npm config get proxy 2>/dev/null | grep -q "$PROXY_PORT"; then
+            echo "  ✓ configured"
         else
-            echo "⚠ not configured"
+            echo "  ⚠ not configured"
         fi
     fi
 
     # Test docker
-    if command -v docker &> /dev/null; then
-        echo -n "• docker: "
-        if [ -f "$USER_HOME/.docker/config.json" ] && grep -q "$PROXY_PORT" "$USER_HOME/.docker/config.json"; then
-            echo "✓ configured"
+    if command -v docker > /dev/null 2>&1; then
+        local docker_path=$(command -v docker)
+        echo "• docker: $docker_path"
+        if [ -f "$USER_HOME/.docker/config.json" ] && grep -q "$PROXY_PORT" "$USER_HOME/.docker/config.json" 2>/dev/null; then
+            echo "  ✓ configured"
         else
-            echo "⚠ not configured"
+            echo "  ⚠ not configured"
         fi
     fi
 
@@ -802,8 +809,8 @@ main() {
     log "Proxy URL: http://localhost:$PROXY_PORT"
     log "Uninstall: make uninstall-squid"
     log ""
-    log "All development tools have been configured to use the proxy"
-    log "Note: You may need to restart your session for global proxy to take effect"
+    log "Development tools configured individually (no system-wide proxy)"
+    log "Other applications (including Claude Code) will not be affected"
 }
 
 main "$@"
