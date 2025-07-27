@@ -25,3 +25,7 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !/usr/bin/gh auth git-credential
+[http]
+	proxy = http://localhost:3128
+[https]
+	proxy = http://localhost:3128

@@ -21,7 +21,7 @@ SSL_DIR="$PREFIX/etc/ssl_cert"
 
 log() { echo "✓ $*"; }
 error() { echo "❌ $*"; }
-run_as_user() { sudo -u "$SUDO_USER" "$@"; }
+run_as_user() { sudo -u "$SUDO_USER" -i "$@"; }
 run_as_proxy() { sudo -u proxy "$@"; }
 clear_proxy_env() { unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY; }
 
@@ -443,16 +443,18 @@ EOF
     log "pip proxy configured"
     
     # Configure npm/yarn
-    if command -v npm &> /dev/null; then
+    if run_as_user bash -c 'command -v npm' &> /dev/null; then
         run_as_user npm config set proxy "$proxy_url"
         run_as_user npm config set https-proxy "$proxy_url"
         log "npm proxy configured"
     fi
     
-    if command -v yarn &> /dev/null; then
-        run_as_user yarn config set proxy "$proxy_url"
-        run_as_user yarn config set https-proxy "$proxy_url"
-        log "yarn proxy configured"
+    if run_as_user bash -c 'command -v yarn' &> /dev/null; then
+        if run_as_user yarn config set proxy "$proxy_url" 2>/dev/null && run_as_user yarn config set https-proxy "$proxy_url" 2>/dev/null; then
+            log "yarn proxy configured"
+        else
+            log "yarn found but configuration failed (may need installation)"
+        fi
     fi
     
     # Configure wget
@@ -600,9 +602,9 @@ test_dev_tools() {
     fi
     
     # Test pip
-    if command -v pip &> /dev/null; then
+    if run_as_user bash -c 'command -v pip' &> /dev/null; then
         echo -n "• pip: "
-        if timeout 15 pip config list 2>&1 | grep -q proxy; then
+        if run_as_user timeout 15 pip config list 2>&1 | grep -q proxy; then
             echo "✓ configured"
         else
             echo "⚠ not configured"
@@ -610,9 +612,9 @@ test_dev_tools() {
     fi
     
     # Test npm
-    if command -v npm &> /dev/null; then
+    if run_as_user bash -c 'command -v npm' &> /dev/null; then
         echo -n "• npm: "
-        if npm config get proxy | grep -q "$PROXY_PORT"; then
+        if run_as_user npm config get proxy | grep -q "$PROXY_PORT"; then
             echo "✓ configured"
         else
             echo "⚠ not configured"
