@@ -101,12 +101,18 @@ remove_tool_proxy_configs() {
         run_as_user cp "$USER_HOME/.profile" "$USER_HOME/.profile.bak" 2>/dev/null || true
         # Remove proxy-related lines added by squid installer (including incomplete blocks)
         run_as_user sed -i '/# Proxy settings with fallback (added by squid installer)/,/^export no_proxy=/d' "$USER_HOME/.profile" 2>/dev/null || true
+        # Remove the "Added by squid installer" marker
+        run_as_user sed -i '/# Added by squid installer/d' "$USER_HOME/.profile" 2>/dev/null || true
         # Remove any remaining proxy-related lines that might have been manually added
         run_as_user sed -i '/HTTP_PROXY.*3128/d; /http_proxy.*3128/d; /HTTPS_PROXY.*3128/d; /https_proxy.*3128/d; /NO_PROXY.*localhost/d; /no_proxy.*localhost/d' "$USER_HOME/.profile" 2>/dev/null || true
         # Remove incomplete proxy blocks
         run_as_user sed -i '/if.*nc.*localhost.*3128/d; /^fi$/d' "$USER_HOME/.profile" 2>/dev/null || true
         log "User .profile proxy settings removed"
     fi
+    
+    # Remove fish proxy configuration
+    run_as_user rm -f "$USER_HOME/.config/fish/conf.d/proxy.fish" 2>/dev/null || true
+    log "Fish proxy configuration removed"
     
     log "All development tool proxy configurations removed"
 }
@@ -356,14 +362,32 @@ EOF
 }
 
 setup_global_proxy() {
-    log "Skipping global proxy setup (tool-specific configuration only)..."
+    log "Setting up global proxy environment variables with squid runtime checks..."
+    
     # Remove any existing global proxy configurations
     rm -f /etc/environment.d/99-proxy.conf
     rm -f /etc/profile.d/proxy.sh
     rm -f /etc/fish/conf.d/proxy.fish
     
-    # Do not add proxy to user's .profile to avoid affecting other applications
-    # Each tool will be configured individually
+    # Add proxy environment variables to user's .profile with runtime squid check
+    if [ -f "$USER_HOME/.profile" ]; then
+        # Remove any existing proxy settings first
+        run_as_user sed -i '/# Proxy settings with fallback (added by squid installer)/,/^export no_proxy=/d' "$USER_HOME/.profile" 2>/dev/null || true
+    fi
+    
+    # Add the proxy configuration with runtime check
+    create_proxy_env_content "bash" | run_as_user tee -a "$USER_HOME/.profile" > /dev/null
+    echo "# Added by squid installer" | run_as_user tee -a "$USER_HOME/.profile" > /dev/null
+    
+    # Setup fish configuration if fish is available
+    if command -v fish > /dev/null 2>&1; then
+        run_as_user mkdir -p "$USER_HOME/.config/fish/conf.d" 2>/dev/null || true
+        create_proxy_env_content "fish" | run_as_user tee "$USER_HOME/.config/fish/conf.d/proxy.fish" > /dev/null
+        log "Fish proxy configuration added"
+    fi
+    
+    log "Proxy environment variables configured with runtime squid checks"
+    log "Applications will automatically use proxy when squid is running"
 }
 
 create_service() {
@@ -447,11 +471,13 @@ trusted-host = pypi.org pypi.python.org files.pythonhosted.org"
             create_config_file "wget" "$USER_HOME/.wgetrc" "use_proxy = yes
 http_proxy = $proxy_url
 https_proxy = $proxy_url
-no_proxy = $no_proxy"
+no_proxy = $no_proxy
+ca_certificate = /etc/ssl/certs/squid-ca.crt"
             ;;
         "curl")
             create_config_file "curl" "$USER_HOME/.curlrc" "proxy = \"$proxy_url\"
-noproxy = \"$no_proxy\""
+noproxy = \"$no_proxy\"
+cacert = \"/etc/ssl/certs/squid-ca.crt\""
             ;;
         "cargo")
             create_config_file "Cargo" "$USER_HOME/.cargo/config.toml" "
@@ -654,8 +680,9 @@ main() {
     log "Proxy URL: http://localhost:$PROXY_PORT"
     log "Uninstall: make uninstall-squid"
     log ""
-    log "Development tools configured individually (no system-wide proxy)"
-    log "Other applications (including Claude Code) will not be affected"
+    log "Global proxy environment variables configured with runtime checks"
+    log "Applications will automatically use proxy when squid is running"
+    log "Individual development tools also configured for optimal compatibility"
 }
 
 main "$@"
