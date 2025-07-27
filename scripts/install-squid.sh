@@ -648,39 +648,35 @@ test_git_clone() {
     # Ensure target directory exists
     run_as_user mkdir -p "$target_dir"
     
-    # Create temp test directory
+    # Create temp test directory with proper permissions
     mkdir -p "$test_dir"
-    cd "$test_dir"
+    chown "$SUDO_USER:$SUDO_USER" "$test_dir"
     
     # Test with a small repo first
     echo "Testing with small repository..."
-    if timeout 30 run_as_user git clone --depth 1 https://github.com/octocat/Hello-World.git >/dev/null 2>&1; then
+    if timeout 30 sudo -u "$SUDO_USER" bash -c "cd '$test_dir' && git clone --depth 1 https://github.com/octocat/Hello-World.git" >/dev/null 2>&1; then
         log "Small repo clone successful"
-        rm -rf Hello-World
+        rm -rf "$test_dir/Hello-World"
     else
         error "Small repo clone failed"
-        cd - >/dev/null
         rm -rf "$test_dir"
         return 1
     fi
     
     # Test with Linux kernel (shallow clone)
     echo "Testing with Linux kernel (shallow clone)..."
-    cd "$target_dir"
-    if [ -d "linux" ]; then
+    if [ -d "$target_dir/linux" ]; then
         log "Linux repo already exists in $target_dir/linux"
     else
-        if timeout 120 run_as_user git clone --depth 1 https://github.com/torvalds/linux.git >/dev/null 2>&1; then
+        if timeout 120 sudo -u "$SUDO_USER" bash -c "cd '$target_dir' && git clone --depth 1 https://github.com/torvalds/linux.git" >/dev/null 2>&1; then
             log "Linux kernel clone successful to $target_dir/linux"
         else
             error "Linux kernel clone failed"
-            cd - >/dev/null
             rm -rf "$test_dir"
             return 1
         fi
     fi
     
-    cd - >/dev/null
     rm -rf "$test_dir"
     log "Git clone tests completed successfully"
 }
