@@ -41,6 +41,22 @@ cleanup() {
     update-ca-certificates --fresh >/dev/null 2>&1 || true
 }
 
+uninstall_only() {
+    log "Removing Squid installation (preserving build)..."
+    cleanup
+    
+    # Remove proxy user
+    if id proxy >/dev/null 2>&1; then
+        pkill -9 -u proxy 2>/dev/null || true
+        userdel -rf proxy 2>/dev/null || true
+    fi
+    
+    # Remove only configuration and runtime files, NEVER the build
+    rm -rf "$PREFIX/etc" "$PREFIX/var" "$CACHE_DIR" /etc/systemd/system/squid.service
+    systemctl daemon-reload
+    log "Uninstall complete (build preserved)"
+}
+
 clean_install() {
     log "Performing clean installation..."
     cleanup
@@ -51,10 +67,8 @@ clean_install() {
         userdel -rf proxy 2>/dev/null || true
     fi
     
-    # Remove only runtime files, keep the built binary
-    rm -rf "$CACHE_DIR" /etc/systemd/system/squid.service
-    # Remove config and runtime dirs but preserve the built squid binary
-    rm -rf "$PREFIX/etc" "$PREFIX/var" "$PREFIX/libexec/security_file_certgen"
+    # Remove everything including the build
+    rm -rf "$PREFIX" "$CACHE_DIR" /etc/systemd/system/squid.service
     systemctl daemon-reload
     log "Clean complete"
 }
@@ -686,6 +700,10 @@ main() {
             clean_install
             exit 0 
             ;;
+        --uninstall)
+            uninstall_only
+            exit 0
+            ;;
         --disable) 
             cleanup
             remove_dev_tools_proxy
@@ -697,6 +715,8 @@ main() {
             exit 0
             ;;
         --install-only)
+            # Ensure proxy user exists for install-only mode
+            id proxy >/dev/null 2>&1 || useradd -r -s /bin/false proxy
             create_certs
             create_config
             init_cache
