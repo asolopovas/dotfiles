@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash clean-tests install-test-deps install-squid test-squid uninstall-squid
+.PHONY: help test-bash clean-tests install-test-deps build-squid install-squid test-squid uninstall-squid clean-squid-build
 
 # Default target
 help:
@@ -10,9 +10,11 @@ help:
 	@echo "  test-bash-verbose   Run E2E tests with detailed output"
 	@echo ""
 	@echo "Squid Proxy:"
-	@echo "  install-squid       Install Squid proxy and configure all dev tools"
+	@echo "  build-squid         Build Squid proxy (one-time operation)"
+	@echo "  install-squid       Install and configure Squid proxy (auto-builds if needed)"
 	@echo "  test-squid          Test complete Squid proxy setup and dev environment caching"
-	@echo "  uninstall-squid     Completely remove Squid and all traces from system"
+	@echo "  uninstall-squid     Remove Squid installation (keeps build for reuse)"
+	@echo "  clean-squid-build   Completely remove Squid build (forces rebuild next time)"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests         Clean up test artifacts"
@@ -60,20 +62,18 @@ install-test-deps:
 	@chmod +x tests/bash/*.sh
 	@echo "Dependencies ready"
 
-# Squid Proxy targets
+# Squid Proxy targets  
 install-squid:
-	@echo "Installing Squid proxy (never rebuilds if already built)..."
-	@# Check if squid is already installed and working
-	@if [ -x /usr/local/squid/sbin/squid ] && systemctl is-active squid >/dev/null 2>&1 && \
-	   netstat -tlnp 2>/dev/null | grep -q ":3128.*LISTEN" && \
-	   timeout 5 curl -s --proxy http://localhost:3128 --connect-timeout 2 http://httpbin.org/get >/dev/null 2>&1; then \
-		echo "✓ Squid is already installed and working - skipping installation"; \
-	else \
-		echo "Installing/updating Squid..."; \
+	@if [ -x /usr/local/squid/sbin/squid ]; then \
+		echo "Squid already built, configuring only..."; \
 		env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
-			sudo -E env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
-			./scripts/install-squid.sh; \
-		echo "✓ Squid proxy installation complete"; \
+		sudo -E env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+		./scripts/install-squid.sh --install-only; \
+	else \
+		echo "Installing Squid proxy and configuring all development tools..."; \
+		env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+		sudo -E env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY \
+		./scripts/install-squid.sh; \
 	fi
 
 test-squid: install-squid
@@ -182,3 +182,10 @@ uninstall-squid:
 	@echo "Completely removing Squid proxy from system..."
 	@sudo ./scripts/install-squid.sh --clean
 	@echo "✓ Squid proxy completely removed from system"
+	@echo "Note: Build remains available for future installations"
+
+clean-squid-build:
+	@echo "Removing Squid build (will require rebuild on next install)..."
+	@sudo ./scripts/install-squid.sh --clean
+	@sudo rm -f /usr/local/squid/.build-complete
+	@echo "✓ Squid build completely removed from system"
