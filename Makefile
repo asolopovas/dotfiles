@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash test-bash-verbose clean-tests install-test-deps install-squid test-squid uninstall-squid
+.PHONY: help test-bash test-bash-verbose clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -9,6 +9,9 @@ SUDO_NO_PROXY = sudo -E $(CLEAR_PROXY_ENV)
 help:
 	@echo "Dotfiles Project - Available targets:"
 	@echo ""
+	@echo "Main Installation:"
+	@echo "  install             Install everything (Squid proxy + Docker registry cache + Git cache)"
+	@echo ""
 	@echo "Testing:"
 	@echo "  test-bash           Run all bash script tests"
 	@echo "  test-bash-verbose   Run E2E tests with detailed output"
@@ -17,6 +20,16 @@ help:
 	@echo "  install-squid       Install and configure Squid proxy (auto-builds if needed)"
 	@echo "  test-squid          Test complete Squid proxy setup and dev environment caching"
 	@echo "  uninstall-squid     Remove Squid installation and all proxy configs (keeps build for reuse)"
+	@echo ""
+	@echo "Docker Registry Cache:"
+	@echo "  install-docker-registry-cache   Install Docker proxy config and registry cache"
+	@echo "  test-docker-registry-cache      Test Docker configuration and registry cache"
+	@echo "  uninstall-docker-registry-cache Remove Docker proxy config and registry cache"
+	@echo ""
+	@echo "Git Cache:"
+	@echo "  install-git-cache               Install Git caching container (10-100x faster clones)"
+	@echo "  test-git-cache                  Test Git cache configuration"
+	@echo "  uninstall-git-cache             Remove Git cache container and configuration"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests         Clean up test artifacts"
@@ -79,3 +92,34 @@ test-squid: install-squid
 uninstall-squid:
 	@echo "Removing Squid proxy from system (preserving build)..."
 	@sudo ./scripts/install-squid.sh --uninstall
+
+# Main installation target
+install: install-squid install-docker-registry-cache install-git-cache
+	@echo "Complete installation finished!"
+	@echo "Squid proxy, Docker registry cache, and Git cache are now configured."
+
+# Docker Registry Cache targets
+install-docker-registry-cache:
+	@echo "Installing Docker proxy configuration and registry cache..."
+	@$(SUDO_NO_PROXY) ./scripts/install-docker-registry-cache.sh install
+
+test-docker-registry-cache:
+	@echo "Testing Docker configuration and registry cache..."
+	@sudo ./scripts/install-docker-registry-cache.sh test
+
+uninstall-docker-registry-cache:
+	@echo "Removing Docker proxy configuration and registry cache..."
+	@sudo ./scripts/install-docker-registry-cache.sh uninstall
+
+# Git Cache targets
+install-git-cache:
+	@echo "Installing Git caching container..."
+	@$(SUDO_NO_PROXY) ./scripts/install-git-cache.sh install
+
+test-git-cache:
+	@echo "Testing Git cache configuration..."
+	@sudo ./scripts/install-git-cache.sh test
+
+uninstall-git-cache:
+	@echo "Removing Git cache container and configuration..."
+	@sudo ./scripts/install-git-cache.sh uninstall
