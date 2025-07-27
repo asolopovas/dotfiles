@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash test-utility test-cleanup test-deps test-build clean-tests install-test-deps
+.PHONY: help test-bash clean-tests install-test-deps
 
 # Default target
 help:
@@ -7,10 +7,6 @@ help:
 	@echo ""
 	@echo "Testing:"
 	@echo "  test-bash           Run all bash script tests"
-	@echo "  test-utility        Test utility functions only"
-	@echo "  test-cleanup        Test cleanup functions only"
-	@echo "  test-deps           Test dependency installation only"
-	@echo "  test-build          Test squid build process only"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests         Clean up test artifacts"
@@ -20,28 +16,15 @@ help:
 
 # Test targets
 test-bash: install-test-deps
-	@echo "Running comprehensive bash script tests..."
-	@./tests/bash/run_all_tests.sh
-
-test-utility: install-test-deps
-	@echo "Testing utility functions..."
-	@./tests/bash/test_utility_functions.sh
-
-test-cleanup: install-test-deps
-	@echo "Testing cleanup functions..."
-	@./tests/bash/test_cleanup_functions.sh
-
-test-deps: install-test-deps
-	@echo "Testing dependency installation..."
-	@./tests/bash/test_install_deps.sh
-
-test-build: install-test-deps
-	@echo "Testing squid build process..."
-	@./tests/bash/test_build_squid.sh
+	@echo "Running bash script tests..."
+	@chmod +x ./tests/bash/squid/run_squid_tests.sh
+	@./tests/bash/squid/run_squid_tests.sh
 
 # Maintenance targets
 clean-tests:
 	@echo "Cleaning test artifacts..."
+	@chmod +x ./tests/bash/squid/run_squid_tests.sh
+	@./tests/bash/squid/run_squid_tests.sh --clean || true
 	@rm -f /tmp/squid-*-test-*.log
 	@rm -f /tmp/*-functions.sh
 	@rm -f /tmp/mock-gum /tmp/gum
