@@ -177,7 +177,7 @@ test-squid: install-squid
 	@echo "Note: You may need to restart your session for global proxy to take effect"
 
 uninstall-squid:
-	@echo "Completely removing Squid proxy from system..."
-	@sudo ./scripts/install-squid.sh --clean
-	@echo "✓ Squid proxy completely removed from system"
+	@echo "Removing Squid proxy from system (preserving build)..."
+	@sudo ./scripts/install-squid.sh --uninstall
+	@echo "✓ Squid proxy removed from system"
 	@echo "Note: Build remains available for future installations"
