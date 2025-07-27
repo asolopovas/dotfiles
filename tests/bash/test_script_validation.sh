@@ -116,11 +116,12 @@ test_sudo_checks() {
     log_test "Testing sudo requirement checks"
     
     if grep -q 'id -u.*!= "0"' "$INSTALL_SCRIPT" && 
-       grep -q 'SUDO_USER' "$INSTALL_SCRIPT"; then
-        log_pass "Script has proper sudo checks"
+       grep -q 'SUDO_USER' "$INSTALL_SCRIPT" &&
+       grep -q 'exec sudo' "$INSTALL_SCRIPT"; then
+        log_pass "Script has proper sudo checks and auto-elevation"
         return 0
     else
-        log_fail "Script missing sudo requirement checks"
+        log_fail "Script missing sudo requirement checks or auto-elevation"
         return 1
     fi
 }

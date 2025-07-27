@@ -1,9 +1,14 @@
 #!/bin/sh
 set -eu
 
-# Require sudo
-[ "$(id -u)" != "0" ] && { echo "Error: This script requires sudo"; exit 1; }
-[ -z "${SUDO_USER:-}" ] && { echo "Error: Run with sudo, not as root"; exit 1; }
+# Check if running as root, if not, re-exec with sudo
+if [ "$(id -u)" != "0" ]; then
+    echo "This script requires sudo privileges. Please enter your password:"
+    exec sudo "$0" "$@"
+fi
+
+# Ensure we have SUDO_USER (when run via sudo)
+[ -z "${SUDO_USER:-}" ] && { echo "Error: Run with sudo, not as root directly"; exit 1; }
 
 # Configuration
 VER=7.1
