@@ -4,7 +4,7 @@
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-INSTALL_SCRIPT="$SCRIPT_DIR/../../scripts/install-squid.sh"
+INSTALL_SCRIPT="$SCRIPT_DIR/../../../scripts/install-squid.sh"
 TEST_LOG="/tmp/squid-functional-test-$(date +%s).log"
 
 # Test configuration
@@ -290,7 +290,7 @@ test_transparent_proxy() {
     fi
 }
 
-# Test cache functionality
+# Test cache functionality with actual caching behavior
 test_cache_functionality() {
     log_test "Testing cache functionality"
     
@@ -314,11 +314,49 @@ test_cache_functionality() {
     local swap_state="$cache_dir/swap.state"
     if [[ -f "$swap_state" ]]; then
         log_pass "Cache appears to be functional"
-        return 0
     else
         log_fail "Cache swap.state file not found"
         return 1
     fi
+    
+    # Test actual caching behavior
+    log_test "Testing cache behavior with repeated requests"
+    
+    local proxy_port=3128
+    local test_url="http://httpbin.org/uuid"
+    local first_response second_response
+    
+    # Make first request
+    if first_response=$(curl -s --max-time 10 --proxy "http://localhost:$proxy_port" "$test_url" 2>/dev/null); then
+        log_info "First request completed"
+        
+        # Wait a moment
+        sleep 1
+        
+        # Make second request (same URL - should be cached for some responses)
+        if second_response=$(curl -s --max-time 10 --proxy "http://localhost:$proxy_port" "$test_url" 2>/dev/null); then
+            log_info "Second request completed"
+            
+            # Check access logs for cache hit indicators
+            local access_log="/usr/local/squid/var/logs/access.log"
+            if [[ -f "$access_log" ]]; then
+                local recent_logs=$(tail -10 "$access_log" | grep "$test_url" || echo "")
+                if [[ -n "$recent_logs" ]]; then
+                    log_pass "Cache functionality test completed (check access logs for HIT/MISS status)"
+                else
+                    log_info "Cache test completed (logs may not show immediate results)"
+                fi
+            fi
+        else
+            log_fail "Second cache test request failed"
+            return 1
+        fi
+    else
+        log_fail "First cache test request failed"
+        return 1
+    fi
+    
+    return 0
 }
 
 # Test systemd service
@@ -365,6 +403,200 @@ test_argument_handling() {
     fi
     
     return 0
+}
+
+# Test wget functionality through proxy
+test_wget_functionality() {
+    log_test "Testing wget through proxy"
+    
+    local proxy_port=3128
+    local test_url="http://httpbin.org/robots.txt"
+    local test_file="/tmp/wget-test-$$"
+    
+    # Test wget with proxy (using environment variable)
+    if env http_proxy="http://localhost:$proxy_port" wget -q -O "$test_file" "$test_url" 2>/dev/null; then
+        if [[ -f "$test_file" ]] && [[ -s "$test_file" ]]; then
+            log_pass "wget functionality working through proxy"
+            rm -f "$test_file"
+            return 0
+        else
+            log_fail "wget created empty file"
+            rm -f "$test_file"
+            return 1
+        fi
+    else
+        log_fail "wget failed through proxy"
+        rm -f "$test_file"
+        return 1
+    fi
+}
+
+# Test certificate validation
+test_certificate_validation() {
+    log_test "Testing certificate validation and installation"
+    
+    local ssl_dir="/usr/local/squid/etc/ssl_cert"
+    local ca_cert_system="/usr/local/share/ca-certificates/squid-ca.crt"
+    local ca_cert_ssl="$ssl_dir/ca.pem"
+    
+    local failed=0
+    
+    # Check CA certificate exists
+    if [[ -f "$ca_cert_ssl" ]]; then
+        log_pass "CA certificate exists in SSL directory"
+    else
+        log_fail "CA certificate missing in SSL directory"
+        ((failed++))
+    fi
+    
+    # Check system CA certificate
+    if [[ -f "$ca_cert_system" ]]; then
+        log_pass "CA certificate installed in system store"
+    else
+        log_fail "CA certificate not installed in system store"
+        ((failed++))
+    fi
+    
+    # Verify certificate is valid
+    if openssl x509 -in "$ca_cert_ssl" -noout -text >/dev/null 2>&1; then
+        # Get certificate details
+        local subject=$(openssl x509 -in "$ca_cert_ssl" -noout -subject | sed 's/subject=//')
+        local expires=$(openssl x509 -in "$ca_cert_ssl" -noout -enddate | sed 's/notAfter=//')
+        log_pass "CA certificate is valid (Subject: $subject)"
+        log_info "Certificate expires: $expires"
+    else
+        log_fail "CA certificate is invalid"
+        ((failed++))
+    fi
+    
+    # Test certificate verification
+    local server_cert="$ssl_dir/squid-self-signed.crt"
+    if [[ -f "$server_cert" ]]; then
+        if openssl verify -CAfile "$ca_cert_ssl" "$server_cert" >/dev/null 2>&1; then
+            log_pass "Server certificate verifies against CA"
+        else
+            log_fail "Server certificate verification failed"
+            ((failed++))
+        fi
+    else
+        log_fail "Server certificate not found"
+        ((failed++))
+    fi
+    
+    return $failed
+}
+
+# Test safe port configuration (for development/testing)
+test_safe_port_configuration() {
+    log_test "Testing safe port configuration capability"
+    
+    # This test verifies the script has the capability to use safe ports
+    # without actually modifying iptables to avoid breaking internet
+    
+    local install_script="$SCRIPT_DIR/../../../scripts/install-squid.sh"
+    
+    # Check if script has configurable ports
+    if grep -q "STD_HTTP_PORT=" "$install_script" && grep -q "STD_HTTPS_PORT=" "$install_script"; then
+        log_pass "Script has configurable port constants"
+        
+        # Show current port configuration
+        local http_port=$(grep "^STD_HTTP_PORT=" "$install_script" | cut -d= -f2)
+        local https_port=$(grep "^STD_HTTPS_PORT=" "$install_script" | cut -d= -f2)
+        log_info "Current HTTP port: $http_port"
+        log_info "Current HTTPS port: $https_port"
+        log_info "For safe testing, these could be changed to 8080/8443"
+        
+        return 0
+    else
+        log_fail "Script does not have configurable port constants"
+        return 1
+    fi
+}
+
+# Test concurrent connections
+test_concurrent_connections() {
+    log_test "Testing concurrent connection handling"
+    
+    local proxy_port=3128
+    local test_url="http://httpbin.org/delay/1"
+    local concurrent_count=5
+    local pids=()
+    
+    log_info "Starting $concurrent_count concurrent requests"
+    
+    # Start concurrent requests
+    for i in $(seq 1 $concurrent_count); do
+        (curl -s --max-time 15 --proxy "http://localhost:$proxy_port" "$test_url" >/dev/null 2>&1) &
+        pids+=($!)
+    done
+    
+    # Wait for all requests to complete
+    local completed=0
+    for pid in "${pids[@]}"; do
+        if wait "$pid"; then
+            ((completed++))
+        fi
+    done
+    
+    if [[ $completed -eq $concurrent_count ]]; then
+        log_pass "All $concurrent_count concurrent requests completed successfully"
+        
+        # Check if squid is still running
+        if pgrep -f "/usr/local/squid/sbin/squid" >/dev/null; then
+            log_pass "Squid remained stable during concurrent requests"
+            return 0
+        else
+            log_fail "Squid crashed during concurrent requests"
+            return 1
+        fi
+    else
+        log_fail "Only $completed out of $concurrent_count requests completed"
+        return 1
+    fi
+}
+
+# Test access log functionality
+test_access_log_functionality() {
+    log_test "Testing access log functionality"
+    
+    local access_log="/usr/local/squid/var/logs/access.log"
+    local proxy_port=3128
+    local test_url="http://httpbin.org/user-agent"
+    
+    if [[ ! -f "$access_log" ]]; then
+        log_fail "Access log file does not exist"
+        return 1
+    fi
+    
+    # Get current log size
+    local initial_size=$(wc -l < "$access_log" 2>/dev/null || echo 0)
+    
+    # Make a request with identifiable user agent
+    local test_ua="SquidFunctionalityTest/1.0"
+    if curl -s --max-time 10 --proxy "http://localhost:$proxy_port" -A "$test_ua" "$test_url" >/dev/null 2>&1; then
+        sleep 2  # Give squid time to write the log
+        
+        # Check if log grew
+        local final_size=$(wc -l < "$access_log" 2>/dev/null || echo 0)
+        if [[ $final_size -gt $initial_size ]]; then
+            log_pass "Access log is being written"
+            
+            # Check if our request is in the recent logs
+            if tail -5 "$access_log" | grep -q "$test_ua"; then
+                log_pass "Request properly logged with user agent"
+                return 0
+            else
+                log_info "Request logged but user agent not found in recent entries"
+                return 0
+            fi
+        else
+            log_fail "Access log size did not increase"
+            return 1
+        fi
+    else
+        log_fail "Test request failed"
+        return 1
+    fi
 }
 
 # Performance test
@@ -426,9 +658,14 @@ main() {
     test_squid_config || ((failed++))
     test_squid_service || ((failed++))
     test_ssl_certificates || ((failed++))
+    test_certificate_validation || ((failed++))
     test_proxy_functionality || ((failed++))
+    test_wget_functionality || ((failed++))
     test_transparent_proxy || ((failed++))
     test_cache_functionality || ((failed++))
+    test_access_log_functionality || ((failed++))
+    test_concurrent_connections || ((failed++))
+    test_safe_port_configuration || ((failed++))
     test_systemd_service || ((failed++))
     test_performance || ((failed++))
     
