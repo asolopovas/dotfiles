@@ -12,7 +12,7 @@ set -x TERMINAL alacritty
 set -x EDITOR nvim
 set -x GOPATH $HOME/go
 set -x GOBIN $HOME/go/bin
-
+set -x GITCACHE_DIR /mnt/d/.cache/git
 # Aliases
 source $HOME/dotfiles/config/.aliasrc
 
