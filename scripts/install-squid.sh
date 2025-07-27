@@ -41,9 +41,117 @@ cleanup() {
     update-ca-certificates --fresh >/dev/null 2>&1 || true
 }
 
+remove_tool_proxy_configs() {
+    log "Removing all proxy configurations from development tools..."
+    
+    # Git proxy configuration
+    if run_as_user git config --global --get http.proxy >/dev/null 2>&1; then
+        run_as_user git config --global --unset http.proxy 2>/dev/null || true
+        run_as_user git config --global --unset https.proxy 2>/dev/null || true
+        run_as_user git config --global --unset http.sslverify 2>/dev/null || true
+        log "Git proxy configuration removed"
+    fi
+    
+    # NPM proxy configuration
+    if run_as_user bash -c 'command -v npm' >/dev/null 2>&1; then
+        run_as_user npm config delete proxy 2>/dev/null || true
+        run_as_user npm config delete https-proxy 2>/dev/null || true
+        log "NPM proxy configuration removed"
+    fi
+    
+    # Yarn proxy configuration
+    if run_as_user bash -c 'command -v yarn' >/dev/null 2>&1; then
+        run_as_user yarn config delete proxy 2>/dev/null || true
+        run_as_user yarn config delete https-proxy 2>/dev/null || true
+        log "Yarn proxy configuration removed"
+    fi
+    
+    # Bun proxy configuration (uses npm config or env vars)
+    if run_as_user bash -c 'command -v bun' >/dev/null 2>&1; then
+        # Bun typically uses npm config or environment variables
+        log "Bun will use environment variables (removed with global proxy cleanup)"
+    fi
+    
+    # Go/Golang proxy configuration (uses env vars GOPROXY, GOSUMDB, etc.)
+    if run_as_user bash -c 'command -v go' >/dev/null 2>&1; then
+        run_as_user go env -u GOPROXY 2>/dev/null || true
+        run_as_user go env -u GOSUMDB 2>/dev/null || true
+        log "Go proxy configuration removed"
+    fi
+    
+    # PIP proxy configuration
+    run_as_user rm -f "$USER_HOME/.config/pip/pip.conf" 2>/dev/null || true
+    run_as_user rm -f "$USER_HOME/.pip/pip.conf" 2>/dev/null || true
+    log "PIP proxy configuration removed"
+    
+    # Wget proxy configuration
+    run_as_user rm -f "$USER_HOME/.wgetrc" 2>/dev/null || true
+    log "Wget proxy configuration removed"
+    
+    # Curl proxy configuration  
+    run_as_user rm -f "$USER_HOME/.curlrc" 2>/dev/null || true
+    log "Curl proxy configuration removed"
+    
+    # Docker client proxy configuration
+    if [ -f "$USER_HOME/.docker/config.json" ]; then
+        # Backup and remove proxies section
+        run_as_user cp "$USER_HOME/.docker/config.json" "$USER_HOME/.docker/config.json.bak" 2>/dev/null || true
+        # Use jq if available, otherwise manual removal
+        if command -v jq >/dev/null 2>&1; then
+            run_as_user jq 'del(.proxies)' "$USER_HOME/.docker/config.json" > "$USER_HOME/.docker/config.json.tmp" 2>/dev/null || true
+            run_as_user mv "$USER_HOME/.docker/config.json.tmp" "$USER_HOME/.docker/config.json" 2>/dev/null || true
+        else
+            # Fallback: remove entire file if it only contains proxy config
+            if grep -q '"proxies"' "$USER_HOME/.docker/config.json" 2>/dev/null; then
+                run_as_user rm -f "$USER_HOME/.docker/config.json" 2>/dev/null || true
+                log "Docker client config removed (contained only proxy settings)"
+            fi
+        fi
+        log "Docker client proxy configuration removed"
+    fi
+    
+    # Docker daemon proxy configuration
+    if [ -f /etc/systemd/system/docker.service.d/http-proxy.conf ]; then
+        rm -f /etc/systemd/system/docker.service.d/http-proxy.conf
+        # Remove directory if empty
+        rmdir /etc/systemd/system/docker.service.d 2>/dev/null || true
+        if command -v docker >/dev/null 2>&1; then
+            systemctl daemon-reload
+            log "Docker daemon proxy configuration removed"
+        fi
+    fi
+    
+    # Cargo proxy configuration
+    run_as_user rm -f "$USER_HOME/.cargo/config.toml" 2>/dev/null || true
+    log "Cargo proxy configuration removed"
+    
+    # APT proxy configuration
+    rm -f /etc/apt/apt.conf.d/99proxy 2>/dev/null || true
+    rm -f /usr/local/bin/apt-proxy-detect 2>/dev/null || true
+    log "APT proxy configuration removed"
+    
+    # Remove proxy settings from user's .profile
+    if [ -f "$USER_HOME/.profile" ]; then
+        # Create a backup
+        run_as_user cp "$USER_HOME/.profile" "$USER_HOME/.profile.bak" 2>/dev/null || true
+        # Remove proxy-related lines added by squid installer (including incomplete blocks)
+        run_as_user sed -i '/# Proxy settings with fallback (added by squid installer)/,/^export no_proxy=/d' "$USER_HOME/.profile" 2>/dev/null || true
+        # Remove any remaining proxy-related lines that might have been manually added
+        run_as_user sed -i '/HTTP_PROXY.*3128/d; /http_proxy.*3128/d; /HTTPS_PROXY.*3128/d; /https_proxy.*3128/d; /NO_PROXY.*localhost/d; /no_proxy.*localhost/d' "$USER_HOME/.profile" 2>/dev/null || true
+        # Remove incomplete proxy blocks
+        run_as_user sed -i '/if.*nc.*localhost.*3128/d; /^fi$/d' "$USER_HOME/.profile" 2>/dev/null || true
+        log "User .profile proxy settings removed"
+    fi
+    
+    log "All development tool proxy configurations removed"
+}
+
 uninstall() {
     log "Removing Squid installation (preserving build)..."
     cleanup
+    
+    # Remove all proxy configurations from development tools
+    remove_tool_proxy_configs
 
     # Remove proxy user
     if id proxy >/dev/null 2>&1; then
@@ -55,6 +163,7 @@ uninstall() {
     rm -rf "$PREFIX/etc" "$PREFIX/var" "$CACHE_DIR" /etc/systemd/system/squid.service
     systemctl daemon-reload
     log "Uninstall complete (build preserved)"
+    log "All proxy configurations have been removed from the system"
 }
 
 
