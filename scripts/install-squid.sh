@@ -36,8 +36,17 @@ stop_squid() {
 }
 
 remove_ca() {
+    # Remove system-wide CA certificates
     sudo rm -f /usr/local/share/ca-certificates/squid-ca.crt
+    sudo rm -f /etc/ssl/certs/squid-ca.pem
     sudo update-ca-certificates --fresh >/dev/null || true
+    sudo c_rehash /etc/ssl/certs >/dev/null 2>&1 || true
+    
+    # Remove from system ca-certificates bundle
+    ca_bundle_path="/etc/ssl/certs/ca-certificates.crt"
+    if [ -f "$ca_bundle_path" ] && grep -q "Squid Proxy CA" "$ca_bundle_path" 2>/dev/null; then
+        sudo sed -i '/# Squid Proxy CA/,/-----END CERTIFICATE-----/d' "$ca_bundle_path"
+    fi
 }
 
 clean_install() {
@@ -133,39 +142,79 @@ create_ca() {
 
 install_ca() {
     log "Installing CA certificates..."
+    
+    # Install system-wide CA certificate
     sudo cp "$ssl/ca.crt" /usr/local/share/ca-certificates/squid-ca.crt
     sudo update-ca-certificates >/dev/null
     
+    # Also install in system's ca-certificates bundle for better compatibility
+    sudo mkdir -p /etc/ssl/certs
+    sudo cp "$ssl/ca.crt" /etc/ssl/certs/squid-ca.pem
+    sudo c_rehash /etc/ssl/certs >/dev/null 2>&1 || true
+    
     # Install for current user's browsers and certificate stores
-    [ -n "${SUDO_USER:-}" ] && sudo -u "$SUDO_USER" sh -c "
-        # Firefox profiles
-        [ -d /home/$SUDO_USER/.mozilla/firefox ] && {
-            for profile in /home/$SUDO_USER/.mozilla/firefox/*.default* /home/$SUDO_USER/.mozilla/firefox/*default*; do
-                [ -d \"\$profile\" ] && {
-                    certutil -A -n 'Squid Proxy CA' -t 'TCu,Cu,Tu' -i '$ssl/ca.crt' -d \"\$profile\" 2>/dev/null || true
-                    log \"  ✔ Installed CA in Firefox profile: \$(basename \"\$profile\")\"
-                }
-            done
-        }
+    [ -n "${SUDO_USER:-}" ] && {
+        user_home="/home/$SUDO_USER"
         
-        # Chrome/Chromium certificate database
-        command -v certutil >/dev/null && {
-            mkdir -p /home/$SUDO_USER/.pki/nssdb
-            certutil -A -n 'Squid Proxy CA' -t 'TCu,Cu,Tu' -i '$ssl/ca.crt' -d sql:/home/$SUDO_USER/.pki/nssdb 2>/dev/null && {
-                log \"  ✔ Installed CA in Chrome/Chromium certificate database\"
-            } || true
-        }
+        # Firefox profiles (regular installation)
+        if [ -d "$user_home/.mozilla/firefox" ]; then
+            for profile in "$user_home/.mozilla/firefox"/*default* "$user_home/.mozilla/firefox"/*.default*; do
+                if [ -d "$profile" ]; then
+                    # Create nss db if it doesn't exist
+                    if [ ! -f "$profile/cert9.db" ]; then
+                        sudo -u "$SUDO_USER" certutil -N -d "$profile" --empty-password 2>/dev/null || true
+                    fi
+                    # Install CA certificate
+                    if sudo -u "$SUDO_USER" certutil -A -n "Squid Proxy CA" -t "TCu,Cu,Tu" -i "$ssl/ca.crt" -d "$profile" 2>/dev/null; then
+                        log "  ✔ Installed CA in Firefox profile: $(basename "$profile")"
+                    fi
+                fi
+            done
+        fi
         
         # Snap Firefox (if exists)
-        [ -d /home/$SUDO_USER/snap/firefox/common/.mozilla/firefox ] && {
-            for profile in /home/$SUDO_USER/snap/firefox/common/.mozilla/firefox/*.default*; do
-                [ -d \"\$profile\" ] && {
-                    certutil -A -n 'Squid Proxy CA' -t 'TCu,Cu,Tu' -i '$ssl/ca.crt' -d \"\$profile\" 2>/dev/null || true
-                    log \"  ✔ Installed CA in Snap Firefox profile: \$(basename \"\$profile\")\"
-                }
+        if [ -d "$user_home/snap/firefox/common/.mozilla/firefox" ]; then
+            for profile in "$user_home/snap/firefox/common/.mozilla/firefox"/*default* "$user_home/snap/firefox/common/.mozilla/firefox"/*.default*; do
+                if [ -d "$profile" ]; then
+                    if [ ! -f "$profile/cert9.db" ]; then
+                        sudo -u "$SUDO_USER" certutil -N -d "$profile" --empty-password 2>/dev/null || true
+                    fi
+                    if sudo -u "$SUDO_USER" certutil -A -n "Squid Proxy CA" -t "TCu,Cu,Tu" -i "$ssl/ca.crt" -d "$profile" 2>/dev/null; then
+                        log "  ✔ Installed CA in Snap Firefox profile: $(basename "$profile")"
+                    fi
+                fi
             done
-        }
-    " || true
+        fi
+        
+        # Chrome/Chromium certificate database
+        if command -v certutil >/dev/null; then
+            nssdb_dir="$user_home/.pki/nssdb"
+            sudo -u "$SUDO_USER" mkdir -p "$nssdb_dir"
+            
+            # Initialize NSS database if it doesn't exist
+            if [ ! -f "$nssdb_dir/cert9.db" ]; then
+                sudo -u "$SUDO_USER" certutil -N -d sql:"$nssdb_dir" --empty-password 2>/dev/null || true
+            fi
+            
+            # Install CA certificate
+            if sudo -u "$SUDO_USER" certutil -A -n "Squid Proxy CA" -t "TCu,Cu,Tu" -i "$ssl/ca.crt" -d sql:"$nssdb_dir" 2>/dev/null; then
+                log "  ✔ Installed CA in Chrome/Chromium certificate database"
+            fi
+        fi
+        
+        # Install for curl/wget system-wide configuration
+        ca_bundle_path="/etc/ssl/certs/ca-certificates.crt"
+        if [ -f "$ca_bundle_path" ]; then
+            if ! grep -q "Squid Proxy CA" "$ca_bundle_path" 2>/dev/null; then
+                {
+                    echo ""
+                    echo "# Squid Proxy CA"
+                    cat "$ssl/ca.crt"
+                } | sudo tee -a "$ca_bundle_path" >/dev/null
+                log "  ✔ Added CA to system ca-certificates bundle"
+            fi
+        fi
+    }
     
     # Verify system-wide installation
     if openssl verify -CAfile /usr/local/share/ca-certificates/squid-ca.crt "$ssl/ca.crt" >/dev/null 2>&1; then
@@ -174,6 +223,13 @@ install_ca() {
         error "❌ CA certificate installation in system trust store failed"
         return 1
     fi
+    
+    # Additional verification for browsers
+    log "✔ CA certificate installed for:"
+    log "  - System-wide applications (curl, wget, etc.)"
+    log "  - Firefox browsers (if available)"
+    log "  - Chrome/Chromium browsers (if available)"
+    log "  - Command-line tools"
 }
 
 create_config() {
