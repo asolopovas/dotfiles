@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash clean-tests install-test-deps build-squid install-squid test-squid uninstall-squid clean-squid-build
+.PHONY: help test-bash clean-tests install-test-deps install-squid test-squid uninstall-squid
 
 # Default target
 help:
@@ -10,11 +10,9 @@ help:
 	@echo "  test-bash-verbose   Run E2E tests with detailed output"
 	@echo ""
 	@echo "Squid Proxy:"
-	@echo "  build-squid         Build Squid proxy (one-time operation)"
 	@echo "  install-squid       Install and configure Squid proxy (auto-builds if needed)"
 	@echo "  test-squid          Test complete Squid proxy setup and dev environment caching"
 	@echo "  uninstall-squid     Remove Squid installation (keeps build for reuse)"
-	@echo "  clean-squid-build   Completely remove Squid build (forces rebuild next time)"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests         Clean up test artifacts"
@@ -183,9 +181,3 @@ uninstall-squid:
 	@sudo ./scripts/install-squid.sh --clean
 	@echo "✓ Squid proxy completely removed from system"
 	@echo "Note: Build remains available for future installations"
-
-clean-squid-build:
-	@echo "Removing Squid build (will require rebuild on next install)..."
-	@sudo ./scripts/install-squid.sh --clean
-	@sudo rm -f /usr/local/squid/.build-complete
-	@echo "✓ Squid build completely removed from system"
