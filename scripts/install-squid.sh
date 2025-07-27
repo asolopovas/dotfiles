@@ -16,10 +16,10 @@ CACHE_DIR=/mnt/d/.cache/web
 PROXY_PORT=3128
 HTTP_INTERCEPT_PORT=3129
 HTTPS_INTERCEPT_PORT=3130
-HTTP_PORT=80  # Test port for HTTP interception
-HTTPS_PORT=443 # Test port for HTTPS interception
-# HTTP_PORT=8080  # Test port for HTTP interception
-# HTTPS_PORT=8443 # Test port for HTTPS interception
+HTTP_PORT=80
+HTTPS_PORT=443
+# HTTP_PORT=8080
+# HTTPS_PORT=8443
 
 # Standard web ports
 STD_HTTP_PORT=80
@@ -55,10 +55,6 @@ TCP_KEEPALIVE_PROBES=3
 log() { gum style --foreground="#00ff00" "$*"; }
 error() { gum style --foreground="#ff0000" "$*"; }
 
-remove_iptables() {
-    sudo iptables -t nat -D OUTPUT -p tcp --dport $STD_HTTP_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTP_INTERCEPT_PORT 2>/dev/null || true
-    sudo iptables -t nat -D OUTPUT -p tcp --dport $STD_HTTPS_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTPS_INTERCEPT_PORT 2>/dev/null || true
-}
 
 stop_squid() {
     # Stop systemd service first
@@ -122,12 +118,17 @@ remove_ca() {
     }
 }
 
+remove_iptables() {
+    sudo iptables -t nat -D OUTPUT -p tcp --dport $STD_HTTP_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTP_INTERCEPT_PORT 2>/dev/null || true
+    sudo iptables -t nat -D OUTPUT -p tcp --dport $STD_HTTPS_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTPS_INTERCEPT_PORT 2>/dev/null || true
+}
+
 clean_install() {
     echo "Step 1: Starting cleanup"
-    sudo iptables -t nat -D OUTPUT -p tcp --dport $STD_HTTP_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTP_INTERCEPT_PORT 2>/dev/null || true
-    echo "Step 2: Removed iptables rule 1"
-    sudo iptables -t nat -D OUTPUT -p tcp --dport $STD_HTTPS_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTPS_INTERCEPT_PORT 2>/dev/null || true
-    echo "Step 3: Removed iptables rule 2"
+
+    echo "Step 2: Removing iptables"
+    remove_iptables
+
     echo "Step 4: Stopping squid"
     stop_squid
     id proxy >/dev/null 2>&1 && {
@@ -597,67 +598,67 @@ start_squid() {
 
 setup_iptables() {
     log "Setting up iptables rules for transparent proxy..."
-    
+
     # Save current iptables state for emergency rollback
     sudo iptables-save > /tmp/iptables.pre-transparent-backup
-    
+
     # Remove any existing rules first
     remove_iptables
-    
+
     # Verify squid is actually running before adding rules
     if ! pgrep -f "$PREFIX/sbin/squid" >/dev/null; then
         error "❌ Squid is not running - cannot enable transparent proxy"
         return 1
     fi
-    
+
     # Test that squid intercept ports are actually listening
     if ! netstat -ln | grep -q ":$HTTP_INTERCEPT_PORT.*LISTEN"; then
         error "❌ Squid not listening on HTTP intercept port $HTTP_INTERCEPT_PORT"
         return 1
     fi
-    
+
     if ! netstat -ln | grep -q ":$HTTPS_INTERCEPT_PORT.*LISTEN"; then
         error "❌ Squid not listening on HTTPS intercept port $HTTPS_INTERCEPT_PORT"
         return 1
     fi
-    
+
     # Add rules to redirect HTTP and HTTPS traffic to squid intercept ports
     # Exclude traffic from proxy user to avoid loops
     sudo iptables -t nat -A OUTPUT -p tcp --dport $STD_HTTP_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTP_INTERCEPT_PORT
     sudo iptables -t nat -A OUTPUT -p tcp --dport $STD_HTTPS_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTPS_INTERCEPT_PORT
-    
+
     log "✔ iptables rules added for transparent proxy"
     log "HTTP traffic (port 80) redirected to port $HTTP_INTERCEPT_PORT"
     log "HTTPS traffic (port 443) redirected to port $HTTPS_INTERCEPT_PORT"
-    
+
     # Critical failsafe: Test connectivity multiple times with timeout
     log "Testing internet connectivity through transparent proxy (failsafe enabled)..."
     connectivity_tests=0
     max_tests=3
-    
+
     while [ $connectivity_tests -lt $max_tests ]; do
         connectivity_tests=$((connectivity_tests + 1))
         log "Connectivity test $connectivity_tests/$max_tests..."
-        
+
         if test_internet_connectivity; then
             log "✔ Internet connectivity working through transparent proxy"
             rm -f /tmp/iptables.pre-transparent-backup
             return 0
         fi
-        
+
         # Check if squid crashed during test
         if ! pgrep -f "$PREFIX/sbin/squid" >/dev/null; then
             error "❌ Squid crashed during connectivity test!"
             break
         fi
-        
+
         sleep 2
     done
-    
+
     # FAILSAFE: Connectivity failed - immediately restore iptables
     error "❌ Internet connectivity test failed $max_tests times with transparent proxy"
     error "🚨 FAILSAFE TRIGGERED: Restoring iptables to prevent connectivity loss"
-    
+
     if [ -f /tmp/iptables.pre-transparent-backup ]; then
         sudo iptables-restore < /tmp/iptables.pre-transparent-backup
         log "✔ iptables restored from backup"
@@ -665,7 +666,7 @@ setup_iptables() {
         remove_iptables
         log "✔ iptables rules removed"
     fi
-    
+
     # Verify connectivity is restored
     if test_internet_connectivity; then
         log "✔ Internet connectivity restored after failsafe"
@@ -674,7 +675,7 @@ setup_iptables() {
         error "❌ CRITICAL: Unable to restore internet connectivity - manual intervention required"
         error "Try: sudo iptables -t nat -F"
     fi
-    
+
     rm -f /tmp/iptables.pre-transparent-backup
     return 1
 }
