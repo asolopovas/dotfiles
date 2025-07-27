@@ -205,41 +205,50 @@ NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 EOF
 
-    # Create shell profile for legacy support
+    # Create shell profile for legacy support with fallback
     cat > /etc/profile.d/proxy.sh << EOF
-export HTTP_PROXY=http://localhost:$PROXY_PORT
-export HTTPS_PROXY=http://localhost:$PROXY_PORT
-export http_proxy=http://localhost:$PROXY_PORT
-export https_proxy=http://localhost:$PROXY_PORT
+# Proxy settings with fallback - only set if squid is running
+if command -v nc >/dev/null 2>&1 && nc -z localhost $PROXY_PORT 2>/dev/null; then
+    export HTTP_PROXY=http://localhost:$PROXY_PORT
+    export HTTPS_PROXY=http://localhost:$PROXY_PORT
+    export http_proxy=http://localhost:$PROXY_PORT
+    export https_proxy=http://localhost:$PROXY_PORT
+fi
 export NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 export no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 EOF
     chmod +x /etc/profile.d/proxy.sh
     
-    # Create Fish shell configuration
+    # Create Fish shell configuration with fallback
     mkdir -p /etc/fish/conf.d
     cat > /etc/fish/conf.d/proxy.fish << EOF
-set -gx HTTP_PROXY http://localhost:$PROXY_PORT
-set -gx HTTPS_PROXY http://localhost:$PROXY_PORT
-set -gx http_proxy http://localhost:$PROXY_PORT
-set -gx https_proxy http://localhost:$PROXY_PORT
+# Proxy settings with fallback - only set if squid is running
+if command -s nc >/dev/null 2>&1; and nc -z localhost $PROXY_PORT 2>/dev/null
+    set -gx HTTP_PROXY http://localhost:$PROXY_PORT
+    set -gx HTTPS_PROXY http://localhost:$PROXY_PORT
+    set -gx http_proxy http://localhost:$PROXY_PORT
+    set -gx https_proxy http://localhost:$PROXY_PORT
+end
 set -gx NO_PROXY localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 set -gx no_proxy localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 EOF
     
-    # Update user's .profile if it exists
+    # Update user's .profile if it exists with fallback logic
     if [ -f "$USER_HOME/.profile" ] && ! grep -q "HTTP_PROXY.*$PROXY_PORT" "$USER_HOME/.profile"; then
         run_as_user tee -a "$USER_HOME/.profile" > /dev/null << EOF
 
-# Proxy settings (added by squid installer)
-export HTTP_PROXY=http://localhost:$PROXY_PORT
-export HTTPS_PROXY=http://localhost:$PROXY_PORT
-export http_proxy=http://localhost:$PROXY_PORT
-export https_proxy=http://localhost:$PROXY_PORT
+# Proxy settings with fallback (added by squid installer)
+# Only set proxy if squid is running, otherwise apps work without proxy
+if nc -z localhost $PROXY_PORT 2>/dev/null; then
+    export HTTP_PROXY=http://localhost:$PROXY_PORT
+    export HTTPS_PROXY=http://localhost:$PROXY_PORT
+    export http_proxy=http://localhost:$PROXY_PORT
+    export https_proxy=http://localhost:$PROXY_PORT
+fi
 export NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 export no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 EOF
-        log "Updated user's .profile with proxy settings"
+        log "Updated user's .profile with fallback proxy settings"
     fi
 }
 
@@ -251,6 +260,7 @@ create_service() {
     
     # Replace placeholders
     sed -i "s|{{PREFIX}}|$PREFIX|g" /etc/systemd/system/squid.service
+    sed -i "s|{{RESTART_DELAY}}|5s|g" /etc/systemd/system/squid.service
     
     systemctl daemon-reload
     systemctl enable squid.service
