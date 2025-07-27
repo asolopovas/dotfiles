@@ -51,8 +51,10 @@ clean_install() {
         userdel -rf proxy 2>/dev/null || true
     fi
     
-    # Remove files
-    rm -rf "$PREFIX" "$CACHE_DIR" /etc/systemd/system/squid.service
+    # Remove only runtime files, keep the built binary
+    rm -rf "$CACHE_DIR" /etc/systemd/system/squid.service
+    # Remove config and runtime dirs but preserve the built squid binary
+    rm -rf "$PREFIX/etc" "$PREFIX/var" "$PREFIX/libexec/security_file_certgen"
     systemctl daemon-reload
     log "Clean complete"
 }
