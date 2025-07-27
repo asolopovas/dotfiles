@@ -88,16 +88,52 @@ build_squid() {
     # Clear proxy environment for downloading source
     clear_proxy_env
     SQUID_URL="https://github.com/squid-cache/squid/archive/refs/tags/SQUID_$(echo $VER | sed 's/\./_/g').tar.gz"
-    env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy \
-        wget -qO "$build/squid.tar.gz" "$SQUID_URL"
-    tar -xf "$build/squid.tar.gz" -C "$build"
-    cd "$build"/*
-    [ -x configure ] || ./bootstrap.sh
-    ./configure --with-default-user=proxy --with-openssl --enable-ssl-crtd --prefix="$PREFIX" >/dev/null
-    make -j"$(nproc)" >/dev/null
-    make install >/dev/null
+    
+    log "Downloading Squid source..."
+    # Ensure no proxy configuration interferes with source download
+    if ! env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy \
+        wget --no-proxy -qO "$build/squid.tar.gz" "$SQUID_URL"; then
+        error "Failed to download Squid source from $SQUID_URL"
+        return 1
+    fi
+    
+    log "Extracting source..."
+    if ! tar -xf "$build/squid.tar.gz" -C "$build"; then
+        error "Failed to extract Squid source"
+        return 1
+    fi
+    
+    cd "$build"/* || { error "Failed to enter build directory"; return 1; }
+    
+    log "Bootstrapping build system..."
+    if [ ! -x configure ]; then
+        if ! ./bootstrap.sh; then
+            error "Bootstrap failed"
+            return 1
+        fi
+    fi
+    
+    log "Configuring build..."
+    if ! ./configure --with-default-user=proxy --with-openssl --enable-ssl-crtd --prefix="$PREFIX" >/dev/null 2>&1; then
+        error "Configure failed"
+        return 1
+    fi
+    
+    log "Compiling Squid (this may take several minutes)..."
+    if ! make -j"$(nproc)" >/dev/null 2>&1; then
+        error "Compilation failed"
+        return 1
+    fi
+    
+    log "Installing Squid..."
+    if ! make install >/dev/null 2>&1; then
+        error "Installation failed"
+        return 1
+    fi
+    
     cd - >/dev/null
     chown -R proxy:proxy "$PREFIX"
+    log "Squid build and installation completed successfully"
 }
 
 create_certs() {
@@ -175,24 +211,32 @@ create_config() {
 init_cache() {
     log "Initializing cache..."
     
+    # Ensure cache directories exist and have correct ownership
     mkdir -p "$(dirname "$CACHE_DIR")" "$CACHE_DIR" "$PREFIX/var/logs" "$PREFIX/var/run"
     rm -rf "$PREFIX/var/logs/ssl_db" "$CACHE_DIR"/* 2>/dev/null || true
+    
+    # Remove any stale PID files that might interfere with squid -z
+    rm -f "$PREFIX/var/run/squid.pid"
+    
     chown -R proxy:proxy "$PREFIX/var" "$CACHE_DIR"
     
     # SSL cert db
     run_as_proxy "$PREFIX/libexec/security_file_certgen" -c -s "$PREFIX/var/logs/ssl_db" -M 20MB
     
-    # Cache dirs - use squid -z first, then manual hex creation if needed
-    run_as_proxy "$PREFIX/sbin/squid" -z -f "$PREFIX/etc/squid.conf" || {
+    # Initialize cache directories using squid -z (create swap directories)
+    if run_as_proxy "$PREFIX/sbin/squid" -z -f "$PREFIX/etc/squid.conf" 2>/dev/null; then
+        log "Cache directories initialized successfully"
+    else
+        log "Squid -z failed, creating cache directories manually..."
         # Manual creation with hex naming (0-F) as squid expects
-        log "Manual cache directory creation..."
         for i in 0 1 2 3 4 5 6 7 8 9 A B C D E F; do
             for j in 0 1 2 3 4 5 6 7 8 9 A B C D E F; do
                 run_as_proxy mkdir -p "$CACHE_DIR/0$i/0$j"
             done
         done
         run_as_proxy touch "$CACHE_DIR/swap.state"
-    }
+        log "Manual cache directory creation completed"
+    fi
 }
 
 setup_global_proxy() {
@@ -276,49 +320,52 @@ start_squid() {
         fi
     fi
     
-    # Stop any existing squid processes cleanly
-    if systemctl is-active squid >/dev/null 2>&1; then
-        log "Stopping existing squid service..."
-        systemctl stop squid
-        sleep 2
-    fi
+    # Comprehensive cleanup of any existing squid processes
+    systemctl stop squid 2>/dev/null || true
+    sleep 2
     
     # Force kill any remaining processes
-    pkill -f "^$PREFIX/sbin/squid" 2>/dev/null || true
+    pkill -9 -f "squid" 2>/dev/null || true
     sleep 1
     
-    # Remove stale PID file
+    # Remove stale PID files and sockets
     rm -f "$PREFIX/var/run/squid.pid"
+    rm -f /var/run/squid.pid
     
-    # Test config
-    run_as_proxy "$PREFIX/sbin/squid" -k parse >/dev/null 2>&1 || {
-        error "Config test failed"
+    # Test config before attempting to start
+    if ! run_as_proxy "$PREFIX/sbin/squid" -k parse >/dev/null 2>&1; then
+        error "Squid configuration test failed"
+        run_as_proxy "$PREFIX/sbin/squid" -k parse
         return 1
-    }
+    fi
     
-    # Start via systemctl
-    systemctl start squid
-    sleep 3
+    # Ensure systemd service is enabled
+    systemctl enable squid 2>/dev/null || true
+    systemctl daemon-reload
     
-    # Verify it's running and listening
-    systemctl is-active squid >/dev/null || {
-        error "Failed to start squid service"
+    # Start squid service
+    if ! systemctl start squid; then
+        error "Failed to start squid systemd service"
+        journalctl -u squid --no-pager -n 5
         return 1
-    }
+    fi
     
-    # Wait for squid to start listening
+    # Wait for squid to start and begin listening
     local retries=0
-    while ! netstat -tlnp 2>/dev/null | grep -q ":$PROXY_PORT.*LISTEN" && [ $retries -lt 10 ]; do
-        sleep 1
+    while [ $retries -lt 15 ]; do
+        if systemctl is-active squid >/dev/null 2>&1 && netstat -tlnp 2>/dev/null | grep -q ":$PROXY_PORT.*LISTEN"; then
+            log "Squid started successfully and listening on port $PROXY_PORT"
+            return 0
+        fi
+        sleep 2
         retries=$((retries + 1))
     done
     
-    if [ $retries -eq 10 ]; then
-        error "Squid started but not listening on port $PROXY_PORT"
-        return 1
-    fi
-    
-    log "Squid started successfully and listening on port $PROXY_PORT"
+    # If we get here, squid failed to start properly
+    error "Squid failed to start after 30 seconds"
+    systemctl status squid --no-pager -n 5
+    journalctl -u squid --no-pager -n 10
+    return 1
 }
 
 test_proxy() {
@@ -493,7 +540,7 @@ remove_dev_tools_proxy() {
     # Remove config files
     rm -f "$USER_HOME/.wgetrc" "$USER_HOME/.curlrc" "$USER_HOME/.pip/pip.conf" "$USER_HOME/.config/pip/pip.conf"
     rm -f "$USER_HOME/.docker/config.json"
-    rm -f /etc/apt/apt.conf.d/99proxy 2>/dev/null || true
+    rm -f /etc/apt/apt.conf.d/99proxy /etc/apt/apt.conf.d/95proxy 2>/dev/null || true
     rm -f /usr/local/bin/apt-proxy-detect 2>/dev/null || true
     rm -f /etc/systemd/system/docker.service.d/http-proxy.conf 2>/dev/null || true
     
@@ -642,6 +689,22 @@ main() {
             remove_dev_tools_proxy
             exit 0 
             ;;
+        --build-only)
+            install_deps
+            build_squid
+            exit 0
+            ;;
+        --install-only)
+            create_certs
+            create_config
+            init_cache
+            setup_global_proxy
+            create_service
+            start_squid
+            test_proxy
+            configure_dev_tools
+            exit 0
+            ;;
         --configure-tools)
             configure_dev_tools
             exit 0
@@ -663,6 +726,8 @@ main() {
             echo ""
             echo "Options:"
             echo "  (none)                Install Squid proxy with default settings"
+            echo "  --build-only          Build Squid only (dependencies + compilation)"
+            echo "  --install-only        Install and configure only (assumes build exists)"
             echo "  --clean               Complete clean install (removes everything)"
             echo "  --disable             Disable proxy and remove from system"
             echo "  --configure-tools     Configure all dev tools to use proxy"
