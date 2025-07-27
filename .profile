@@ -1,4 +1,5 @@
 OS=$(awk '/^ID=/' /etc/os-release | sed -e 's/ID=//' -e 's/"//g' | tr '[:upper:]' '[:lower:]')
+export http_proxy='http://127.0.01:3128'
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export LESSHISTFILE="-"
 export LESS=-R
