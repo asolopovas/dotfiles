@@ -731,6 +731,10 @@ main() {
             uninstall
             exit 0
             ;;
+        --install-only)
+            # Skip build step, only configure and install 
+            SKIP_BUILD=1
+            ;;
         --test)
             test
             exit 0
@@ -740,7 +744,8 @@ main() {
             echo ""
             echo "Options:"
             echo "  (none)                Install Squid proxy with default settings"
-            echo "  --uninstall           Remove Squid installation (preserving build)"
+            echo "  --install-only        Configure only (skip build if already built)"
+            echo "  --uninstall           Remove Squid installation and all proxy configs"
             echo "  --test                Test all dev tools proxy configuration"
             echo "  --help                Show this help message"
             exit 0
@@ -757,7 +762,14 @@ main() {
 
     # Main installation flow
     install_deps
-    build_squid
+    
+    # Only build if not in install-only mode or if squid doesn't exist
+    if [ "${SKIP_BUILD:-}" != "1" ] || [ ! -x "$PREFIX/sbin/squid" ]; then
+        build_squid
+    else
+        log "Skipping build (using existing squid binary)"
+    fi
+    
     create_certs
     create_config
     init_cache
@@ -772,8 +784,7 @@ main() {
     log "Installation complete!"
     log "Cache directory: $CACHE_DIR"
     log "Proxy URL: http://localhost:$PROXY_PORT"
-    log "Disable: $0 --disable"
-    log "Clean: $0 --clean"
+    log "Uninstall: make uninstall-squid"
     log ""
     log "All development tools have been configured to use the proxy"
     log "Note: You may need to restart your session for global proxy to take effect"
