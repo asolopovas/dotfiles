@@ -10,6 +10,7 @@ VER=7.1
 PREFIX=/usr/local/squid
 CACHE_DIR=/mnt/d/.cache/web
 USER_HOME="/home/$SUDO_USER"
+CONFIG_DIR="$(cd "$(dirname "$0")/../config/squid" && pwd)"
 
 # Ports
 PROXY_PORT=3128
@@ -38,6 +39,15 @@ CACHE_REFRESH_GITHUB=1
 CACHE_REFRESH_DEFAULT=3
 CACHE_PERCENTAGE=20
 
+# Cache configuration
+CACHE_MAX_OBJECT_SIZE="50 GB"
+CACHE_MEM_SIZE="8192 MB"
+CACHE_DIR_SIZE=100000
+CACHE_L1_DIRS=16
+CACHE_L2_DIRS=256
+CACHE_SWAP_LOW=90
+CACHE_SWAP_HIGH=95
+
 # Service settings
 RESTART_DELAY=5
 SSLCRTD_CHILDREN=5
@@ -47,6 +57,17 @@ TCP_KEEPALIVE="60,30,3"
 # Test settings
 TEST_SLEEP=3
 LOG_TAIL=20
+SECONDS_PER_DAY=86400
+CONNECTIVITY_TEST_RETRIES=3
+CACHE_GRID_SIZE=16
+SQUID_SSL_DB_SIZE="20MB"
+SLEEP_AFTER_KILL=1
+SLEEP_BEFORE_START=2
+
+# File permissions
+PERM_PRIVATE_KEY=600
+PERM_PUBLIC_FILE=644
+PERM_DIRECTORY=755
 
 # URLs
 SQUID_URL="https://github.com/squid-cache/squid/archive/refs/tags/SQUID_$(echo $VER | sed 's/\./_/g').tar.gz"
@@ -62,7 +83,7 @@ cleanup() {
     systemctl stop squid 2>/dev/null || true
     systemctl disable squid 2>/dev/null || true
     pkill -f "^$PREFIX/sbin/squid" 2>/dev/null || true
-    sleep 1
+    sleep $SLEEP_AFTER_KILL
     pkill -9 -f "^$PREFIX/sbin/squid" 2>/dev/null || true
     
     # Remove iptables
@@ -131,49 +152,9 @@ create_certs() {
     log "Creating SSL certificates..."
     tmp=$(mktemp -d)
     
-    # CA config
-    cat > "$tmp/ca.conf" <<EOF
-[req]
-distinguished_name = req_distinguished_name
-x509_extensions = v3_ca
-prompt = no
-[req_distinguished_name]
-C = US
-ST = Local
-L = Local
-O = Squid Proxy Root CA
-OU = Certificate Authority
-CN = Squid Root CA
-[v3_ca]
-basicConstraints = critical,CA:TRUE
-keyUsage = critical,keyCertSign,cRLSign
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer:always
-EOF
-
-    # Server config
-    cat > "$tmp/server.conf" <<EOF
-[req]
-distinguished_name = req_distinguished_name
-req_extensions = v3_req
-prompt = no
-[req_distinguished_name]
-C = US
-ST = Local
-L = Local
-O = Squid Proxy
-OU = Server
-CN = Squid Proxy Server
-[v3_req]
-basicConstraints = CA:FALSE
-keyUsage = nonRepudiation,digitalSignature,keyEncipherment
-subjectAltName = @alt_names
-extendedKeyUsage = serverAuth
-[alt_names]
-DNS.1 = localhost
-DNS.2 = *.local
-IP.1 = 127.0.0.1
-EOF
+    # Copy config templates
+    cp "$CONFIG_DIR/ca.conf.template" "$tmp/ca.conf"
+    cp "$CONFIG_DIR/server.conf.template" "$tmp/server.conf"
 
     # Generate certificates
     openssl genrsa -out "$tmp/ca.key" $RSA_KEY_SIZE 2>/dev/null
@@ -240,63 +221,45 @@ install_certs() {
 create_config() {
     log "Creating configuration..."
     
-    # Mime config
-    cat > "$PREFIX/etc/mime.conf" <<EOF
-text/html html htm
-text/plain txt
-text/css css
-application/octet-stream bin exe
-image/jpeg jpg jpeg
-image/png png
-image/gif gif
-EOF
+    # Calculate seconds from days
+    CACHE_REFRESH_LARGE_SECONDS=$(($CACHE_REFRESH_LARGE * $SECONDS_PER_DAY))
+    CACHE_REFRESH_CONDA_SECONDS=$(echo "$CACHE_REFRESH_CONDA * $SECONDS_PER_DAY" | bc | cut -d. -f1)
+    CACHE_REFRESH_MEDIA_SECONDS=$(($CACHE_REFRESH_MEDIA * $SECONDS_PER_DAY))
+    CACHE_REFRESH_GITHUB_SECONDS=$(($CACHE_REFRESH_GITHUB * $SECONDS_PER_DAY))
+    CACHE_REFRESH_DEFAULT_SECONDS=$(($CACHE_REFRESH_DEFAULT * $SECONDS_PER_DAY))
     
-    # Squid config
-    cat > "$PREFIX/etc/squid.conf" <<EOF
-acl intermediate_fetching transaction_initiator certificate-fetching
-http_access allow intermediate_fetching
-
-acl localnet src 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.0/8
-acl SSL_ports port $STD_HTTPS_PORT
-acl Safe_ports port $STD_HTTP_PORT 21 $STD_HTTPS_PORT 70 210 1025-65535 280 488 591 777
-acl CONNECT method CONNECT
-
-acl step1 at_step SslBump1
-acl step2 at_step SslBump2
-acl step3 at_step SslBump3
-
-http_access deny !Safe_ports
-http_access deny CONNECT !SSL_ports
-http_access allow localhost manager
-http_access deny manager
-http_access allow localnet
-http_access allow localhost
-http_access deny all
-
-http_port $PROXY_PORT tcpkeepalive=$TCP_KEEPALIVE ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=$SSL_CERT_CACHE_SIZE tls-cert=$SSL_DIR/squid-self-signed.crt tls-key=$SSL_DIR/squid-self-signed.key cipher=HIGH:MEDIUM:!LOW:!RC4:!SEED:!IDEA:!3DES:!MD5:!EXP:!PSK:!DSS options=NO_TLSv1,NO_SSLv3 tls-dh=$SSL_DIR/squid-self-signed_dhparam.pem
-http_port $HTTP_INTERCEPT_PORT intercept
-https_port $HTTPS_INTERCEPT_PORT intercept ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=$SSL_CERT_CACHE_SIZE tls-cert=$SSL_DIR/ca.crt tls-key=$SSL_DIR/ca.key
-
-sslcrtd_program $PREFIX/libexec/security_file_certgen -s $PREFIX/var/logs/ssl_db -M 20MB
-sslcrtd_children $SSLCRTD_CHILDREN
-
-ssl_bump server-first all
-ssl_bump stare all
-sslproxy_cert_error deny all
-
-maximum_object_size 50 GB
-cache_mem 8192 MB
-cache_dir ufs $CACHE_DIR 100000 16 256
-cache_replacement_policy heap LFUDA
-cache_swap_low 90
-cache_swap_high 95
-
-refresh_pattern -i \\.(jar|zip|whl|gz|bz2|tar|tgz|deb|rpm|exe|msi|dmg|iso)$ $(($CACHE_REFRESH_LARGE * 86400)) $CACHE_PERCENTAGE% $(($CACHE_REFRESH_LARGE * 86400))
-refresh_pattern -i conda.anaconda.org/.* $(echo "$CACHE_REFRESH_CONDA * 86400" | bc | cut -d. -f1) $CACHE_PERCENTAGE% $(echo "$CACHE_REFRESH_CONDA * 86400" | bc | cut -d. -f1)
-refresh_pattern -i \\.(jpg|jpeg|png|gif|ico|webp|svg|mp4|mp3|avi|mov|mkv|pdf)$ $(($CACHE_REFRESH_MEDIA * 86400)) $CACHE_PERCENTAGE% $(($CACHE_REFRESH_MEDIA * 86400))
-refresh_pattern -i github.com/.*/releases/.* $(($CACHE_REFRESH_GITHUB * 86400)) $CACHE_PERCENTAGE% $(($CACHE_REFRESH_GITHUB * 86400))
-refresh_pattern . 0 $CACHE_PERCENTAGE% $(($CACHE_REFRESH_DEFAULT * 86400))
-EOF
+    # Copy and process mime config
+    cp "$CONFIG_DIR/mime.conf.template" "$PREFIX/etc/mime.conf"
+    
+    # Copy and process squid config
+    cp "$CONFIG_DIR/squid.conf.template" "$PREFIX/etc/squid.conf"
+    
+    # Replace placeholders in squid.conf
+    sed -i "s|{{PREFIX}}|$PREFIX|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{PROXY_PORT}}|$PROXY_PORT|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{HTTP_INTERCEPT_PORT}}|$HTTP_INTERCEPT_PORT|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{HTTPS_INTERCEPT_PORT}}|$HTTPS_INTERCEPT_PORT|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{STD_HTTP_PORT}}|$STD_HTTP_PORT|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{STD_HTTPS_PORT}}|$STD_HTTPS_PORT|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{TCP_KEEPALIVE}}|$TCP_KEEPALIVE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{SSL_CERT_CACHE_SIZE}}|$SSL_CERT_CACHE_SIZE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{SSL_DIR}}|$SSL_DIR|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{SSLCRTD_CHILDREN}}|$SSLCRTD_CHILDREN|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_DIR}}|$CACHE_DIR|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_PERCENTAGE}}|$CACHE_PERCENTAGE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_REFRESH_LARGE_SECONDS}}|$CACHE_REFRESH_LARGE_SECONDS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_REFRESH_CONDA_SECONDS}}|$CACHE_REFRESH_CONDA_SECONDS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_REFRESH_MEDIA_SECONDS}}|$CACHE_REFRESH_MEDIA_SECONDS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_REFRESH_GITHUB_SECONDS}}|$CACHE_REFRESH_GITHUB_SECONDS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_REFRESH_DEFAULT_SECONDS}}|$CACHE_REFRESH_DEFAULT_SECONDS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{SQUID_SSL_DB_SIZE}}|$SQUID_SSL_DB_SIZE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_MAX_OBJECT_SIZE}}|$CACHE_MAX_OBJECT_SIZE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_MEM_SIZE}}|$CACHE_MEM_SIZE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_DIR_SIZE}}|$CACHE_DIR_SIZE|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_L1_DIRS}}|$CACHE_L1_DIRS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_L2_DIRS}}|$CACHE_L2_DIRS|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_SWAP_LOW}}|$CACHE_SWAP_LOW|g" "$PREFIX/etc/squid.conf"
+    sed -i "s|{{CACHE_SWAP_HIGH}}|$CACHE_SWAP_HIGH|g" "$PREFIX/etc/squid.conf"
     
     chown proxy:proxy "$PREFIX/etc/mime.conf" "$PREFIX/etc/squid.conf"
 }
@@ -309,13 +272,13 @@ init_cache() {
     chown -R proxy:proxy "$PREFIX/var" "$CACHE_DIR"
     
     # SSL cert db
-    run_as_proxy "$PREFIX/libexec/security_file_certgen" -c -s "$PREFIX/var/logs/ssl_db" -M 20MB
+    run_as_proxy "$PREFIX/libexec/security_file_certgen" -c -s "$PREFIX/var/logs/ssl_db" -M $SQUID_SSL_DB_SIZE
     
     # Cache dirs
     run_as_proxy "$PREFIX/sbin/squid" -z -f "$PREFIX/etc/squid.conf" || {
         # Manual creation if needed
-        for i in $(seq -f "%02g" 0 15); do
-            for j in $(seq -f "%02g" 0 15); do
+        for i in $(seq -f "%02g" 0 $(($CACHE_GRID_SIZE - 1))); do
+            for j in $(seq -f "%02g" 0 $(($CACHE_GRID_SIZE - 1))); do
                 run_as_proxy mkdir -p "$CACHE_DIR/$i/$j"
             done
         done
@@ -328,7 +291,7 @@ start_squid() {
     
     # Stop existing
     pkill -f "^$PREFIX/sbin/squid" 2>/dev/null || true
-    sleep 2
+    sleep $SLEEP_BEFORE_START
     
     # Test config
     run_as_proxy "$PREFIX/sbin/squid" -k parse >/dev/null 2>&1 || {
@@ -375,11 +338,11 @@ setup_iptables() {
     iptables -t nat -A OUTPUT -p tcp --dport $STD_HTTPS_PORT -m owner ! --uid-owner proxy -j REDIRECT --to-port $HTTPS_INTERCEPT_PORT
     
     # Test with failsafe
-    for i in 1 2 3; do
-        log "Testing connectivity ($i/3)..."
+    for i in $(seq 1 $CONNECTIVITY_TEST_RETRIES); do
+        log "Testing connectivity ($i/$CONNECTIVITY_TEST_RETRIES)..."
         test_connectivity && { rm -f /tmp/iptables.backup; return 0; }
         pgrep -f "$PREFIX/sbin/squid" >/dev/null || { error "❌ Squid crashed"; break; }
-        sleep 2
+        sleep $SLEEP_BEFORE_START
     done
     
     # Failsafe restore
@@ -392,26 +355,13 @@ setup_iptables() {
 
 create_service() {
     log "Creating systemd service..."
-    cat > /etc/systemd/system/squid.service <<EOF
-[Unit]
-Description=Squid Web Proxy Server
-After=network.target
-
-[Service]
-Type=forking
-PIDFile=$PREFIX/var/run/squid.pid
-ExecStart=$PREFIX/sbin/squid
-ExecReload=/bin/kill -HUP \$MAINPID
-ExecStop=$PREFIX/sbin/squid -k shutdown
-TimeoutStop=30s
-Restart=on-failure
-RestartSec=$RESTART_DELAY
-User=proxy
-Group=proxy
-
-[Install]
-WantedBy=multi-user.target
-EOF
+    
+    # Copy and process service file
+    cp "$CONFIG_DIR/squid.service.template" /etc/systemd/system/squid.service
+    
+    # Replace placeholders
+    sed -i "s|{{PREFIX}}|$PREFIX|g" /etc/systemd/system/squid.service
+    sed -i "s|{{RESTART_DELAY}}|$RESTART_DELAY|g" /etc/systemd/system/squid.service
     systemctl daemon-reload
     systemctl enable squid.service
 }
@@ -441,6 +391,11 @@ test_proxy() {
 }
 
 main() {
+    # Check config templates exist
+    for template in ca.conf.template server.conf.template mime.conf.template squid.conf.template squid.service.template; do
+        [ -f "$CONFIG_DIR/$template" ] || { error "❌ Missing config template: $CONFIG_DIR/$template"; exit 1; }
+    done
+    
     case "${1:-}" in
         --clean) clean_install; exit 0 ;;
         --disable) cleanup; exit 0 ;;
