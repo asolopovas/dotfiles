@@ -234,7 +234,9 @@ init_cache() {
     # Remove any stale PID files that might interfere with squid -z
     rm -f "$PREFIX/var/run/squid.pid"
     
+    # Ensure directories have correct ownership and permissions
     chown -R proxy:proxy "$PREFIX/var" "$CACHE_DIR"
+    chmod 755 "$PREFIX/var/run" "$PREFIX/var/logs"
     
     # SSL cert db
     run_as_proxy "$PREFIX/libexec/security_file_certgen" -c -s "$PREFIX/var/logs/ssl_db" -M 20MB
