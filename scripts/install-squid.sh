@@ -277,6 +277,19 @@ create_certs() {
     # Install CA certificate system-wide
     cp "$SSL_DIR/ca.pem" /usr/local/share/ca-certificates/squid-ca.crt
     update-ca-certificates >/dev/null
+    
+    # Install CA certificate for Docker registry
+    mkdir -p /etc/docker/certs.d/registry-1.docker.io/
+    cp "$SSL_DIR/ca.pem" /etc/docker/certs.d/registry-1.docker.io/ca.crt
+    
+    # Also copy to system SSL directory for Docker daemon
+    cp "$SSL_DIR/ca.crt" /etc/ssl/certs/squid-ca.crt
+    c_rehash /etc/ssl/certs/ >/dev/null 2>&1 || true
+    
+    # Restart Docker to load new certificates if Docker is running
+    if systemctl is-active docker >/dev/null 2>&1; then
+        systemctl restart docker >/dev/null 2>&1 || true
+    fi
 }
 
 apply_config_substitutions() {
@@ -596,9 +609,9 @@ configure_dev_tools() {
 
     # Configure tools that may not be installed
     run_as_user bash -c 'command -v npm' &> /dev/null && configure_tool_proxy "npm" "$proxy_url" "$no_proxy"
-    run_as_user bash -c 'command -v yarn' &> /dev/null && configure_tool_proxy "yarn" "$proxy_url" "$no_proxy"
+    run_as_user bash -c 'command -v yarn' &> /dev/null && configure_tool_proxy "yarn" "$proxy_url" "$no_proxy" || true
     command -v docker &> /dev/null && {
-        configure_tool_proxy "docker" "$proxy_url" "$no_proxy"
+        configure_tool_proxy "docker" "$proxy_url" "$no_proxy" || true
         # Docker daemon configuration
         if [ -w /etc/systemd/system/docker.service.d ] || true; then
             mkdir -p /etc/systemd/system/docker.service.d
