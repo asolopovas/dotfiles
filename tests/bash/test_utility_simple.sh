@@ -38,14 +38,14 @@ test_utility_functions_exist() {
     fi
 }
 
-test_gum_usage() {
-    log_test "Testing gum command usage"
+test_output_formatting() {
+    log_test "Testing output formatting"
     
-    if grep -q "gum style" "$INSTALL_SCRIPT"; then
-        log_pass "Script uses gum for formatted output"
+    if grep -q "echo.*✓" "$INSTALL_SCRIPT"; then
+        log_pass "Script uses formatted output"
         return 0
     else
-        log_fail "Script does not use gum for output"
+        log_fail "Script does not use formatted output"
         return 1
     fi
 }
@@ -81,7 +81,7 @@ main() {
     local failed=0
     
     test_utility_functions_exist || ((failed++))
-    test_gum_usage || ((failed++))
+    test_output_formatting || ((failed++))
     test_sudo_user_usage || ((failed++))
     test_error_handling || ((failed++))
     

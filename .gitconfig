@@ -25,8 +25,15 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !/usr/bin/gh auth git-credential
-[http]
-	proxy = http://localhost:3128
-	sslverify = false
-[https]
-	proxy = http://localhost:3128
+[url "git://localhost:9418/git://github.com/"]
+	insteadOf = git://github.com/
+[url "http://localhost:8080/https://gitlab.com/"]
+	insteadOf = https://gitlab.com/
+[url "http://localhost:8080/https://bitbucket.org/"]
+	insteadOf = https://bitbucket.org/
+[url "git://localhost:9418/github.com/"]
+	insteadOf = git://github.com/
+[url "git://localhost:9418/gitlab.com/"]
+	insteadOf = https://gitlab.com/
+[url "git://localhost:9418/bitbucket.org/"]
+	insteadOf = https://bitbucket.org/
