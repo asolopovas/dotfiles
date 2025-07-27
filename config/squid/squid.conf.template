@@ -18,16 +18,16 @@ http_access allow localnet
 http_access allow localhost
 http_access deny all
 
-http_port {{PROXY_PORT}}
-http_port {{HTTP_INTERCEPT_PORT}} intercept
-https_port {{HTTPS_INTERCEPT_PORT}} intercept ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size={{SSL_CERT_CACHE_SIZE}} tls-cert={{SSL_DIR}}/ca.crt tls-key={{SSL_DIR}}/ca.key
+http_port {{PROXY_PORT}} tcpkeepalive={{TCP_KEEPALIVE}} ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size={{SSL_CERT_CACHE_SIZE}} tls-cert={{SSL_DIR}}/ca.crt tls-key={{SSL_DIR}}/ca.key cipher=HIGH:MEDIUM:!LOW:!RC4:!SEED:!IDEA:!3DES:!MD5:!EXP:!PSK:!DSS options=NO_TLSv1,NO_SSLv3 tls-dh=prime256v1:{{SSL_DIR}}/dhparam.pem
 
 sslcrtd_program {{PREFIX}}/libexec/security_file_certgen -s {{PREFIX}}/var/logs/ssl_db -M {{SQUID_SSL_DB_SIZE}}
 sslcrtd_children {{SSLCRTD_CHILDREN}}
 
-ssl_bump server-first all
-ssl_bump stare all
-sslproxy_cert_error deny all
+ssl_bump peek step1
+ssl_bump bump step2
+ssl_bump splice step3
+
+sslproxy_cert_error allow all
 
 maximum_object_size {{CACHE_MAX_OBJECT_SIZE}}
 cache_mem {{CACHE_MEM_SIZE}}
