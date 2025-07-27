@@ -38,3 +38,5 @@
 - Build preservation saves significant time on repeated installs
 - Docker proxy works through CONNECT tunnels (visible in logs as `CONNECT registry-1.docker.io:443`)
 - SSL certificate verification may need additional configuration for some tools
+- **Use /home/andrius/dotfiles/tmp/ for experiments**: This directory is gitignored and safe for testing
+- **Clean up tmp/ directory after experiments**: Remove test files to keep the repository clean
