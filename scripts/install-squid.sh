@@ -226,6 +226,21 @@ set -gx https_proxy http://localhost:$PROXY_PORT
 set -gx NO_PROXY localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 set -gx no_proxy localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 EOF
+    
+    # Update user's .profile if it exists
+    if [ -f "$USER_HOME/.profile" ] && ! grep -q "HTTP_PROXY.*$PROXY_PORT" "$USER_HOME/.profile"; then
+        run_as_user tee -a "$USER_HOME/.profile" > /dev/null << EOF
+
+# Proxy settings (added by squid installer)
+export HTTP_PROXY=http://localhost:$PROXY_PORT
+export HTTPS_PROXY=http://localhost:$PROXY_PORT
+export http_proxy=http://localhost:$PROXY_PORT
+export https_proxy=http://localhost:$PROXY_PORT
+export NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+export no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+EOF
+        log "Updated user's .profile with proxy settings"
+    fi
 }
 
 create_service() {
@@ -334,21 +349,320 @@ test_proxy() {
     log "All development tools will now use caching proxy"
 }
 
-main() {
-    # Check config templates exist
-    for template in ca.conf.template server.conf.template mime.conf.template squid.conf.template squid.service.template; do
-        [ -f "$CONFIG_DIR/$template" ] || { error "Missing config template: $CONFIG_DIR/$template"; exit 1; }
-    done
+configure_dev_tools() {
+    log "Configuring development tools to use proxy..."
+    local proxy_url="http://localhost:$PROXY_PORT"
+    local no_proxy="localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
     
+    # Configure Git
+    run_as_user git config --global http.proxy "$proxy_url"
+    run_as_user git config --global https.proxy "$proxy_url"
+    log "Git proxy configured"
+    
+    # Configure pip/Python
+    run_as_user mkdir -p "$USER_HOME/.config/pip"
+    run_as_user tee "$USER_HOME/.config/pip/pip.conf" > /dev/null << EOF
+[global]
+proxy = $proxy_url
+trusted-host = pypi.org pypi.python.org files.pythonhosted.org
+EOF
+    # Legacy location
+    run_as_user mkdir -p "$USER_HOME/.pip"
+    run_as_user cp "$USER_HOME/.config/pip/pip.conf" "$USER_HOME/.pip/pip.conf"
+    log "pip proxy configured"
+    
+    # Configure npm/yarn
+    if command -v npm &> /dev/null; then
+        run_as_user npm config set proxy "$proxy_url"
+        run_as_user npm config set https-proxy "$proxy_url"
+        log "npm proxy configured"
+    fi
+    
+    if command -v yarn &> /dev/null; then
+        run_as_user yarn config set proxy "$proxy_url"
+        run_as_user yarn config set https-proxy "$proxy_url"
+        log "yarn proxy configured"
+    fi
+    
+    # Configure wget
+    run_as_user tee "$USER_HOME/.wgetrc" > /dev/null << EOF
+use_proxy = yes
+http_proxy = $proxy_url
+https_proxy = $proxy_url
+no_proxy = $no_proxy
+EOF
+    log "wget proxy configured"
+    
+    # Configure curl
+    run_as_user tee "$USER_HOME/.curlrc" > /dev/null << EOF
+proxy = "$proxy_url"
+noproxy = "$no_proxy"
+EOF
+    log "curl proxy configured"
+    
+    # Configure Docker
+    if command -v docker &> /dev/null; then
+        run_as_user mkdir -p "$USER_HOME/.docker"
+        [ -f "$USER_HOME/.docker/config.json" ] && run_as_user cp "$USER_HOME/.docker/config.json" "$USER_HOME/.docker/config.json.bak"
+        run_as_user tee "$USER_HOME/.docker/config.json" > /dev/null << EOF
+{
+  "proxies": {
+    "default": {
+      "httpProxy": "$proxy_url",
+      "httpsProxy": "$proxy_url",
+      "noProxy": "$no_proxy"
+    }
+  }
+}
+EOF
+        log "Docker client proxy configured"
+        
+        # Docker daemon
+        if [ -w /etc/systemd/system/docker.service.d ] || true; then
+            mkdir -p /etc/systemd/system/docker.service.d
+            tee /etc/systemd/system/docker.service.d/http-proxy.conf > /dev/null << EOF
+[Service]
+Environment="HTTP_PROXY=$proxy_url"
+Environment="HTTPS_PROXY=$proxy_url"
+Environment="NO_PROXY=$no_proxy"
+EOF
+            systemctl daemon-reload
+            log "Docker daemon proxy configured"
+        fi
+    fi
+    
+    # Configure Cargo/Rust
+    if command -v cargo &> /dev/null; then
+        run_as_user mkdir -p "$USER_HOME/.cargo"
+        [ -f "$USER_HOME/.cargo/config.toml" ] && run_as_user cp "$USER_HOME/.cargo/config.toml" "$USER_HOME/.cargo/config.toml.bak"
+        run_as_user tee -a "$USER_HOME/.cargo/config.toml" > /dev/null << EOF
+
+[http]
+proxy = "$proxy_url"
+
+[https]
+proxy = "$proxy_url"
+EOF
+        log "Cargo proxy configured"
+    fi
+    
+    # Configure apt
+    if command -v apt &> /dev/null; then
+        echo "Acquire::http::Proxy \"$proxy_url\";" > /etc/apt/apt.conf.d/99proxy
+        echo "Acquire::https::Proxy \"$proxy_url\";" >> /etc/apt/apt.conf.d/99proxy
+        log "apt proxy configured"
+    fi
+    
+    log "Development tools proxy configuration complete"
+}
+
+remove_dev_tools_proxy() {
+    log "Removing proxy configuration from development tools..."
+    
+    # Git
+    run_as_user git config --global --unset http.proxy 2>/dev/null || true
+    run_as_user git config --global --unset https.proxy 2>/dev/null || true
+    
+    # npm/yarn
+    run_as_user npm config delete proxy 2>/dev/null || true
+    run_as_user npm config delete https-proxy 2>/dev/null || true
+    run_as_user yarn config delete proxy 2>/dev/null || true
+    run_as_user yarn config delete https-proxy 2>/dev/null || true
+    
+    # Remove config files
+    rm -f "$USER_HOME/.wgetrc" "$USER_HOME/.curlrc" "$USER_HOME/.pip/pip.conf" "$USER_HOME/.config/pip/pip.conf"
+    rm -f "$USER_HOME/.docker/config.json"
+    rm -f /etc/apt/apt.conf.d/99proxy 2>/dev/null || true
+    rm -f /etc/systemd/system/docker.service.d/http-proxy.conf 2>/dev/null || true
+    
+    log "Proxy configuration removed from development tools"
+}
+
+test_dev_tools() {
+    log "Testing development tools with proxy..."
+    echo ""
+    local test_url="http://httpbin.org/get"
+    local https_test_url="https://httpbin.org/get"
+    local failed=0
+    
+    # Test curl
+    echo -n "• curl: "
+    if timeout 10 curl -s "$test_url" >/dev/null 2>&1; then
+        echo "✓ working"
+    else
+        echo "❌ failed"
+        ((failed++))
+    fi
+    
+    # Test wget
+    echo -n "• wget: "
+    if timeout 10 wget -q -O /dev/null "$test_url" 2>&1; then
+        echo "✓ working"
+    else
+        echo "❌ failed"
+        ((failed++))
+    fi
+    
+    # Test git
+    echo -n "• git (https): "
+    if timeout 20 git ls-remote https://github.com/torvalds/linux.git HEAD >/dev/null 2>&1; then
+        echo "✓ working"
+    else
+        echo "❌ failed"
+        ((failed++))
+    fi
+    
+    # Test pip
+    if command -v pip &> /dev/null; then
+        echo -n "• pip: "
+        if timeout 15 pip config list 2>&1 | grep -q proxy; then
+            echo "✓ configured"
+        else
+            echo "⚠ not configured"
+        fi
+    fi
+    
+    # Test npm
+    if command -v npm &> /dev/null; then
+        echo -n "• npm: "
+        if npm config get proxy | grep -q "$PROXY_PORT"; then
+            echo "✓ configured"
+        else
+            echo "⚠ not configured"
+        fi
+    fi
+    
+    # Test docker
+    if command -v docker &> /dev/null; then
+        echo -n "• docker: "
+        if [ -f "$USER_HOME/.docker/config.json" ] && grep -q "$PROXY_PORT" "$USER_HOME/.docker/config.json"; then
+            echo "✓ configured"
+        else
+            echo "⚠ not configured"
+        fi
+    fi
+    
+    echo ""
+    if [ $failed -eq 0 ]; then
+        log "All tools working with proxy"
+    else
+        error "$failed tools failed proxy test"
+        return 1
+    fi
+}
+
+test_git_clone() {
+    log "Testing git clone with proxy..."
+    local test_dir="/tmp/squid-git-test-$$"
+    local target_dir="${1:-$USER_HOME/src}"
+    
+    # Ensure target directory exists
+    run_as_user mkdir -p "$target_dir"
+    
+    # Create temp test directory
+    mkdir -p "$test_dir"
+    cd "$test_dir"
+    
+    # Test with a small repo first
+    echo "Testing with small repository..."
+    if timeout 30 run_as_user git clone --depth 1 https://github.com/octocat/Hello-World.git >/dev/null 2>&1; then
+        log "Small repo clone successful"
+        rm -rf Hello-World
+    else
+        error "Small repo clone failed"
+        cd - >/dev/null
+        rm -rf "$test_dir"
+        return 1
+    fi
+    
+    # Test with Linux kernel (shallow clone)
+    echo "Testing with Linux kernel (shallow clone)..."
+    cd "$target_dir"
+    if [ -d "linux" ]; then
+        log "Linux repo already exists in $target_dir/linux"
+    else
+        if timeout 120 run_as_user git clone --depth 1 https://github.com/torvalds/linux.git >/dev/null 2>&1; then
+            log "Linux kernel clone successful to $target_dir/linux"
+        else
+            error "Linux kernel clone failed"
+            cd - >/dev/null
+            rm -rf "$test_dir"
+            return 1
+        fi
+    fi
+    
+    cd - >/dev/null
+    rm -rf "$test_dir"
+    log "Git clone tests completed successfully"
+}
+
+main() {
+    # Check config templates exist (only for main install)
     case "${1:-}" in
-        --clean) clean_install; exit 0 ;;
-        --disable) cleanup; exit 0 ;;
+        --configure-tools|--remove-tools-config|--test-tools|--test-git-clone)
+            # Skip template check for these options
+            ;;
+        *)
+            # Check templates for all other options
+            for template in ca.conf.template server.conf.template mime.conf.template squid.conf.template squid.service.template; do
+                [ -f "$CONFIG_DIR/$template" ] || { error "Missing config template: $CONFIG_DIR/$template"; exit 1; }
+            done
+            ;;
     esac
     
-    # Build if needed
+    case "${1:-}" in
+        --clean) 
+            clean_install
+            exit 0 
+            ;;
+        --disable) 
+            cleanup
+            remove_dev_tools_proxy
+            exit 0 
+            ;;
+        --configure-tools)
+            configure_dev_tools
+            exit 0
+            ;;
+        --remove-tools-config)
+            remove_dev_tools_proxy
+            exit 0
+            ;;
+        --test-tools)
+            test_dev_tools
+            exit 0
+            ;;
+        --test-git-clone)
+            test_git_clone "${2:-}"
+            exit 0
+            ;;
+        --help)
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  (none)                Install Squid proxy with default settings"
+            echo "  --clean               Complete clean install (removes everything)"
+            echo "  --disable             Disable proxy and remove from system"
+            echo "  --configure-tools     Configure all dev tools to use proxy"
+            echo "  --remove-tools-config Remove proxy config from dev tools"
+            echo "  --test-tools          Test all dev tools proxy configuration"
+            echo "  --test-git-clone [DIR] Test git clone via proxy (default: ~/src)"
+            echo "  --help                Show this help message"
+            exit 0
+            ;;
+        "")
+            # Default install flow
+            ;;
+        *)
+            error "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+    
+    # Main installation flow
     install_deps
     build_squid
-    
     create_certs
     create_config
     init_cache
@@ -357,12 +671,16 @@ main() {
     start_squid
     test_proxy
     
+    # Automatically configure dev tools
+    configure_dev_tools
+    
     log "Installation complete!"
     log "Cache directory: $CACHE_DIR"
     log "Proxy URL: http://localhost:$PROXY_PORT"
     log "Disable: $0 --disable"
     log "Clean: $0 --clean"
     log ""
+    log "All development tools have been configured to use the proxy"
     log "Note: You may need to restart your session for global proxy to take effect"
 }
 
