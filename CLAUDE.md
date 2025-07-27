@@ -9,9 +9,15 @@
 
 ## Testing Commands
 - `make test-bash` - Run bash script tests
-- `make install-squid` - Install squid proxy and configure dev tools
+- `make install-squid` - Install squid proxy and configure dev tools (tool-specific, not system-wide)
 - `make test-squid` - Test complete squid setup
 - `make uninstall-squid` - Clean removal of squid
+
+## Proxy Configuration
+- **NO SYSTEM-WIDE PROXY**: The proxy is configured per-tool only, not globally
+- **Tool-specific configuration**: Each dev tool (git, npm, pip, etc.) is individually configured
+- **No interference with other apps**: Claude Code and other applications won't be affected
+- **Fallback support**: Tools work normally when squid is not running
 
 ## CRITICAL BUILD PRESERVATION RULES
 - **NEVER DELETE SQUID BUILD**: Once Squid is built at `/usr/local/squid/`, it must NEVER be removed
