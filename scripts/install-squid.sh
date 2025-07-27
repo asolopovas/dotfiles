@@ -61,8 +61,10 @@ install_deps() {
     log "Installing dependencies..."
     # Clear proxy environment to avoid circular dependency during install
     clear_proxy_env
-    apt-get update -y >/dev/null
-    apt-get install -y build-essential autoconf automake libtool libtool-bin \
+    env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy \
+        apt-get update -y >/dev/null
+    env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy \
+        apt-get install -y build-essential autoconf automake libtool libtool-bin \
         libltdl-dev openssl libssl-dev pkg-config wget >/dev/null
     id proxy >/dev/null 2>&1 || useradd -r -s /bin/false proxy
 }
@@ -86,7 +88,8 @@ build_squid() {
     # Clear proxy environment for downloading source
     clear_proxy_env
     SQUID_URL="https://github.com/squid-cache/squid/archive/refs/tags/SQUID_$(echo $VER | sed 's/\./_/g').tar.gz"
-    wget -qO "$build/squid.tar.gz" "$SQUID_URL"
+    env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy \
+        wget -qO "$build/squid.tar.gz" "$SQUID_URL"
     tar -xf "$build/squid.tar.gz" -C "$build"
     cd "$build"/*
     [ -x configure ] || ./bootstrap.sh
@@ -195,15 +198,8 @@ init_cache() {
 setup_global_proxy() {
     log "Setting up global proxy environment..."
     
-    # Create systemd environment file
-    cat > /etc/environment.d/99-proxy.conf << EOF
-HTTP_PROXY=http://localhost:$PROXY_PORT
-HTTPS_PROXY=http://localhost:$PROXY_PORT
-http_proxy=http://localhost:$PROXY_PORT
-https_proxy=http://localhost:$PROXY_PORT
-NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-no_proxy=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
-EOF
+    # Remove any system-wide proxy environment file to avoid issues when squid is down
+    rm -f /etc/environment.d/99-proxy.conf
 
     # Create shell profile for legacy support with fallback
     cat > /etc/profile.d/proxy.sh << EOF
@@ -456,11 +452,26 @@ EOF
         log "Cargo proxy configured"
     fi
     
-    # Configure apt
+    # Configure apt with fallback script
     if command -v apt &> /dev/null; then
-        echo "Acquire::http::Proxy \"$proxy_url\";" > /etc/apt/apt.conf.d/99proxy
-        echo "Acquire::https::Proxy \"$proxy_url\";" >> /etc/apt/apt.conf.d/99proxy
-        log "apt proxy configured"
+        cat > /etc/apt/apt.conf.d/99proxy << 'EOF'
+// Dynamic proxy configuration with fallback
+Acquire::http::ProxyAutoDetect "/usr/local/bin/apt-proxy-detect";
+Acquire::https::ProxyAutoDetect "/usr/local/bin/apt-proxy-detect";
+EOF
+        
+        # Create proxy detection script for apt
+        cat > /usr/local/bin/apt-proxy-detect << 'EOF'
+#!/bin/bash
+# Check if squid is running, return proxy URL or empty
+if nc -z localhost 3128 2>/dev/null; then
+    echo "http://localhost:3128"
+else
+    echo "DIRECT"
+fi
+EOF
+        chmod +x /usr/local/bin/apt-proxy-detect
+        log "apt proxy with fallback configured"
     fi
     
     log "Development tools proxy configuration complete"
@@ -483,6 +494,7 @@ remove_dev_tools_proxy() {
     rm -f "$USER_HOME/.wgetrc" "$USER_HOME/.curlrc" "$USER_HOME/.pip/pip.conf" "$USER_HOME/.config/pip/pip.conf"
     rm -f "$USER_HOME/.docker/config.json"
     rm -f /etc/apt/apt.conf.d/99proxy 2>/dev/null || true
+    rm -f /usr/local/bin/apt-proxy-detect 2>/dev/null || true
     rm -f /etc/systemd/system/docker.service.d/http-proxy.conf 2>/dev/null || true
     
     log "Proxy configuration removed from development tools"
