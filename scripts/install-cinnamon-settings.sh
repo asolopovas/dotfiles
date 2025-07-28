@@ -346,55 +346,14 @@ fi
 EOF
     chmod +x ~/.local/bin/toggle-terminal-window
 
-    # Create window snapping script (mod+hjkl functionality)
-    cat > ~/.local/bin/snap-window << 'EOF'
-#!/bin/bash
-# Snap active window to various sections of the screen
-
-direction="$1"
-
-if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null; then
-    exit 1
-fi
-
-active_window=$(xdotool getactivewindow 2>/dev/null)
-if [ -z "$active_window" ]; then
-    exit 1
-fi
-
-# Get screen dimensions using xdotool
-eval $(xdotool getdisplaygeometry --shell)
-screen_width=$WIDTH
-screen_height=$HEIGHT
-
-# Account for panel (usually at bottom in Cinnamon)
-panel_height=40
-usable_height=$((screen_height - panel_height))
-
-case "$direction" in
-    "left")
-        # Snap to left half
-        wmctrl -i -r "$active_window" -e "0,0,0,$((screen_width/2)),$usable_height"
-        ;;
-    "right")
-        # Snap to right half
-        wmctrl -i -r "$active_window" -e "0,$((screen_width/2)),0,$((screen_width/2)),$usable_height"
-        ;;
-    "up")
-        # Maximize window
-        wmctrl -i -b add,maximized_vert,maximized_horz "$active_window"
-        ;;
-    "down")
-        # Minimize window
-        wmctrl -i -b add,hidden "$active_window"
-        ;;
-    *)
-        echo "Usage: snap-window {left|right|up|down}"
-        exit 1
-        ;;
-esac
-EOF
-    chmod +x ~/.local/bin/snap-window
+    # Install 4-column grid snap-window script from dotfiles
+    if [ -f "${HOME}/dotfiles/scripts/snap-window" ]; then
+        cp "${HOME}/dotfiles/scripts/snap-window" ~/.local/bin/snap-window
+        chmod +x ~/.local/bin/snap-window
+        print_status "Installed 4-column grid snap-window script"
+    else
+        print_warning "snap-window script not found in dotfiles/scripts/"
+    fi
 
     # Create a simple window cycling script (since Cinnamon's alt-tab is different)
     cat > ~/.local/bin/cinnamon-cycle-windows << 'EOF'
@@ -464,10 +423,10 @@ EOF
     echo "  • Super+o: Code editor"
     echo "  • Super+s: Focus master window"
     echo "  • Super+0: System actions/power menu"
-    echo "  • Super+h: Snap window to left half"
-    echo "  • Super+j: Snap window to bottom half"
-    echo "  • Super+k: Snap window to top half"
-    echo "  • Super+l: Snap window to right half"
+    echo "  • Super+h: Snap window left (4-column grid aware)"
+    echo "  • Super+j: Snap window down (4-column grid aware)"
+    echo "  • Super+k: Snap window up (4-column grid aware)"
+    echo "  • Super+l: Snap window right (4-column grid aware)"
     echo "  • Super+q: Close window"
     echo "  • Super+f: Toggle fullscreen"
     echo "  • Super+t: Toggle window always-on-top"
