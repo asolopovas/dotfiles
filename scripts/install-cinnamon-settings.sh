@@ -166,6 +166,13 @@ main() {
     set_keybinding "snap-right" "${USER_HOME}/.local/bin/snap-window right" "<Super>l"
     add_custom_keybinding "snap-right"
 
+    # Expand quarter windows to half (mod+shift+j/k)
+    set_keybinding "expand-up" "${USER_HOME}/.local/bin/snap-window expand-up" "<Super><Shift>k"
+    add_custom_keybinding "expand-up"
+    
+    set_keybinding "expand-down" "${USER_HOME}/.local/bin/snap-window expand-down" "<Super><Shift>j"
+    add_custom_keybinding "expand-down"
+
     # Toggle fullscreen
     gsettings set org.cinnamon.desktop.keybindings.wm toggle-fullscreen "['<Super>f']"
 
