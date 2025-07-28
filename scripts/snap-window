@@ -81,7 +81,7 @@ case "$direction" in
             target_column=0  # Wrap to leftmost column
         fi
         ;;
-    "up"|"down")
+    "up"|"down"|"expand-up"|"expand-down")
         target_column=$current_column  # Stay in same column
         ;;
 esac
@@ -137,6 +137,18 @@ case "$direction" in
     "down")
         new_y=$((target_screen_y + usable_height / 2))
         new_height=$((usable_height / 2))
+        ;;
+    "expand-up"|"expand-down")
+        # Expand quarter window to full height, preserving horizontal position
+        if [ "$is_half_height" = false ]; then
+            # Window is not half-height (could be quarter), expand to full height
+            new_y=$target_screen_y
+            new_height=$usable_height
+        else
+            # Window is already half-height, do nothing or could toggle back to quarter
+            new_y=$target_screen_y
+            new_height=$usable_height
+        fi
         ;;
 esac
 
