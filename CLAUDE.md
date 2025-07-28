@@ -75,3 +75,12 @@
 - **NEVER USE TIMEOUT COMMANDS**: timeout is unreliable - use proper error handling and process management instead
 - **Use /home/andrius/dotfiles/tmp/ for experiments**: This directory is gitignored and safe for testing
 - **Clean up tmp/ directory after experiments**: Remove test files to keep the repository clean
+
+## Error Handling Requirements
+- **ALWAYS ADDRESS EVERY ERROR**: When encountering any error during testing or execution, it must be fixed before proceeding
+- **TOOL-SPECIFIC ERROR HANDLING**: Different package managers have different command syntax - check if config exists before removing:
+  - NPM: Use `npm config delete` (works even if config doesn't exist)
+  - Yarn: Use `yarn config get` to check existence before `yarn config unset` to avoid "Invalid configuration key" errors
+  - Go: Use `go env -u` (gracefully handles non-existent variables)
+- **VERIFY ERROR FIXES**: After fixing errors, always test the fix to ensure it works properly
+- **DOCUMENT ERROR PATTERNS**: Note common error patterns and their solutions for future reference

@@ -13,11 +13,6 @@ acl step1 at_step SslBump1
 acl step2 at_step SslBump2
 acl step3 at_step SslBump3
 
-# Docker registry ACL - bypass SSL bump for Docker
-acl docker_registry dstdomain registry-1.docker.io
-acl docker_registry dstdomain auth.docker.io
-acl docker_registry dstdomain production.cloudflare.docker.com
-acl docker_registry dstdomain registry.docker.io
 
 http_access deny !Safe_ports
 http_access deny CONNECT !SSL_ports
@@ -32,7 +27,6 @@ http_port {{PROXY_PORT}} tcpkeepalive={{TCP_KEEPALIVE}} ssl-bump generate-host-c
 sslcrtd_program {{PREFIX}}/libexec/security_file_certgen -s {{PREFIX}}/var/logs/ssl_db -M {{SQUID_SSL_DB_SIZE}}
 sslcrtd_children {{SSLCRTD_CHILDREN}}
 
-ssl_bump splice docker_registry
 ssl_bump peek step1
 ssl_bump bump step2
 ssl_bump splice step3
