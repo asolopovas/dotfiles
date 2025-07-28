@@ -120,7 +120,7 @@ myKeyb =
     ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"      ), -- Restarts xmonad
     ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
-    ("M-m",              namedScratchpadAction myScratchPads "lollypop"      ),
+    ("M-m",              namedScratchpadAction myScratchPads "tauon"         ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
@@ -134,12 +134,12 @@ myKeyb =
     ("<XF86AudioLowerVolume>", spawn "lmc down" ),
     ("<XF86AudioRaiseVolume>", spawn "lmc up"   ),
     ("<XF86AudioMute>",        spawn "lmc mute" ),
-    ("<XF86AudioPlay>",        spawn "lollypop -t"                          ),
+    ("<XF86AudioPlay>",        spawn "playerctl play-pause"                ),
     ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                            ),
     ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
-    ("<XF86AudioStop>",        spawn "lollypop -s"                          ),
-    ("<XF86AudioPrev>",        spawn "lollypop -p"                          ),
-    ("<XF86AudioNext>",        spawn "lollypop -n"                          ),
+    ("<XF86AudioStop>",        spawn "playerctl stop"                       ),
+    ("<XF86AudioPrev>",        spawn "playerctl previous"                   ),
+    ("<XF86AudioNext>",        spawn "playerctl next"                       ),
     ("<Print>",                spawn "flameshot gui"                         ),
     ("<XF86MenuPB>",           spawn "flameshot gui"                         )
 
@@ -153,7 +153,7 @@ myScratchPads =
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "lollypop"     "lollypop"                                    "className" "Lollypop"          "lg",
+        buildNS "tauon"        "flatpak run com.github.taiko2k.tauonmb"     "title"     "Tauon"            "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
