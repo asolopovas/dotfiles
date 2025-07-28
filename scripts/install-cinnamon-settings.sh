@@ -124,10 +124,11 @@ main() {
     gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-up "[]" 2>/dev/null || true
     gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-down "[]" 2>/dev/null || true
     gsettings set org.cinnamon.desktop.keybindings.wm panel-run-dialog "[]" 2>/dev/null || true
-    gsettings set org.cinnamon.desktop.keybindings.wm switch-applications "[]" 2>/dev/null || true
-    gsettings set org.cinnamon.desktop.keybindings.wm switch-applications-backward "[]" 2>/dev/null || true
-    gsettings set org.cinnamon.desktop.keybindings.wm switch-windows "[]" 2>/dev/null || true
-    gsettings set org.cinnamon.desktop.keybindings.wm switch-windows-backward "[]" 2>/dev/null || true
+    # Keep Alt+Tab functionality - DO NOT disable these, restore if needed
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-applications "['<Alt>Tab']" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-applications-backward "['<Shift><Alt>Tab']" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-windows "['<Alt>Tab']" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-windows-backward "['<Shift><Alt>Tab']" 2>/dev/null || true
     
     # Disable media key shortcuts that might conflict (with error handling)
     gsettings set org.cinnamon.desktop.keybindings.media-keys terminal "[]" 2>/dev/null || true
@@ -295,27 +296,36 @@ main() {
 #!/bin/bash
 # Toggle terminal: launch if none exist, focus if exists but not active, toggle maximize if active
 
+# Debug logging (uncomment to debug)
+# echo "$(date): toggle-terminal-window called" >> /tmp/terminal-toggle.log
+
 if command -v wmctrl &> /dev/null && command -v xdotool &> /dev/null; then
-    # Get current active window
-    active_window=$(xdotool getactivewindow 2>/dev/null)
+    # Get current active window (in decimal format)
+    active_window_dec=$(xdotool getactivewindow 2>/dev/null)
     
-    # Find all terminal windows
+    # Convert to hexadecimal format for wmctrl comparison
+    active_window_hex=$(printf "0x%08x" "$active_window_dec" 2>/dev/null)
+    
+    # Find all terminal windows (returns hex format)
     terminal_windows=$(wmctrl -l -x | grep -i "alacritty\|gnome-terminal\|terminal\|konsole" | awk '{print $1}')
+    
+    # Debug logging
+    # echo "Active window: $active_window_dec ($active_window_hex)" >> /tmp/terminal-toggle.log
+    # echo "Terminal windows: $terminal_windows" >> /tmp/terminal-toggle.log
     
     if [ -z "$terminal_windows" ]; then
         # No terminals exist - launch new one
         alacritty & disown
+        # echo "Launched new terminal" >> /tmp/terminal-toggle.log
         exit 0
     fi
     
-    # Check if active window is a terminal
-    if [ -n "$active_window" ]; then
-        window_class=$(xdotool getwindowclassname "$active_window" 2>/dev/null || echo "")
-        
-        # Check if current window is a terminal
-        if echo "$terminal_windows" | grep -q "$active_window"; then
+    # Check if active window is a terminal (compare hex formats)
+    if [ -n "$active_window_hex" ]; then
+        if echo "$terminal_windows" | grep -q "$active_window_hex"; then
             # Active window is a terminal - toggle its maximize state
-            wmctrl -i -b toggle,maximized_vert,maximized_horz "$active_window"
+            wmctrl -i -r "$active_window_dec" -b toggle,maximized_vert,maximized_horz
+            # echo "Toggled maximize for active terminal $active_window_hex" >> /tmp/terminal-toggle.log
             exit 0
         fi
     fi
@@ -324,9 +334,11 @@ if command -v wmctrl &> /dev/null && command -v xdotool &> /dev/null; then
     # Focus the first terminal found
     first_terminal=$(echo "$terminal_windows" | head -n1)
     wmctrl -i -a "$first_terminal"
+    # echo "Focused existing terminal $first_terminal" >> /tmp/terminal-toggle.log
 else
     # Fallback: just launch terminal
     alacritty & disown
+    # echo "Fallback: launched terminal" >> /tmp/terminal-toggle.log
 fi
 EOF
     chmod +x ~/.local/bin/toggle-terminal-window
@@ -467,6 +479,7 @@ EOF
     echo "  • F7: Chat application"
     echo "  • F8: System monitor"
     echo "  • Print: Screenshot"
+    echo "  • Alt+Tab: Switch between windows (preserved)"
     echo "  • Media keys: Volume, brightness, playback controls"
     
     print_warning "Note: Some advanced XMonad features cannot be replicated in Cinnamon:"
