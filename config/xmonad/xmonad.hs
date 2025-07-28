@@ -452,8 +452,8 @@ main = do
     [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
 
   xmonad
+    $ ewmh
     $ docks
-    $ ewmhFullscreen
     $ def {
         terminal           = myTerminal,
         focusFollowsMouse  = myFocusFollowsMouse,
