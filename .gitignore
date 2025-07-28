@@ -12,3 +12,4 @@
 .php-ini
 .php-version
 tmp/
+.claude/settings.local.json
