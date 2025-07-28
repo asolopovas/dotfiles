@@ -79,11 +79,12 @@ main() {
     
     # Application shortcuts
     declare -A apps=(
-        ["terminal-toggle"]="alacritty:<Super>Return"
+        ["terminal-toggle"]="${USER_HOME}/.local/bin/terminal-toggle toggle:<Super>Return"
+        ["terminal-new"]="${USER_HOME}/.local/bin/terminal-toggle new:<Super><Shift>Return"
         ["app-launcher"]="cinnamon-launcher:<Super>d"
         ["browser"]="brave-browser --no-default-browser-check:<Super>c"
         ["file-browser"]="thunar:<Super>x"
-        ["scratchpad-terminal"]="alacritty -t scratchpad:<Super><Shift>Return"
+        ["scratchpad-terminal"]="alacritty -t scratchpad:<Super><Ctrl>Return"
         ["music-player"]="flatpak run com.github.taiko2k.tauonmb:<Super>m"
         ["firefox-scratchpad"]="firefox --class='FirefoxScratchpad':<Super>b"
         ["system-monitor"]="gnome-system-monitor:F8"
@@ -123,25 +124,14 @@ main() {
         warn "snap-window script not found in dotfiles/scripts/"
     fi
     
-    # Create toggle-terminal script
-    cat > ~/.local/bin/toggle-terminal-window << 'EOF'
-#!/bin/bash
-# Smart terminal toggle: launch/focus/maximize toggle
-if command -v wmctrl &>/dev/null && command -v xdotool &>/dev/null; then
-    active=$(xdotool getactivewindow 2>/dev/null)
-    active_hex=$(printf "0x%08x" "$active" 2>/dev/null)
-    terminals=$(wmctrl -l -x | grep -i "alacritty\|terminal" | awk '{print $1}')
-    
-    [[ -z "$terminals" ]] && { alacritty & disown; exit; }
-    [[ -n "$active_hex" ]] && echo "$terminals" | grep -q "$active_hex" && {
-        wmctrl -i -r "$active" -b toggle,maximized_vert,maximized_horz; exit
-    }
-    wmctrl -i -a "$(echo "$terminals" | head -n1)"
-else
-    alacritty & disown
-fi
-EOF
-    chmod +x ~/.local/bin/toggle-terminal-window
+    # Copy terminal-toggle script
+    if [[ -f "${HOME}/dotfiles/scripts/terminal-toggle" ]]; then
+        cp "${HOME}/dotfiles/scripts/terminal-toggle" ~/.local/bin/terminal-toggle
+        chmod +x ~/.local/bin/terminal-toggle
+        log "Installed terminal-toggle script"
+    else
+        warn "terminal-toggle script not found in dotfiles/scripts/"
+    fi
     
     header "Configuring WM behavior"
     
