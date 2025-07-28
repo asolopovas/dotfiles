@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Logout script - brings user to GDM login screen
+# Usage: ./logout
+
+# Kill the current user session to return to GDM
+loginctl terminate-user "$USER"
