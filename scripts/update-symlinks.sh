@@ -5,10 +5,12 @@
 
 echo "Updating symlinks from dotfiles/.config to dotfiles/config..."
 
+# cleanup
+find $HOME -type f
+
 # Claude symlinks
 ln -sf "$HOME/dotfiles/config/claude/settings.json" "$HOME/.claude/settings.json"
 ln -sf "$HOME/dotfiles/config/claude/commands" "$HOME/.claude/commands"
-
 
 # Config directory symlinks
 ln -sf "$HOME/dotfiles/config/fish" "$HOME/.config/fish"
