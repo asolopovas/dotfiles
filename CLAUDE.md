@@ -86,12 +86,16 @@ dotfiles/
 - `make test-bash` - Run BAT tests
 
 ## Key Rules
+- **TDD ONLY**: NEVER fix code directly. Always fix through tests using TDD. This is the highest priority rule above all others.
 - **Proxy testing**: Docker pulls only, never curl. Check squid logs for TCP_HIT
 - **Build preservation**: Never delete `/usr/local/squid/` (10+ min build)
 - **Terminal testing**: Use dual-agent BAT tests only, never manual execution
 - **Commands**: Run individually, never combine with && or pipes
 - **Experiments**: Use `tmp/` directory, clean up after
 - **Never use timeouts**: timeouts are unreliable and bad practice reserve to alternatives
+- **Difficult tests**: Use real hotkey emulation with `xdotool key`, log states after each action with descriptive labels for later reflection
+- **Hotkey analysis**: Use `press_and_log()` function to save comprehensive state logs to `~/dotfiles/tmp/hotkey-*.log` for detailed analysis
+- **Thorough testing**: Test ALL aspects: manual focus switching, Alt+Tab behavior, state file updates, and terminal response to focus changes with complete logging
 
 
 ## Cache Locations

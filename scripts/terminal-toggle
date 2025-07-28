@@ -234,6 +234,9 @@ update_terminal_tracking() {
 
 # Function to toggle terminal (main logic)
 toggle_terminal() {
+    # Check and update focus first to detect Alt+Tab switches
+    check_and_update_focus
+    
     # Clean up dead windows first
     update_terminal_tracking
     
