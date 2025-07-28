@@ -1,0 +1,144 @@
+#!/bin/bash
+# 4-column grid system across dual monitors
+# Columns: [Screen0-Left] [Screen0-Right] [Screen1-Left] [Screen1-Right]
+
+direction="$1"
+
+if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null || ! command -v xrandr &> /dev/null; then
+    exit 1
+fi
+
+active_window=$(xdotool getactivewindow 2>/dev/null)
+if [ -z "$active_window" ]; then
+    exit 1
+fi
+
+wmctrl -i -r "$active_window" -b remove,maximized_vert,maximized_horz 2>/dev/null
+
+# Get current window position
+window_info=$(wmctrl -lG | grep "$(printf '0x%08x' $active_window)")
+if [ -z "$window_info" ]; then
+    exit 1
+fi
+
+current_x=$(echo "$window_info" | awk '{print $3}')
+current_y=$(echo "$window_info" | awk '{print $4}')
+current_width=$(echo "$window_info" | awk '{print $5}')
+current_height=$(echo "$window_info" | awk '{print $6}')
+
+# Get monitor info (assuming 2 monitors for now)
+# Screen 0: 1920x1080+0+0
+# Screen 1: 1920x1080+1920+0
+screen0_x=0
+screen0_y=0
+screen0_width=1920
+screen0_height=1080
+
+screen1_x=1920
+screen1_y=0
+screen1_width=1920
+screen1_height=1080
+
+panel_height=40
+usable_height=$((screen0_height - panel_height))
+
+# Determine current column (0-3)
+current_column=-1
+
+if [ $current_x -lt 1920 ]; then
+    # On screen 0
+    if [ $current_x -lt 960 ]; then
+        current_column=0  # Screen 0 left
+    else
+        current_column=1  # Screen 0 right
+    fi
+else
+    # On screen 1
+    if [ $current_x -lt 2880 ]; then
+        current_column=2  # Screen 1 left
+    else
+        current_column=3  # Screen 1 right
+    fi
+fi
+
+# Determine if window is half-height
+is_half_height=false
+if [ $current_height -le $((usable_height / 2 + 50)) ] && [ $current_height -ge $((usable_height / 2 - 50)) ]; then
+    is_half_height=true
+fi
+
+# Calculate target column
+case "$direction" in
+    "left")
+        target_column=$((current_column - 1))
+        if [ $target_column -lt 0 ]; then
+            target_column=3  # Wrap to rightmost column
+        fi
+        ;;
+    "right")
+        target_column=$((current_column + 1))
+        if [ $target_column -gt 3 ]; then
+            target_column=0  # Wrap to leftmost column
+        fi
+        ;;
+    "up"|"down")
+        target_column=$current_column  # Stay in same column
+        ;;
+esac
+
+# Calculate new position based on target column
+case $target_column in
+    0) # Screen 0 left
+        new_x=$screen0_x
+        new_width=$((screen0_width / 2))
+        target_screen_y=$screen0_y
+        ;;
+    1) # Screen 0 right
+        new_x=$((screen0_x + screen0_width / 2))
+        new_width=$((screen0_width / 2))
+        target_screen_y=$screen0_y
+        ;;
+    2) # Screen 1 left
+        new_x=$screen1_x
+        new_width=$((screen1_width / 2))
+        target_screen_y=$screen1_y
+        ;;
+    3) # Screen 1 right
+        new_x=$((screen1_x + screen1_width / 2))
+        new_width=$((screen1_width / 2))
+        target_screen_y=$screen1_y
+        ;;
+esac
+
+# Handle vertical movement
+case "$direction" in
+    "left"|"right")
+        # Preserve vertical position when moving horizontally
+        if [ "$is_half_height" = true ]; then
+            # Window is half-height, preserve top/bottom position
+            relative_y=$((current_y - (current_y < 1920 ? screen0_y : screen1_y)))
+            if [ $relative_y -lt $((usable_height / 2)) ]; then
+                new_y=$target_screen_y
+                new_height=$((usable_height / 2))
+            else
+                new_y=$((target_screen_y + usable_height / 2))
+                new_height=$((usable_height / 2))
+            fi
+        else
+            # Full height
+            new_y=$target_screen_y
+            new_height=$usable_height
+        fi
+        ;;
+    "up")
+        new_y=$target_screen_y
+        new_height=$((usable_height / 2))
+        ;;
+    "down")
+        new_y=$((target_screen_y + usable_height / 2))
+        new_height=$((usable_height / 2))
+        ;;
+esac
+
+# Apply new position
+wmctrl -i -r "$active_window" -e "0,$new_x,$new_y,$new_width,$new_height"
