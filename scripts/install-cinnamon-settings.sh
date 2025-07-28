@@ -83,6 +83,9 @@ disable_default_shortcut() {
 main() {
     print_header "Cinnamon Shortcuts Configuration (XMonad-inspired)"
     
+    # Get the current user's home directory dynamically
+    USER_HOME="$(eval echo ~$USER)"
+    
     check_desktop_environment
     
     # Create applications directory if it doesn't exist
@@ -151,16 +154,16 @@ main() {
     add_custom_keybinding "close-window"
     
     # Window snapping (mod+hjkl)
-    set_keybinding "snap-left" "\$HOME/.local/bin/snap-window left" "<Super>h"
+    set_keybinding "snap-left" "${USER_HOME}/.local/bin/snap-window left" "<Super>h"
     add_custom_keybinding "snap-left"
     
-    set_keybinding "snap-down" "\$HOME/.local/bin/snap-window down" "<Super>j"
+    set_keybinding "snap-down" "${USER_HOME}/.local/bin/snap-window down" "<Super>j"
     add_custom_keybinding "snap-down"
     
-    set_keybinding "snap-up" "\$HOME/.local/bin/snap-window up" "<Super>k"
+    set_keybinding "snap-up" "${USER_HOME}/.local/bin/snap-window up" "<Super>k"
     add_custom_keybinding "snap-up"
     
-    set_keybinding "snap-right" "\$HOME/.local/bin/snap-window right" "<Super>l"
+    set_keybinding "snap-right" "${USER_HOME}/.local/bin/snap-window right" "<Super>l"
     add_custom_keybinding "snap-right"
     
     # Toggle fullscreen
@@ -169,7 +172,7 @@ main() {
     print_header "Configuring Application Shortcuts"
     
     # Terminal toggle (minimize/maximize active terminal)
-    set_keybinding "terminal-toggle" "\$HOME/.local/bin/toggle-terminal-window" "<Super>Return"
+    set_keybinding "terminal-toggle" "${USER_HOME}/.local/bin/toggle-terminal-window" "<Super>Return"
     add_custom_keybinding "terminal-toggle"
     
     # Application launcher (rofi equivalent - using Cinnamon's menu)
@@ -422,7 +425,7 @@ fi
 EOF
     chmod +x ~/.local/bin/toggle-window-float
     
-    set_keybinding "toggle-float" "\$HOME/.local/bin/toggle-window-float" "<Super>t"
+    set_keybinding "toggle-float" "${USER_HOME}/.local/bin/toggle-window-float" "<Super>t"
     add_custom_keybinding "toggle-float"
     
     print_header "Installing Required Dependencies"
