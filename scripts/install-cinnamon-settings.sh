@@ -157,11 +157,11 @@ main() {
     set_keybinding "snap-left" "${USER_HOME}/.local/bin/snap-window left" "<Super>h"
     add_custom_keybinding "snap-left"
     
-    set_keybinding "snap-down" "${USER_HOME}/.local/bin/snap-window down" "<Super>j"
-    add_custom_keybinding "snap-down"
-    
-    set_keybinding "snap-up" "${USER_HOME}/.local/bin/snap-window up" "<Super>k"
+    set_keybinding "snap-up" "${USER_HOME}/.local/bin/snap-window up" "<Super>j"
     add_custom_keybinding "snap-up"
+    
+    set_keybinding "snap-down" "${USER_HOME}/.local/bin/snap-window down" "<Super>k"
+    add_custom_keybinding "snap-down"
     
     set_keybinding "snap-right" "${USER_HOME}/.local/bin/snap-window right" "<Super>l"
     add_custom_keybinding "snap-right"
