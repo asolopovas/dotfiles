@@ -88,33 +88,90 @@ main() {
     # Create applications directory if it doesn't exist
     mkdir -p ~/.local/share/applications
     
+    print_header "Disabling ALL Default Cinnamon Shortcuts"
+    
+    # Disable all default WM shortcuts (with error handling)
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-1 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-2 "[]" 2>/dev/null || true  
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-3 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-4 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-5 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-6 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-7 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-8 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-1 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-2 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-3 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-4 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-5 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-6 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-7 "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-8 "[]" 2>/dev/null || true
+    
+    # Disable window management shortcuts (with error handling)
+    gsettings set org.cinnamon.desktop.keybindings.wm close "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm toggle-fullscreen "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm toggle-maximized "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm minimize "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm maximize "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm unmaximize "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-left "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-right "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-up "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-down "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-left "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-right "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-up "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-down "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm panel-run-dialog "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-applications "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-applications-backward "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-windows "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm switch-windows-backward "[]" 2>/dev/null || true
+    
+    # Disable media key shortcuts that might conflict (with error handling)
+    gsettings set org.cinnamon.desktop.keybindings.media-keys terminal "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.media-keys home "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.media-keys search "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.media-keys screensaver "[]" 2>/dev/null || true
+    
+    # Disable Cinnamon specific shortcuts (with error handling)
+    gsettings set org.cinnamon.desktop.keybindings looking-glass-keybinding "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.desktop.keybindings.wm show-desktop "[]" 2>/dev/null || true
+    
+    # Clear any existing Super+L/lock screen bindings in all possible schemas
+    gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "[]" 2>/dev/null || true
+    gsettings set org.cinnamon.settings-daemon.plugins.media-keys screensaver "[]" 2>/dev/null || true
+    
     print_header "Configuring Window Management Shortcuts"
     
-    # Window management (Super key = Windows key)
-    disable_default_shortcut "org.cinnamon.desktop.keybindings.wm" "close"
+    # Window management (Super key = Windows key) 
     set_keybinding "close-window" "wmctrl -c :ACTIVE:" "<Super>q"
     add_custom_keybinding "close-window"
     
-    # Focus management (using Alt since Super+j/k might conflict)
-    set_keybinding "focus-down" "wmctrl -a :ACTIVE:" "<Super>j"  # This is limited in Cinnamon
-    add_custom_keybinding "focus-down"
+    # Window snapping (mod+hjkl)
+    set_keybinding "snap-left" "\$HOME/.local/bin/snap-window left" "<Super>h"
+    add_custom_keybinding "snap-left"
     
-    set_keybinding "focus-up" "wmctrl -a :ACTIVE:" "<Super>k"    # This is limited in Cinnamon
-    add_custom_keybinding "focus-up"
+    set_keybinding "snap-down" "\$HOME/.local/bin/snap-window down" "<Super>j"
+    add_custom_keybinding "snap-down"
+    
+    set_keybinding "snap-up" "\$HOME/.local/bin/snap-window up" "<Super>k"
+    add_custom_keybinding "snap-up"
+    
+    set_keybinding "snap-right" "\$HOME/.local/bin/snap-window right" "<Super>l"
+    add_custom_keybinding "snap-right"
     
     # Toggle fullscreen
-    disable_default_shortcut "org.cinnamon.desktop.keybindings.wm" "toggle-fullscreen"
     gsettings set org.cinnamon.desktop.keybindings.wm toggle-fullscreen "['<Super>f']"
     
     print_header "Configuring Application Shortcuts"
     
-    # Terminal
-    disable_default_shortcut "org.cinnamon.desktop.keybindings.media-keys" "terminal"
-    set_keybinding "terminal" "alacritty" "<Super>Return"
-    add_custom_keybinding "terminal"
+    # Terminal toggle (minimize/maximize active terminal)
+    set_keybinding "terminal-toggle" "\$HOME/.local/bin/toggle-terminal-window" "<Super>Return"
+    add_custom_keybinding "terminal-toggle"
     
     # Application launcher (rofi equivalent - using Cinnamon's menu)
-    disable_default_shortcut "org.cinnamon.desktop.keybindings.wm" "panel-run-dialog"
     set_keybinding "app-launcher" "cinnamon-launcher" "<Super>d"
     add_custom_keybinding "app-launcher"
     
@@ -188,13 +245,13 @@ main() {
     
     print_header "Configuring Workspace Shortcuts"
     
-    # Switch to workspaces (1-8, matching XMonad's actual workspace count)
+    # Re-enable ONLY our custom workspace shortcuts (1-8, matching XMonad's actual workspace count)
     for i in {1..8}; do
         gsettings set org.cinnamon.desktop.keybindings.wm "switch-to-workspace-$i" "['<Super>$i']"
         gsettings set org.cinnamon.desktop.keybindings.wm "move-to-workspace-$i" "['<Super><Shift>$i']"
     done
     
-    # Workspace navigation with arrow keys
+    # Workspace navigation with arrow keys (re-enable after clearing)
     gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-left "['<Super>Left']"
     gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-right "['<Super>Right']"
     gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-left "['<Super><Shift>Left']"
@@ -233,6 +290,97 @@ main() {
     
     print_header "Creating Custom Scripts for Advanced Features"
     
+    # Create terminal toggle script (handle terminal launching and toggling)
+    cat > ~/.local/bin/toggle-terminal-window << 'EOF'
+#!/bin/bash
+# Toggle terminal: launch if none exist, focus if exists but not active, toggle maximize if active
+
+if command -v wmctrl &> /dev/null && command -v xdotool &> /dev/null; then
+    # Get current active window
+    active_window=$(xdotool getactivewindow 2>/dev/null)
+    
+    # Find all terminal windows
+    terminal_windows=$(wmctrl -l -x | grep -i "alacritty\|gnome-terminal\|terminal\|konsole" | awk '{print $1}')
+    
+    if [ -z "$terminal_windows" ]; then
+        # No terminals exist - launch new one
+        alacritty & disown
+        exit 0
+    fi
+    
+    # Check if active window is a terminal
+    if [ -n "$active_window" ]; then
+        window_class=$(xdotool getwindowclassname "$active_window" 2>/dev/null || echo "")
+        
+        # Check if current window is a terminal
+        if echo "$terminal_windows" | grep -q "$active_window"; then
+            # Active window is a terminal - toggle its maximize state
+            wmctrl -i -b toggle,maximized_vert,maximized_horz "$active_window"
+            exit 0
+        fi
+    fi
+    
+    # Active window is not a terminal, or no active window
+    # Focus the first terminal found
+    first_terminal=$(echo "$terminal_windows" | head -n1)
+    wmctrl -i -a "$first_terminal"
+else
+    # Fallback: just launch terminal
+    alacritty & disown
+fi
+EOF
+    chmod +x ~/.local/bin/toggle-terminal-window
+    
+    # Create window snapping script (mod+hjkl functionality)
+    cat > ~/.local/bin/snap-window << 'EOF'
+#!/bin/bash
+# Snap active window to various sections of the screen
+
+direction="$1"
+
+if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null; then
+    exit 1
+fi
+
+active_window=$(xdotool getactivewindow 2>/dev/null)
+if [ -z "$active_window" ]; then
+    exit 1
+fi
+
+# Get screen dimensions using xdotool
+eval $(xdotool getdisplaygeometry --shell)
+screen_width=$WIDTH
+screen_height=$HEIGHT
+
+# Account for panel (usually at bottom in Cinnamon)
+panel_height=40
+usable_height=$((screen_height - panel_height))
+
+case "$direction" in
+    "left")
+        # Snap to left half
+        wmctrl -i -r "$active_window" -e "0,0,0,$((screen_width/2)),$usable_height"
+        ;;
+    "right")
+        # Snap to right half  
+        wmctrl -i -r "$active_window" -e "0,$((screen_width/2)),0,$((screen_width/2)),$usable_height"
+        ;;
+    "up")
+        # Maximize window
+        wmctrl -i -b add,maximized_vert,maximized_horz "$active_window"
+        ;;
+    "down")
+        # Minimize window
+        wmctrl -i -b add,hidden "$active_window"
+        ;;
+    *)
+        echo "Usage: snap-window {left|right|up|down}"
+        exit 1
+        ;;
+esac
+EOF
+    chmod +x ~/.local/bin/snap-window
+    
     # Create a simple window cycling script (since Cinnamon's alt-tab is different)
     cat > ~/.local/bin/cinnamon-cycle-windows << 'EOF'
 #!/bin/bash
@@ -262,13 +410,13 @@ fi
 EOF
     chmod +x ~/.local/bin/toggle-window-float
     
-    set_keybinding "toggle-float" "toggle-window-float" "<Super>t"
+    set_keybinding "toggle-float" "\$HOME/.local/bin/toggle-window-float" "<Super>t"
     add_custom_keybinding "toggle-float"
     
     print_header "Installing Required Dependencies"
     
     # Check and install required tools
-    REQUIRED_TOOLS=("wmctrl" "xdotool" "flameshot" "alacritty" "thunar")
+    REQUIRED_TOOLS=("wmctrl" "xdotool" "flameshot" "alacritty" "thunar" "xprop" "xdpyinfo")
     MISSING_TOOLS=()
     
     for tool in "${REQUIRED_TOOLS[@]}"; do
@@ -291,7 +439,7 @@ EOF
     print_header "Configuration Complete!"
     
     print_status "Shortcuts configured:"
-    echo "  • Super+Return: Terminal (alacritty)"
+    echo "  • Super+Return: Toggle terminal (minimize/maximize active or open new)"
     echo "  • Super+d: Application launcher"
     echo "  • Super+c: Browser (Brave)"
     echo "  • Super+b: Firefox scratchpad"
@@ -301,6 +449,10 @@ EOF
     echo "  • Super+o: Code editor"
     echo "  • Super+s: Focus master window"
     echo "  • Super+0: System actions/power menu"
+    echo "  • Super+h: Snap window to left half"
+    echo "  • Super+j: Snap window to bottom half"
+    echo "  • Super+k: Snap window to top half"
+    echo "  • Super+l: Snap window to right half"
     echo "  • Super+q: Close window"
     echo "  • Super+f: Toggle fullscreen"
     echo "  • Super+t: Toggle window always-on-top"
