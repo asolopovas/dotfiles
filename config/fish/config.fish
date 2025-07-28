@@ -12,7 +12,7 @@ set -x TERMINAL alacritty
 set -x EDITOR nvim
 set -x GOPATH $HOME/go
 set -x GOBIN $HOME/go/bin
-set -x GITCACHE_DIR /mnt/d/.cache/git
+
 # Aliases
 source $HOME/dotfiles/config/.aliasrc
 
@@ -60,8 +60,6 @@ if [ -f "$HOME/.local/google-cloud-sdk/path.fish.inc" ]; . "$HOME/.local/google-
 
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
-
-
 
 # rmodel CUDA environment
 set -x LD_LIBRARY_PATH "/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"

@@ -48,6 +48,7 @@ map('i', 'jk', '<Esc>', opts)
 -- Edit common files
 map('n', '<leader>er', ':e $HOME/.config/nvim/lua/andrius/remap.lua<CR>', opts)
 map('n', '<leader>ev', ':e $HOME/.config/nvim/lua/andrius/init.lua<CR>', opts)
+map('n', '<leader>ef', ':e $HOME/.config/fish/config.fish<CR>', opts)
 map('n', '<leader>es', ':e $HOME/.config/nvim/lua/andrius/set.lua<CR>', opts)
 map('n', '<leader>ea', ':e $HOME/.config/.aliasrc<CR>', opts)
 map('n', '<leader>sv', ':so $MYVIMRC<CR>', opts)
@@ -101,14 +102,14 @@ vim.keymap.set('n', '<C-M-l>', '<C-w>>', opts)
 vim.api.nvim_create_autocmd("TermOpen", {
   callback = function()
     local buf = vim.api.nvim_get_current_buf()
-    
-    vim.keymap.set("t", "<M-S-h>", "<Cmd>vertical resize -2<CR>", 
+
+    vim.keymap.set("t", "<M-S-h>", "<Cmd>vertical resize -2<CR>",
       { silent = true, buffer = buf })
-    vim.keymap.set("t", "<M-S-j>", "<Cmd>resize -2<CR>", 
+    vim.keymap.set("t", "<M-S-j>", "<Cmd>resize -2<CR>",
       { silent = true, buffer = buf })
-    vim.keymap.set("t", "<M-S-k>", "<Cmd>resize +2<CR>", 
+    vim.keymap.set("t", "<M-S-k>", "<Cmd>resize +2<CR>",
       { silent = true, buffer = buf })
-    vim.keymap.set("t", "<M-S-l>", "<Cmd>vertical resize +2<CR>", 
+    vim.keymap.set("t", "<M-S-l>", "<Cmd>vertical resize +2<CR>",
       { silent = true, buffer = buf })
   end
 })
