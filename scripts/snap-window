@@ -89,6 +89,21 @@ if [ $current_height -le $((usable_height / 2 + 50)) ] && [ $current_height -ge 
     is_half_height=true
 fi
 
+# Determine if window is full-width (check against current monitor)
+is_full_width=false
+current_monitor_width=0
+if [ $current_x -lt $screen0_width ]; then
+    # On screen 0
+    current_monitor_width=$screen0_width
+else
+    # On screen 1 or beyond
+    current_monitor_width=$screen1_width
+fi
+
+if [ $current_width -ge $((current_monitor_width - 50)) ]; then
+    is_full_width=true
+fi
+
 # Calculate target column
 case "$direction" in
     "left")
@@ -161,15 +176,38 @@ case "$direction" in
         new_height=$((usable_height / 2))
         ;;
     "expand-up"|"expand-down")
-        # Expand quarter window to full height, preserving horizontal position
-        if [ "$is_half_height" = false ]; then
-            # Window is not half-height (could be quarter), expand to full height
-            new_y=$target_screen_y
-            new_height=$usable_height
+        # Determine current monitor for proper width calculation
+        target_monitor=$((target_column / 2))
+        if [ $target_monitor -eq 0 ]; then
+            target_monitor_x=${screen_x[0]}
+            target_monitor_width=${screen_width[0]}
         else
-            # Window is already half-height, do nothing or could toggle back to quarter
+            target_monitor_x=${screen_x[1]}
+            target_monitor_width=${screen_width[1]}
+        fi
+        
+        # Handle vertical expansion based on current window state
+        if [ "$is_half_height" = false ]; then
+            # Window is quarter height - expand to half height, preserving horizontal position
             new_y=$target_screen_y
-            new_height=$usable_height
+            new_height=$((usable_height / 2))
+            if [ "$direction" = "expand-down" ]; then
+                new_y=$((target_screen_y + usable_height / 2))
+            fi
+        else
+            # Window is half height - check if it's also full width
+            if [ "$is_full_width" = true ]; then
+                # Full-width half window - expand to full window
+                new_y=$target_screen_y
+                new_height=$usable_height
+                # Preserve full width
+                new_x=$target_monitor_x
+                new_width=$target_monitor_width
+            else
+                # Half-width half window - expand to full height, preserve horizontal position
+                new_y=$target_screen_y
+                new_height=$usable_height
+            fi
         fi
         ;;
     "expand-left"|"expand-right")

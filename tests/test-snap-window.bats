@@ -146,6 +146,24 @@ test_snap_command() {
     test_snap_command "expand-down" ""
 }
 
+@test "expand-down from full-width top half to full window" {
+    # Create full-width top half
+    test_snap_command "up" ""
+    test_snap_command "expand-right" ""
+    
+    # Expand down should create full window
+    test_snap_command "expand-down" ""
+}
+
+@test "expand-up from full-width bottom half to full window" {
+    # Create full-width bottom half
+    test_snap_command "down" ""
+    test_snap_command "expand-right" ""
+    
+    # Expand up should create full window
+    test_snap_command "expand-up" ""
+}
+
 @test "expand-right from half to full to right-half" {
     # Position to left half first
     test_snap_command "left" ""
