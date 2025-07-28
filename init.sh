@@ -1,28 +1,10 @@
 #!/bin/bash
 
-OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
-
-DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
-export DOTFILES_DIR="$HOME/dotfiles"
 export CONFIG_DIR="$HOME/.config"
+export DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
+export DOTFILES_DIR="$HOME/dotfiles"
+export OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
-
-if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
-    SUDO="sudo"
-else
-    SUDO=""
-fi
-
-if ! command -v unzip &> /dev/null; then
-    sudo apt update
-    sudo apt install -y unzip
-fi
-
-cmd_exist() {
-    command -v $1 >/dev/null 2>&1
-}
-
-mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
 
 # Arguments
 declare -A features=(
@@ -45,6 +27,24 @@ declare -A features=(
     [TYPE]=${TYPE:-https}
     [ZSH]=${ZSH:-false}
 )
+
+if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
+    SUDO="sudo"
+else
+    SUDO=""
+fi
+
+if ! command -v unzip &> /dev/null; then
+    sudo apt update
+    sudo apt install -y unzip
+fi
+
+cmd_exist() {
+    command -v $1 >/dev/null 2>&1
+}
+
+mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
+
 
 for feature_name in "${!features[@]}"; do
     export ${feature_name}=${features[$feature_name]}
