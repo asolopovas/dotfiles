@@ -28,7 +28,22 @@ get_terminal_windows() {
 # Function to check if window exists
 window_exists() {
     local window_id="$1"
-    [ -n "$window_id" ] && wmctrl -l | grep -q "0x$(printf "%08x" "$window_id")"
+    if [ -z "$window_id" ]; then
+        return 1
+    fi
+    
+    # Handle both hex and decimal window IDs
+    local hex_id
+    if [[ "$window_id" =~ ^0x ]]; then
+        # Already in hex format, convert to decimal then back to consistent hex
+        local decimal_id=$(printf "%d" "$window_id")
+        hex_id=$(printf "0x%08x" "$decimal_id")
+    else
+        # Decimal format, convert to hex
+        hex_id=$(printf "0x%08x" "$window_id")
+    fi
+    
+    wmctrl -l | grep -q "$hex_id"
 }
 
 # Function to check if window is active
@@ -47,11 +62,14 @@ check_and_update_focus() {
         if [ "$window_class" = "$TERMINAL_CLASS" ]; then
             # Active window is a terminal, check if it's different from current tracked
             if [ "$active_window" != "$current_toggle_id" ]; then
-                # Lock onto this terminal
-                if [ -n "$current_toggle_id" ]; then
-                    previous_toggle_id="$current_toggle_id"
-                fi
+                # Lock onto this terminal - preserve old current as previous
+                local old_current="$current_toggle_id"
                 current_toggle_id="$active_window"
+                
+                # Only update previous_toggle_id if we had a different current window
+                if [ -n "$old_current" ] && [ "$old_current" != "$active_window" ]; then
+                    previous_toggle_id="$old_current"
+                fi
                 
                 # Save updated state
                 echo "current_toggle_id=$current_toggle_id" > "$STATE_FILE"
@@ -73,8 +91,23 @@ window_is_minimized() {
 # Function to activate window
 activate_window() {
     local window_id="$1"
-    wmctrl -i -a "$window_id" 2>/dev/null
-    xdotool windowactivate "$window_id" 2>/dev/null
+    
+    # Check if window exists first
+    if ! window_exists "$window_id"; then
+        return 1
+    fi
+    
+    # Try wmctrl first
+    if wmctrl -i -a "$window_id" 2>/dev/null; then
+        return 0
+    fi
+    
+    # Fallback to xdotool
+    if xdotool windowactivate "$window_id" 2>/dev/null; then
+        return 0
+    fi
+    
+    return 1
 }
 
 # Function to minimize window  
@@ -86,8 +119,23 @@ minimize_window() {
 # Function to restore window
 restore_window() {
     local window_id="$1"
-    wmctrl -i -r "$window_id" -b remove,hidden 2>/dev/null
-    wmctrl -i -a "$window_id" 2>/dev/null
+    
+    # Check if window exists first
+    if ! window_exists "$window_id"; then
+        return 1
+    fi
+    
+    # Try to restore window
+    if ! wmctrl -i -r "$window_id" -b remove,hidden 2>/dev/null; then
+        return 1
+    fi
+    
+    # Try to activate window
+    if ! wmctrl -i -a "$window_id" 2>/dev/null; then
+        return 1
+    fi
+    
+    return 0
 }
 
 # Function to launch new terminal
@@ -131,20 +179,27 @@ launch_terminal() {
     
     if [ -n "$new_window_id" ]; then
         # Convert hex to decimal for consistent handling
+        # get_terminal_windows() returns hex without 0x prefix, so add it
         new_window_id=$(printf "%d" "0x$new_window_id")
         
-        # Update tracking state
-        if [ -n "$current_toggle_id" ]; then
-            previous_toggle_id="$current_toggle_id"
-        fi
+        # Update tracking state - preserve previous state before updating
+        local old_current="$current_toggle_id"
         current_toggle_id="$new_window_id"
+        
+        # Only update previous_toggle_id if we had a different current window
+        if [ -n "$old_current" ] && [ "$old_current" != "$new_window_id" ]; then
+            previous_toggle_id="$old_current"
+        fi
         
         # Save state
         echo "current_toggle_id=$current_toggle_id" > "$STATE_FILE"
         echo "previous_toggle_id=$previous_toggle_id" >> "$STATE_FILE"
         
-        # Activate the new window
+        # Activate the new window to ensure it gets focus
         activate_window "$new_window_id"
+        
+        # Don't call check_and_update_focus here as it could overwrite our state
+        # The launch_terminal function should have full control over state updates
     fi
 }
 
@@ -165,6 +220,11 @@ update_terminal_tracking() {
         state_changed=true
     fi
     
+    # If both windows are dead, clear everything
+    if [ -z "$current_toggle_id" ] && [ -z "$previous_toggle_id" ]; then
+        state_changed=true
+    fi
+    
     # Save state if changed
     if [ "$state_changed" = true ]; then
         echo "current_toggle_id=$current_toggle_id" > "$STATE_FILE"
@@ -174,10 +234,11 @@ update_terminal_tracking() {
 
 # Function to toggle terminal (main logic)
 toggle_terminal() {
+    # Clean up dead windows first
     update_terminal_tracking
     
-    # Check if currently active window is a terminal and update focus if needed
-    check_and_update_focus
+    # Re-read state after cleanup
+    source "$STATE_FILE"
     
     # If we have a current terminal window
     if [ -n "$current_toggle_id" ] && window_exists "$current_toggle_id"; then
@@ -186,11 +247,19 @@ toggle_terminal() {
             minimize_window "$current_toggle_id"
         elif window_is_minimized "$current_toggle_id"; then
             # Terminal is minimized, restore and activate it
-            restore_window "$current_toggle_id"
+            if ! restore_window "$current_toggle_id"; then
+                # Restore failed, window likely dead - launch new terminal
+                launch_terminal
+                return
+            fi
             activate_window "$current_toggle_id"
         else
             # Terminal exists but not active, activate it
-            activate_window "$current_toggle_id"
+            if ! activate_window "$current_toggle_id"; then
+                # Activation failed, window likely dead - launch new terminal
+                launch_terminal
+                return
+            fi
         fi
     else
         # No current terminal, launch new one

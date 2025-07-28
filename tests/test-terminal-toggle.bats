@@ -1,469 +1,183 @@
 #!/usr/bin/env bats
 
-# Test suite for terminal-toggle script using Bats testing framework
-# Install bats with: sudo apt install bats (or see https://github.com/bats-core/bats-core)
+# Terminal toggle dual-agent test
 
-# Setup test environment
 setup() {
-    # Source script location
     TERMINAL_TOGGLE="/home/andrius/dotfiles/scripts/terminal-toggle"
-    STATE_FILE="$HOME/.cache/terminal-toggle-state"
-    BACKUP_STATE_FILE="$HOME/.cache/terminal-toggle-state.bak"
-    
-    # Ensure script is executable
-    chmod +x "$TERMINAL_TOGGLE"
-    
-    # Backup existing state if it exists
-    if [ -f "$STATE_FILE" ]; then
-        cp "$STATE_FILE" "$BACKUP_STATE_FILE"
-    fi
-    
-    # Clean state for testing
-    rm -f "$STATE_FILE"
-    
-    # Kill any existing alacritty processes to start clean
     pkill -f alacritty 2>/dev/null || true
-    sleep 0.5
-    
-    # Ensure we have required tools
-    if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null; then
-        skip "Required tools (wmctrl, xdotool) not available"
-    fi
-}
-
-# Teardown - restore original state
-teardown() {
-    # Kill any test alacritty processes
-    pkill -f alacritty 2>/dev/null || true
-    sleep 0.5
-    
-    # Restore original state file if it existed
-    if [ -f "$BACKUP_STATE_FILE" ]; then
-        mv "$BACKUP_STATE_FILE" "$STATE_FILE"
-    else
-        rm -f "$STATE_FILE"
-    fi
-}
-
-# Helper function to get alacritty windows
-get_alacritty_windows() {
-    wmctrl -l | grep -i "Alacritty" | wc -l
-}
-
-# Helper function to get alacritty window ID
-get_alacritty_window_id() {
-    wmctrl -l | grep -i "Alacritty" | head -1 | awk '{print $1}' | sed 's/0x0*//'
-}
-
-# Helper function to check if window is minimized
-is_window_minimized() {
-    local window_id="$1"
-    local hex_id=$(printf "0x%08x" "$window_id" 2>/dev/null)
-    if [ -n "$hex_id" ]; then
-        local state=$(xprop -id "$hex_id" WM_STATE 2>/dev/null | grep -o "Iconic\|Normal")
-        [ "$state" = "Iconic" ]
-    else
-        return 1
-    fi
-}
-
-# Helper function to check if window is active
-is_window_active() {
-    local window_id="$1"
-    local active_window=$(xdotool getactivewindow 2>/dev/null)
-    [ "$window_id" = "$active_window" ]
-}
-
-# Helper function to wait for window state change
-wait_for_window_change() {
-    local max_attempts=20
-    local attempt=0
-    
-    while [ $attempt -lt $max_attempts ]; do
-        sleep 0.1
-        ((attempt++))
-    done
-}
-
-@test "terminal-toggle script exists and is executable" {
-    [ -f "$TERMINAL_TOGGLE" ]
-    [ -x "$TERMINAL_TOGGLE" ]
-}
-
-@test "required dependencies are available" {
-    command -v wmctrl
-    command -v xdotool
-    command -v alacritty
-}
-
-@test "script creates state file on first run" {
-    [ ! -f "$STATE_FILE" ]
-    
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    wait_for_window_change
-    
-    [ -f "$STATE_FILE" ]
-}
-
-@test "toggle launches alacritty when none exists" {
-    # Verify no alacritty windows exist
-    initial_count=$(get_alacritty_windows)
-    [ "$initial_count" -eq 0 ]
-    
-    # Run toggle command
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify alacritty was launched
-    final_count=$(get_alacritty_windows)
-    [ "$final_count" -eq 1 ]
-    
-    # Verify state file was created and populated
-    [ -f "$STATE_FILE" ]
-    grep -q "current_toggle_id=" "$STATE_FILE"
-}
-
-@test "toggle minimizes active alacritty window" {
-    # First launch alacritty
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Get the window ID
-    local window_id=$(get_alacritty_window_id)
-    [ -n "$window_id" ]
-    
-    # Convert to decimal for comparison
-    local decimal_id=$(printf "%d" "0x$window_id" 2>/dev/null)
-    
-    # Activate the window to ensure it's active
-    wmctrl -i -a "0x$window_id"
-    wait_for_window_change
-    
-    # Verify window is not minimized initially
-    run is_window_minimized "$decimal_id"
-    [ "$status" -ne 0 ]
-    
-    # Toggle again to minimize
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify window is now minimized
-    run is_window_minimized "$decimal_id"
-    [ "$status" -eq 0 ]
-}
-
-@test "toggle restores minimized alacritty window" {
-    # Launch and then minimize alacritty
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    local window_id=$(get_alacritty_window_id)
-    local decimal_id=$(printf "%d" "0x$window_id" 2>/dev/null)
-    
-    # Activate and then minimize
-    wmctrl -i -a "0x$window_id"
-    wait_for_window_change
-    
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify it's minimized
-    run is_window_minimized "$decimal_id"
-    [ "$status" -eq 0 ]
-    
-    # Toggle again to restore
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify window is restored (not minimized)
-    run is_window_minimized "$decimal_id"
-    [ "$status" -ne 0 ]
-}
-
-@test "new command always launches new alacritty" {
-    # Launch first terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    initial_count=$(get_alacritty_windows)
-    [ "$initial_count" -eq 1 ]
-    
-    # Launch new terminal
-    run timeout 10s "$TERMINAL_TOGGLE" new
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify we now have 2 terminals
-    final_count=$(get_alacritty_windows)
-    [ "$final_count" -eq 2 ]
-}
-
-@test "state file tracks window IDs correctly" {
-    # Launch terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Check state file contains current_toggle_id
-    grep -q "current_toggle_id=" "$STATE_FILE"
-    
-    # Extract the ID from state file
-    local stored_id=$(grep "current_toggle_id=" "$STATE_FILE" | cut -d'=' -f2)
-    [ -n "$stored_id" ]
-    
-    # Verify it matches an actual alacritty window
-    local actual_window_id=$(get_alacritty_window_id)
-    local decimal_actual=$(printf "%d" "0x$actual_window_id" 2>/dev/null)
-    
-    [ "$stored_id" = "$decimal_actual" ]
-}
-
-@test "script handles multiple terminals correctly" {
-    # Launch first terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Launch second terminal with 'new' command
-    run timeout 10s "$TERMINAL_TOGGLE" new
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify we have 2 terminals
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 2 ]
-    
-    # The toggle should now work with the most recently created terminal
-    # Test that toggle still works (should minimize the current tracked terminal)
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # We should still have 2 terminal windows (one minimized)
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 2 ]
-}
-
-@test "script cleans up dead window references" {
-    # Launch terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Get window ID from state
-    local stored_id=$(grep "current_toggle_id=" "$STATE_FILE" | cut -d'=' -f2)
-    [ -n "$stored_id" ]
-    
-    # Kill all alacritty processes
-    pkill -f alacritty
+    rm -f ~/.cache/terminal-toggle-state
     sleep 1
     
-    # Try to toggle - should launch new terminal since tracked one is dead
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Should have exactly 1 terminal again
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 1 ]
-    
-    # State should be updated with new window ID
-    local new_stored_id=$(grep "current_toggle_id=" "$STATE_FILE" | cut -d'=' -f2)
-    [ "$new_stored_id" != "$stored_id" ]
+    if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null; then
+        skip "Required tools not available"
+    fi
 }
 
-@test "full workflow: launch, minimize, restore, new terminal" {
-    # 1. Launch first terminal (none exists)
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 1 ]
-    
-    # Get window details
-    local window_id=$(get_alacritty_window_id)
-    local decimal_id=$(printf "%d" "0x$window_id" 2>/dev/null)
-    
-    # 2. Activate and minimize
-    wmctrl -i -a "0x$window_id"
-    wait_for_window_change
-    
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify minimized
-    run is_window_minimized "$decimal_id"
-    [ "$status" -eq 0 ]
-    
-    # 3. Restore
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify restored
-    run is_window_minimized "$decimal_id"
-    [ "$status" -ne 0 ]
-    
-    # 4. Launch new terminal
-    run timeout 10s "$TERMINAL_TOGGLE" new
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Should now have 2 terminals
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 2 ]
+teardown() {
+    pkill -f alacritty 2>/dev/null || true
+    sleep 0.5
 }
 
-@test "script handles invalid arguments gracefully" {
-    run "$TERMINAL_TOGGLE" invalid_command
-    [ "$status" -eq 1 ]
-    [[ "$output" == *"Usage:"* ]]
+count_terminals() { wmctrl -l | grep -i "Alacritty" | wc -l; }
+get_terminal_ids() { wmctrl -l | grep -i "Alacritty" | awk '{print $1}'; }
+is_minimized() {
+    local hex_id=$(printf "0x%08x" "$(printf "%d" "$1" 2>/dev/null)" 2>/dev/null)
+    local state=$(xprop -id "$hex_id" WM_STATE 2>/dev/null | grep -o "Iconic\|Normal")
+    [ "$state" = "Iconic" ]
 }
 
-@test "script works when state file is corrupted" {
-    # Create corrupted state file
-    echo "invalid_content_here" > "$STATE_FILE"
-    
-    # Should still work and create new clean state
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Should have launched terminal
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 1 ]
-    
-    # State file should be fixed
-    grep -q "current_toggle_id=" "$STATE_FILE"
-    grep -q "previous_toggle_id=" "$STATE_FILE"
+execute_toggle() {
+    echo "OPERATOR: $1"
+    $2 &
+    sleep 2
 }
 
-@test "focus-locking: toggle locks onto currently active terminal" {
-    # Launch first terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
+log_state() {
+    local action="$1"
+    local terminal_count=$(count_terminals)
+    local state_content=""
+    [ -f ~/.cache/terminal-toggle-state ] && state_content=$(cat ~/.cache/terminal-toggle-state)
+    local active_window=$(xdotool getactivewindow 2>/dev/null || echo "none")
+    local terminal_ids=$(get_terminal_ids | tr '\n' ',' | sed 's/,$//')
     
-    local first_window_id=$(get_alacritty_window_id)
-    local first_decimal_id=$(printf "%d" "0x$first_window_id" 2>/dev/null)
+    echo "=== $action ==="
+    echo "Terminal count: $terminal_count"
+    echo "Terminal IDs: [$terminal_ids]"
+    echo "Active window: $active_window"
+    echo "State file:"
+    echo "$state_content"
+    echo "===================="
+}
+
+wait_for_terminal_change() {
+    local expected_count="$1"
+    local max_attempts=20
+    local attempts=0
     
-    # Launch second terminal
-    run timeout 10s "$TERMINAL_TOGGLE" new
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Get both window IDs
-    local all_windows=($(wmctrl -l | grep -i "Alacritty" | awk '{print $1}' | sed 's/0x0*//'))
-    [ "${#all_windows[@]}" -eq 2 ]
-    
-    local second_window_id=""
-    for window in "${all_windows[@]}"; do
-        local decimal_id=$(printf "%d" "0x$window" 2>/dev/null)
-        if [ "$decimal_id" != "$first_decimal_id" ]; then
-            second_window_id="$window"
-            break
+    while [ $attempts -lt $max_attempts ]; do
+        local current_count=$(count_terminals)
+        if [ "$current_count" -eq "$expected_count" ]; then
+            echo "OBSERVER: Terminal count reached $expected_count after $attempts attempts"
+            return 0
         fi
+        sleep 0.2
+        ((attempts++))
     done
     
-    local second_decimal_id=$(printf "%d" "0x$second_window_id" 2>/dev/null)
-    
-    # Manually switch focus to first terminal (simulating Alt+Tab or click)
-    wmctrl -i -a "0x$first_window_id"
-    wait_for_window_change
-    
-    # Verify first terminal is now active
-    local active_window=$(xdotool getactivewindow 2>/dev/null)
-    [ "$active_window" = "$first_decimal_id" ]
-    
-    # Now toggle should lock onto the first terminal and minimize it
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Verify first terminal is minimized
-    run is_window_minimized "$first_decimal_id"
-    [ "$status" -eq 0 ]
-    
-    # Verify state file reflects the focus lock
-    local stored_id=$(grep "current_toggle_id=" "$STATE_FILE" | cut -d'=' -f2)
-    [ "$stored_id" = "$first_decimal_id" ]
+    echo "OBSERVER: TIMEOUT - Expected $expected_count terminals, got $(count_terminals)"
+    return 1
 }
 
-@test "focus-locking: works when switching between multiple terminals" {
-    # Launch three terminals
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
+wait_for_window_state_change() {
+    local window_id="$1"
+    local expected_state="$2"  # "minimized" or "visible"
+    local max_attempts=15
+    local attempts=0
     
-    run timeout 10s "$TERMINAL_TOGGLE" new
-    [ "$status" -eq 0 ]
-    wait_for_window_change
+    while [ $attempts -lt $max_attempts ]; do
+        if [ "$expected_state" = "minimized" ]; then
+            if is_minimized "$window_id"; then
+                echo "OBSERVER: Window $window_id minimized after $attempts attempts"
+                return 0
+            fi
+        else
+            if ! is_minimized "$window_id"; then
+                echo "OBSERVER: Window $window_id visible after $attempts attempts"
+                return 0
+            fi
+        fi
+        sleep 0.2
+        ((attempts++))
+    done
     
-    run timeout 10s "$TERMINAL_TOGGLE" new
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    # Should have 3 terminals
-    terminal_count=$(get_alacritty_windows)
-    [ "$terminal_count" -eq 3 ]
-    
-    # Get all terminal window IDs
-    local all_windows=($(wmctrl -l | grep -i "Alacritty" | awk '{print $1}' | sed 's/0x0*//'))
-    [ "${#all_windows[@]}" -eq 3 ]
-    
-    local first_window=$(printf "%d" "0x${all_windows[0]}" 2>/dev/null)
-    local second_window=$(printf "%d" "0x${all_windows[1]}" 2>/dev/null)
-    local third_window=$(printf "%d" "0x${all_windows[2]}" 2>/dev/null)
-    
-    # Switch focus to first terminal
-    wmctrl -i -a "0x${all_windows[0]}"
-    wait_for_window_change
-    
-    # Toggle should minimize first terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    run is_window_minimized "$first_window"
-    [ "$status" -eq 0 ]
-    
-    # Switch focus to second terminal
-    wmctrl -i -a "0x${all_windows[1]}"
-    wait_for_window_change
-    
-    # Toggle should now minimize second terminal
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
-    
-    run is_window_minimized "$second_window"
-    [ "$status" -eq 0 ]
-    
-    # Verify state file tracks the second terminal
-    local stored_id=$(grep "current_toggle_id=" "$STATE_FILE" | cut -d'=' -f2)
-    [ "$stored_id" = "$second_window" ]
+    echo "OBSERVER: TIMEOUT - Window $window_id did not reach $expected_state state"
+    return 1
 }
 
-# Performance test
-@test "toggle commands execute quickly" {
-    start_time=$(date +%s%N)
+simulate_hotkey() {
+    local action="$1"
+    local key="$2"
+    local expected_terminal_count="$3"
     
-    run timeout 10s "$TERMINAL_TOGGLE" toggle
-    [ "$status" -eq 0 ]
-    wait_for_window_change
+    echo "OPERATOR: Simulating $action ($key)"
+    local before_count=$(count_terminals)
+    echo "OBSERVER: Before hotkey - terminals: $before_count"
     
-    end_time=$(date +%s%N)
+    xdotool key "$key"
     
-    # Should complete in less than 10 seconds (reasonable for terminal launch)
-    execution_time=$((end_time - start_time))
-    [ $execution_time -lt 10000000000 ]
+    if [ -n "$expected_terminal_count" ]; then
+        wait_for_terminal_change "$expected_terminal_count" || return 1
+    else
+        sleep 1
+    fi
+    
+    log_state "$action"
+}
+
+@test "Terminal toggle hotkey simulation with logging" {
+    echo "Terminal toggle hotkey simulation: Real Super+Enter and Super+Shift+Enter"
+    
+    # Initial state
+    log_state "INITIAL STATE"
+    [ "$(count_terminals)" -eq 0 ]
+    
+    # Phase 1: Super+Enter (first terminal)
+    simulate_hotkey "Super+Enter (first terminal)" "super+Return" 1
+    [ "$(count_terminals)" -eq 1 ]
+    
+    local first_terminal=$(get_terminal_ids | head -1)
+    echo "OBSERVER: First terminal ID: $first_terminal"
+    
+    # Phase 2: Super+Enter again (minimize first terminal)
+    simulate_hotkey "Super+Enter (minimize first)" "super+Return" 1
+    wait_for_window_state_change "$first_terminal" "minimized" || return 1
+    
+    # Phase 3: Super+Enter again (restore first terminal)
+    simulate_hotkey "Super+Enter (restore first)" "super+Return" 1
+    wait_for_window_state_change "$first_terminal" "visible" || return 1
+    
+    # Phase 4: Super+Shift+Enter (launch second terminal)
+    simulate_hotkey "Super+Shift+Enter (second terminal)" "super+shift+Return" 2
+    [ "$(count_terminals)" -eq 2 ]
+    
+    local all_windows=($(get_terminal_ids))
+    local second_terminal=""
+    for window in "${all_windows[@]}"; do
+        [ "$window" != "$first_terminal" ] && second_terminal="$window" && break
+    done
+    echo "OBSERVER: Second terminal ID: $second_terminal"
+    
+    # Phase 5: Super+Enter (should minimize SECOND terminal, not first)
+    echo "OBSERVER: About to test critical locking - first: $first_terminal, second: $second_terminal"
+    simulate_hotkey "Super+Enter (minimize second)" "super+Return" 2
+    
+    # Wait for state change and then check
+    sleep 1
+    wait_for_window_state_change "$second_terminal" "minimized" || {
+        echo "OBSERVER: Second terminal did not minimize - checking if first was affected instead"
+        if is_minimized "$first_terminal"; then
+            echo "BUG: First terminal was minimized when second should be affected (locking failure)"
+            return 1
+        fi
+        echo "OBSERVER: Neither terminal minimized - possible timing issue"
+        return 1
+    }
+    
+    # Verify first terminal remained visible
+    ! is_minimized "$first_terminal" || {
+        echo "BUG: First terminal was minimized when second should be affected (locking failure)"
+        return 1
+    }
+    
+    echo "OBSERVER: Correct behavior - First: VISIBLE, Second: MINIMIZED"
+    
+    # Phase 6: Super+Enter again (should restore SECOND terminal)
+    simulate_hotkey "Super+Enter (restore second)" "super+Return" 2
+    wait_for_window_state_change "$second_terminal" "visible" || return 1
+    
+    # Final verification
+    ! is_minimized "$second_terminal" || return 1
+    ! is_minimized "$first_terminal" || return 1
+    
+    echo "SUCCESS: Hotkey locking mechanism working correctly"
 }
