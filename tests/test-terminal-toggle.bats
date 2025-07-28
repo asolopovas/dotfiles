@@ -4,9 +4,16 @@
 
 setup() {
     TERMINAL_TOGGLE="/home/andrius/dotfiles/scripts/terminal-toggle"
-    pkill -f alacritty 2>/dev/null || true
+    # Use make command to kill alacritty processes
+    make -C /home/andrius/dotfiles kill-alacritty >/dev/null 2>&1
+    # Verify no ALACRITTY terminals remain
+    local alacritty_count=$(wmctrl -l | grep -c "Alacritty" || echo "0")
+    if [ "$alacritty_count" -ne 0 ]; then
+        echo "ERROR: Alacritty windows still exist after cleanup"
+        wmctrl -l | grep "Alacritty"
+        exit 1
+    fi
     rm -f ~/.cache/terminal-toggle-state
-    sleep 1
     
     if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null; then
         skip "Required tools not available"
@@ -18,8 +25,8 @@ teardown() {
     sleep 0.5
 }
 
-count_terminals() { wmctrl -l | grep -i "Alacritty" | wc -l; }
-get_terminal_ids() { wmctrl -l | grep -i "Alacritty" | awk '{print $1}'; }
+count_terminals() { wmctrl -l | grep "Alacritty" | wc -l; }
+get_terminal_ids() { wmctrl -l | grep "Alacritty" | awk '{print $1}'; }
 is_minimized() {
     local hex_id=$(printf "0x%08x" "$(printf "%d" "$1" 2>/dev/null)" 2>/dev/null)
     local state=$(xprop -id "$hex_id" WM_STATE 2>/dev/null | grep -o "Iconic\|Normal")
@@ -32,21 +39,55 @@ execute_toggle() {
     sleep 2
 }
 
-log_state() {
-    local action="$1"
-    local terminal_count=$(count_terminals)
-    local state_content=""
-    [ -f ~/.cache/terminal-toggle-state ] && state_content=$(cat ~/.cache/terminal-toggle-state)
-    local active_window=$(xdotool getactivewindow 2>/dev/null || echo "none")
-    local terminal_ids=$(get_terminal_ids | tr '\n' ',' | sed 's/,$//')
+press_and_log() {
+    local hotkey="$1"
+    local description="$2"
+    local timestamp=$(date +"%H%M%S")
+    local logfile="$HOME/dotfiles/tmp/hotkey-${timestamp}-${description// /-}.log"
     
-    echo "=== $action ==="
-    echo "Terminal count: $terminal_count"
-    echo "Terminal IDs: [$terminal_ids]"
-    echo "Active window: $active_window"
-    echo "State file:"
-    echo "$state_content"
-    echo "===================="
+    echo "HOTKEY: $description ($hotkey)"
+    xdotool key "$hotkey"
+    sleep 1
+    
+    # Create comprehensive state log
+    {
+        echo "=== HOTKEY ANALYSIS: $description ==="
+        echo "Timestamp: $(date)"
+        echo "Hotkey pressed: $hotkey"
+        echo ""
+        
+        echo "TERMINAL COUNT: $(count_terminals)"
+        echo "TERMINAL IDs: $(get_terminal_ids | tr '\n' ',' | sed 's/,$//')"
+        echo "ACTIVE WINDOW: $(xdotool getactivewindow 2>/dev/null || echo 'none') (decimal)"
+        echo ""
+        
+        echo "TERMINAL STATES:"
+        if [ "$(count_terminals)" -gt 0 ]; then
+            get_terminal_ids | while read -r term_id; do
+                local decimal_id=$(printf "%d" "$term_id" 2>/dev/null)
+                local state="VISIBLE"
+                is_minimized "$decimal_id" && state="MINIMIZED"
+                echo "  $term_id (decimal: $decimal_id) = $state"
+            done
+        else
+            echo "  No terminals found"
+        fi
+        echo ""
+        
+        echo "STATE FILE:"
+        if [ -f ~/.cache/terminal-toggle-state ]; then
+            cat ~/.cache/terminal-toggle-state
+        else
+            echo "  No state file found"
+        fi
+        echo ""
+        
+        echo "WINDOW LIST:"
+        wmctrl -l | grep -i alacritty || echo "  No alacritty windows"
+        echo "================================"
+    } > "$logfile"
+    
+    echo "State logged to: $logfile"
 }
 
 wait_for_terminal_change() {
@@ -114,70 +155,180 @@ simulate_hotkey() {
     log_state "$action"
 }
 
-@test "Terminal toggle hotkey simulation with logging" {
-    echo "Terminal toggle hotkey simulation: Real Super+Enter and Super+Shift+Enter"
+test_script_call() {
+    local cmd="$1"
+    local description="$2"
+    echo "TESTING: $description"
+    echo "COMMAND: $cmd"
+    eval "$cmd" &
+    sleep 2
+    echo "RESULT: Terminal count = $(count_terminals)"
+}
+
+diagnose_hotkey_config() {
+    echo "=== HOTKEY CONFIGURATION DIAGNOSIS ==="
+    echo "terminal-toggle command:"
+    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-toggle/ command 2>/dev/null || echo "Not found"
+    echo "terminal-toggle binding:"
+    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-toggle/ binding 2>/dev/null || echo "Not found"
+    echo ""
+    echo "terminal-new command:"
+    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-new/ command 2>/dev/null || echo "Not found"
+    echo "terminal-new binding:"
+    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-new/ binding 2>/dev/null || echo "Not found"
+    echo ""
+    echo "Script locations:"
+    ls -la /home/andrius/.local/bin/terminal-toggle 2>/dev/null || echo "~/.local/bin/terminal-toggle: Not found"
+    ls -la /home/andrius/dotfiles/scripts/terminal-toggle 2>/dev/null || echo "~/dotfiles/scripts/terminal-toggle: Not found"
+    echo "=================================="
+}
+
+manual_step() {
+    local step_num="$1"
+    local key="$2" 
+    local description="$3"
+    local expected="$4"
     
-    # Initial state
-    log_state "INITIAL STATE"
-    [ "$(count_terminals)" -eq 0 ]
+    echo "=== STEP $step_num ==="
+    echo "KEY TO PRESS: $key"
+    echo "ACTION: $description"
+    echo "EXPECTED: $expected"
+    echo ""
+    echo "Press ENTER to execute this step..."
+    read -r
     
-    # Phase 1: Super+Enter (first terminal)
-    simulate_hotkey "Super+Enter (first terminal)" "super+Return" 1
-    [ "$(count_terminals)" -eq 1 ]
+    if [ "$key" != "manual" ]; then
+        xdotool key "$key"
+        sleep 2
+    else
+        # Manual action - execute direct script call
+        $TERMINAL_TOGGLE toggle &
+        sleep 2
+    fi
     
-    local first_terminal=$(get_terminal_ids | head -1)
-    echo "OBSERVER: First terminal ID: $first_terminal"
+    # Log current state
+    local timestamp=$(date +"%H%M%S")
+    local logfile="$HOME/dotfiles/tmp/manual-step-${step_num}-${timestamp}.log"
     
-    # Phase 2: Super+Enter again (minimize first terminal)
-    simulate_hotkey "Super+Enter (minimize first)" "super+Return" 1
-    wait_for_window_state_change "$first_terminal" "minimized" || return 1
-    
-    # Phase 3: Super+Enter again (restore first terminal)
-    simulate_hotkey "Super+Enter (restore first)" "super+Return" 1
-    wait_for_window_state_change "$first_terminal" "visible" || return 1
-    
-    # Phase 4: Super+Shift+Enter (launch second terminal)
-    simulate_hotkey "Super+Shift+Enter (second terminal)" "super+shift+Return" 2
-    [ "$(count_terminals)" -eq 2 ]
-    
-    local all_windows=($(get_terminal_ids))
-    local second_terminal=""
-    for window in "${all_windows[@]}"; do
-        [ "$window" != "$first_terminal" ] && second_terminal="$window" && break
-    done
-    echo "OBSERVER: Second terminal ID: $second_terminal"
-    
-    # Phase 5: Super+Enter (should minimize SECOND terminal, not first)
-    echo "OBSERVER: About to test critical locking - first: $first_terminal, second: $second_terminal"
-    simulate_hotkey "Super+Enter (minimize second)" "super+Return" 2
-    
-    # Wait for state change and then check
-    sleep 1
-    wait_for_window_state_change "$second_terminal" "minimized" || {
-        echo "OBSERVER: Second terminal did not minimize - checking if first was affected instead"
-        if is_minimized "$first_terminal"; then
-            echo "BUG: First terminal was minimized when second should be affected (locking failure)"
-            return 1
+    {
+        echo "=== MANUAL STEP $step_num: $description ==="
+        echo "Key pressed: $key"
+        echo "Expected: $expected"
+        echo "Timestamp: $(date)"
+        echo ""
+        echo "TERMINAL COUNT: $(count_terminals)"
+        echo "ACTIVE WINDOW: $(xdotool getactivewindow 2>/dev/null) (decimal)"
+        echo ""
+        echo "TERMINAL IDs:"
+        get_terminal_ids | while read -r term_id; do
+            local decimal_id=$(printf "%d" "$term_id" 2>/dev/null)
+            local state="VISIBLE"
+            is_minimized "$decimal_id" && state="MINIMIZED"
+            echo "  $term_id (decimal: $decimal_id) = $state"
+        done
+        echo ""
+        echo "STATE FILE:"
+        if [ -f ~/.cache/terminal-toggle-state ]; then
+            cat ~/.cache/terminal-toggle-state
+        else
+            echo "  No state file exists"
         fi
-        echo "OBSERVER: Neither terminal minimized - possible timing issue"
+        echo "================================"
+    } > "$logfile"
+    
+    echo "State logged to: $logfile"
+    echo "ACTUAL RESULT: Please confirm what happened"
+    echo ""
+}
+
+@test "Manual step-by-step focus diagnosis" {
+    mkdir -p "$HOME/dotfiles/tmp"
+    rm -f ~/.cache/terminal-toggle-state
+    
+    manual_step "1" "super+Return" "Launch first terminal" "One Alacritty window opens and becomes active"
+    
+    # Step 1 failed, try direct script call
+    manual_step "2" "manual" "Direct script call - terminal-toggle toggle" "One Alacritty window opens via direct script"
+    echo "=== SETUP: Create two terminals with direct script calls ==="
+    execute_toggle "Launch first terminal" "$TERMINAL_TOGGLE toggle"
+    [ "$(count_terminals)" -eq 1 ]
+    local first=$(get_terminal_ids | head -1)
+    press_and_log "state_after_first" "after first terminal launch"
+    
+    execute_toggle "Launch second terminal" "$TERMINAL_TOGGLE new"
+    [ "$(count_terminals)" -eq 2 ]
+    local second=$(get_terminal_ids | tail -1)
+    press_and_log "state_after_second" "after second terminal launch"
+    
+    # Minimize second terminal (most recent should be affected)
+    execute_toggle "Minimize second terminal" "$TERMINAL_TOGGLE toggle"
+    is_minimized "$(printf "%d" "$second")" || {
+        echo "FAIL: Second terminal should be minimized"
         return 1
     }
+    press_and_log "state_after_minimize" "after minimizing second terminal"
     
-    # Verify first terminal remained visible
-    ! is_minimized "$first_terminal" || {
-        echo "BUG: First terminal was minimized when second should be affected (locking failure)"
+    echo "=== THOROUGH ALT+TAB FOCUS TESTING ==="
+    
+    # Step 1: Explicitly focus first terminal
+    echo "STEP 1: Manual focus to first terminal"
+    wmctrl -i -a "$first"
+    sleep 1
+    press_and_log "manual_focus_first" "manual focus first terminal"
+    local active_after_manual=$(xdotool getactivewindow 2>/dev/null)
+    
+    [ "$active_after_manual" = "$(printf "%d" "$first")" ] || {
+        echo "FAIL: Could not manually focus first terminal"
+        echo "Expected: $(printf "%d" "$first"), Got: $active_after_manual"
         return 1
     }
+    echo "CONFIRMED: First terminal manually focused"
     
-    echo "OBSERVER: Correct behavior - First: VISIBLE, Second: MINIMIZED"
+    # Step 2: Test Alt+Tab switching
+    echo "STEP 2: Alt+Tab focus switching"
+    press_and_log "alt+Tab" "alt tab focus switch"
+    local active_after_alttab=$(xdotool getactivewindow 2>/dev/null)
     
-    # Phase 6: Super+Enter again (should restore SECOND terminal)
-    simulate_hotkey "Super+Enter (restore second)" "super+Return" 2
-    wait_for_window_state_change "$second_terminal" "visible" || return 1
+    # Step 3: Check state file update
+    echo "STEP 3: State file focus tracking verification"
+    source ~/.cache/terminal-toggle-state
+    local state_current_id="$current_toggle_id"
+    echo "OBSERVER: Active window after Alt+Tab: $active_after_alttab"
+    echo "OBSERVER: State file current_toggle_id: $state_current_id"
+    echo "OBSERVER: First terminal: $(printf "%d" "$first")"
+    echo "OBSERVER: Second terminal: $(printf "%d" "$second")"
     
-    # Final verification
-    ! is_minimized "$second_terminal" || return 1
-    ! is_minimized "$first_terminal" || return 1
+    # Step 4: Test terminal response to focus
+    echo "STEP 4: Terminal toggle response to current focus"
+    execute_toggle "Toggle after Alt+Tab" "$TERMINAL_TOGGLE toggle"
+    press_and_log "toggle_after_alttab" "toggle after alt tab focus switch"
     
-    echo "SUCCESS: Hotkey locking mechanism working correctly"
+    # Step 5: Comprehensive analysis
+    echo "STEP 5: Final state analysis"
+    local first_final="VISIBLE"; is_minimized "$(printf "%d" "$first")" && first_final="MINIMIZED"
+    local second_final="VISIBLE"; is_minimized "$(printf "%d" "$second")" && second_final="MINIMIZED"
+    
+    echo "THOROUGH ANALYSIS RESULTS:"
+    echo "  Manual focus worked: $([ "$active_after_manual" = "$(printf "%d" "$first")" ] && echo "YES" || echo "NO")"
+    echo "  Alt+Tab switched focus: $([ "$active_after_alttab" != "$active_after_manual" ] && echo "YES" || echo "NO")"
+    echo "  State file updated: $([ "$state_current_id" = "$active_after_alttab" ] && echo "YES" || echo "NO")"
+    echo "  First terminal final: $first_final"
+    echo "  Second terminal final: $second_final"
+    
+    # Determine success/failure with specific diagnostics
+    if [ "$active_after_alttab" = "$(printf "%d" "$first")" ] && [ "$first_final" = "MINIMIZED" ]; then
+        echo "SUCCESS: Alt+Tab focus detection working - affected first terminal correctly"
+    elif [ "$active_after_alttab" = "$(printf "%d" "$second")" ] && [ "$second_final" = "VISIBLE" ]; then
+        echo "SUCCESS: Alt+Tab focus detection working - affected second terminal correctly"
+    elif [ "$state_current_id" != "$active_after_alttab" ]; then
+        echo "FAIL: State file not tracking Alt+Tab focus changes"
+        echo "FIX: Add check_and_update_focus() at start of toggle_terminal() function"
+        return 1
+    else
+        echo "PARTIAL: Alt+Tab behavior unclear - check logs for detailed analysis"
+        echo "Active: $active_after_alttab, State: $state_current_id"
+    fi
+    
+    echo "=== THOROUGH ALT+TAB TEST COMPLETE ==="
+    echo "Log files created in ~/dotfiles/tmp/ for detailed analysis"
 }

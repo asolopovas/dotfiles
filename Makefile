@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-bash test-bash-verbose test-snap-window clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache
+.PHONY: help test test-bash test-bash-verbose test-snap-window clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -143,3 +143,10 @@ test-git-cache:
 uninstall-git-cache:
 	@echo "Removing Git cache container and configuration..."
 	@sudo ./scripts/install-git-cache.sh uninstall
+
+# Utility targets
+kill-alacritty:
+	@echo "Killing all Alacritty processes..."
+	@pkill -9 alacritty 2>/dev/null || true
+	@sleep 1
+	@echo "Alacritty processes killed. Remaining count: $$(wmctrl -l | grep 'Alacritty' | wc -l)"

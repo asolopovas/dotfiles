@@ -122,6 +122,7 @@ myKeyb =
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "tauon"         ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
+    ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
     ("M-S-x",            namedScratchpadAction myScratchPads "pcmanfmSearch" ),
