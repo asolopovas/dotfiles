@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./install-squid.sh:*)",
+      "Bash(sudo:*)",
+      "Bash(true)",
+      "Bash(timeout:*)",
+      "Bash(echo $?)",
+      "Bash(bash:*)"
+    ],
+    "deny": []
+  }
+}
