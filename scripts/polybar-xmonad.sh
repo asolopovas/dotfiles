@@ -10,6 +10,12 @@ declare -A screen_active_desktop
 $HOME/go/bin/xmonad-log | while IFS= read -r line; do
     # Extract all screen-desktop pairs from the line and find active workspaces
     temp_line="$line"
+    current_focused_screen=""
+    
+    # First, find the currently focused screen (highlighted with #2266d0)
+    if [[ $line =~ %\{F#2266d0\}\ ([0-9]+)_([0-9]+)\ %\{F-\} ]]; then
+        current_focused_screen="${BASH_REMATCH[1]}"
+    fi
     
     # Parse all workspaces and identify active ones
     while [[ $temp_line =~ ([^%]*)%\{F#[0-9a-fA-F]+\}\ ([0-9]+)_([0-9]+)\ %\{F-\}(.*) ]] || [[ $temp_line =~ ([^%]*)%\{F#2266d0\}\ ([0-9]+)_([0-9]+)\ %\{F-\}(.*) ]]; do
@@ -42,7 +48,13 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
     display=""
     for i in "${!sorted_screens[@]}"; do
         screen="${sorted_screens[i]}"
-        display+="Screen $screen: "
+        
+        # Highlight currently focused screen name in soft blue
+        if [[ "$screen" == "$current_focused_screen" ]]; then
+            display+="%{F#87ceeb}Screen $screen:%{F-} "
+        else
+            display+="Screen $screen: "
+        fi
         
         # Show desktops 1-8 for this screen
         for desktop in {1..8}; do
