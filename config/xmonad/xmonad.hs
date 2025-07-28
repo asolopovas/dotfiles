@@ -157,7 +157,7 @@ myScratchPads =
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
         buildNS "audacious"    "audacious"                                   "title"     "Audacious"        "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
-        buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
+        buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
     ]
 
