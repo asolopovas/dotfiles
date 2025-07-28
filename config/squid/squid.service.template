@@ -5,12 +5,13 @@ After=network.target
 [Service]
 Type=forking
 PIDFile={{PREFIX}}/var/run/squid.pid
-ExecStart={{PREFIX}}/sbin/squid
+ExecStart={{PREFIX}}/sbin/squid -f {{PREFIX}}/etc/squid.conf
+KillMode=mixed
+Restart=on-failure
+RestartSec={{RESTART_DELAY}}
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStop={{PREFIX}}/sbin/squid -k shutdown
 TimeoutStopSec=30s
-Restart=on-failure
-RestartSec={{RESTART_DELAY}}
 User=proxy
 Group=proxy
 
