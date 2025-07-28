@@ -76,6 +76,15 @@
 - **Use /home/andrius/dotfiles/tmp/ for experiments**: This directory is gitignored and safe for testing
 - **Clean up tmp/ directory after experiments**: Remove test files to keep the repository clean
 
+## Dual-Agent Testing Protocol
+- **ALWAYS USE TWO AGENTS FOR E2E TESTS**: When testing complex functionality (especially GUI/window operations), use dual agents:
+  - **OPERATOR AGENT**: Executes the test operations (runs commands, clicks, toggles)
+  - **OBSERVER AGENT**: Monitors and confirms state changes (window states, process counts, file contents)
+- **PREVENT TEST HANGS**: Observer agent monitors for timeouts and reports if operations hang beyond expected duration
+- **STATE CONFIRMATION REQUIRED**: Every state change must be confirmed by the observer agent before proceeding to next test step
+- **CONCURRENT MONITORING**: Both agents run simultaneously during tests to provide real-time feedback
+- **EXAMPLE**: Testing terminal toggle requires operator to run toggle commands while observer confirms window minimize/restore states
+
 ## Error Handling Requirements
 - **ALWAYS ADDRESS EVERY ERROR**: When encountering any error during testing or execution, it must be fixed before proceeding
 - **TOOL-SPECIFIC ERROR HANDLING**: Different package managers have different command syntax - check if config exists before removing:

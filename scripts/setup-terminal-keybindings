@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Setup terminal keybindings for Cinnamon
+# Super+Enter: Toggle terminal
+# Super+Shift+Enter: New terminal
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TERMINAL_TOGGLE_SCRIPT="$SCRIPT_DIR/terminal-toggle"
+
+echo "Setting up terminal keybindings..."
+
+# Get current custom keybindings list
+current_list=$(gsettings get org.cinnamon.desktop.keybindings custom-list 2>/dev/null)
+
+# Initialize if empty
+if [ "$current_list" = "@as []" ] || [ -z "$current_list" ]; then
+    current_list="[]"
+fi
+
+# Function to add keybinding if it doesn't exist
+add_keybinding() {
+    local key_name="$1"
+    local binding="$2" 
+    local command="$3"
+    local name="$4"
+    
+    # Check if this keybinding already exists
+    if echo "$current_list" | grep -q "'$key_name'"; then
+        echo "Keybinding $key_name already exists, updating..."
+    else
+        echo "Adding keybinding $key_name..."
+        # Add to custom list
+        if [ "$current_list" = "[]" ]; then
+            new_list="['$key_name']"
+        else
+            new_list=$(echo "$current_list" | sed "s/]$/, '$key_name']/")
+        fi
+        gsettings set org.cinnamon.desktop.keybindings custom-list "$new_list"
+        current_list="$new_list"
+    fi
+    
+    # Set the keybinding properties
+    gsettings set org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/$key_name/ name "$name"
+    gsettings set org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/$key_name/ command "$command"
+    gsettings set org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/$key_name/ binding "['$binding']"
+}
+
+# Add Super+Enter for terminal toggle
+add_keybinding "terminal-toggle" "<Super>Return" "$TERMINAL_TOGGLE_SCRIPT toggle" "Toggle Terminal"
+
+# Add Super+Shift+Enter for new terminal
+add_keybinding "terminal-new" "<Super><Shift>Return" "$TERMINAL_TOGGLE_SCRIPT new" "New Terminal"
+
+echo ""
+echo "✓ Terminal keybindings configured:"
+echo "  Super+Enter: Toggle terminal window"
+echo "  Super+Shift+Enter: Always open new terminal window"
+echo ""
+echo "Keybindings will be active after logging out and back in, or restart Cinnamon with Alt+F2 -> 'r'"

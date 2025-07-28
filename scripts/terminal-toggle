@@ -1,0 +1,220 @@
+#!/bin/bash
+
+# Terminal toggle script for Cinnamon
+# Implements super+enter and super+shift+enter functionality
+# Based on AutoHotkey terminal.ahk logic
+
+TERMINAL_COMMAND="alacritty"
+TERMINAL_CLASS="Alacritty"
+STATE_FILE="$HOME/.cache/terminal-toggle-state"
+
+# Ensure cache directory exists
+mkdir -p "$(dirname "$STATE_FILE")"
+
+# Initialize state file if it doesn't exist
+if [ ! -f "$STATE_FILE" ]; then
+    echo "current_toggle_id=" > "$STATE_FILE"
+    echo "previous_toggle_id=" >> "$STATE_FILE"
+fi
+
+# Read current state
+source "$STATE_FILE"
+
+# Function to get all terminal window IDs
+get_terminal_windows() {
+    wmctrl -l | grep "$TERMINAL_CLASS" | awk '{print $1}' | sed 's/0x0*//'
+}
+
+# Function to check if window exists
+window_exists() {
+    local window_id="$1"
+    [ -n "$window_id" ] && wmctrl -l | grep -q "0x$(printf "%08x" "$window_id")"
+}
+
+# Function to check if window is active
+window_is_active() {
+    local window_id="$1"
+    local active_window=$(xdotool getactivewindow 2>/dev/null)
+    [ "$window_id" = "$active_window" ]
+}
+
+# Function to check if active window is a terminal and update tracking
+check_and_update_focus() {
+    local active_window=$(xdotool getactivewindow 2>/dev/null)
+    if [ -n "$active_window" ]; then
+        # Check if active window is an Alacritty terminal
+        local window_class=$(xprop -id "$active_window" WM_CLASS 2>/dev/null | grep -o '"[^"]*"' | tail -1 | tr -d '"')
+        if [ "$window_class" = "$TERMINAL_CLASS" ]; then
+            # Active window is a terminal, check if it's different from current tracked
+            if [ "$active_window" != "$current_toggle_id" ]; then
+                # Lock onto this terminal
+                if [ -n "$current_toggle_id" ]; then
+                    previous_toggle_id="$current_toggle_id"
+                fi
+                current_toggle_id="$active_window"
+                
+                # Save updated state
+                echo "current_toggle_id=$current_toggle_id" > "$STATE_FILE"
+                echo "previous_toggle_id=$previous_toggle_id" >> "$STATE_FILE"
+                return 0  # Indicates focus was updated
+            fi
+        fi
+    fi
+    return 1  # No focus update
+}
+
+# Function to check if window is minimized
+window_is_minimized() {
+    local window_id="$1"
+    local state=$(xprop -id "$window_id" WM_STATE 2>/dev/null | grep -o "[0-9]")
+    [ "$state" = "3" ] # IconicState = 3
+}
+
+# Function to activate window
+activate_window() {
+    local window_id="$1"
+    wmctrl -i -a "$window_id" 2>/dev/null
+    xdotool windowactivate "$window_id" 2>/dev/null
+}
+
+# Function to minimize window  
+minimize_window() {
+    local window_id="$1"
+    xdotool windowminimize "$window_id" 2>/dev/null
+}
+
+# Function to restore window
+restore_window() {
+    local window_id="$1"
+    wmctrl -i -r "$window_id" -b remove,hidden 2>/dev/null
+    wmctrl -i -a "$window_id" 2>/dev/null
+}
+
+# Function to launch new terminal
+launch_terminal() {
+    # Get existing windows before launch
+    local existing_windows=($(get_terminal_windows))
+    
+    # Launch terminal
+    $TERMINAL_COMMAND &
+    local launch_pid=$!
+    
+    # Wait for new window to appear (max 3 seconds)
+    local attempts=0
+    local new_window_id=""
+    
+    while [ $attempts -lt 60 ]; do
+        sleep 0.05
+        local current_windows=($(get_terminal_windows))
+        
+        # Find new window by comparing arrays
+        for window in "${current_windows[@]}"; do
+            local found=false
+            for existing in "${existing_windows[@]}"; do
+                if [ "$window" = "$existing" ]; then
+                    found=true
+                    break
+                fi
+            done
+            if [ "$found" = false ]; then
+                new_window_id="$window"
+                break
+            fi
+        done
+        
+        if [ -n "$new_window_id" ]; then
+            break
+        fi
+        
+        ((attempts++))
+    done
+    
+    if [ -n "$new_window_id" ]; then
+        # Convert hex to decimal for consistent handling
+        new_window_id=$(printf "%d" "0x$new_window_id")
+        
+        # Update tracking state
+        if [ -n "$current_toggle_id" ]; then
+            previous_toggle_id="$current_toggle_id"
+        fi
+        current_toggle_id="$new_window_id"
+        
+        # Save state
+        echo "current_toggle_id=$current_toggle_id" > "$STATE_FILE"
+        echo "previous_toggle_id=$previous_toggle_id" >> "$STATE_FILE"
+        
+        # Activate the new window
+        activate_window "$new_window_id"
+    fi
+}
+
+# Function to update terminal tracking (clean up dead windows)
+update_terminal_tracking() {
+    local state_changed=false
+    
+    # Check if current window still exists
+    if [ -n "$current_toggle_id" ] && ! window_exists "$current_toggle_id"; then
+        current_toggle_id="$previous_toggle_id"
+        previous_toggle_id=""
+        state_changed=true
+    fi
+    
+    # Check if previous window still exists
+    if [ -n "$previous_toggle_id" ] && ! window_exists "$previous_toggle_id"; then
+        previous_toggle_id=""
+        state_changed=true
+    fi
+    
+    # Save state if changed
+    if [ "$state_changed" = true ]; then
+        echo "current_toggle_id=$current_toggle_id" > "$STATE_FILE"
+        echo "previous_toggle_id=$previous_toggle_id" >> "$STATE_FILE"
+    fi
+}
+
+# Function to toggle terminal (main logic)
+toggle_terminal() {
+    update_terminal_tracking
+    
+    # Check if currently active window is a terminal and update focus if needed
+    check_and_update_focus
+    
+    # If we have a current terminal window
+    if [ -n "$current_toggle_id" ] && window_exists "$current_toggle_id"; then
+        if window_is_active "$current_toggle_id"; then
+            # Terminal is active, minimize it
+            minimize_window "$current_toggle_id"
+        elif window_is_minimized "$current_toggle_id"; then
+            # Terminal is minimized, restore and activate it
+            restore_window "$current_toggle_id"
+            activate_window "$current_toggle_id"
+        else
+            # Terminal exists but not active, activate it
+            activate_window "$current_toggle_id"
+        fi
+    else
+        # No current terminal, launch new one
+        launch_terminal
+    fi
+}
+
+# Function to always launch new terminal
+launch_new_terminal() {
+    launch_terminal
+}
+
+# Main script logic
+case "${1:-toggle}" in
+    "toggle")
+        toggle_terminal
+        ;;
+    "new")
+        launch_new_terminal
+        ;;
+    *)
+        echo "Usage: $0 [toggle|new]"
+        echo "  toggle: Toggle current terminal window (default)"
+        echo "  new: Always launch new terminal window"
+        exit 1
+        ;;
+esac
