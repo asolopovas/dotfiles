@@ -1,0 +1,229 @@
+#!/bin/bash
+# Dynamic multi-monitor window snapping system
+
+direction="$1"
+
+if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null || ! command -v xrandr &> /dev/null; then
+    exit 1
+fi
+
+active_window=$(xdotool getactivewindow 2>/dev/null)
+if [ -z "$active_window" ]; then
+    exit 1
+fi
+
+wmctrl -i -r "$active_window" -b remove,maximized_vert,maximized_horz 2>/dev/null
+
+# Get current window position
+window_info=$(wmctrl -lG | grep "$(printf '0x%08x' $active_window)")
+if [ -z "$window_info" ]; then
+    exit 1
+fi
+
+current_x=$(echo "$window_info" | awk '{print $3}')
+current_y=$(echo "$window_info" | awk '{print $4}')
+current_width=$(echo "$window_info" | awk '{print $5}')
+current_height=$(echo "$window_info" | awk '{print $6}')
+
+# Get monitor info dynamically
+declare -a screen_x screen_y screen_width screen_height
+screen_count=0
+
+while read -r line; do
+    if echo "$line" | grep -q " connected"; then
+        geometry=$(echo "$line" | grep -o '[0-9]\+x[0-9]\++[0-9]\++[0-9]\+')
+        if [ -n "$geometry" ]; then
+            screen_width[$screen_count]=$(echo "$geometry" | cut -d'x' -f1)
+            screen_height[$screen_count]=$(echo "$geometry" | cut -d'x' -f2 | cut -d'+' -f1)
+            screen_x[$screen_count]=$(echo "$geometry" | cut -d'+' -f2)
+            screen_y[$screen_count]=$(echo "$geometry" | cut -d'+' -f3)
+            ((screen_count++))
+        fi
+    fi
+done <<< "$(xrandr --query)"
+
+if [ $screen_count -eq 0 ]; then
+    exit 1
+fi
+
+panel_height=40
+
+# Find current screen and column
+current_screen=-1
+current_column=-1
+total_columns=$((screen_count * 2))
+
+for i in $(seq 0 $((screen_count-1))); do
+    if [ "$current_x" -ge "${screen_x[$i]}" ] && [ "$current_x" -lt $((screen_x[i] + screen_width[i])) ]; then
+        current_screen=$i
+        half_width=$((screen_width[i] / 2))
+        relative_x=$((current_x - screen_x[i]))
+        
+        if [ $relative_x -lt $half_width ]; then
+            current_column=$((i * 2))      # Left half
+        else
+            current_column=$((i * 2 + 1))  # Right half
+        fi
+        break
+    fi
+done
+
+if [ $current_screen -eq -1 ]; then
+    current_screen=0
+    current_column=0
+fi
+
+# Determine window size categories
+screen_usable_height=$((screen_height[current_screen] - panel_height))
+half_width=$((screen_width[current_screen] / 2))
+half_height=$((screen_usable_height / 2))
+
+is_half_width=false
+if [ $current_width -le $((half_width + 50)) ] && [ $current_width -ge $((half_width - 50)) ]; then
+    is_half_width=true
+fi
+
+is_half_height=false
+if [ $current_height -le $((half_height + 50)) ] && [ $current_height -ge $((half_height - 50)) ]; then
+    is_half_height=true
+fi
+
+# Calculate target column
+case "$direction" in
+    "left")
+        target_column=$((current_column - 1))
+        if [ $target_column -lt 0 ]; then
+            target_column=$((total_columns - 1))  # Wrap to rightmost
+        fi
+        ;;
+    "right")
+        target_column=$((current_column + 1))
+        if [ $target_column -ge $total_columns ]; then
+            target_column=0  # Wrap to leftmost
+        fi
+        ;;
+    "up"|"down"|"expand-up"|"expand-down"|"expand-left"|"expand-right")
+        target_column=$current_column  # Stay in same column
+        ;;
+esac
+
+# Calculate target screen and position
+target_screen=$((target_column / 2))
+column_in_screen=$((target_column % 2))
+
+target_screen_x=${screen_x[$target_screen]}
+target_screen_y=${screen_y[$target_screen]}
+target_screen_width=${screen_width[$target_screen]}
+target_screen_height=${screen_height[$target_screen]}
+target_usable_height=$((target_screen_height - panel_height))
+
+# Calculate new position
+case "$direction" in
+    "left"|"right")
+        # Regular navigation - preserve vertical position and size
+        new_width=$((target_screen_width / 2))
+        if [ $column_in_screen -eq 0 ]; then
+            new_x=$target_screen_x
+        else
+            new_x=$((target_screen_x + target_screen_width / 2))
+        fi
+        
+        # Preserve vertical position
+        if [ "$is_half_height" = true ]; then
+            new_height=$((target_usable_height / 2))
+            if [ $((current_y - screen_y[current_screen])) -lt $((screen_usable_height / 2)) ]; then
+                new_y=$target_screen_y
+            else
+                new_y=$((target_screen_y + target_usable_height / 2))
+            fi
+        else
+            new_height=$target_usable_height
+            new_y=$target_screen_y
+        fi
+        ;;
+    "up")
+        # Snap to top half, preserve horizontal position and width
+        if [ "$is_half_width" = true ]; then
+            new_width=$((target_screen_width / 2))
+            if [ $column_in_screen -eq 0 ]; then
+                new_x=$target_screen_x
+            else
+                new_x=$((target_screen_x + target_screen_width / 2))
+            fi
+        else
+            new_width=$target_screen_width
+            new_x=$target_screen_x
+        fi
+        new_y=$target_screen_y
+        new_height=$((target_usable_height / 2))
+        ;;
+    "down")
+        # Snap to bottom half, preserve horizontal position and width
+        if [ "$is_half_width" = true ]; then
+            new_width=$((target_screen_width / 2))
+            if [ $column_in_screen -eq 0 ]; then
+                new_x=$target_screen_x
+            else
+                new_x=$((target_screen_x + target_screen_width / 2))
+            fi
+        else
+            new_width=$target_screen_width
+            new_x=$target_screen_x
+        fi
+        new_y=$((target_screen_y + target_usable_height / 2))
+        new_height=$((target_usable_height / 2))
+        ;;
+    "expand-up"|"expand-down")
+        # Expand vertically to full height
+        new_y=$target_screen_y
+        new_height=$target_usable_height
+        # Preserve horizontal position and width
+        if [ "$is_half_width" = true ]; then
+            new_width=$((target_screen_width / 2))
+            if [ $column_in_screen -eq 0 ]; then
+                new_x=$target_screen_x
+            else
+                new_x=$((target_screen_x + target_screen_width / 2))
+            fi
+        else
+            new_width=$target_screen_width
+            new_x=$target_screen_x
+        fi
+        ;;
+    "expand-left"|"expand-right")
+        # Expand/contract horizontally
+        target_half_width=$((target_screen_width / 2))
+        
+        if [ "$is_half_width" = true ]; then
+            # Window is half-width, expand to full width
+            new_x=$target_screen_x
+            new_width=$target_screen_width
+        else
+            # Window is full-width, contract based on direction
+            new_width=$target_half_width
+            if [ "$direction" = "expand-right" ]; then
+                # Contract to right half
+                new_x=$((target_screen_x + target_half_width))
+            else # expand-left
+                # Contract to left half
+                new_x=$target_screen_x
+            fi
+        fi
+        
+        # Preserve vertical position and size
+        if [ "$is_half_height" = true ]; then
+            new_height=$((target_usable_height / 2))
+            if [ $((current_y - screen_y[current_screen])) -lt $((screen_usable_height / 2)) ]; then
+                new_y=$target_screen_y
+            else
+                new_y=$((target_screen_y + target_usable_height / 2))
+            fi
+        else
+            new_height=$target_usable_height
+            new_y=$target_screen_y
+        fi
+        ;;
+esac
+
+# Apply new position
+wmctrl -i -r "$active_window" -e "0,$new_x,$new_y,$new_width,$new_height"

@@ -26,20 +26,42 @@ current_y=$(echo "$window_info" | awk '{print $4}')
 current_width=$(echo "$window_info" | awk '{print $5}')
 current_height=$(echo "$window_info" | awk '{print $6}')
 
-# Get monitor info (assuming 2 monitors for now)
-# Screen 0: 1920x1080+0+0
-# Screen 1: 1920x1080+1920+0
-screen0_x=0
-screen0_y=0
-screen0_width=1920
-screen0_height=1080
+# Get monitor info dynamically
+declare -a screen_x screen_y screen_width screen_height
+screen_count=0
 
-screen1_x=1920
-screen1_y=0
-screen1_width=1920
-screen1_height=1080
+while read -r line; do
+    if echo "$line" | grep -q " connected"; then
+        geometry=$(echo "$line" | grep -o '[0-9]\+x[0-9]\++[0-9]\++[0-9]\+')
+        if [ -n "$geometry" ]; then
+            screen_width[$screen_count]=$(echo "$geometry" | cut -d'x' -f1)
+            screen_height[$screen_count]=$(echo "$geometry" | cut -d'x' -f2 | cut -d'+' -f1)
+            screen_x[$screen_count]=$(echo "$geometry" | cut -d'+' -f2)
+            screen_y[$screen_count]=$(echo "$geometry" | cut -d'+' -f3)
+            ((screen_count++))
+        fi
+    fi
+done <<< "$(xrandr --query)"
+
+if [ $screen_count -eq 0 ]; then
+    exit 1
+fi
 
 panel_height=40
+
+# Define convenience variables for first two screens
+screen0_x=${screen_x[0]}
+screen0_y=${screen_y[0]}
+screen0_width=${screen_width[0]}
+screen0_height=${screen_height[0]}
+
+if [ $screen_count -gt 1 ]; then
+    screen1_x=${screen_x[1]}
+    screen1_y=${screen_y[1]}
+    screen1_width=${screen_width[1]}
+    screen1_height=${screen_height[1]}
+fi
+
 usable_height=$((screen0_height - panel_height))
 
 # Determine current column (0-3)
@@ -81,7 +103,7 @@ case "$direction" in
             target_column=0  # Wrap to leftmost column
         fi
         ;;
-    "up"|"down"|"expand-up"|"expand-down")
+    "up"|"down"|"expand-up"|"expand-down"|"expand-left"|"expand-right")
         target_column=$current_column  # Stay in same column
         ;;
 esac
@@ -148,6 +170,84 @@ case "$direction" in
             # Window is already half-height, do nothing or could toggle back to quarter
             new_y=$target_screen_y
             new_height=$usable_height
+        fi
+        ;;
+    "expand-left"|"expand-right")
+        # Expand/contract half window horizontally with directional behavior
+        # Determine current monitor for the target column
+        target_monitor=$((target_column / 2))
+        if [ $target_monitor -eq 0 ]; then
+            target_monitor_x=${screen_x[0]}
+            target_monitor_y=${screen_y[0]}
+            target_monitor_width=${screen_width[0]}
+            target_monitor_height=${screen_height[0]}
+        else
+            target_monitor_x=${screen_x[1]}
+            target_monitor_y=${screen_y[1]}
+            target_monitor_width=${screen_width[1]}
+            target_monitor_height=${screen_height[1]}
+        fi
+        target_usable_height=$((target_monitor_height - panel_height))
+        
+        # Check if window is currently half-width
+        half_width=$((target_monitor_width / 2))
+        is_half_width=false
+        if [ $current_width -le $((half_width + 50)) ] && [ $current_width -ge $((half_width - 50)) ]; then
+            is_half_width=true
+        fi
+        
+        # Determine current horizontal position (left/right half)
+        relative_x=$((current_x - target_monitor_x))
+        is_left_half=false
+        if [ $relative_x -lt $half_width ]; then
+            is_left_half=true
+        fi
+        
+        if [ "$is_half_width" = true ]; then
+            if [ "$direction" = "expand-right" ]; then
+                if [ "$is_left_half" = true ]; then
+                    # From left half: expand to full width
+                    new_x=$target_monitor_x
+                    new_width=$target_monitor_width
+                else
+                    # From right half: already right, expand to full
+                    new_x=$target_monitor_x
+                    new_width=$target_monitor_width
+                fi
+            else # expand-left
+                if [ "$is_left_half" = true ]; then
+                    # From left half: already left, expand to full
+                    new_x=$target_monitor_x
+                    new_width=$target_monitor_width
+                else
+                    # From right half: expand to full width
+                    new_x=$target_monitor_x
+                    new_width=$target_monitor_width
+                fi
+            fi
+        else
+            # Window is full-width, contract based on direction
+            new_width=$half_width
+            if [ "$direction" = "expand-right" ]; then
+                # Contract to right half
+                new_x=$((target_monitor_x + half_width))
+            else # expand-left
+                # Contract to left half
+                new_x=$target_monitor_x
+            fi
+        fi
+        
+        # Preserve vertical position and size
+        if [ "$is_half_height" = true ]; then
+            new_height=$((target_usable_height / 2))
+            if [ $((current_y - target_monitor_y)) -lt $((target_usable_height / 2)) ]; then
+                new_y=$target_monitor_y
+            else
+                new_y=$((target_monitor_y + target_usable_height / 2))
+            fi
+        else
+            new_height=$target_usable_height
+            new_y=$target_monitor_y
         fi
         ;;
 esac

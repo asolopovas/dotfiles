@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test-bash test-bash-verbose clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache
+.PHONY: help test test-bash test-bash-verbose test-snap-window clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -13,8 +13,10 @@ help:
 	@echo "  install             Install everything (Squid proxy + Docker registry cache + Git cache)"
 	@echo ""
 	@echo "Testing:"
+	@echo "  test                Run all project tests"
 	@echo "  test-bash           Run all bash script tests"
 	@echo "  test-bash-verbose   Run E2E tests with detailed output"
+	@echo "  test-snap-window    Run snap-window functionality tests"
 	@echo ""
 	@echo "Squid Proxy:"
 	@echo "  install-squid       Install and configure Squid proxy (auto-builds if needed)"
@@ -38,10 +40,18 @@ help:
 	@echo "Usage: make <target>"
 
 # Test targets
+test: test-bash test-snap-window
+	@echo "✅ All project tests completed successfully!"
+
 test-bash: install-test-deps
 	@echo "Running bash script tests..."
 	@chmod +x ./tests/bash/squid/run_squid_tests.sh
 	@./tests/bash/squid/run_squid_tests.sh
+
+test-snap-window: install-test-deps
+	@echo "Running snap-window functionality tests..."
+	@chmod +x ./tests/run-snap-tests.sh
+	@./tests/run-snap-tests.sh
 
 test-bash-verbose: install-test-deps
 	@echo "Running verbose E2E Squid tests..."
@@ -70,6 +80,16 @@ install-test-deps:
 			brew install gum; \
 		else \
 			echo "Warning: gum not found, tests will use mock version"; \
+		fi \
+	fi
+	@if ! command -v bats >/dev/null 2>&1; then \
+		echo "Installing bats testing framework..."; \
+		if command -v apt-get >/dev/null 2>&1; then \
+			$(SUDO_NO_PROXY) apt-get update -qq && sudo apt-get install -y bats; \
+		elif command -v brew >/dev/null 2>&1; then \
+			brew install bats-core; \
+		else \
+			echo "Warning: bats not found, snap-window tests may fail"; \
 		fi \
 	fi
 	@chmod +x tests/bash/*.sh
