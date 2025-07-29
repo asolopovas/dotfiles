@@ -1,6 +1,8 @@
 ## Clean Project Instructions
 
+- Clean up codebase
 - Reduce redundancy
-- Clean up and standardize all imports
+- Enforce reusability
+- Replace all hardcoded values with config in `config/*` dir
 - Keep folder structure ≤2 levels deep
-- Replace all magic values with constants or config
+- run code quality, format and linting tools
