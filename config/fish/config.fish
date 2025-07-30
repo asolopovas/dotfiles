@@ -66,18 +66,6 @@ set -x LD_LIBRARY_PATH "/home/andrius/.rye/tools/rmodel/lib/python3.12/site-pack
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-if test -d "/home/andrius/miniconda3" -a -f "/home/andrius/miniconda3/bin/conda"
-    eval "/home/andrius/miniconda3/bin/conda" "shell.fish" "hook" 2> /dev/null | source
-else
-    if test -f "/home/andrius/miniconda3/etc/fish/conf.d/conda.fish"
-        source "/home/andrius/miniconda3/etc/fish/conf.d/conda.fish"
-    else
-        set -x PATH "/home/andrius/miniconda3/bin" $PATH
-    end
-end
-# <<< conda initialize <<<
 
 # opencode
 fish_add_path /home/andrius/.opencode/bin
