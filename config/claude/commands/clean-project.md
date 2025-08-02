@@ -3,7 +3,8 @@
 - Remove redundant code
 - Fix deprecated code
 - Eliminate redundant tests and assertions
-- Centralize duplicated code into functions and configuration files
+- split large files into `[filename]-[logical-chunk].go`
+- Reuse duplicated code via functions and config files
 - Keep folder structure ≤2 levels deep
-- run language appropriate code quality tools fix issues
+- Run language-specific code quality tools and fix identified issues
 - make sure all tests pass
