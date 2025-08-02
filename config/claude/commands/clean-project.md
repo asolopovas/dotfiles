@@ -1,7 +1,9 @@
 # Cleanup Project
-- read CLAUDE.md follow its instruction
-- remove redundant code
+- Read CLAUDE.md follow its instruction
+- Remove redundant code
+- Fix deprecated code
 - Eliminate redundant tests and assertions
-- centralize code duplication into function and configs
+- Centralize duplicated code into functions and configuration files
 - Keep folder structure ≤2 levels deep
+- run language appropriate code quality tools fix issues
 - make sure all tests pass

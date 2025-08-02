@@ -1,6 +1,7 @@
 # RULES
 
 - No comments in the code
+- Avoid deprecated code
 - Avoid hard coded values use configs (yml|json|php|etc...)
 - Embrace code reuse
 - Follow best functional programing and classic programming practices where applicable
