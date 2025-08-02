@@ -86,7 +86,7 @@ alias ppaste='xsel --clipboard --output'
 alias fb="fabric"
 
 # Python/Rye
-alias pip='rye add'
-alias pip3='rye add'
-alias python='rye run python'
-alias python3='rye run python'
+alias python='/home/andrius/.rye/py/cpython@3.11.11/bin/python3'
+alias python3='/home/andrius/.rye/py/cpython@3.11.11/bin/python3'
+alias pip='python -m pip'
+alias pip3='python -m pip'
