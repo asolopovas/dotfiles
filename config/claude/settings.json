@@ -92,7 +92,7 @@
             "Bash(which *)",
             "Bash(xlsx2csv *)",
             "Bash(yarn *)",
-            "Write(*)",
+            "Write(*)"
         ]
     },
     "hooks": {
