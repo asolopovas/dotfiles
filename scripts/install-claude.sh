@@ -2,18 +2,26 @@
 
 set -e
 
-echo "Installing Claude Code globally..."
+base="$HOME/dotfiles/config/claude"
+target="$HOME/.claude"
+
+if [ "$1" == "--force" ]; then
+  for dir in ide statsig shell-snapshots todos projects; do
+    rm -rf "$target/$dir"
+    mkdir -p "$target/$dir"
+  done
+fi
+
 npm install -g @anthropic-ai/claude-code
 
-mkdir -p "$HOME/.claude"
-mkdir -p "$HOME/.config/claude"
+mkdir -p "$target"
 
-# Create symbolic links for all Claude configuration
-ln -sf "$HOME/dotfiles/config/claude/settings.json" "$HOME/.claude/settings.json"
-ln -sf "$HOME/dotfiles/config/claude/commands" "$HOME/.claude/commands"
-ln -sf "$HOME/dotfiles/config/claude/agents" "$HOME/.claude/agents"
-ln -sf "$HOME/dotfiles/config/claude/hooks" "$HOME/.claude/hooks"
-ln -sf "$HOME/dotfiles/config/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+items=(settings.json CLAUDE.md commands agents hooks)
+
+for item in "${items[@]}"; do
+  rm -f "$target/$item"
+  ln -sf "$base/$item" "$target/$item"
+done
 
 echo "Claude Code installation complete!"
-echo "Configuration linked from ~/dotfiles/config/claude/"
+echo "Configuration linked from $base"
