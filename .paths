@@ -1,6 +1,7 @@
 go/bin
 .local/bin
 .rye/shims
+.rye/py/cpython@3.11.11/bin
 .local/bin/helpers
 .local/bin/helpers/apps
 .local/bin/helpers/statusbar
