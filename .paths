@@ -1,5 +1,6 @@
 go/bin
 .local/bin
+.rye/shims
 .local/bin/helpers
 .local/bin/helpers/apps
 .local/bin/helpers/statusbar
