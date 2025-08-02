@@ -27,6 +27,7 @@
             "Bash(go *)",
             "Bash(go mod tidy *)",
             "Bash(go vet *)",
+            "Bash(golangci-lint)",
             "Bash(gofmt *)",
             "Bash(goimports *)",
             "Bash(golint *)",
@@ -90,7 +91,8 @@
             "Bash(whereis *)",
             "Bash(which *)",
             "Bash(xlsx2csv *)",
-            "Bash(yarn *)"
+            "Bash(yarn *)",
+            "Write(*)",
         ]
     },
     "hooks": {
