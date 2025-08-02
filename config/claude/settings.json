@@ -47,6 +47,7 @@
             "Bash(ln *)",
             "Bash(lsof *)",
             "Bash(ls *)",
+            "Bash(make *)",
             "Bash(mkdir *)",
             "Bash(mocha *)",
             "Bash(more *)",
