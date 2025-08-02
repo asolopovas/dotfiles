@@ -1,7 +1,6 @@
 # Cleanup Project
 - read CLAUDE.md follow its instruction
-- Reduce redundancy
-- Replace all hardcoded values use configs instead
+- remove redundant codee
+- centralize code duplication into function and configs
 - Keep folder structure ≤2 levels deep
-- run code quality, format and linting tools
 - make sure all tests pass
