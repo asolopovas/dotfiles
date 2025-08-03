@@ -4,7 +4,6 @@
 - Fix deprecated code
 - Eliminate redundant tests and assertions
 - Simplify complex functions
-- split large files into `[filename]-[logical-chunk].go`
 - Reuse duplicated code via functions and config files
 - Keep folder structure ≤2 levels deep
 - Run language-specific code quality tools and fix identified issues
