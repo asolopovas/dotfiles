@@ -23,6 +23,9 @@ alias dc='docker compose '
 alias dk-stop='docker stop (docker ps -a -q); docker rm (docker ps -a -q)'
 alias sys='systemctl'
 
+alias cld='claude --dangerously-skip-permissions'
+
+
 # Github
 alias ga='git commit --amend'
 alias gs='git status '
