@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Update symlinks script for dotfiles config directory rename
-# Run this script after renaming .config to config
 
 echo "Updating symlinks from dotfiles/.config to dotfiles/config..."
 
 # cleanup
-find $HOME -type f
+rm -f $HOME/.config/fish
+rm -rf $HOME/dotifles/.config
 
 # Claude symlinks
 ln -sf "$HOME/dotfiles/config/claude/settings.json" "$HOME/.claude/settings.json"
