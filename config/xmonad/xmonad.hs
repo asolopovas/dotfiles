@@ -120,7 +120,7 @@ myKeyb =
     ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"      ), -- Restarts xmonad
     ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
-    ("M-m",              namedScratchpadAction myScratchPads "tauon"         ),
+    ("M-m",              namedScratchpadAction myScratchPads "audacious"     ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
@@ -155,7 +155,7 @@ myScratchPads =
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "tauon"        "flatpak run com.github.taiko2k.tauonmb"     "title"     "Tauon"            "lg",
+        buildNS "audacious"    "audacious"                                   "title"     "Audacious"        "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "Thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
