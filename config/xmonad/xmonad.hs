@@ -68,7 +68,7 @@ myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#fff323"
 
 myTerminal           = "alacritty"
-myBrowser            = "brave-browser --no-default-browser-check --enable-features=WebUIDarkMode --force-dark-mode"
+myBrowser            = "$BROWSER"
 myFilebrowser        = "thunar"
 myModMask            = mod4Mask
 myWorkspaces         = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -104,7 +104,7 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-d",            spawn "rofi -show run"         ),
-    ("M-c",            spawn myBrowser                ),
+    ("M-c",            spawn "sh -c '$BROWSER'"        ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
@@ -123,7 +123,7 @@ myKeyb =
     ("M-m",              namedScratchpadAction myScratchPads "tauon"         ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
-    ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
+    ("M-b"  ,            spawn "firefox"                                    ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
     ("M-S-x",            namedScratchpadAction myScratchPads "pcmanfmSearch" ),
     ("M-S-<Return>",     namedScratchpadAction myScratchPads "terminal"      ),
