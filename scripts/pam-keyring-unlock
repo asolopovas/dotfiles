@@ -1,0 +1,38 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ "${PAM_TYPE:-}" == "auth" ]] && [[ "${PAM_USER:-}" == "$(whoami)" ]]; then
+    if ! pgrep -x "gnome-keyring-d" >/dev/null 2>&1; then
+        gnome-keyring-daemon --start --daemonize --components=gpg,pkcs11,secrets,ssh >/dev/null 2>&1 || exit 0
+    fi
+    if [[ -n "${PAM_AUTHTOK:-}" ]]; then
+        echo "${PAM_AUTHTOK}" | gnome-keyring-daemon --unlock >/dev/null 2>&1 || exit 0
+    fi
+    exit 0
+fi
+
+if pgrep -x "gnome-keyring-d" >/dev/null 2>&1 && echo | gnome-keyring-daemon --unlock >/dev/null 2>&1; then
+    echo "Keyring already unlocked"
+    exit 0
+fi
+
+echo -n "Enter password to unlock keyring: "
+read -s password
+echo
+
+if [[ -z "$password" ]]; then
+    echo "No password provided" >&2
+    exit 1
+fi
+
+if echo "$password" | gnome-keyring-daemon --unlock >/dev/null 2>&1; then
+    echo "Keyring unlocked"
+    password=""
+    unset password
+    if ! pgrep -x "gnome-keyring-d" >/dev/null 2>&1; then
+        gnome-keyring-daemon --start --daemonize --components=gpg,pkcs11,secrets,ssh >/dev/null 2>&1 || true
+    fi
+else
+    echo "Failed to unlock keyring" >&2
+    exit 1
+fi
