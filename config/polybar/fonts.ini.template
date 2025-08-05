@@ -1,0 +1,15 @@
+# Polybar Font Configuration Template
+# This file is generated dynamically based on DPI settings
+
+font-0 = "JetBrainsMono Nerd Font:style=Normal:size=${POLYBAR_FONT_SIZE};3"
+font-1 = "JetBrainsMono Nerd Font:style=Medium:size=${POLYBAR_FONT_SIZE};3"
+font-2 = "JetBrainsMono Nerd Font:style=Bold:size=${POLYBAR_FONT_SIZE};3"
+font-3 = "JetBrainsMono Nerd Font:style=Italic:size=${POLYBAR_FONT_SIZE};3"
+font-4 = "JetBrainsMono Nerd Font:style=Medium Italic:size=${POLYBAR_FONT_SIZE};3"
+font-5 = "JetBrainsMono Nerd Font:size=${POLYBAR_FONT_SIZE_LARGE};5"
+font-6 = "Feather:size=${POLYBAR_FONT_SIZE};3.5"
+font-7 = "Material Icons:size=${POLYBAR_FONT_SIZE};4"
+font-8 = "Material Icons Outlined:size=${POLYBAR_FONT_SIZE};4"
+font-9 = "Material Icons Round:size=${POLYBAR_FONT_SIZE};4"
+font-10 = "Material Icons Sharp:size=${POLYBAR_FONT_SIZE};4"
+font-11 = "Material Icons TwoTone:size=${POLYBAR_FONT_SIZE};4"
