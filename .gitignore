@@ -13,3 +13,4 @@
 .php-version
 tmp/
 .claude/settings.local.json
+config/polybar/fonts.ini
