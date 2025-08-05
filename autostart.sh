@@ -1,4 +1,7 @@
 #!/bin/bash
+# Set DPI based on hardware (laptop vs desktop)
+~/dotfiles/scripts/set-dpi-by-hardware.sh
+
 gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
 # Start compositor (fastcompmgr preferred, fallback to picom)
 if command -v fastcompmgr &> /dev/null; then
