@@ -55,6 +55,9 @@ main() {
     # Clear GNOME settings daemon keybindings that conflict
     disable_key org.gnome.settings-daemon.plugins.media-keys screensaver
     
+    # Clear Cinnamon Looking Glass (Melange) keybinding
+    gsettings set org.cinnamon.desktop.keybindings looking-glass-keybinding "[]"
+    
     # Preserve Alt+Tab (skip if keys don't exist)
     gsettings set org.cinnamon.desktop.keybindings.wm switch-windows "['<Alt>Tab']" 2>/dev/null || true
     gsettings set org.cinnamon.desktop.keybindings.wm switch-windows-backward "['<Shift><Alt>Tab']" 2>/dev/null || true
