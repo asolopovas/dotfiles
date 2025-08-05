@@ -150,7 +150,7 @@ myScratchPads =
     [
         buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
         buildNSTiled "firefox" "firefox --class='FirefoxScratchpad' --enable-features=WebUIDarkMode --force-dark-mode" "className" "FirefoxScratchpad",
-        buildNSTiled "brave"   "sh -c '$BROWSER --force-dark-mode --class=BraveScratchpad'" "className" "BraveScratchpad",
+        buildNSTiled "brave"   "sh -c '$BROWSER --class=BraveScratchpad'" "className" "BraveScratchpad",
         buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
