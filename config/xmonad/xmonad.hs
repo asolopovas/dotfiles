@@ -463,6 +463,7 @@ main = do
     [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
 
   xmonad
+    $ ewmhFullscreen
     $ ewmh
     $ docks
     $ def {
