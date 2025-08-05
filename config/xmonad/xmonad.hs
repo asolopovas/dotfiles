@@ -104,7 +104,7 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-d",            spawn "rofi -show run"         ),
-    ("M-c",            spawn "sh -c '$BROWSER'"        ),
+    ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
@@ -123,7 +123,7 @@ myKeyb =
     ("M-m",              namedScratchpadAction myScratchPads "tauon"         ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
-    ("M-b"  ,            spawn "firefox"                                    ),
+    ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),
     ("M-S-x",            namedScratchpadAction myScratchPads "pcmanfmSearch" ),
     ("M-S-<Return>",     namedScratchpadAction myScratchPads "terminal"      ),
@@ -149,7 +149,8 @@ myKeyb =
 myScratchPads =
     [
         buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
-        buildNS "firefox"      "firefox --class='FirefoxScratchpad'"         "className" "FirefoxScratchpad" "lg",
+        buildNSTiled "firefox" "firefox --class='FirefoxScratchpad' --enable-features=WebUIDarkMode --force-dark-mode" "className" "FirefoxScratchpad",
+        buildNSTiled "brave"   "sh -c '$BROWSER --force-dark-mode --class=BraveScratchpad'" "className" "BraveScratchpad",
         buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
@@ -375,6 +376,15 @@ buildNS name cmd prop value floatTypeStr = NS name cmd (property =? value) (floa
         floatType "sm" = smFloatCustom
         floatType "md" = mdFloatCustom
         floatType "lg" = lgFloatCustom
+        floatType "tiled" = doIgnore  -- Don't float, keep tiled
+
+-- Build scratchpad without floating
+buildNSTiled :: String -> String -> String -> String -> NamedScratchpad
+buildNSTiled name cmd prop value = NS name cmd (property =? value) nonFloating
+    where
+        property
+            | prop == "title"    = title
+            | prop == "className" = className
 
 --------------------------------------------
 -- Mouse bindings
