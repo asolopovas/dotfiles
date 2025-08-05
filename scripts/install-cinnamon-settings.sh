@@ -52,6 +52,9 @@ main() {
         disable_key org.cinnamon.desktop.keybindings.media-keys $key
     done
     
+    # Clear GNOME settings daemon keybindings that conflict
+    disable_key org.gnome.settings-daemon.plugins.media-keys screensaver
+    
     # Preserve Alt+Tab (skip if keys don't exist)
     gsettings set org.cinnamon.desktop.keybindings.wm switch-windows "['<Alt>Tab']" 2>/dev/null || true
     gsettings set org.cinnamon.desktop.keybindings.wm switch-windows-backward "['<Shift><Alt>Tab']" 2>/dev/null || true
@@ -113,22 +116,26 @@ main() {
     gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-left "['<Super><Shift>Left']"
     gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-right "['<Super><Shift>Right']"
     
+    header "Installing dependencies"
+    
+    # Install required packages
+    log "Installing xdotool and other dependencies..."
+    sudo apt update && sudo apt install -y xdotool wmctrl x11-xserver-utils
+    
     header "Installing scripts"
     
-    # Copy snap-window script
+    # Create symbolic links for scripts
     if [[ -f "${HOME}/dotfiles/scripts/snap-window" ]]; then
-        cp "${HOME}/dotfiles/scripts/snap-window" ~/.local/bin/snap-window
-        chmod +x ~/.local/bin/snap-window
-        log "Installed snap-window script"
+        ln -sf "${HOME}/dotfiles/scripts/snap-window" ~/.local/bin/snap-window
+        log "Linked snap-window script"
     else
         warn "snap-window script not found in dotfiles/scripts/"
     fi
     
-    # Copy terminal-toggle script
+    # Create symbolic link for terminal-toggle script
     if [[ -f "${HOME}/dotfiles/scripts/terminal-toggle" ]]; then
-        cp "${HOME}/dotfiles/scripts/terminal-toggle" ~/.local/bin/terminal-toggle
-        chmod +x ~/.local/bin/terminal-toggle
-        log "Installed terminal-toggle script"
+        ln -sf "${HOME}/dotfiles/scripts/terminal-toggle" ~/.local/bin/terminal-toggle
+        log "Linked terminal-toggle script"
     else
         warn "terminal-toggle script not found in dotfiles/scripts/"
     fi
