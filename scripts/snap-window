@@ -64,24 +64,29 @@ fi
 
 usable_height=$((screen0_height - panel_height))
 
-# Determine current column (0-3)
+# Calculate total columns (2 per monitor)
+total_columns=$((screen_count * 2))
+
+# Determine current column dynamically
 current_column=-1
 
-if [ $current_x -lt 1920 ]; then
-    # On screen 0
-    if [ $current_x -lt 960 ]; then
-        current_column=0  # Screen 0 left
-    else
-        current_column=1  # Screen 0 right
+# Find which monitor and column the window is on
+for ((i = 0; i < screen_count; i++)); do
+    monitor_x=${screen_x[i]}
+    monitor_width=${screen_width[i]}
+    monitor_right=$((monitor_x + monitor_width))
+    
+    if [ $current_x -ge $monitor_x ] && [ $current_x -lt $monitor_right ]; then
+        # Window is on monitor i
+        half_width=$((monitor_width / 2))
+        if [ $current_x -lt $((monitor_x + half_width)) ]; then
+            current_column=$((i * 2))      # Left half
+        else
+            current_column=$((i * 2 + 1))  # Right half
+        fi
+        break
     fi
-else
-    # On screen 1
-    if [ $current_x -lt 2880 ]; then
-        current_column=2  # Screen 1 left
-    else
-        current_column=3  # Screen 1 right
-    fi
-fi
+done
 
 # Determine if window is half-height
 is_half_height=false
@@ -109,12 +114,12 @@ case "$direction" in
     "left")
         target_column=$((current_column - 1))
         if [ $target_column -lt 0 ]; then
-            target_column=3  # Wrap to rightmost column
+            target_column=$((total_columns - 1))  # Wrap to rightmost column
         fi
         ;;
     "right")
         target_column=$((current_column + 1))
-        if [ $target_column -gt 3 ]; then
+        if [ $target_column -ge $total_columns ]; then
             target_column=0  # Wrap to leftmost column
         fi
         ;;
@@ -123,29 +128,27 @@ case "$direction" in
         ;;
 esac
 
-# Calculate new position based on target column
-case $target_column in
-    0) # Screen 0 left
-        new_x=$screen0_x
-        new_width=$((screen0_width / 2))
-        target_screen_y=$screen0_y
-        ;;
-    1) # Screen 0 right
-        new_x=$((screen0_x + screen0_width / 2))
-        new_width=$((screen0_width / 2))
-        target_screen_y=$screen0_y
-        ;;
-    2) # Screen 1 left
-        new_x=$screen1_x
-        new_width=$((screen1_width / 2))
-        target_screen_y=$screen1_y
-        ;;
-    3) # Screen 1 right
-        new_x=$((screen1_x + screen1_width / 2))
-        new_width=$((screen1_width / 2))
-        target_screen_y=$screen1_y
-        ;;
-esac
+# Calculate new position based on target column dynamically
+target_monitor=$((target_column / 2))
+target_half=$((target_column % 2))
+
+# Get target monitor dimensions
+target_monitor_x=${screen_x[target_monitor]}
+target_monitor_y=${screen_y[target_monitor]} 
+target_monitor_width=${screen_width[target_monitor]}
+target_monitor_height=${screen_height[target_monitor]}
+
+# Calculate position within target monitor
+half_width=$((target_monitor_width / 2))
+if [ $target_half -eq 0 ]; then
+    # Left half
+    new_x=$target_monitor_x
+else
+    # Right half
+    new_x=$((target_monitor_x + half_width))
+fi
+new_width=$half_width
+target_screen_y=$target_monitor_y
 
 # Handle vertical movement
 case "$direction" in
