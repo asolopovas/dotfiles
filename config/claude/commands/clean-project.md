@@ -1,5 +1,4 @@
 # Cleanup Project
-- Read CLAUDE.md follow its instruction
 - Remove redundant code
 - Remove redundant tests and assertions
 - Remove hardcoded values and replace them with config values
