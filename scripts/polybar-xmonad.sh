@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to format xmonad log output for polybar
-# Shows all screens with all desktops 1-8, highlighting active ones
+# Shows all screens with all desktops 1-9, highlighting active ones
 # The active workspace is highlighted with %{F#2266d0} in xmonad-log output
 
 # Track active desktops for each screen
@@ -56,8 +56,8 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
             display+="Screen $screen: "
         fi
         
-        # Show desktops 1-8 for this screen
-        for desktop in {1..8}; do
+        # Show desktops 1-9 for this screen
+        for desktop in {1..9}; do
             if [[ "${screen_active_desktop[$screen]}" == "$desktop" ]]; then
                 # Highlight active desktop with #ffe500 color
                 display+="%{F#ffe500}$desktop%{F-}"
@@ -65,7 +65,7 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
                 display+="$desktop"
             fi
             # Add separator between desktop numbers
-            if [[ $desktop -lt 8 ]]; then
+            if [[ $desktop -lt 9 ]]; then
                 display+=" "
             fi
         done
