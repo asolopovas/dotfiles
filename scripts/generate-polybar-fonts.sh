@@ -4,6 +4,9 @@
 # Source environment variables
 [ -f "$HOME/.env-vars" ] && source "$HOME/.env-vars"
 
+# Export variables for envsubst
+export POLYBAR_FONT_SIZE POLYBAR_FONT_SIZE_LARGE
+
 POLYBAR_CONFIG_DIR="$HOME/dotfiles/config/polybar"
 TEMPLATE_FILE="$POLYBAR_CONFIG_DIR/fonts.ini.template"
 OUTPUT_FILE="$POLYBAR_CONFIG_DIR/fonts.ini"
