@@ -1,11 +1,9 @@
 #!/bin/bash
 
-
 echo "Updating symlinks from dotfiles/.config to dotfiles/config..."
 
 # cleanup
-rm -f $HOME/.config/fish
-rm -rf $HOME/dotifles/.config
+rm -rf $HOME/.config/fish
 
 # Claude symlinks
 ln -sf "$HOME/dotfiles/config/claude/settings.json" "$HOME/.claude/settings.json"
