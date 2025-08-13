@@ -14,11 +14,11 @@ declare -A mcp_servers=(
 
 get_server_package() {
     case "$1" in
-    git) echo "@cyanheads/git-mcp-server" ;;
-    playwright) echo "@playwright/mcp" ;;
-    github) echo "@modelcontextprotocol/server-github" ;;
-    sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
     context7) echo "@upstash/context7-mcp" ;;
+    git) echo "@cyanheads/git-mcp-server" ;;
+    github) echo "@modelcontextprotocol/server-github" ;;
+    playwright) echo "@playwright/mcp" ;;
+    sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
     *) echo "@modelcontextprotocol/server-$1" ;;
     esac
 }
@@ -54,16 +54,8 @@ done
 
 claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
 
-if [ "${mcp_servers[duckduckgo]}" = "true" ]; then
-    is_server_configured "duckduckgo" || add_server "duckduckgo"
-fi
-
 if [ "${mcp_servers[fetch]}" = "true" ]; then
     is_server_configured "fetch" || add_server "fetch"
-fi
-
-if [ "${mcp_servers[filesystem]}" = "true" ]; then
-    is_server_configured "filesystem" || add_server "filesystem"
 fi
 
 if [ "${mcp_servers[git]}" = "true" ]; then
