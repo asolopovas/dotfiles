@@ -4,24 +4,18 @@
 
 command -v gum >/dev/null || "$HOME/dotfiles/scripts/install-gum.sh"
 
-# MCP servers configuration
 declare -A mcp_servers=(
-    [duckduckgo]=${DUCKDUCKGO:-false}
     [context7]=${CONTEXT7:-true}
-    [fetch]=${FETCH:-true}
     [git]=${GIT:-true}
     [github]=${GITHUB:-true}
     [playwright]=${PLAYWRIGHT:-true}
     [sequential-thinking]=${SEQUENTIAL_THINKING:-true}
 )
 
-# Server package mappings
 get_server_package() {
     case "$1" in
-    fetch) echo "@kazuph/mcp-fetch" ;;
     git) echo "@cyanheads/git-mcp-server" ;;
     playwright) echo "@playwright/mcp" ;;
-    duckduckgo) echo "@oevortex/ddg_search" ;;
     github) echo "@modelcontextprotocol/server-github" ;;
     sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
     context7) echo "@upstash/context7-mcp" ;;
@@ -29,12 +23,10 @@ get_server_package() {
     esac
 }
 
-# Check if server is already configured
 is_server_configured() {
     echo "$claude_servers" | grep -q "^$1$"
 }
 
-# Add server with optional environment
 add_server() {
     server="$1"
     env_vars="$2"
@@ -47,10 +39,8 @@ add_server() {
     fi
 }
 
-# Get current Claude servers
 claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
 
-# Build enabled servers list
 enabled_servers=""
 for server in "${!mcp_servers[@]}"; do
     if [ "${mcp_servers[$server]}" = "true" ]; then
@@ -58,15 +48,12 @@ for server in "${!mcp_servers[@]}"; do
     fi
 done
 
-# Remove servers not in enabled list
 for server in $claude_servers; do
     echo "$enabled_servers" | grep -q "\b$server\b" || { claude mcp remove "$server" && echo "Removed $server"; }
 done
 
-# Refresh server list
 claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
 
-# Add enabled servers
 if [ "${mcp_servers[duckduckgo]}" = "true" ]; then
     is_server_configured "duckduckgo" || add_server "duckduckgo"
 fi

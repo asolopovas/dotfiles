@@ -14,3 +14,5 @@
 tmp/
 .claude/settings.local.json
 config/polybar/fonts.ini
+todo.md
+task.md
