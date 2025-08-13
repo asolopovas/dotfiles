@@ -6,10 +6,9 @@ command -v gum >/dev/null || "$HOME/dotfiles/scripts/install-gum.sh"
 
 # MCP servers configuration
 declare -A mcp_servers=(
-    [duckduckgo]=${DUCKDUCKGO:-true}
+    [duckduckgo]=${DUCKDUCKGO:-false}
     [context7]=${CONTEXT7:-true}
     [fetch]=${FETCH:-true}
-    [filesystem]=${FILESYSTEM:-false}
     [git]=${GIT:-true}
     [github]=${GITHUB:-true}
     [playwright]=${PLAYWRIGHT:-true}
@@ -19,7 +18,6 @@ declare -A mcp_servers=(
 # Server package mappings
 get_server_package() {
     case "$1" in
-    filesystem) echo "@modelcontextprotocol/server-filesystem /home/andrius" ;;
     fetch) echo "@kazuph/mcp-fetch" ;;
     git) echo "@cyanheads/git-mcp-server" ;;
     playwright) echo "@playwright/mcp" ;;
