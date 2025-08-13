@@ -39,7 +39,7 @@ add_server() {
     fi
 }
 
-claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
+claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | grep -v "Checking MCP server health" | cut -d: -f1)
 
 enabled_servers=""
 for server in "${!mcp_servers[@]}"; do
@@ -52,7 +52,7 @@ for server in $claude_servers; do
     echo "$enabled_servers" | grep -q "\b$server\b" || { claude mcp remove "$server" && echo "Removed $server"; }
 done
 
-claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | cut -d: -f1)
+claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | grep -v "Checking MCP server health" | cut -d: -f1)
 
 if [ "${mcp_servers[fetch]}" = "true" ]; then
     is_server_configured "fetch" || add_server "fetch"
