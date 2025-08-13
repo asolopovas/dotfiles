@@ -23,61 +23,51 @@ get_server_package() {
     esac
 }
 
+get_claude_servers() {
+    claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | grep -v "Checking MCP server health" | cut -d: -f1
+}
+
 is_server_configured() {
-    echo "$claude_servers" | grep -q "^$1$"
+    get_claude_servers | grep -q "^$1$"
 }
 
 add_server() {
-    server="$1"
-    env_vars="$2"
-    package=$(get_server_package "$server")
-
-    if [ -n "$env_vars" ]; then
-        claude mcp add "$server" -- $env_vars npx $package && echo "Added $server"
-    else
-        claude mcp add "$server" -- npx $package && echo "Added $server"
-    fi
+    local server="$1"
+    local env_vars="$2"
+    local package=$(get_server_package "$server")
+    
+    local cmd="claude mcp add \"$server\" --"
+    [ -n "$env_vars" ] && cmd="$cmd $env_vars"
+    cmd="$cmd npx $package"
+    
+    eval $cmd && echo "Added $server"
 }
 
-claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | grep -v "Checking MCP server health" | cut -d: -f1)
+remove_unconfigured_servers() {
+    local enabled_servers=$(printf "%s\n" "${!mcp_servers[@]}" | grep -E "$(IFS=\|; echo "${!mcp_servers[*]}")")
+    
+    for server in $(get_claude_servers); do
+        if [ "${mcp_servers[$server]}" != "true" ]; then
+            claude mcp remove "$server" && echo "Removed $server"
+        fi
+    done
+}
 
-enabled_servers=""
-for server in "${!mcp_servers[@]}"; do
-    if [ "${mcp_servers[$server]}" = "true" ]; then
-        enabled_servers="$enabled_servers $server"
-    fi
-done
+add_configured_servers() {
+    for server in "${!mcp_servers[@]}"; do
+        [ "${mcp_servers[$server]}" != "true" ] && continue
+        
+        if ! is_server_configured "$server"; then
+            if [ "$server" = "github" ]; then
+                command -v gh >/dev/null && gh auth status >/dev/null 2>&1 && add_server "$server"
+            else
+                add_server "$server"
+            fi
+        fi
+    done
+}
 
-for server in $claude_servers; do
-    echo "$enabled_servers" | grep -q "\b$server\b" || { claude mcp remove "$server" && echo "Removed $server"; }
-done
-
-claude_servers=$(claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | grep -v "Checking MCP server health" | cut -d: -f1)
-
-if [ "${mcp_servers[fetch]}" = "true" ]; then
-    is_server_configured "fetch" || add_server "fetch"
-fi
-
-if [ "${mcp_servers[git]}" = "true" ]; then
-    is_server_configured "git" || add_server "git"
-fi
-
-if [ "${mcp_servers[github]}" = "true" ]; then
-    is_server_configured "github" || {
-        command -v gh >/dev/null && gh auth status >/dev/null 2>&1 && add_server "github"
-    }
-fi
-
-if [ "${mcp_servers[playwright]}" = "true" ]; then
-    is_server_configured "playwright" || add_server "playwright"
-fi
-
-if [ "${mcp_servers[sequential-thinking]}" = "true" ]; then
-    is_server_configured "sequential-thinking" || add_server "sequential-thinking"
-fi
-
-if [ "${mcp_servers[context7]}" = "true" ]; then
-    is_server_configured "context7" || add_server "context7"
-fi
+remove_unconfigured_servers
+add_configured_servers
 
 gum style --foreground 32 "✅ MCP sync complete"
