@@ -3,6 +3,7 @@
 echo "Updating symlinks from dotfiles/.config to dotfiles/config..."
 
 # cleanup
+mkdir -p $HOME/.config
 rm -rf $HOME/.config/fish
 
 # Claude symlinks
