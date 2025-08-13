@@ -1,73 +1,76 @@
-#!/bin/bash
-. "$HOME/dotfiles/globals.sh"
-[ -f "$HOME/.env" ] && . "$HOME/.env"
+#!/usr/bin/env bash
+set -euo pipefail
 
-command -v gum >/dev/null || "$HOME/dotfiles/scripts/install-gum.sh"
+want_enabled() {
+  local v="${1:-}"
+  [[ -z "$v" ]] && return 0
+  case "${v,,}" in 1|true|yes|on) return 0 ;; *) return 1 ;; esac
+}
 
-declare -A mcp_servers=(
-    [context7]=${CONTEXT7:-true}
-    [git]=${GIT:-true}
-    [github]=${GITHUB:-true}
-    [playwright]=${PLAYWRIGHT:-true}
-    [sequential-thinking]=${SEQUENTIAL_THINKING:-true}
+declare -A WANT=(
+  [context7]=$(want_enabled "${CONTEXT7:-}" && echo 1 || echo 0)
+  [git]=$(want_enabled "${GIT:-}" && echo 1 || echo 0)
+  [github]=$(want_enabled "${GITHUB:-}" && echo 1 || echo 0)
+  [playwright]=$(want_enabled "${PLAYWRIGHT:-}" && echo 1 || echo 0)
+  [sequential-thinking]=$(want_enabled "${SEQUENTIAL_THINKING:-}" && echo 1 || echo 0)
 )
 
-get_server_package() {
-    case "$1" in
-    context7) echo "@upstash/context7-mcp" ;;
-    git) echo "@cyanheads/git-mcp-server" ;;
-    github) echo "@modelcontextprotocol/server-github" ;;
-    playwright) echo "@playwright/mcp" ;;
+command -v claude >/dev/null || { echo "Error: 'claude' CLI not found in PATH." >&2; exit 1; }
+command -v npx >/dev/null    || { echo "Error: 'npx' not found in PATH." >&2; exit 1; }
+
+gh_ok=false
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then gh_ok=true; fi
+
+pkg_for() {
+  case "$1" in
+    context7)            echo "@upstash/context7-mcp" ;;
+    git)                 echo "@cyanheads/git-mcp-server" ;;
+    github)              echo "@modelcontextprotocol/server-github" ;;
+    playwright)          echo "@playwright/mcp" ;;
     sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
-    *) echo "@modelcontextprotocol/server-$1" ;;
-    esac
+    *)                   echo "@modelcontextprotocol/server-$1" ;;
+  esac
 }
 
-get_claude_servers() {
-    claude mcp list 2>/dev/null | grep -v "No MCP servers configured" | grep -v "Checking MCP server health" | cut -d: -f1
-}
+mapfile -t CURRENT < <(claude mcp list 2>/dev/null | awk -F: '/^[a-z0-9-]+:/{print $1}')
 
-is_server_configured() {
-    get_claude_servers | grep -q "^$1$"
+in_current() {
+  local s="$1"
+  local x
+  for x in "${CURRENT[@]:-}"; do [[ "$x" == "$s" ]] && return 0; done
+  return 1
 }
 
 add_server() {
-    local server="$1"
-    local env_vars="$2"
-    local package=$(get_server_package "$server")
-    
-    local cmd="claude mcp add \"$server\" --"
-    [ -n "$env_vars" ] && cmd="$cmd $env_vars"
-    cmd="$cmd npx $package"
-    
-    eval $cmd && echo "Added $server"
+  local s="$1"
+  # Special case: github requires gh auth
+  if [[ "$s" == "github" && "$gh_ok" != true ]]; then
+    echo "↪︎ Skipping github (gh not installed or not authenticated)."
+    return 0
+  fi
+  local pkg; pkg="$(pkg_for "$s")"
+  # Build args without eval
+  claude mcp add "$s" -- npx "$pkg" && echo "➕ Added $s"
 }
 
-remove_unconfigured_servers() {
-    local enabled_servers=$(printf "%s\n" "${!mcp_servers[@]}" | grep -E "$(IFS=\|; echo "${!mcp_servers[*]}")")
-    
-    for server in $(get_claude_servers); do
-        if [ "${mcp_servers[$server]}" != "true" ]; then
-            claude mcp remove "$server" && echo "Removed $server"
-        fi
-    done
+remove_server() {
+  local s="$1"
+  claude mcp remove "$s" && echo "➖ Removed $s"
 }
 
-add_configured_servers() {
-    for server in "${!mcp_servers[@]}"; do
-        [ "${mcp_servers[$server]}" != "true" ] && continue
-        
-        if ! is_server_configured "$server"; then
-            if [ "$server" = "github" ]; then
-                command -v gh >/dev/null && gh auth status >/dev/null 2>&1 && add_server "$server"
-            else
-                add_server "$server"
-            fi
-        fi
-    done
-}
+for s in "${CURRENT[@]:-}"; do
+  if [[ -z "${WANT[$s]:-}" || "${WANT[$s]}" != "1" ]]; then
+    remove_server "$s"
+  fi
+done
 
-remove_unconfigured_servers
-add_configured_servers
+for s in "${!WANT[@]}"; do
+  [[ "${WANT[$s]}" == "1" ]] || continue
+  in_current "$s" || add_server "$s"
+done
 
-gum style --foreground 32 "✅ MCP sync complete"
+if command -v tput >/dev/null 2>&1 && [[ -t 1 ]]; then
+  printf "%s\n" "$(tput setaf 2)✅ MCP sync complete$(tput sgr0)"
+else
+  echo "✅ MCP sync complete"
+fi
