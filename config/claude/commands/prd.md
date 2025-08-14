@@ -37,7 +37,9 @@ Create detailed Product Requirements Documents (PRDs) that junior developers can
 
 ## Remember
 
--   Write for junior developers - be explicit and avoid jargon
+-   Write for junior developers
+-   Avoid jargon
+-   Be Explicit
 -   Ask clarifying questions before writing
 -   Don't implement - just document
 -   Focus on "what" and "why", not "how"

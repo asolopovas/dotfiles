@@ -16,3 +16,4 @@ tmp/
 config/polybar/fonts.ini
 todo.md
 task.md
+config/fish/fish_variables
