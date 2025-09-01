@@ -59,7 +59,8 @@ remove_server() {
 }
 
 for s in "${CURRENT[@]:-}"; do
-  if [[ -z "${WANT[$s]:-}" || "${WANT[$s]}" != "1" ]]; then
+  [[ -n "$s" ]] || continue
+  if [[ ! -v "WANT[$s]" || "${WANT[$s]:-0}" != "1" ]]; then
     remove_server "$s"
   fi
 done
