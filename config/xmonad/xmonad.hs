@@ -117,10 +117,10 @@ myKeyb =
     ("M-<Delete>",     withFocused $ windows . W.sink ), -- Push floating window back to tile
     ("M-t",            toggleFloat                    ),
     --Xmonad
-    ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"      ), -- Restarts xmonad
+    ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"), -- Restarts xmonad
     ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
-    ("M-m",              namedScratchpadAction myScratchPads "audacious"     ),
+    ("M-m",              namedScratchpadAction myScratchPads "nuclear"       ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
@@ -132,30 +132,30 @@ myKeyb =
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
 
     --Media Keys
-    ("<XF86AudioLowerVolume>", spawn "lmc down" ),
-    ("<XF86AudioRaiseVolume>", spawn "lmc up"   ),
-    ("<XF86AudioMute>",        spawn "lmc mute" ),
-    ("<XF86AudioPlay>",        spawn "playerctl play-pause"                ),
+    ("<XF86AudioLowerVolume>",  spawn "lmc down"                             ),
+    ("<XF86AudioRaiseVolume>",  spawn "lmc up"                               ),
+    ("<XF86AudioMute>",         spawn "lmc mute"                             ),
+    ("<XF86AudioPlay>",         spawn "playerctl play-pause"                 ),
     ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                            ),
     ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
-    ("<XF86AudioStop>",        spawn "playerctl stop"                       ),
-    ("<XF86AudioPrev>",        spawn "playerctl previous"                   ),
-    ("<XF86AudioNext>",        spawn "playerctl next"                       ),
-    ("<Print>",                spawn "flameshot gui"                         ),
-    ("<XF86MenuPB>",           spawn "flameshot gui"                         )
+    ("<XF86AudioStop>",         spawn "playerctl stop"                       ),
+    ("<XF86AudioPrev>",         spawn "playerctl previous"                   ),
+    ("<XF86AudioNext>",         spawn "playerctl next"                       ),
+    ("<Print>",                 spawn "flameshot gui"                        ),
+    ("<XF86MenuPB>",            spawn "flameshot gui"                        )
 
   ]
 
 myScratchPads =
     [
-        buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
         buildNSTiled "firefox" "firefox --class='FirefoxScratchpad' --enable-features=WebUIDarkMode --force-dark-mode" "className" "FirefoxScratchpad",
-        buildNSTiled "brave"   "sh -c '$BROWSER --class=BraveScratchpad'" "className" "BraveScratchpad",
+        buildNSTiled "brave"   "sh -c '$BROWSER --class=BraveScratchpad'"    "className" "BraveScratchpad",
+        buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
         buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
-        buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"  "className" "stacer"            "md",
+        buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"   "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "audacious"    "audacious"                                   "title"     "Audacious"        "lg",
+        buildNS "nuclear"      "nuclear"                                     "className" "Nuclear"           "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
