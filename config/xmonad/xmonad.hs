@@ -103,7 +103,7 @@ myKeyb =
     ("M-S-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
-    ("M-d",            spawn "rofi -show run"         ),
+    ("M-d",            spawn "ulauncher"              ),
     ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
@@ -132,15 +132,15 @@ myKeyb =
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
 
     --Media Keys
-    ("<XF86AudioLowerVolume>",  spawn "pamixer --decrease 5"                 ),
-    ("<XF86AudioRaiseVolume>",  spawn "pamixer --increase 5"                 ),
+    ("<XF86AudioLowerVolume>",  spawn "lmc down"                             ),
+    ("<XF86AudioRaiseVolume>",  spawn "lmc up"                               ),
     ("<XF86AudioMute>",         spawn "pamixer --toggle-mute"                ),
-    ("<XF86AudioPlay>",         spawn "playerctl -p rhythmbox play-pause"    ),
+    ("<XF86AudioPlay>",         spawn "playerctl play-pause"                 ),
     ("<XF86MonBrightnessUp>",   spawn "brightnessctl set +5%"                ),
     ("<XF86MonBrightnessDown>", spawn "brightnessctl set 5%-"                ),
-    ("<XF86AudioStop>",         spawn "playerctl -p rhythmbox stop"          ),
-    ("<XF86AudioPrev>",         spawn "playerctl -p rhythmbox previous"      ),
-    ("<XF86AudioNext>",         spawn "playerctl -p rhythmbox next"          ),
+    ("<XF86AudioStop>",         spawn "playerctl stop"                       ),
+    ("<XF86AudioPrev>",         spawn "playerctl previous"                   ),
+    ("<XF86AudioNext>",         spawn "playerctl next"                       ),
     ("<Print>",                 spawn "flameshot gui"                        ),
     ("<XF86MenuPB>",            spawn "flameshot gui"                        )
 
