@@ -120,7 +120,7 @@ myKeyb =
     ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"), -- Restarts xmonad
     ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
-    ("M-m",              namedScratchpadAction myScratchPads "strawberry"    ),
+    ("M-m",              namedScratchpadAction myScratchPads "rhythmbox"     ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
@@ -132,15 +132,15 @@ myKeyb =
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
 
     --Media Keys
-    ("<XF86AudioLowerVolume>",  spawn "lmc down"                             ),
-    ("<XF86AudioRaiseVolume>",  spawn "lmc up"                               ),
-    ("<XF86AudioMute>",         spawn "lmc mute"                             ),
-    ("<XF86AudioPlay>",         spawn "playerctl play-pause"                 ),
-    ("<XF86MonBrightnessUp>",   spawn "lux -a 5%"                            ),
-    ("<XF86MonBrightnessDown>", spawn "lux -s 5%"                            ),
-    ("<XF86AudioStop>",         spawn "playerctl stop"                       ),
-    ("<XF86AudioPrev>",         spawn "playerctl previous"                   ),
-    ("<XF86AudioNext>",         spawn "playerctl next"                       ),
+    ("<XF86AudioLowerVolume>",  spawn "pamixer --decrease 5"                 ),
+    ("<XF86AudioRaiseVolume>",  spawn "pamixer --increase 5"                 ),
+    ("<XF86AudioMute>",         spawn "pamixer --toggle-mute"                ),
+    ("<XF86AudioPlay>",         spawn "playerctl -p rhythmbox play-pause"    ),
+    ("<XF86MonBrightnessUp>",   spawn "brightnessctl set +5%"                ),
+    ("<XF86MonBrightnessDown>", spawn "brightnessctl set 5%-"                ),
+    ("<XF86AudioStop>",         spawn "playerctl -p rhythmbox stop"          ),
+    ("<XF86AudioPrev>",         spawn "playerctl -p rhythmbox previous"      ),
+    ("<XF86AudioNext>",         spawn "playerctl -p rhythmbox next"          ),
     ("<Print>",                 spawn "flameshot gui"                        ),
     ("<XF86MenuPB>",            spawn "flameshot gui"                        )
 
@@ -155,7 +155,7 @@ myScratchPads =
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"   "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "strawberry"   "strawberry"                                  "className" "strawberry"        "lg",
+        buildNS "rhythmbox"    "rhythmbox"                                   "className" "Rhythmbox"         "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
