@@ -155,7 +155,7 @@ myScratchPads =
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"   "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "nuclear"      "nuclear"                                     "className" "Nuclear"           "lg",
+        buildNS "nuclear"      "nuclear"                                     "className" "nuclear"           "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
