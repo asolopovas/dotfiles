@@ -60,7 +60,6 @@
             "Bash(php *)",
             "Bash(phpstan *)",
             "Bash(phpunit *)",
-            "Bash(playwright *)",
             "Bash(pkill *)",
             "Bash(pnpm *)",
             "Bash(prettier *)",

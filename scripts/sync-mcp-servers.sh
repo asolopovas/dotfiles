@@ -10,64 +10,80 @@ want_enabled() {
 declare -A WANT=(
   [context7]=$(want_enabled "${CONTEXT7:-}" && echo 1 || echo 0)
   [git]=$(want_enabled "${GIT:-}" && echo 1 || echo 0)
-  [github]=$(want_enabled "${GITHUB:-}" && echo 1 || echo 0)
-  [playwright]=$(want_enabled "${PLAYWRIGHT:-}" && echo 1 || echo 0)
-  [sequential-thinking]=$(want_enabled "${SEQUENTIAL_THINKING:-}" && echo 1 || echo 0)
 )
 
-command -v claude >/dev/null || { echo "Error: 'claude' CLI not found in PATH." >&2; exit 1; }
-command -v npx >/dev/null    || { echo "Error: 'npx' not found in PATH." >&2; exit 1; }
-
-gh_ok=false
-if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then gh_ok=true; fi
+CLIS=()
+if [[ -n "${MCP_CLI:-}" ]]; then
+  CLIS+=("$MCP_CLI")
+else
+  command -v claude >/dev/null 2>&1 && CLIS+=(claude)
+  command -v codex >/dev/null 2>&1 && CLIS+=(codex)
+fi
+if [[ ${#CLIS[@]} -eq 0 ]]; then
+  echo "Error: neither 'claude' nor 'codex' CLI found in PATH." >&2
+  exit 1
+fi
+command -v npx >/dev/null 2>&1 || { echo "Error: 'npx' not found in PATH." >&2; exit 1; }
 
 pkg_for() {
   case "$1" in
     context7)            echo "@upstash/context7-mcp" ;;
     git)                 echo "@cyanheads/git-mcp-server" ;;
-    github)              echo "@modelcontextprotocol/server-github" ;;
-    playwright)          echo "@playwright/mcp" ;;
-    sequential-thinking) echo "@modelcontextprotocol/server-sequential-thinking" ;;
     *)                   echo "@modelcontextprotocol/server-$1" ;;
   esac
 }
 
-mapfile -t CURRENT < <(claude mcp list 2>/dev/null | awk -F: '/^[a-z0-9-]+:/{print $1}')
+key_for_name() {
+  local name="${1,,}"
+  case "$name" in
+    context7) echo "context7" ;;
+    git) echo "git" ;;
+    github) echo "github" ;;
+    playwright) echo "playwright" ;;
+    sequentialthinking|sequential-thinking) echo "sequential-thinking" ;;
+    *) echo "" ;;
+  esac
+}
 
-in_current() {
-  local s="$1"
-  local x
-  for x in "${CURRENT[@]:-}"; do [[ "$x" == "$s" ]] && return 0; done
-  return 1
+list_servers() {
+  local cli="$1"
+  case "$cli" in
+    claude) claude mcp list 2>/dev/null | awk -F: '/^[a-z0-9-]+:/{print $1}' ;;
+    codex)  codex mcp list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}' ;;
+    *) return 1 ;;
+  esac
 }
 
 add_server() {
-  local s="$1"
-  # Special case: github requires gh auth
-  if [[ "$s" == "github" && "$gh_ok" != true ]]; then
-    echo "↪︎ Skipping github (gh not installed or not authenticated)."
-    return 0
-  fi
+  local cli="$1"
+  local s="$2"
   local pkg; pkg="$(pkg_for "$s")"
   # Build args without eval
-  claude mcp add "$s" -- npx "$pkg" && echo "➕ Added $s"
+  "$cli" mcp add "$s" -- npx "$pkg" && echo "➕ Added $s ($cli)"
 }
 
 remove_server() {
-  local s="$1"
-  claude mcp remove "$s" && echo "➖ Removed $s"
+  local cli="$1"
+  local s="$2"
+  "$cli" mcp remove "$s" && echo "➖ Removed $s ($cli)"
 }
 
-for s in "${CURRENT[@]:-}"; do
-  [[ -n "$s" ]] || continue
-  if [[ ! -v "WANT[$s]" || "${WANT[$s]:-0}" != "1" ]]; then
-    remove_server "$s"
-  fi
-done
+for cli in "${CLIS[@]}"; do
+  mapfile -t CURRENT < <(list_servers "$cli")
+  declare -A CURRENT_KEYS=()
+  for s in "${CURRENT[@]:-}"; do
+    [[ -n "$s" ]] || continue
+    key="$(key_for_name "$s")"
+    [[ -n "$key" ]] && CURRENT_KEYS["$key"]=1
+    if [[ -n "$key" && ( ! -v "WANT[$key]" || "${WANT[$key]:-0}" != "1" ) ]]; then
+      remove_server "$cli" "$s"
+    fi
+  done
 
-for s in "${!WANT[@]}"; do
-  [[ "${WANT[$s]}" == "1" ]] || continue
-  in_current "$s" || add_server "$s"
+  for key in "${!WANT[@]}"; do
+    [[ "${WANT[$key]}" == "1" ]] || continue
+    [[ -v "CURRENT_KEYS[$key]" ]] || add_server "$cli" "$key"
+  done
 done
 
 if command -v tput >/dev/null 2>&1 && [[ -t 1 ]]; then
