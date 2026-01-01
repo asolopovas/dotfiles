@@ -19,7 +19,7 @@ Note: `init.sh` removes existing `~/.config/fish` and `~/.config/tmux` before sy
 ## Project structure
 ```
 dotfiles/
-├── config/        # App configs (fish, tmux, nvim, polybar, squid, rofi, gtk)
+├── config/        # App configs (fish, tmux, nvim, polybar, rofi, gtk)
 ├── scripts/       # Installers and system utilities
 ├── helpers/       # Small CLI helpers (system, tools, web)
 ├── env/           # Environment exports
@@ -61,7 +61,6 @@ scripts/
 ├── inst-composer.sh             # install Composer
 ├── inst-cryptomator.sh          # install Cryptomator
 ├── inst-deno.sh                 # install Deno
-├── inst-docker-registry-cache.sh # install Docker registry cache
 ├── inst-docker.sh               # install Docker
 ├── inst-fastcompmgr.sh          # build/install fastcompmgr compositor
 ├── inst-fd.sh                   # install fd
@@ -89,8 +88,6 @@ scripts/
 ├── inst-rye.sh                  # install Rye + Python toolchains
 ├── inst-samba.sh                # install Samba
 ├── inst-software.sh             # install common OS packages
-├── inst-squid-clean.sh          # install/clean Squid (alt flow)
-├── inst-squid.sh                # install/configure Squid proxy
 ├── wsl-win32yank.sh            # download/extract win32yank
 ├── wsl-windows-hello.sh        # install WSL Hello sudo (evanphilip)
 ├── inst-wp-cli.sh               # install WP-CLI
@@ -132,9 +129,8 @@ scripts/
 
 ## Key commands
 - `make help` lists available targets.
-- `make install` installs Squid proxy + Docker registry cache + Git cache (sudo required).
-- `make test` runs shell and ui-snap-window tests (may install deps like `bats`/`gum`).
-- `make test-squid` runs full Squid tests (sudo required).
+- `make install` installs Git cache (sudo required).
+- `make test` runs ui-snap-window tests (may install deps like `bats`/`gum`).
 
 ## Terminal
 
