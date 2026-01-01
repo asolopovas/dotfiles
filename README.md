@@ -161,18 +161,77 @@ scripts/
 
 ## Neovim
 
+Leader key: `Space`
+
+Normal mode:
+
 |Shortcut|Action|
 |---|---|
-| `Ctrl + V`       | Visual block mode |
-| `Shift + >`      | Indent line |
-| `Shift + N >`    | Indent line N steps |
-| `F7`             | Reindent file |
-| `Shift + { \\| }` | Select lines between curly brackets |
-| `vib \\| cib`     | Select visual or change selection inside block |
-| `ci} \\| ci{`     | Select visual or change selection inside block |
-| `Shift + { \\| }` | Select lines between curly brackets |
-| `m{letter}`      | Mark line (use capital letter for global marks) |
-| `'{letter}`      | Jump to marked line |
+| `<leader>pv`     | Open file explorer (`:Ex`) |
+| `J`              | Join lines, keep cursor |
+| `n` / `N`        | Next/previous search result, centered |
+| `<leader>f`      | Auto-format whole file |
+| `<leader><space>` | Clear search highlighting |
+| `<F5>`           | Toggle hidden characters (`list`) |
+| `<M-J>` / `<M-K>` | Indent left/right |
+| `j` / `k`        | Move by display lines (`gj` / `gk`) |
+| `<C-d>` / `<C-u>` | Page down/up, centered |
+| `<leader>q`      | Close all buffers |
+| `<leader>bd`     | Close current buffer |
+| `<leader>bq`     | Close current buffer, keep window |
+| `<leader>to`     | Close other tabs |
+| `<M-q>`          | Close tab |
+| `<M-t>`          | New tab |
+| `<M-H>` / `<M-L>` | Previous/next tab |
+| `<leader>T`      | New empty buffer |
+| `<leader>h` / `<leader>l` | Previous/next buffer |
+| `<M-h>` / `<M-j>` / `<M-k>` / `<M-l>` | Move between splits |
+| `<leader>vh`     | Horizontal split |
+| `<leader>vv`     | Vertical split |
+| `<C-M-h>` / `<C-M-j>` / `<C-M-k>` / `<C-M-l>` | Resize splits |
+| `<leader>er`     | Edit `remap.lua` |
+| `<leader>ev`     | Edit `init.lua` |
+| `<leader>ef`     | Edit `config.fish` |
+| `<leader>es`     | Edit `set.lua` |
+| `<leader>ea`     | Edit `.aliasrc` |
+| `<leader>sv`     | Source `MYVIMRC` |
+| `<leader>fml`    | CellularAutomaton: make it rain |
+| ``<M-`>``        | Toggle NvimTree |
+| `<M-S-q>`        | Force quit Neovim |
+
+Visual mode:
+
+|Shortcut|Action|
+|---|---|
+| `J` / `K`        | Move selection down/up |
+| `<leader>p`      | Paste without yanking |
+| `<` / `>`        | Indent and keep selection |
+
+Insert mode:
+
+|Shortcut|Action|
+|---|---|
+| `jk`             | Exit insert mode |
+| `<M-J>` / `<M-K>` | Indent left/right |
+| `<F5>`           | Toggle hidden characters (`list`) |
+
+Command-line mode:
+
+|Shortcut|Action|
+|---|---|
+| `<S-Insert>`     | Paste from clipboard |
+| `w!!`            | Write file with sudo (`SudaWrite`) |
+| `<F5>`           | Toggle hidden characters (`list`) |
+
+Terminal mode:
+
+|Shortcut|Action|
+|---|---|
+| ``<M-`>``        | Toggle NvimTree |
+| `<M-h>` / `<M-j>` / `<M-k>` / `<M-l>` | Move between splits |
+| `<M-S-h>` / `<M-S-j>` / `<M-S-k>` / `<M-S-l>` | Resize splits |
+| `<M-q>`          | Close terminal buffer |
+| `<M-S-q>`        | Force quit Neovim |
 
 <!-- Telescope -->
 | Shortcut         | Action                                      |
