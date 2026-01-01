@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
 want_enabled() {
   local v="${1:-}"
   [[ -z "$v" ]] && return 0
@@ -12,18 +21,31 @@ declare -A WANT=(
   [git]=$(want_enabled "${GIT:-}" && echo 1 || echo 0)
 )
 
-CLIS=()
-if [[ -n "${MCP_CLI:-}" ]]; then
-  CLIS+=("$MCP_CLI")
-else
-  command -v claude >/dev/null 2>&1 && CLIS+=(claude)
-  command -v codex >/dev/null 2>&1 && CLIS+=(codex)
-fi
-if [[ ${#CLIS[@]} -eq 0 ]]; then
-  echo "Error: neither 'claude' nor 'codex' CLI found in PATH." >&2
-  exit 1
-fi
-command -v npx >/dev/null 2>&1 || { echo "Error: 'npx' not found in PATH." >&2; exit 1; }
+resolve_clis() {
+  local -a candidates=()
+  local -a resolved=()
+  if [[ -n "${MCP_CLI:-}" ]]; then
+    local raw="${MCP_CLI//,/ }"
+    read -ra candidates <<< "$raw"
+  else
+    candidates=(claude codex)
+  fi
+
+  for cli in "${candidates[@]}"; do
+    [[ -n "$cli" ]] || continue
+    if have_cmd "$cli"; then
+      resolved+=("$cli")
+    elif [[ -n "${MCP_CLI:-}" ]]; then
+      echo "Warning: '$cli' not found in PATH; skipping." >&2
+    fi
+  done
+
+  if [[ ${#resolved[@]} -eq 0 ]]; then
+    die "Error: no supported MCP CLI found in PATH."
+  fi
+
+  printf '%s\n' "${resolved[@]}"
+}
 
 pkg_for() {
   case "$1" in
@@ -58,7 +80,7 @@ add_server() {
   local cli="$1"
   local s="$2"
   local pkg; pkg="$(pkg_for "$s")"
-  # Build args without eval
+  have_cmd npx || die "Error: 'npx' not found in PATH."
   "$cli" mcp add "$s" -- npx "$pkg" && echo "➕ Added $s ($cli)"
 }
 
@@ -68,14 +90,21 @@ remove_server() {
   "$cli" mcp remove "$s" && echo "➖ Removed $s ($cli)"
 }
 
+mapfile -t CLIS < <(resolve_clis)
+
 for cli in "${CLIS[@]}"; do
-  mapfile -t CURRENT < <(list_servers "$cli")
+  if ! CURRENT_RAW="$(list_servers "$cli")"; then
+    echo "Warning: '$cli mcp list' failed; skipping." >&2
+    continue
+  fi
+  mapfile -t CURRENT <<< "$CURRENT_RAW"
   declare -A CURRENT_KEYS=()
   for s in "${CURRENT[@]:-}"; do
     [[ -n "$s" ]] || continue
     key="$(key_for_name "$s")"
-    [[ -n "$key" ]] && CURRENT_KEYS["$key"]=1
-    if [[ -n "$key" && ( ! -v "WANT[$key]" || "${WANT[$key]:-0}" != "1" ) ]]; then
+    [[ -n "$key" ]] || continue
+    CURRENT_KEYS["$key"]=1
+    if [[ "${WANT[$key]:-0}" != "1" ]]; then
       remove_server "$cli" "$s"
     fi
   done
