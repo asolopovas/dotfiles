@@ -5,9 +5,9 @@ set -euo pipefail
 MCP_SERVERS=(
   "context7|npx @upstash/context7-mcp"
   "git|npx @cyanheads/git-mcp-server"
-  "github|npx @modelcontextprotocol/server-github"
-  "playwright|npx @modelcontextprotocol/server-playwright"
-  "sequential-thinking|npx @modelcontextprotocol/server-sequential-thinking"
+#   "github|npx @modelcontextprotocol/server-github"
+#   "playwright|npx @modelcontextprotocol/server-playwright"
+#   "sequential-thinking|npx @modelcontextprotocol/server-sequential-thinking"
 )
 
 if [[ $# -gt 0 ]]; then
