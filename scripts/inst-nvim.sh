@@ -4,6 +4,10 @@ INSTALL_ARCHIVE="nvim-linux-x86_64.tar.gz"
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+is_sourced() {
+    [ "${BASH_SOURCE[0]}" != "$0" ]
+}
+
 download_and_extract() {
     local target_dir=$1
     curl -L -o "$INSTALL_ARCHIVE" "$URL"
@@ -101,12 +105,34 @@ install_root() {
     /opt/nvim/bin/nvim --headless "+Lazy sync" +qa
 }
 
-if command -v nvim >/dev/null 2>&1; then
-    exit 0
-fi
+sync_existing() {
+    local nvim_bin
+    nvim_bin="$(command -v nvim 2>/dev/null || true)"
+    if [ -z "$nvim_bin" ]; then
+        return 1
+    fi
 
-if [ "$(id -u)" -eq 0 ]; then
-    install_root
-else
-    install_user
+    ensure_node || return 1
+    ensure_deno || return 1
+    "$nvim_bin" --headless "+Lazy sync" +qa
+}
+
+main() {
+    if command -v nvim >/dev/null 2>&1; then
+        sync_existing
+        return $?
+    fi
+
+    if [ "$(id -u)" -eq 0 ]; then
+        install_root
+    else
+        install_user
+    fi
+}
+
+main
+status=$?
+if is_sourced; then
+    return $status
 fi
+exit $status

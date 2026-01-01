@@ -157,16 +157,15 @@ if [ "${features[NODE]}" = true ]; then
 fi
 
 if [ "${features[NVIM]}" = true ]; then
-
-    if ! cmd_exist nvim; then
-        load_script "nvim"
-    fi
+    load_script "nvim"
 
     if ! cmd_exist lua; then
         sudo apt install -y lua5.1 luarocks
     fi
 
-    ln -sf $(which nvim) $HOME/.local/bin/vim
+    if cmd_exist nvim; then
+        ln -sf "$(which nvim)" "$HOME/.local/bin/vim"
+    fi
 fi
 
 
