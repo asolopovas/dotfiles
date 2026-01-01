@@ -5,6 +5,7 @@ set -euo pipefail
 SKILL_SOURCES=(
   "https://github.com/openai/skills/tree/main/skills/.curated/gh-address-comments"
   "https://github.com/openai/skills/tree/main/skills/.curated/gh-fix-ci"
+  "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
 )
 
 if [[ $# -gt 0 ]]; then
