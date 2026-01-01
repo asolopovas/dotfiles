@@ -81,7 +81,11 @@ ensure_node() {
         return
     fi
 
-    run_installer "node" || return 1
+    if [ -f "$SCRIPT_DIR/inst-node.sh" ]; then
+        bash "$SCRIPT_DIR/inst-node.sh" || return 1
+    else
+        run_installer "node" || return 1
+    fi
 
     if [ -d "$volta_home/bin" ]; then
         export VOLTA_HOME="$volta_home"
