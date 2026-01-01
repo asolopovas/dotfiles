@@ -65,16 +65,6 @@ vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 25
 vim.g.nvim_tree_auto_open = 0
 
-local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
-parser_config.blade = {
-    install_info = {
-        url = "https://github.com/EmranMR/tree-sitter-blade",
-        files = { "src/parser.c" },
-        branch = "main",
-    },
-    filetype = "blade"
-}
-
 vim.filetype.add({
     pattern = {
         ['.*%.blade%.php'] = 'blade',
@@ -109,4 +99,3 @@ local browser = detect_browser()
 if browser then
   vim.env.BROWSER = browser
 end
-
