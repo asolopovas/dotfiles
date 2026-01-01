@@ -96,7 +96,7 @@ install_composer
 
 load_script() {
     local script_name=$1
-    local script_path="$SCRIPTS_DIR/install-$script_name.sh"
+    local script_path="$SCRIPTS_DIR/inst-$script_name.sh"
     print_color green "Sourcing $script_path"
     [[ -f $script_path ]] && source $script_path
 }
