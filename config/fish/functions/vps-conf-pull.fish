@@ -1,5 +1,5 @@
 function vps-conf-pull
-    echo "🔄 Connecting to root to run 'conf pull' for all cPanel users..."
+    echo "🔄 Connecting to root to run 'ops-git-sync pull' for all cPanel users..."
 
     ssh root "
         # 1) Get the list of cPanel accounts from /var/cpanel/users
@@ -13,12 +13,12 @@ function vps-conf-pull
 
                 # Ensure the home directory exists
                 if test -d \$user_home
-                    echo \"🔧 Running 'conf pull' for user: \$user...\"
+                    echo \"🔧 Running 'ops-git-sync pull' for user: \$user...\"
 
-                    # Run 'conf pull' as the user
-                    su -c \"conf pull\" -s /bin/bash \$user
+                    # Run 'ops-git-sync pull' as the user
+                    su -c \"ops-git-sync pull\" -s /bin/bash \$user
 
-                    echo \"✅ 'conf pull' completed for user: \$user\"
+                    echo \"✅ 'ops-git-sync pull' completed for user: \$user\"
                 else
                     echo \"⚠️  Skipping \$user: /home/\$user does not exist.\"
                 end
@@ -28,5 +28,5 @@ function vps-conf-pull
         end
     "
 
-    echo "🎉 Finished running 'conf pull' for all cPanel users!"
+    echo "🎉 Finished running 'ops-git-sync pull' for all cPanel users!"
 end

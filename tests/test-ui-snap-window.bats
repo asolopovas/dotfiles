@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
 
-# Test suite for snap-window script using Bats testing framework
+# Test suite for ui-snap-window script using Bats testing framework
 # Install bats with: sudo apt install bats (or see https://github.com/bats-core/bats-core)
 
 # Setup test environment
 setup() {
     # Source script location
-    SNAP_WINDOW="/home/andrius/dotfiles/scripts/snap-window"
+    SNAP_WINDOW="/home/andrius/dotfiles/scripts/ui-snap-window"
     TEST_WINDOW_POS="/home/andrius/.local/bin/test-window-position"
     
     # Ensure scripts are executable
@@ -52,7 +52,7 @@ get_window_position() {
     echo "$window_info"
 }
 
-# Helper function to run snap-window and verify result
+# Helper function to run ui-snap-window and verify result
 test_snap_command() {
     local direction="$1"
     local expected_desc="$2"
@@ -70,7 +70,7 @@ test_snap_command() {
     fi
 }
 
-@test "snap-window script exists and is executable" {
+@test "ui-snap-window script exists and is executable" {
     [ -f "$SNAP_WINDOW" ]
     [ -x "$SNAP_WINDOW" ]
 }

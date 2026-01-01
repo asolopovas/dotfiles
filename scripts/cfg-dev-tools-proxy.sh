@@ -243,7 +243,7 @@ update_profile() {
     if ! grep -q "HTTP_PROXY.*3128" "$profile_file"; then
         cat >> "$profile_file" << EOF
 
-# Proxy settings (added by configure-dev-tools-proxy.sh)
+# Proxy settings (added by cfg-dev-tools-proxy.sh)
 export HTTP_PROXY=$PROXY_URL
 export HTTPS_PROXY=$PROXY_URL
 export http_proxy=$PROXY_URL

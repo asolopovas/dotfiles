@@ -3,7 +3,7 @@
 # Terminal toggle dual-agent test
 
 setup() {
-    TERMINAL_TOGGLE="/home/andrius/dotfiles/scripts/terminal-toggle"
+    TERMINAL_TOGGLE="/home/andrius/dotfiles/scripts/ui-terminal-toggle"
     # Use make command to kill alacritty processes
     make -C /home/andrius/dotfiles kill-alacritty >/dev/null 2>&1
     # Verify no ALACRITTY terminals remain
@@ -13,7 +13,7 @@ setup() {
         wmctrl -l | grep "Alacritty"
         exit 1
     fi
-    rm -f ~/.cache/terminal-toggle-state
+    rm -f ~/.cache/ui-terminal-toggle-state
     
     if ! command -v wmctrl &> /dev/null || ! command -v xdotool &> /dev/null; then
         skip "Required tools not available"
@@ -75,8 +75,8 @@ press_and_log() {
         echo ""
         
         echo "STATE FILE:"
-        if [ -f ~/.cache/terminal-toggle-state ]; then
-            cat ~/.cache/terminal-toggle-state
+        if [ -f ~/.cache/ui-terminal-toggle-state ]; then
+            cat ~/.cache/ui-terminal-toggle-state
         else
             echo "  No state file found"
         fi
@@ -167,10 +167,10 @@ test_script_call() {
 
 diagnose_hotkey_config() {
     echo "=== HOTKEY CONFIGURATION DIAGNOSIS ==="
-    echo "terminal-toggle command:"
-    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-toggle/ command 2>/dev/null || echo "Not found"
-    echo "terminal-toggle binding:"
-    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-toggle/ binding 2>/dev/null || echo "Not found"
+    echo "ui-terminal-toggle command:"
+    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/ui-terminal-toggle/ command 2>/dev/null || echo "Not found"
+    echo "ui-terminal-toggle binding:"
+    gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/ui-terminal-toggle/ binding 2>/dev/null || echo "Not found"
     echo ""
     echo "terminal-new command:"
     gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-new/ command 2>/dev/null || echo "Not found"
@@ -178,8 +178,8 @@ diagnose_hotkey_config() {
     gsettings get org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/terminal-new/ binding 2>/dev/null || echo "Not found"
     echo ""
     echo "Script locations:"
-    ls -la /home/andrius/.local/bin/terminal-toggle 2>/dev/null || echo "~/.local/bin/terminal-toggle: Not found"
-    ls -la /home/andrius/dotfiles/scripts/terminal-toggle 2>/dev/null || echo "~/dotfiles/scripts/terminal-toggle: Not found"
+    ls -la /home/andrius/.local/bin/ui-terminal-toggle 2>/dev/null || echo "~/.local/bin/ui-terminal-toggle: Not found"
+    ls -la /home/andrius/dotfiles/scripts/ui-terminal-toggle 2>/dev/null || echo "~/dotfiles/scripts/ui-terminal-toggle: Not found"
     echo "=================================="
 }
 
@@ -228,8 +228,8 @@ manual_step() {
         done
         echo ""
         echo "STATE FILE:"
-        if [ -f ~/.cache/terminal-toggle-state ]; then
-            cat ~/.cache/terminal-toggle-state
+        if [ -f ~/.cache/ui-terminal-toggle-state ]; then
+            cat ~/.cache/ui-terminal-toggle-state
         else
             echo "  No state file exists"
         fi
@@ -243,12 +243,12 @@ manual_step() {
 
 @test "Manual step-by-step focus diagnosis" {
     mkdir -p "$HOME/dotfiles/tmp"
-    rm -f ~/.cache/terminal-toggle-state
+    rm -f ~/.cache/ui-terminal-toggle-state
     
     manual_step "1" "super+Return" "Launch first terminal" "One Alacritty window opens and becomes active"
     
     # Step 1 failed, try direct script call
-    manual_step "2" "manual" "Direct script call - terminal-toggle toggle" "One Alacritty window opens via direct script"
+    manual_step "2" "manual" "Direct script call - ui-terminal-toggle toggle" "One Alacritty window opens via direct script"
     echo "=== SETUP: Create two terminals with direct script calls ==="
     execute_toggle "Launch first terminal" "$TERMINAL_TOGGLE toggle"
     [ "$(count_terminals)" -eq 1 ]
@@ -291,7 +291,7 @@ manual_step() {
     
     # Step 3: Check state file update
     echo "STEP 3: State file focus tracking verification"
-    source ~/.cache/terminal-toggle-state
+    source ~/.cache/ui-terminal-toggle-state
     local state_current_id="$current_toggle_id"
     echo "OBSERVER: Active window after Alt+Tab: $active_after_alttab"
     echo "OBSERVER: State file current_toggle_id: $state_current_id"

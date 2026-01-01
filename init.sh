@@ -104,7 +104,7 @@ load_script() {
 # Serialize and export associative array
 export features_string=$(declare -p features)
 
-[[ "$UNATTENDED" = false ]] && source $SCRIPTS_DIR/install-menu.sh
+[[ "$UNATTENDED" = false ]] && source $SCRIPTS_DIR/inst-menu.sh
 
 echo -e "FEATURE\t\tSTATUS"
 separator="------------\t--------"
@@ -120,7 +120,7 @@ done
 echo -e "$separator\n"
 
 source $DOTFILES_DIR/globals.sh
-source $SCRIPTS_DIR/default-dirs.sh
+source $SCRIPTS_DIR/cfg-default-dirs.sh
 
 if [ "${features[BUN]}" = true ]; then
     curl -fsSL https://bun.sh/install | bash

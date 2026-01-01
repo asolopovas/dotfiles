@@ -4,7 +4,7 @@
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-INSTALL_SCRIPT="$SCRIPT_DIR/../../scripts/install-squid.sh"
+INSTALL_SCRIPT="$SCRIPT_DIR/../../scripts/inst-squid.sh"
 TEST_LOG="/tmp/squid-utility-simple-test-$(date +%s).log"
 
 # Colors

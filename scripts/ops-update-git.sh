@@ -56,7 +56,7 @@ process_directory() {
 
 
 if [ -z "$1" ]; then
-    echo "No option specified. Usage: ./update_git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
+    echo "No option specified. Usage: ./ops-update-git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
     exit 1
 fi
 
@@ -73,14 +73,14 @@ case $ACTION in
     --tag)
         GIT_ACTION="checkout_specific_tag"
         if [ -z "$1" ]; then
-            echo "No tag specified. Usage: ./update_git.sh --tag <tag> <user:dir1> <user:dir2> ..."
+            echo "No tag specified. Usage: ./ops-update-git.sh --tag <tag> <user:dir1> <user:dir2> ..."
             exit 1
         fi
         TAG=$1
         shift
         ;;
     *)
-        echo "Invalid option. Usage: ./update_git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
+        echo "Invalid option. Usage: ./ops-update-git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
         exit 1
         ;;
 esac
@@ -88,7 +88,7 @@ esac
 for item in "$@"; do
     IFS=':' read -r user dir <<< "$item"
     if [ -z "$user" ] || [ -z "$dir" ]; then
-        echo "Invalid format. Usage: ./update_git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
+        echo "Invalid format. Usage: ./ops-update-git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
         exit 1
     fi
     process_directory "$user" "$dir" "$GIT_ACTION" $TAG

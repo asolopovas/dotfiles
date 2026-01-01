@@ -36,104 +36,104 @@ dotfiles/
 ## Scripts map
 ```
 scripts/
-├── askpass.sh                      # masked password prompt helper
-├── ban-ips.sh                      # ban IPs from logs via fail2ban
-├── check-err.sh                    # view/clear common system logs
-├── conf                            # push/pull predefined git paths
-├── config-gnome-terminal.sh        # apply Alacritty-like GNOME Terminal profile
-├── configure-dev-tools-proxy.sh    # set proxy for git/npm/pip/curl/docker
-├── cpanel-cert-import.sh           # install SSL cert/key via WHM API
-├── db_backup.sh                    # export DB tables into per-table SQL
-├── default-dirs.sh                 # create default dirs + symlink dotfiles
-├── disable-mouse-on-touchpad.sh    # udev rule to disable touchpad on mouse
-├── disable-ubuntu-shortcuts.sh     # disable GNOME dash hotkeys
-├── fix-cpanel-perms.sh             # fix cPanel user ownership/permissions
-├── fix-nvidia-settings.sh          # fix NVIDIA settings permissions/paths
-├── fix-tearing-intel-adler.sh      # tweak i915 params to reduce tearing
-├── fix-vite.sh                     # raise inotify + nofile limits
-├── flip.sh                         # swap Claude credential files
-├── generate-polybar-fonts.sh       # build polybar fonts from template
-├── install-bash.sh                 # build/install bash from source
-├── install-bfg.sh                  # install BFG repo cleaner
-├── install-cinnamon-settings.sh    # apply Cinnamon desktop settings
-├── install-claude.sh               # install Claude Code CLI
-├── install-cog.sh                  # install Replicate cog
-├── install-composer.sh             # install Composer
-├── install-cryptomator.sh          # install Cryptomator
-├── install-deno.sh                 # install Deno
-├── install-docker-registry-cache.sh # install Docker registry cache
-├── install-docker.sh               # install Docker
-├── install-fastcompmgr.sh          # build/install fastcompmgr compositor
-├── install-fd.sh                   # install fd
-├── install-fish.sh                 # install fish shell
-├── install-font.sh                 # install fonts
-├── install-fzf.sh                  # install fzf
-├── install-gcloud.sh               # install Google Cloud SDK
-├── install-ghc.sh                  # install GHC
-├── install-git-cache.sh            # install git cache container
-├── install-gitcli.sh               # install GitHub CLI (gh)
-├── install-golang.sh               # install Go toolchain
-├── install-gum.sh                  # install gum
-├── install-hubtool.sh              # install docker hub-tool
-├── install-mainline.sh             # install mainline kernel tool
-├── install-menu.sh                 # interactive feature menu
-├── install-node.sh                 # install Node via Volta
-├── install-nvim.sh                 # install Neovim + sync plugins
-├── install-ohmybash.sh             # install Oh My Bash
-├── install-ohmyfish.sh             # install Oh My Fish
-├── install-ohmyzsh.sh              # install Oh My Zsh
-├── install-php.sh                  # install PHP version packages
-├── install-plesk-defaults.sh       # apply Plesk defaults
-├── install-redis-service.sh        # install Redis systemd service
-├── install-redis.sh                # build/install Redis from source
-├── install-rye.sh                  # install Rye + Python toolchains
-├── install-samba.sh                # install Samba
-├── install-software.sh             # install common OS packages
-├── install-squid-clean.sh          # install/clean Squid (alt flow)
-├── install-squid.sh                # install/configure Squid proxy
-├── install-win32yank.sh            # download/extract win32yank
-├── install-windows-hello.sh        # install WSL Hello sudo (evanphilip)
-├── install-wp-cli.sh               # install WP-CLI
-├── install-wsl-browser.sh          # install WSL browser opener
-├── install-wsl-fingerprint.sh      # install WSL Hello sudo (nullpo-head)
-├── install-wslu.sh                 # install wslu
-├── install-xmonad.sh               # install xmonad + deps
-├── latest-kernel-ubuntu.sh         # install mainline-kernel helper
-├── load-kmodule.sh                 # load kernel modules (+persist)
-├── logout                          # terminate user session (GDM)
-├── natural-scrolling-fix.sh        # enable libinput natural scrolling
-├── pam-keyring-unlock              # unlock GNOME keyring
-├── pinst                           # install/update/list PHP packages
-├── polybar-vram.sh                 # print GPU VRAM usage for polybar
-├── polybar-xmonad.sh               # format xmonad log for polybar
-├── pull-dotfiles.sh                # hard reset + pull dotfiles for all users
-├── remove-nouveau.sh               # blacklist nouveau driver
-├── remove-thumb.sh                 # remove generated JPG thumbnails
-├── rm-symlinks-in-current-folder.sh # remove symlinks in cwd
-├── screen-laptop-main.sh           # configure LightDM display layout
-├── set-dpi-by-hardware.sh          # set DPI based on ThinkPad detection
-├── set-mouse-speed.sh              # set xinput mouse acceleration
-├── setup-locale.sh                 # generate/apply locale
-├── setup-terminal-keybindings      # configure Cinnamon terminal hotkeys
-├── snap-window                     # snap windows across dual monitors
-├── snap-window-dynamic             # snap windows for multi-monitor layouts
-├── ssh-key-auth-cpanel.sh          # install SSH key for cPanel users
-├── ssh-key-auth-plesk.sh           # install SSH key for Plesk users
-├── start-workers.sh                # start Laravel queue workers
-├── stop-workers.sh                 # stop Laravel queue workers
-├── sync-mcp-servers.sh             # sync MCP server list
-├── sync-skills.sh                  # sync Codex/Claude skills
-├── terminal-toggle                 # toggle Alacritty terminal visibility
-├── update_git.sh                   # update repos + run composer/pnpm builds
-├── update-plesk-dotfiles.sh        # reset dotfiles for Plesk users
-├── update-symlinks.sh              # refresh config symlinks
+├── sec-askpass.sh                      # masked password prompt helper
+├── sec-ban-ips.sh                      # ban IPs from logs via fail2ban
+├── ops-check-err.sh                    # view/clear common system logs
+├── ops-git-sync                   # push/pull predefined git paths
+├── ui-gnome-terminal-config.sh        # apply Alacritty-like GNOME Terminal profile
+├── cfg-dev-tools-proxy.sh    # set proxy for git/npm/pip/curl/docker
+├── sec-cpanel-cert-import.sh           # install SSL cert/key via WHM API
+├── ops-db-backup.sh                    # export DB tables into per-table SQL
+├── cfg-default-dirs.sh                 # create default dirs + symlink dotfiles
+├── ui-disable-mouse-on-touchpad.sh    # udev rule to disable touchpad on mouse
+├── ui-disable-ubuntu-shortcuts.sh     # disable GNOME dash hotkeys
+├── sec-fix-cpanel-perms.sh             # fix cPanel user ownership/permissions
+├── sys-fix-nvidia-settings.sh          # fix NVIDIA settings permissions/paths
+├── sys-fix-tearing-intel-adler.sh      # tweak i915 params to reduce tearing
+├── sys-fix-vite.sh                     # raise inotify + nofile limits
+├── ui-flip.sh                         # swap Claude credential files
+├── ui-polybar-fonts.sh       # build polybar fonts from template
+├── inst-bash.sh                 # build/install bash from source
+├── inst-bfg.sh                  # install BFG repo cleaner
+├── inst-cinnamon-settings.sh    # apply Cinnamon desktop settings
+├── inst-claude.sh               # install Claude Code CLI
+├── inst-cog.sh                  # install Replicate cog
+├── inst-composer.sh             # install Composer
+├── inst-cryptomator.sh          # install Cryptomator
+├── inst-deno.sh                 # install Deno
+├── inst-docker-registry-cache.sh # install Docker registry cache
+├── inst-docker.sh               # install Docker
+├── inst-fastcompmgr.sh          # build/install fastcompmgr compositor
+├── inst-fd.sh                   # install fd
+├── inst-fish.sh                 # install fish shell
+├── inst-font.sh                 # install fonts
+├── inst-fzf.sh                  # install fzf
+├── inst-gcloud.sh               # install Google Cloud SDK
+├── inst-ghc.sh                  # install GHC
+├── inst-git-cache.sh            # install git cache container
+├── inst-gitcli.sh               # install GitHub CLI (gh)
+├── inst-golang.sh               # install Go toolchain
+├── inst-gum.sh                  # install gum
+├── inst-hubtool.sh              # install docker hub-tool
+├── inst-mainline.sh             # install mainline kernel tool
+├── inst-menu.sh                 # interactive feature menu
+├── inst-node.sh                 # install Node via Volta
+├── inst-nvim.sh                 # install Neovim + sync plugins
+├── inst-ohmybash.sh             # install Oh My Bash
+├── inst-ohmyfish.sh             # install Oh My Fish
+├── inst-ohmyzsh.sh              # install Oh My Zsh
+├── inst-php.sh                  # install PHP version packages
+├── cfg-plesk-defaults.sh       # apply Plesk defaults
+├── inst-redis-service.sh        # install Redis systemd service
+├── inst-redis.sh                # build/install Redis from source
+├── inst-rye.sh                  # install Rye + Python toolchains
+├── inst-samba.sh                # install Samba
+├── inst-software.sh             # install common OS packages
+├── inst-squid-clean.sh          # install/clean Squid (alt flow)
+├── inst-squid.sh                # install/configure Squid proxy
+├── wsl-win32yank.sh            # download/extract win32yank
+├── wsl-windows-hello.sh        # install WSL Hello sudo (evanphilip)
+├── inst-wp-cli.sh               # install WP-CLI
+├── wsl-browser.sh          # install WSL browser opener
+├── wsl-fingerprint.sh      # install WSL Hello sudo (nullpo-head)
+├── wsl-wslu.sh                 # install wslu
+├── inst-xmonad.sh               # install xmonad + deps
+├── sys-latest-kernel-ubuntu.sh         # install mainline-kernel helper
+├── sys-load-kmodule.sh                 # load kernel modules (+persist)
+├── ops-logout                      # terminate user session (GDM)
+├── ui-natural-scrolling-fix.sh        # enable libinput natural scrolling
+├── sec-pam-keyring-unlock              # unlock GNOME keyring
+├── inst-php-pkgs                           # install/update/list PHP packages
+├── ui-polybar-vram.sh                 # print GPU VRAM usage for polybar
+├── ui-polybar-xmonad.sh               # format xmonad log for polybar
+├── ops-pull-dotfiles.sh                # hard reset + pull dotfiles for all users
+├── sys-remove-nouveau.sh               # blacklist nouveau driver
+├── ops-remove-thumbs.sh                 # remove generated JPG thumbnails
+├── ops-rm-symlinks-here.sh # remove symlinks in cwd
+├── ui-screen-laptop-main.sh           # configure LightDM display layout
+├── ui-set-dpi-by-hardware.sh          # set DPI based on ThinkPad detection
+├── ui-set-mouse-speed.sh              # set xinput mouse acceleration
+├── cfg-locale.sh                 # generate/apply locale
+├── cfg-terminal-keybindings      # configure Cinnamon terminal hotkeys
+├── ui-snap-window                     # snap windows across dual monitors
+├── ui-snap-window-dynamic             # snap windows for multi-monitor layouts
+├── sec-ssh-key-auth-cpanel.sh          # install SSH key for cPanel users
+├── sec-ssh-key-auth-plesk.sh           # install SSH key for Plesk users
+├── ops-start-workers.sh                # start Laravel queue workers
+├── ops-stop-workers.sh                 # stop Laravel queue workers
+├── ops-sync-mcp-servers.sh             # sync MCP server list
+├── ops-sync-skills.sh                  # sync Codex/Claude skills
+├── ui-terminal-toggle                 # toggle Alacritty terminal visibility
+├── ops-update-git.sh                   # update repos + run composer/pnpm builds
+├── ops-update-plesk-dotfiles.sh        # reset dotfiles for Plesk users
+├── ops-update-symlinks.sh              # refresh config symlinks
 └── wsl-setup.sh                    # install win32yank for WSL
 ```
 
 ## Key commands
 - `make help` lists available targets.
 - `make install` installs Squid proxy + Docker registry cache + Git cache (sudo required).
-- `make test` runs shell and snap-window tests (may install deps like `bats`/`gum`).
+- `make test` runs shell and ui-snap-window tests (may install deps like `bats`/`gum`).
 - `make test-squid` runs full Squid tests (sudo required).
 
 ## Terminal
