@@ -12,7 +12,11 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    spec = "andrius.lazy",
-    change_detection = { notify = false }
+    spec = {
+        { import = "andrius.lazy" },
+    },
+    change_detection = { notify = false },
+    rocks = {
+        hererocks = true,
+    },
 })
-
