@@ -71,8 +71,15 @@ for src in "${CONFDIRS[@]}"; do
     srcPath="$DOTFILES_DIR/$src"
     destPath="$HOME/.$src"
 
-    if [ -d "$destPath" ]; then
-        rm -rf $destPath
+    if [ -L "$destPath" ]; then
+        link_target="$(readlink "$destPath" 2>/dev/null || true)"
+        if [ "$link_target" = "$srcPath" ]; then
+            continue
+        fi
+    fi
+
+    if [ -e "$destPath" ] || [ -L "$destPath" ]; then
+        rm -rf "$destPath"
     fi
     ln -sf $srcPath $destPath
 done
