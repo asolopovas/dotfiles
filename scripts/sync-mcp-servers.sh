@@ -1,21 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-declare -A MCP_INSTALL=(
-  [context7]="npx @upstash/context7-mcp"
-  [git]="npx @cyanheads/git-mcp-server"
-  [github]="npx @modelcontextprotocol/server-github"
-  [playwright]="npx @modelcontextprotocol/server-playwright"
-  [sequential-thinking]="npx @modelcontextprotocol/server-sequential-thinking"
+# Each entry: name|install command (the command is passed after `--` to `mcp add`).
+MCP_SERVERS=(
+  "context7|npx @upstash/context7-mcp"
+  "git|npx @cyanheads/git-mcp-server"
+  "github|npx @modelcontextprotocol/server-github"
+  "playwright|npx @modelcontextprotocol/server-playwright"
+  "sequential-thinking|npx @modelcontextprotocol/server-sequential-thinking"
 )
 
-declare -A MCP_ENABLE=(
-  [context7]="${CONTEXT7:-1}"
-  [git]="${GIT:-1}"
-  [github]="${GITHUB:-0}"
-  [playwright]="${PLAYWRIGHT:-0}"
-  [sequential-thinking]="${SEQUENTIAL_THINKING:-0}"
-)
+if [[ $# -gt 0 ]]; then
+  MCP_SERVERS+=("$@")
+fi
 
 die() {
   echo "$*" >&2
@@ -26,9 +23,11 @@ have_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-enabled() {
-  local value="${1:-}"
-  case "${value,,}" in 1|true|yes|on) return 0 ;; *) return 1 ;; esac
+trim() {
+  local value="$1"
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  printf '%s' "$value"
 }
 
 normalize_key() {
@@ -39,9 +38,31 @@ normalize_key() {
   esac
 }
 
-enabled_key() {
-  local key="$1"
-  enabled "${MCP_ENABLE[$key]:-0}"
+parse_entry() {
+  local entry="$1"
+  local name
+  local cmd
+
+  if [[ "$entry" == *"|"* ]]; then
+    name="${entry%%|*}"
+    cmd="${entry#*|}"
+  elif [[ "$entry" == *"="* ]]; then
+    name="${entry%%=*}"
+    cmd="${entry#*=}"
+  else
+    die "Error: invalid MCP entry '$entry'. Use 'name|command'."
+  fi
+
+  name="$(trim "$name")"
+  cmd="$(trim "$cmd")"
+  name="$(normalize_key "$name")"
+
+  if [[ -z "$name" || -z "$cmd" ]]; then
+    die "Error: invalid MCP entry '$entry'."
+  fi
+
+  ENTRY_NAME="$name"
+  ENTRY_CMD="$cmd"
 }
 
 resolve_clis() {
@@ -84,8 +105,7 @@ list_servers() {
 add_server() {
   local cli="$1"
   local key="$2"
-  local install; install="${MCP_INSTALL[$key]}"
-  [[ -n "$install" ]] || die "Error: no install command configured for '$key'."
+  local install="$3"
   read -ra cmd_parts <<< "$install"
   if [[ "${cmd_parts[0]}" == "npx" ]] && ! have_cmd npx; then
     die "Error: 'npx' not found in PATH."
@@ -98,6 +118,12 @@ remove_server() {
   local name="$2"
   "$cli" mcp remove "$name" && echo "➖ Removed $name ($cli)"
 }
+
+declare -A DESIRED_CMD=()
+for entry in "${MCP_SERVERS[@]}"; do
+  parse_entry "$entry"
+  DESIRED_CMD["$ENTRY_NAME"]="$ENTRY_CMD"
+done
 
 mapfile -t CLIS < <(resolve_clis)
 
@@ -113,18 +139,18 @@ sync_cli() {
 
   while IFS= read -r server; do
     [[ -n "$server" ]] || continue
-    local key; key="$(normalize_key "$server")"
-    [[ -n "$key" ]] || continue
-    [[ -v "MCP_INSTALL[$key]" ]] || continue
-    current_keys["$key"]=1
-    if ! enabled_key "$key"; then
+    local key
+    key="$(normalize_key "$server")"
+    if [[ -z "${DESIRED_CMD[$key]:-}" ]]; then
       remove_server "$cli" "$server"
+      continue
     fi
+    current_keys["$key"]=1
   done <<< "$raw"
 
-  for key in "${!MCP_INSTALL[@]}"; do
-    if enabled_key "$key" && [[ -z "${current_keys[$key]:-}" ]]; then
-      add_server "$cli" "$key"
+  for key in "${!DESIRED_CMD[@]}"; do
+    if [[ -z "${current_keys[$key]:-}" ]]; then
+      add_server "$cli" "$key" "${DESIRED_CMD[$key]}"
     fi
   done
 }
