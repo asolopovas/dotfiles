@@ -67,3 +67,44 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | `<b>or tag* types</b>`       | `csth1<CR>`  | `<h1>or tag types</h1>` |
 | `delete(functi*on calls)`    | `dsf`        | `function calls` |
 
+## Project Structure
+```
+dotfiles/
+├── completions/                    # Shell completions
+├── config/                         # Application configurations
+├── env/                            # Environment configuration
+├── helpers/                        # Utility scripts
+├── scripts/                        # Installation & utility scripts
+├── tests/                          # Test suites
+├── tmp/                            # Temporary experiments
+├── Makefile                        # Build automation
+└── README.md                       # Project overview
+```
+
+## Commands
+- `make install` - Install all (squid + docker cache + git cache)
+- `make install-squid` / `make test-squid` / `make uninstall-squid`
+- `make install-docker-registry-cache` / `make test-docker-registry-cache` / `make uninstall-docker-registry-cache`
+- `make install-git-cache` / `make test-git-cache` / `make uninstall-git-cache`
+- `make test-bash` - Run Bats tests
+
+## Key Rules
+- **TDD ONLY**: NEVER fix code directly. Always fix through tests using TDD. This is the highest priority rule above all others.
+- **Proxy testing**: Docker pulls only, never curl. Check squid logs for TCP_HIT.
+- **Build preservation**: Never delete `/usr/local/squid/` (10+ min build).
+- **Terminal testing**: Use dual-agent Bats tests only, never manual execution.
+- **Commands**: Run individually, never combine with `&&` or pipes.
+- **Experiments**: Use `tmp/` directory, clean up after.
+- **Never use timeouts**: Timeouts are unreliable and bad practice; prefer alternatives.
+- **Difficult tests**: Use real hotkey emulation with `xdotool key`, log states after each action with descriptive labels for later reflection.
+- **Hotkey analysis**: Use `press_and_log()` to save state logs to `~/dotfiles/tmp/hotkey-*.log`.
+- **Thorough testing**: Test focus switching, Alt+Tab behavior, state file updates, and terminal response to focus changes with complete logging.
+
+## Cache Locations
+- Docker: `localhost:5000/library/image:tag` → `/mnt/d/.cache/docker-registry`
+- Git: Normal clone commands → `/mnt/d/.cache/git`
+- Squid logs: `/usr/local/squid/var/logs/access.log`
+
+## Terminal Toggle Bug
+**Issue**: After Super+Shift+Enter opens second terminal, Super+Enter toggles first terminal instead of second (focus tracking).  
+**Test**: `bats tests/test-terminal-toggle.bats` reproduces the bug and is ready for fix.
