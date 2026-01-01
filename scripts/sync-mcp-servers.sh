@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+declare -A MCP_INSTALL=(
+  [context7]="npx @upstash/context7-mcp"
+  [git]="npx @cyanheads/git-mcp-server"
+  [github]="npx @modelcontextprotocol/server-github"
+  [playwright]="npx @modelcontextprotocol/server-playwright"
+  [sequential-thinking]="npx @modelcontextprotocol/server-sequential-thinking"
+)
+
+declare -A MCP_ENABLE=(
+  [context7]="${CONTEXT7:-1}"
+  [git]="${GIT:-1}"
+  [github]="${GITHUB:-0}"
+  [playwright]="${PLAYWRIGHT:-0}"
+  [sequential-thinking]="${SEQUENTIAL_THINKING:-0}"
+)
+
 die() {
   echo "$*" >&2
   exit 1
@@ -10,22 +26,31 @@ have_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-want_enabled() {
-  local v="${1:-}"
-  [[ -z "$v" ]] && return 0
-  case "${v,,}" in 1|true|yes|on) return 0 ;; *) return 1 ;; esac
+enabled() {
+  local value="${1:-}"
+  case "${value,,}" in 1|true|yes|on) return 0 ;; *) return 1 ;; esac
 }
 
-declare -A WANT=(
-  [context7]=$(want_enabled "${CONTEXT7:-}" && echo 1 || echo 0)
-  [git]=$(want_enabled "${GIT:-}" && echo 1 || echo 0)
-)
+normalize_key() {
+  local name="${1,,}"
+  case "$name" in
+    sequentialthinking) echo "sequential-thinking" ;;
+    *) echo "$name" ;;
+  esac
+}
+
+enabled_key() {
+  local key="$1"
+  enabled "${MCP_ENABLE[$key]:-0}"
+}
 
 resolve_clis() {
+  local raw="${MCP_CLI:-}"
   local -a candidates=()
   local -a resolved=()
-  if [[ -n "${MCP_CLI:-}" ]]; then
-    local raw="${MCP_CLI//,/ }"
+
+  if [[ -n "$raw" ]]; then
+    raw="${raw//,/ }"
     read -ra candidates <<< "$raw"
   else
     candidates=(claude codex)
@@ -47,72 +72,65 @@ resolve_clis() {
   printf '%s\n' "${resolved[@]}"
 }
 
-pkg_for() {
-  case "$1" in
-    context7)            echo "@upstash/context7-mcp" ;;
-    git)                 echo "@cyanheads/git-mcp-server" ;;
-    *)                   echo "@modelcontextprotocol/server-$1" ;;
-  esac
-}
-
-key_for_name() {
-  local name="${1,,}"
-  case "$name" in
-    context7) echo "context7" ;;
-    git) echo "git" ;;
-    github) echo "github" ;;
-    playwright) echo "playwright" ;;
-    sequentialthinking|sequential-thinking) echo "sequential-thinking" ;;
-    *) echo "" ;;
-  esac
-}
-
 list_servers() {
   local cli="$1"
   case "$cli" in
     claude) claude mcp list 2>/dev/null | awk -F: '/^[a-z0-9-]+:/{print $1}' ;;
-    codex)  codex mcp list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}' ;;
+    codex) codex mcp list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}' ;;
     *) return 1 ;;
   esac
 }
 
 add_server() {
   local cli="$1"
-  local s="$2"
-  local pkg; pkg="$(pkg_for "$s")"
-  have_cmd npx || die "Error: 'npx' not found in PATH."
-  "$cli" mcp add "$s" -- npx "$pkg" && echo "➕ Added $s ($cli)"
+  local key="$2"
+  local install; install="${MCP_INSTALL[$key]}"
+  [[ -n "$install" ]] || die "Error: no install command configured for '$key'."
+  read -ra cmd_parts <<< "$install"
+  if [[ "${cmd_parts[0]}" == "npx" ]] && ! have_cmd npx; then
+    die "Error: 'npx' not found in PATH."
+  fi
+  "$cli" mcp add "$key" -- "${cmd_parts[@]}" && echo "➕ Added $key ($cli)"
 }
 
 remove_server() {
   local cli="$1"
-  local s="$2"
-  "$cli" mcp remove "$s" && echo "➖ Removed $s ($cli)"
+  local name="$2"
+  "$cli" mcp remove "$name" && echo "➖ Removed $name ($cli)"
 }
 
 mapfile -t CLIS < <(resolve_clis)
 
-for cli in "${CLIS[@]}"; do
-  if ! CURRENT_RAW="$(list_servers "$cli")"; then
+sync_cli() {
+  local cli="$1"
+  local raw
+  declare -A current_keys=()
+
+  if ! raw="$(list_servers "$cli")"; then
     echo "Warning: '$cli mcp list' failed; skipping." >&2
-    continue
+    return
   fi
-  mapfile -t CURRENT <<< "$CURRENT_RAW"
-  declare -A CURRENT_KEYS=()
-  for s in "${CURRENT[@]:-}"; do
-    [[ -n "$s" ]] || continue
-    key="$(key_for_name "$s")"
+
+  while IFS= read -r server; do
+    [[ -n "$server" ]] || continue
+    local key; key="$(normalize_key "$server")"
     [[ -n "$key" ]] || continue
-    CURRENT_KEYS["$key"]=1
-    if [[ "${WANT[$key]:-0}" != "1" ]]; then
-      remove_server "$cli" "$s"
+    [[ -v "MCP_INSTALL[$key]" ]] || continue
+    current_keys["$key"]=1
+    if ! enabled_key "$key"; then
+      remove_server "$cli" "$server"
+    fi
+  done <<< "$raw"
+
+  for key in "${!MCP_INSTALL[@]}"; do
+    if enabled_key "$key" && [[ -z "${current_keys[$key]:-}" ]]; then
+      add_server "$cli" "$key"
     fi
   done
+}
 
-  for key in "${!WANT[@]}"; do
-    [[ "${WANT[$key]}" == "1" ]] || continue
-    [[ -v "CURRENT_KEYS[$key]" ]] || add_server "$cli" "$key"
-  done
+for cli in "${CLIS[@]}"; do
+  sync_cli "$cli"
 done
 
 if command -v tput >/dev/null 2>&1 && [[ -t 1 ]]; then
