@@ -266,7 +266,7 @@ main() {
     # Check if proxy is accessible
     if ! timeout 5 curl -s --proxy "$PROXY_URL" --connect-timeout 3 http://httpbin.org/get > /dev/null 2>&1; then
         error "Cannot connect to proxy at $PROXY_URL"
-        error "Please ensure Squid is running: sudo systemctl start squid"
+        error "Please ensure the proxy is running and reachable"
         exit 1
     fi
     
