@@ -34,10 +34,12 @@ ensure_path() {
 
 download_and_extract() {
     local target_dir=$1
+    local tmp_dir
 
-    curl -L -o "$INSTALL_ARCHIVE" "$URL"
-    tar -xzf "$INSTALL_ARCHIVE" -C "$target_dir"
-    rm -f "$INSTALL_ARCHIVE"
+    tmp_dir="$(mktemp -d)"
+    curl -fsSL -o "$tmp_dir/$INSTALL_ARCHIVE" "$URL"
+    tar -xzf "$tmp_dir/$INSTALL_ARCHIVE" -C "$target_dir"
+    rm -rf "$tmp_dir"
 }
 
 link_binaries() {
@@ -124,49 +126,92 @@ ensure_deno() {
     fi
 }
 
+is_managed_nvim() {
+    local nvim_bin=$1
+    local resolved
+
+    if [ -z "$nvim_bin" ]; then
+        return 1
+    fi
+
+    if [ "$nvim_bin" = "$HOME/.local/nvim/bin/nvim" ] || [ "$nvim_bin" = "/opt/nvim/bin/nvim" ]; then
+        return 0
+    fi
+
+    if command -v readlink >/dev/null 2>&1; then
+        resolved="$(readlink -f "$nvim_bin" 2>/dev/null || true)"
+        if [ "$resolved" = "$HOME/.local/nvim/bin/nvim" ] || [ "$resolved" = "/opt/nvim/bin/nvim" ]; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+reset_install_dir() {
+    local dir=$1
+
+    if [ -L "$dir" ] || [ -f "$dir" ]; then
+        rm -f "$dir"
+    elif [ -d "$dir" ]; then
+        rm -rf "$dir"
+    fi
+}
+
+sync_plugins() {
+    local nvim_bin=$1
+
+    if ! "$nvim_bin" --headless \
+        "+lua local ok,lazy=pcall(require,'lazy'); if ok then lazy.sync({wait=true}) end" \
+        +qa; then
+        echo "Lazy sync skipped (nvim startup failed)."
+    fi
+}
+
 install_user() {
     local dir="$HOME/.local"
     local bin="$dir/bin"
 
     mkdir -p "$bin"
     download_and_extract "$dir"
+    reset_install_dir "$dir/nvim"
     mv "$dir/nvim-linux-x86_64" "$dir/nvim"
     link_binaries "$dir/nvim/bin/nvim" "$bin/nvim" "$bin/vim"
     ensure_nvim_config
     ensure_node
     ensure_deno
-    "$dir/nvim/bin/nvim" --headless "+Lazy sync" +qa
+    sync_plugins "$dir/nvim/bin/nvim"
 }
 
 install_root() {
-    rm -rf /opt/nvim
+    reset_install_dir /opt/nvim
     download_and_extract /opt
     mv /opt/nvim-linux-x86_64 /opt/nvim
     link_binaries "/opt/nvim/bin/nvim" "/usr/bin/nvim" "/usr/bin/vim"
     ensure_nvim_config
     ensure_node
     ensure_deno
-    /opt/nvim/bin/nvim --headless "+Lazy sync" +qa
+    sync_plugins /opt/nvim/bin/nvim
 }
 
 sync_existing() {
-    local nvim_bin
-
-    nvim_bin="$(command -v nvim 2>/dev/null || true)"
-    if [ -z "$nvim_bin" ]; then
-        return 1
-    fi
+    local nvim_bin=$1
 
     ensure_nvim_config
     ensure_node
     ensure_deno
-    "$nvim_bin" --headless "+Lazy sync" +qa
+    sync_plugins "$nvim_bin"
 }
 
 main() {
+    local nvim_bin
+
     if command -v nvim >/dev/null 2>&1; then
-        sync_existing
-        return
+        nvim_bin="$(command -v nvim 2>/dev/null || true)"
+        if is_managed_nvim "$nvim_bin"; then
+            sync_existing "$nvim_bin"
+            return
+        fi
     fi
 
     if [ "$(id -u)" -eq 0 ]; then
