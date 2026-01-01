@@ -7,6 +7,7 @@ SKILL_SOURCES=(
   "https://github.com/openai/skills/tree/main/skills/.curated/gh-fix-ci"
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
   "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
+  "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/git-commit-helper"
 )
 
 if [[ $# -gt 0 ]]; then
