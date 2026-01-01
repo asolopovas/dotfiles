@@ -14,6 +14,7 @@
 tmp/
 .claude/settings.local.json
 config/polybar/fonts.ini
+config/nvim/lazy-lock.json
 todo.md
 task.md
 config/fish/fish_variables
