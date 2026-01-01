@@ -5,6 +5,12 @@ INSTALL_ARCHIVE="nvim-linux-x86_64.tar.gz"
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
 
 SCRIPT_PATH="${BASH_SOURCE[0]}"
+if [ ! -e "$SCRIPT_PATH" ]; then
+    script_lookup="$(command -v -- "$SCRIPT_PATH" 2>/dev/null || true)"
+    if [ -n "$script_lookup" ]; then
+        SCRIPT_PATH="$script_lookup"
+    fi
+fi
 if command -v readlink >/dev/null 2>&1; then
     SCRIPT_PATH="$(readlink -f "$SCRIPT_PATH" 2>/dev/null || echo "$SCRIPT_PATH")"
 fi
@@ -56,15 +62,22 @@ ensure_nvim_config() {
         if [ "$resolved_target" = "$source_config" ]; then
             return
         fi
+        echo "nvim config symlink points elsewhere; leaving untouched."
+        return
+    fi
+
+    if [ -e "$nvim_config" ]; then
+        echo "nvim config exists; leaving untouched."
+        return
     fi
 
     if [ -d "$source_config" ]; then
         mkdir -p "$HOME/.config"
-        rm -rf "$nvim_config"
-        ln -sf "$source_config" "$nvim_config"
-    else
-        echo "Missing $source_config; skipping nvim config symlink."
+        ln -s "$source_config" "$nvim_config"
+        return
     fi
+
+    echo "Missing $source_config; skipping nvim config symlink."
 }
 
 ensure_node() {
