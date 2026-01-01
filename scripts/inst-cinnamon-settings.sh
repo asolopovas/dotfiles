@@ -26,8 +26,8 @@ readonly REQUIRED_PACKAGES=(
 
 # Scripts to link
 readonly SCRIPTS_TO_LINK=(
-    "snap-window:snap-window"
-    "terminal-toggle:terminal-toggle"
+    "ui-snap-window:ui-snap-window"
+    "ui-terminal-toggle:ui-terminal-toggle"
 )
 
 #============================================================================
@@ -103,14 +103,14 @@ readonly -A WINDOW_MGMT_KEYS=(
 
 # Snap window keybindings
 readonly -A SNAP_KEYS=(
-    ["snap-left"]="${LOCAL_BIN}/snap-window left:<Super>h"
-    ["snap-down"]="${LOCAL_BIN}/snap-window down:<Super>j"
-    ["snap-up"]="${LOCAL_BIN}/snap-window up:<Super>k"
-    ["snap-right"]="${LOCAL_BIN}/snap-window right:<Super>l"
-    ["expand-left"]="${LOCAL_BIN}/snap-window expand-left:<Super><Shift>h"
-    ["expand-down"]="${LOCAL_BIN}/snap-window expand-down:<Super><Shift>j"
-    ["expand-up"]="${LOCAL_BIN}/snap-window expand-up:<Super><Shift>k"
-    ["expand-right"]="${LOCAL_BIN}/snap-window expand-right:<Super><Shift>l"
+    ["snap-left"]="${LOCAL_BIN}/ui-snap-window left:<Super>h"
+    ["snap-down"]="${LOCAL_BIN}/ui-snap-window down:<Super>j"
+    ["snap-up"]="${LOCAL_BIN}/ui-snap-window up:<Super>k"
+    ["snap-right"]="${LOCAL_BIN}/ui-snap-window right:<Super>l"
+    ["expand-left"]="${LOCAL_BIN}/ui-snap-window expand-left:<Super><Shift>h"
+    ["expand-down"]="${LOCAL_BIN}/ui-snap-window expand-down:<Super><Shift>j"
+    ["expand-up"]="${LOCAL_BIN}/ui-snap-window expand-up:<Super><Shift>k"
+    ["expand-right"]="${LOCAL_BIN}/ui-snap-window expand-right:<Super><Shift>l"
 )
 
 # Layout resizing keybindings
@@ -123,8 +123,8 @@ readonly -A LAYOUT_KEYS=(
 
 # Application shortcuts
 readonly -A APP_KEYS=(
-    ["terminal-toggle"]="${LOCAL_BIN}/terminal-toggle toggle:<Super>Return"
-    ["terminal-new"]="${LOCAL_BIN}/terminal-toggle new:<Super><Shift>Return"
+    ["ui-terminal-toggle"]="${LOCAL_BIN}/ui-terminal-toggle toggle:<Super>Return"
+    ["terminal-new"]="${LOCAL_BIN}/ui-terminal-toggle new:<Super><Shift>Return"
     ["app-launcher"]="rofi -show run:<Super>d"
     ["sudo-launcher"]="su_dmenu_run:<Super><Shift>d"
     ["system-actions"]="sysact:<Super>0"

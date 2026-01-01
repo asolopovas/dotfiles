@@ -5,9 +5,9 @@ JAIL="plesk-permanent-ban"
 # ------------------------------------------------------------
 # Usage:
 #   1) Single-file mode:
-#       ban-ips.sh <log_file> <pattern> [excluded_ip1 excluded_ip2 ...]
+#       sec-ban-ips.sh <log_file> <pattern> [excluded_ip1 excluded_ip2 ...]
 #   2) Recursive-directory mode:
-#       ban-ips.sh "<pattern>" --dir <directory> [excluded_ip1 excluded_ip2 ...]
+#       sec-ban-ips.sh "<pattern>" --dir <directory> [excluded_ip1 excluded_ip2 ...]
 # ------------------------------------------------------------
 
 if [ $# -lt 2 ]; then

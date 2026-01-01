@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-echo "🔄 Connecting to root-new to retrieve Plesk users and execute 'conf pull'..."
+echo "🔄 Connecting to root-new to retrieve Plesk users and execute 'ops-git-sync pull'..."
 
 ssh root bash -s <<'EOF'
 set -euo pipefail
@@ -25,7 +25,7 @@ if [[ -z "$plesk_users" ]]; then
     exit 1
 fi
 
-echo "✅ Found Plesk users. Executing 'conf pull' for each..."
+echo "✅ Found Plesk users. Executing 'ops-git-sync pull' for each..."
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
     [[ -z "$domain" || -z "$plesk_user" || -z "$home_dir" ]] && continue
@@ -48,5 +48,5 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
 
 done <<< "$plesk_users"
 
-echo "✅ Finished executing 'conf pull' for all Plesk users!"
+echo "✅ Finished executing 'ops-git-sync pull' for all Plesk users!"
 EOF

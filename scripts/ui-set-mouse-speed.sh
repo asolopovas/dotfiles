@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set mouse acceleration speed for Logitech G305
-# Usage: ./set-mouse-speed.sh [speed]
+# Usage: ./ui-set-mouse-speed.sh [speed]
 # Speed range: -1.0 (slowest) to 1.0 (fastest), default: -0.8
 
 SPEED=${1:-"-0.8"}

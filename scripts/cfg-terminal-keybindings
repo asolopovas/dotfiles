@@ -5,7 +5,7 @@
 # Super+Shift+Enter: New terminal
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TERMINAL_TOGGLE_SCRIPT="$SCRIPT_DIR/terminal-toggle"
+TERMINAL_TOGGLE_SCRIPT="$SCRIPT_DIR/ui-terminal-toggle"
 
 echo "Setting up terminal keybindings..."
 
@@ -46,7 +46,7 @@ add_keybinding() {
 }
 
 # Add Super+Enter for terminal toggle
-add_keybinding "terminal-toggle" "<Super>Return" "$TERMINAL_TOGGLE_SCRIPT toggle" "Toggle Terminal"
+add_keybinding "ui-terminal-toggle" "<Super>Return" "$TERMINAL_TOGGLE_SCRIPT toggle" "Toggle Terminal"
 
 # Add Super+Shift+Enter for new terminal
 add_keybinding "terminal-new" "<Super><Shift>Return" "$TERMINAL_TOGGLE_SCRIPT new" "New Terminal"

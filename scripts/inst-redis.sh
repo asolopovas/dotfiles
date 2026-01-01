@@ -15,9 +15,9 @@ echo "Installing Redis $VER..."
 if command -v apt-get &>/dev/null; then
     sudo apt-get update -qq && sudo apt-get install -y build-essential tcl pkg-config libsystemd-dev
 elif command -v dnf &>/dev/null; then
-    sudo dnf groupinstall -y "Development Tools" && sudo dnf install -y tcl pkgconfig systemd-devel
+    sudo dnf grouinst-php-pkgsall -y "Development Tools" && sudo dnf install -y tcl pkgconfig systemd-devel
 elif command -v yum &>/dev/null; then
-    sudo yum groupinstall -y "Development Tools" && sudo yum install -y tcl pkgconfig systemd-devel
+    sudo yum grouinst-php-pkgsall -y "Development Tools" && sudo yum install -y tcl pkgconfig systemd-devel
 fi
 
 # System config

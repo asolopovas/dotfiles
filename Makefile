@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-bash test-bash-verbose test-snap-window clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-bash test-bash-verbose test-ui-snap-window clean-tests install-test-deps install install-squid test-squid uninstall-squid install-docker-registry-cache test-docker-registry-cache uninstall-docker-registry-cache install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -16,7 +16,7 @@ help:
 	@echo "  test                Run all project tests"
 	@echo "  test-bash           Run all bash script tests"
 	@echo "  test-bash-verbose   Run E2E tests with detailed output"
-	@echo "  test-snap-window    Run snap-window functionality tests"
+	@echo "  test-ui-snap-window    Run ui-snap-window functionality tests"
 	@echo ""
 	@echo "Squid Proxy:"
 	@echo "  install-squid       Install and configure Squid proxy (auto-builds if needed)"
@@ -40,7 +40,7 @@ help:
 	@echo "Usage: make <target>"
 
 # Test targets
-test: test-bash test-snap-window
+test: test-bash test-ui-snap-window
 	@echo "✅ All project tests completed successfully!"
 
 test-bash: install-test-deps
@@ -48,8 +48,8 @@ test-bash: install-test-deps
 	@chmod +x ./tests/bash/squid/run_squid_tests.sh
 	@./tests/bash/squid/run_squid_tests.sh
 
-test-snap-window: install-test-deps
-	@echo "Running snap-window functionality tests..."
+test-ui-snap-window: install-test-deps
+	@echo "Running ui-snap-window functionality tests..."
 	@chmod +x ./tests/run-snap-tests.sh
 	@./tests/run-snap-tests.sh
 
@@ -89,7 +89,7 @@ install-test-deps:
 		elif command -v brew >/dev/null 2>&1; then \
 			brew install bats-core; \
 		else \
-			echo "Warning: bats not found, snap-window tests may fail"; \
+			echo "Warning: bats not found, ui-snap-window tests may fail"; \
 		fi \
 	fi
 	@chmod +x tests/bash/*.sh
@@ -99,19 +99,19 @@ install-test-deps:
 install-squid:
 	@if [ -x /usr/local/squid/sbin/squid ]; then \
 		echo "Squid already built, configuring only..."; \
-		$(SUDO_NO_PROXY) ./scripts/install-squid.sh --install-only; \
+		$(SUDO_NO_PROXY) ./scripts/inst-squid.sh --install-only; \
 	else \
 		echo "Installing Squid proxy and configuring all development tools..."; \
-		$(SUDO_NO_PROXY) ./scripts/install-squid.sh; \
+		$(SUDO_NO_PROXY) ./scripts/inst-squid.sh; \
 	fi
 
 test-squid: install-squid
 	@echo "Testing complete Squid proxy setup and dev environment caching..."
-	@sudo ./scripts/install-squid.sh --test
+	@sudo ./scripts/inst-squid.sh --test
 
 uninstall-squid:
 	@echo "Removing Squid proxy from system (preserving build)..."
-	@sudo ./scripts/install-squid.sh --uninstall
+	@sudo ./scripts/inst-squid.sh --uninstall
 
 # Main installation target
 install: install-squid install-docker-registry-cache install-git-cache
@@ -121,28 +121,28 @@ install: install-squid install-docker-registry-cache install-git-cache
 # Docker Registry Cache targets
 install-docker-registry-cache:
 	@echo "Installing Docker proxy configuration and registry cache..."
-	@$(SUDO_NO_PROXY) ./scripts/install-docker-registry-cache.sh install
+	@$(SUDO_NO_PROXY) ./scripts/inst-docker-registry-cache.sh install
 
 test-docker-registry-cache:
 	@echo "Testing Docker configuration and registry cache..."
-	@sudo ./scripts/install-docker-registry-cache.sh test
+	@sudo ./scripts/inst-docker-registry-cache.sh test
 
 uninstall-docker-registry-cache:
 	@echo "Removing Docker proxy configuration and registry cache..."
-	@sudo ./scripts/install-docker-registry-cache.sh uninstall
+	@sudo ./scripts/inst-docker-registry-cache.sh uninstall
 
 # Git Cache targets
 install-git-cache:
 	@echo "Installing Git caching container..."
-	@$(SUDO_NO_PROXY) ./scripts/install-git-cache.sh install
+	@$(SUDO_NO_PROXY) ./scripts/inst-git-cache.sh install
 
 test-git-cache:
 	@echo "Testing Git cache configuration..."
-	@sudo ./scripts/install-git-cache.sh test
+	@sudo ./scripts/inst-git-cache.sh test
 
 uninstall-git-cache:
 	@echo "Removing Git cache container and configuration..."
-	@sudo ./scripts/install-git-cache.sh uninstall
+	@sudo ./scripts/inst-git-cache.sh uninstall
 
 # Utility targets
 kill-alacritty:

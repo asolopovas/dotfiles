@@ -6,7 +6,7 @@
 
 TERMINAL_COMMAND="alacritty"
 TERMINAL_CLASS="Alacritty"
-STATE_FILE="$HOME/.cache/terminal-toggle-state"
+STATE_FILE="$HOME/.cache/ui-terminal-toggle-state"
 
 # Ensure cache directory exists
 mkdir -p "$(dirname "$STATE_FILE")"
