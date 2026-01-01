@@ -2,7 +2,11 @@
 
 INSTALL_ARCHIVE="nvim-linux-x86_64.tar.gz"
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+if command -v readlink >/dev/null 2>&1; then
+    SCRIPT_PATH="$(readlink -f "$SCRIPT_PATH" 2>/dev/null || echo "$SCRIPT_PATH")"
+fi
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 is_sourced() {
@@ -39,14 +43,25 @@ run_installer() {
 ensure_nvim_config() {
     local nvim_config="$HOME/.config/nvim"
     local source_config="$DOTFILES_DIR/config/nvim"
+    local resolved_target
 
     if [ -L "$nvim_config" ] && [ "$(readlink "$nvim_config")" = "$source_config" ]; then
         return
     fi
+    if [ -L "$nvim_config" ]; then
+        resolved_target="$(readlink -f "$nvim_config" 2>/dev/null || true)"
+        if [ "$resolved_target" = "$source_config" ]; then
+            return
+        fi
+    fi
 
     if [ -d "$source_config" ]; then
         mkdir -p "$HOME/.config"
-        rm -rf "$nvim_config"
+        if [ -L "$nvim_config" ]; then
+            rm -f "$nvim_config"
+        elif [ -e "$nvim_config" ]; then
+            rm -rf "$nvim_config"
+        fi
         ln -sf "$source_config" "$nvim_config"
         return
     fi
