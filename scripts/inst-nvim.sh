@@ -3,6 +3,7 @@
 INSTALL_ARCHIVE="nvim-linux-x86_64.tar.gz"
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 is_sourced() {
     [ "${BASH_SOURCE[0]}" != "$0" ]
@@ -33,6 +34,24 @@ run_installer() {
     fi
 
     return 1
+}
+
+ensure_nvim_config() {
+    local nvim_config="$HOME/.config/nvim"
+    local source_config="$DOTFILES_DIR/config/nvim"
+
+    if [ -L "$nvim_config" ] && [ "$(readlink "$nvim_config")" = "$source_config" ]; then
+        return
+    fi
+
+    if [ -d "$source_config" ]; then
+        mkdir -p "$HOME/.config"
+        rm -rf "$nvim_config"
+        ln -sf "$source_config" "$nvim_config"
+        return
+    fi
+
+    echo "Missing $source_config; skipping nvim config symlink."
 }
 
 ensure_node() {
@@ -90,6 +109,7 @@ install_user() {
     download_and_extract "$dir"
     mv "$dir/nvim-linux-x86_64" "$dir/nvim"
     link_binaries "$dir/nvim/bin/nvim" "$bin/nvim" "$bin/vim"
+    ensure_nvim_config
     ensure_node || return 1
     ensure_deno || return 1
     "$dir/nvim/bin/nvim" --headless "+Lazy sync" +qa
@@ -100,6 +120,7 @@ install_root() {
     download_and_extract /opt
     mv /opt/nvim-linux-x86_64 /opt/nvim
     link_binaries "/opt/nvim/bin/nvim" "/usr/bin/nvim" "/usr/bin/vim"
+    ensure_nvim_config
     ensure_node || return 1
     ensure_deno || return 1
     /opt/nvim/bin/nvim --headless "+Lazy sync" +qa
@@ -112,6 +133,7 @@ sync_existing() {
         return 1
     fi
 
+    ensure_nvim_config
     ensure_node || return 1
     ensure_deno || return 1
     "$nvim_bin" --headless "+Lazy sync" +qa
