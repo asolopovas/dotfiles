@@ -10,6 +10,8 @@ SKILL_SOURCES=(
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/git-commit-helper"
   "https://github.com/steveyegge/beads/tree/main/skills/beads"
 )
+# Superpowers requires a repo clone and bootstrap, so it is handled separately.
+SUPERPOWERS_REPO="https://github.com/obra/superpowers"
 
 if [[ $# -gt 0 ]]; then
   SKILL_SOURCES+=("$@")
@@ -22,6 +24,82 @@ die() {
 
 have_cmd() {
   command -v "$1" >/dev/null 2>&1
+}
+
+superpowers_block() {
+    cat <<'EOF'
+## Superpowers System
+
+<EXTREMELY_IMPORTANT>
+You have superpowers. Superpowers teach you new skills and capabilities. RIGHT NOW run: `~/.codex/superpowers/.codex/superpowers-codex bootstrap` and follow the instructions it returns.
+</EXTREMELY_IMPORTANT>
+EOF
+}
+
+ensure_superpowers_agents() {
+    local codex_home="$1"
+    local agents_file="$codex_home/AGENTS.md"
+    local block
+
+    block="$(superpowers_block)"
+
+    if [[ -f "$agents_file" ]]; then
+        if grep -q "superpowers-codex bootstrap" "$agents_file"; then
+            return 0
+        fi
+        if [[ -s "$agents_file" ]]; then
+            printf '\n%s\n' "$block" >> "$agents_file"
+        else
+            printf '%s\n' "$block" > "$agents_file"
+        fi
+        return 0
+    fi
+
+    mkdir -p "$codex_home"
+    printf '%s\n' "$block" > "$agents_file"
+}
+
+sync_superpowers() {
+    local codex_home="$1"
+    local repo_url="$2"
+    local repo_dir="$codex_home/superpowers"
+    local cli="$repo_dir/.codex/superpowers-codex"
+    local skills_output
+
+    if ! have_cmd git; then
+        die "Error: git not found in PATH."
+    fi
+
+    if [[ -d "$repo_dir/.git" ]]; then
+        git -C "$repo_dir" pull --ff-only
+    elif [[ -e "$repo_dir" ]]; then
+        die "Error: $repo_dir exists but is not a git repository."
+    else
+        mkdir -p "$codex_home"
+        git clone "$repo_url" "$repo_dir"
+    fi
+
+    if [[ -f "$cli" && ! -x "$cli" ]]; then
+        chmod +x "$cli"
+    fi
+
+    mkdir -p "$codex_home/skills"
+    ensure_superpowers_agents "$codex_home"
+
+    if ! have_cmd node; then
+        die "Error: node not found in PATH (required for superpowers)."
+    fi
+
+    if [[ ! -x "$cli" ]]; then
+        die "Error: superpowers CLI not executable at $cli."
+    fi
+
+    if ! skills_output="$("$cli" find-skills)"; then
+        die "Error: superpowers find-skills failed."
+    fi
+    if [[ -z "$skills_output" ]]; then
+        die "Error: superpowers returned no skills."
+    fi
 }
 
 resolve_installer() {
@@ -128,6 +206,11 @@ skill_name_from_url() {
   printf '%s\n' "${path##*/}"
 }
 
+has_skill_marker() {
+    local dest_dir="$1"
+    [[ -f "$dest_dir/SKILL.md" ]]
+}
+
 install_skill() {
   local dest_root="$1"
   local url="$2"
@@ -169,6 +252,10 @@ for source in "${SKILL_SOURCES[@]}"; do
 done
 
 for target in "${TARGETS[@]}"; do
+  if [[ "$target" == "codex" ]]; then
+    sync_superpowers "${CODEX_HOME:-$HOME/.codex}" "$SUPERPOWERS_REPO"
+  fi
+
   dest_root="$(target_root "$target")" || continue
   mkdir -p "$dest_root"
 
@@ -185,10 +272,17 @@ for target in "${TARGETS[@]}"; do
   for key in "${!DESIRED_URL[@]}"; do
     dest_dir="$dest_root/$key"
     if [[ -e "$dest_dir" ]]; then
-      echo "-> $key already installed in $dest_root"
-      continue
+      if has_skill_marker "$dest_dir"; then
+        echo "-> $key already installed in $dest_root"
+        continue
+      fi
+      echo "-> $key missing SKILL.md in $dest_root; reinstalling"
+      rm -rf "$dest_dir"
     fi
     install_skill "$dest_root" "${DESIRED_URL[$key]}"
+    if ! has_skill_marker "$dest_dir"; then
+      die "Error: skill install missing SKILL.md at $dest_dir"
+    fi
   done
 done
 
