@@ -8,6 +8,7 @@ SKILL_SOURCES=(
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
   "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/git-commit-helper"
+  "https://github.com/steveyegge/beads/tree/main/skills/beads"
 )
 
 if [[ $# -gt 0 ]]; then
