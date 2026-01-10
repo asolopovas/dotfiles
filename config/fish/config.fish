@@ -61,3 +61,7 @@ end
 
 # opencode
 fish_add_path /home/andrius/.opencode/bin
+
+function chrome-debug
+    bash /home/andrius/dotfiles/scripts/chrome-debug.sh $argv
+end
