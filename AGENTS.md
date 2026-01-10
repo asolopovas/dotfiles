@@ -32,3 +32,37 @@
 
 ## Security & Configuration Tips
 - Many install scripts edit system files and proxy settings; review before running and document changes.
+
+## Agent Sync
+Custom agents are synced across OpenCode, Claude Code, and Codex using `sync-agents.sh`.
+
+### Configuration
+- Agent URLs are defined in `config/agents.conf`
+- One URL per line, comments start with `#`
+
+### Usage
+```bash
+# Sync agents to all CLIs
+./scripts/sync-agents.sh
+
+# Or use the helper script
+./scripts/add-agent sync
+
+# Add a new agent
+./scripts/add-agent add https://github.com/.../agent.md
+
+# List configured agents
+./scripts/add-agent list
+
+# Remove an agent
+./scripts/add-agent remove agent-name
+```
+
+### Agent Locations
+- OpenCode: `~/.config/opencode/agent/`
+- Claude Code: `~/.claude/agents/`
+- Codex: `~/.codex/agents/` (requires profile-based usage)
+
+### Environment Variables
+- `AGENTS_CONFIG`: Path to agents.conf (default: `$HOME/dotfiles/config/agents.conf`)
+- `AGENTS_CLI`: Target CLIs, comma-separated (default: `claude,codex,opencode`)

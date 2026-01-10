@@ -91,9 +91,9 @@ scripts/
 ├── wsl-win32yank.sh            # download/extract win32yank
 ├── wsl-windows-hello.sh        # install WSL Hello sudo (evanphilip)
 ├── inst-wp-cli.sh               # install WP-CLI
-├── wsl-browser.sh          # install WSL browser opener
-├── wsl-fingerprint.sh      # install WSL Hello sudo (nullpo-head)
-├── wsl-wslu.sh                 # install wslu
+├── browser.sh                   # install WSL browser opener
+├── wsl-fingerprint.sh           # install WSL Hello sudo (nullpo-head)
+├── wsl-wslu.sh                  # install wslu
 ├── inst-xmonad.sh               # install xmonad + deps
 ├── sys-latest-kernel-ubuntu.sh         # install mainline-kernel helper
 ├── sys-load-kmodule.sh                 # load kernel modules (+persist)
