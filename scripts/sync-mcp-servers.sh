@@ -6,7 +6,7 @@ MCP_SERVERS=(
   "context7|npx @upstash/context7-mcp"
   "git|npx @cyanheads/git-mcp-server"
   "github|npx @modelcontextprotocol/server-github"
-  "chrome-devtools|npx @chromedevtools/chrome-devtools-mcp"
+  "chrome-devtools|npx @chromedevtools/chrome-devtools-mcp --browser-url=http://127.0.0.1:9222"
 #   "playwright|npx @modelcontextprotocol/server-playwright"
 #   "sequential-thinking|npx @modelcontextprotocol/server-sequential-thinking"
 )
@@ -99,7 +99,7 @@ list_servers() {
   case "$cli" in
     claude) claude mcp list 2>/dev/null | awk -F: '/^[a-z0-9-]+:/{print $1}' ;;
     codex) codex mcp list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}' ;;
-    opencode) opencode mcp list 2>/dev/null | grep -oP '^\s*[●▪]\s+[✓✗]\s+\K[a-z0-9-]+' ;;
+    opencode) opencode mcp list 2>&1 | grep -oE '[a-z0-9-]+' | head -n -2 ;;
     *) return 1 ;;
   esac
 }
