@@ -6,6 +6,7 @@ MCP_SERVERS=(
   "context7|npx @upstash/context7-mcp"
   "git|npx @cyanheads/git-mcp-server"
   "github|npx @modelcontextprotocol/server-github"
+  "chrome-devtools|npx @chromedevtools/chrome-devtools-mcp"
 #   "playwright|npx @modelcontextprotocol/server-playwright"
 #   "sequential-thinking|npx @modelcontextprotocol/server-sequential-thinking"
 )
