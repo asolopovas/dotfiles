@@ -5,7 +5,7 @@ set -euo pipefail
 SKILL_SOURCES=(
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
   "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
-  "https://github.com/steveyegge/beads/tree/main/skills/beads"
+  "https://github.com/steveyegge/beads/tree/main/claude-plugin/skills/beads"
 )
 # Superpowers requires a repo clone and bootstrap, so it is handled separately.
 SUPERPOWERS_REPO="https://github.com/obra/superpowers"
@@ -131,7 +131,7 @@ resolve_targets() {
     raw="${raw//,/ }"
     read -ra candidates <<< "$raw"
   else
-    candidates=(codex claude)
+    candidates=(codex claude opencode)
   fi
 
   for target in "${candidates[@]}"; do
@@ -151,6 +151,13 @@ resolve_targets() {
           echo "Warning: claude not detected; skipping." >&2
         fi
         ;;
+      opencode)
+        if [[ -d "${OPENCODE_HOME:-$HOME/.config/opencode}" ]] || have_cmd opencode; then
+          resolved+=("opencode")
+        elif [[ -n "$raw" ]]; then
+          echo "Warning: opencode not detected; skipping." >&2
+        fi
+        ;;
       *)
         echo "Warning: unknown target '$target'; skipping." >&2
         ;;
@@ -158,7 +165,7 @@ resolve_targets() {
   done
 
   if [[ ${#resolved[@]} -eq 0 ]]; then
-    die "Error: neither Codex nor Claude detected."
+    die "Error: no supported CLI detected (codex, claude, opencode)."
   fi
 
   printf '%s\n' "${resolved[@]}"
@@ -168,6 +175,7 @@ target_root() {
   case "$1" in
     codex) echo "${CODEX_HOME:-$HOME/.codex}/skills" ;;
     claude) echo "${CLAUDE_HOME:-$HOME/.claude}/skills" ;;
+    opencode) echo "${OPENCODE_HOME:-$HOME/.config/opencode}/skills" ;;
     *) return 1 ;;
   esac
 }
@@ -254,6 +262,12 @@ for target in "${TARGETS[@]}"; do
   fi
 
   dest_root="$(target_root "$target")" || continue
+
+  # Skip superpowers for opencode (not supported)
+  if [[ "$target" == "opencode" ]]; then
+    echo "Note: Superpowers not supported for OpenCode, skipping AGENTS.md integration"
+  fi
+
   mkdir -p "$dest_root"
 
   for installed in "$dest_root"/*; do
@@ -283,4 +297,4 @@ for target in "${TARGETS[@]}"; do
   done
 done
 
-echo "Restart Codex and Claude to pick up new skills."
+echo "Restart Codex, Claude, and OpenCode to pick up new skills."
