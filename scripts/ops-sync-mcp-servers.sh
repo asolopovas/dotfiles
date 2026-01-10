@@ -74,7 +74,7 @@ resolve_clis() {
     raw="${raw//,/ }"
     read -ra candidates <<< "$raw"
   else
-    candidates=(claude codex)
+    candidates=(claude codex opencode)
   fi
 
   for cli in "${candidates[@]}"; do
@@ -98,6 +98,7 @@ list_servers() {
   case "$cli" in
     claude) claude mcp list 2>/dev/null | awk -F: '/^[a-z0-9-]+:/{print $1}' ;;
     codex) codex mcp list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}' ;;
+    opencode) opencode mcp list 2>/dev/null | grep -oP '^\s*[●▪]\s+[✓✗]\s+\K[a-z0-9-]+' ;;
     *) return 1 ;;
   esac
 }
@@ -110,13 +111,64 @@ add_server() {
   if [[ "${cmd_parts[0]}" == "npx" ]] && ! have_cmd npx; then
     die "Error: 'npx' not found in PATH."
   fi
-  "$cli" mcp add "$key" -- "${cmd_parts[@]}" && echo "➕ Added $key ($cli)"
+
+  if [[ "$cli" == "opencode" ]]; then
+    add_opencode_server "$key" "$install"
+  else
+    "$cli" mcp add "$key" -- "${cmd_parts[@]}" && echo "➕ Added $key ($cli)"
+  fi
 }
 
 remove_server() {
   local cli="$1"
   local name="$2"
-  "$cli" mcp remove "$name" && echo "➖ Removed $name ($cli)"
+
+  if [[ "$cli" == "opencode" ]]; then
+    remove_opencode_server "$name"
+  else
+    "$cli" mcp remove "$name" && echo "➖ Removed $name ($cli)"
+  fi
+}
+
+get_opencode_config() {
+  local config_file="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.jsonc}"
+  if [[ ! -f "$config_file" ]]; then
+    echo "{}" > "$config_file"
+  fi
+  echo "$config_file"
+}
+
+add_opencode_server() {
+  local key="$1"
+  local install="$2"
+  local config_file
+  config_file="$(get_opencode_config)"
+  read -ra cmd_parts <<< "$install"
+
+  local json_entry
+  json_entry=$(jq -n \
+    --arg type "local" \
+    --argjson cmd "$(printf '%s\n' "${cmd_parts[@]}" | jq -R . | jq -s .)" \
+    --argjson enabled true \
+    '{type: $type, command: $cmd, enabled: $enabled}')
+
+  jq --arg key "$key" --argjson entry "$json_entry" \
+    '.mcp //= {} | .mcp[$key] = $entry' \
+    "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+  echo "➕ Added $key ($cli via config)"
+}
+
+remove_opencode_server() {
+  local name="$1"
+  local config_file
+  config_file="$(get_opencode_config)"
+
+  if jq -e --arg key "$name" '.mcp | has($key)' "$config_file" >/dev/null 2>&1; then
+    jq --arg key "$name" 'del(.mcp[$key])' "$config_file" > "$config_file.tmp" && \
+      mv "$config_file.tmp" "$config_file"
+    echo "➖ Removed $name (opencode via config)"
+  fi
 }
 
 declare -A DESIRED_CMD=()
