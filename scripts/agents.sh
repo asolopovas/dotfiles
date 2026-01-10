@@ -8,10 +8,9 @@ AGENT_SOURCES=()
 load_agent_sources() {
     if [[ -f "$AGENTS_CONF" ]]; then
         while IFS= read -r line || [[ -n "$line" ]]; do
+            line=$(trim "$line")
             [[ -z "$line" || "$line" =~ ^# ]] && continue
-            line="${line#"${line%%[![:space:]]*}"}"
-            line="${line%"${line##*[![:space:]]}"}"
-            [[ -n "$line" ]] && AGENT_SOURCES+=("$line")
+            AGENT_SOURCES+=("$line")
         done < "$AGENTS_CONF"
     fi
 
@@ -72,11 +71,9 @@ apply_cli_overrides() {
     local file="$1"
     local cli="$2"
 
-    case "$cli" in
-        opencode)
-            sed -i '/^model:/d' "$file" 2>/dev/null || true
-            ;;
-    esac
+    if [[ "$cli" == "opencode" ]] && [[ -f "$file" ]]; then
+        sed -i '/^model:/d' "$file" 2>/dev/null || true
+    fi
 }
 
 resolve_agent_name() {
@@ -109,32 +106,46 @@ resolve_clis() {
 
     for cli in "${candidates[@]}"; do
         [[ -n "$cli" ]] || continue
-        case "${cli,,}" in
+        cli_lower="${cli,,}"
+
+        local detected=false
+        local home_var=""
+
+        case "$cli_lower" in
             claude)
-                if [[ -d "${CLAUDE_HOME:-$HOME/.claude}" ]] || have_cmd claude; then
-                    resolved+=("claude")
-                elif [[ -n "$raw" ]]; then
-                    echo "Warning: claude not detected; skipping." >&2
-                fi
+                detected=true
+                home_var="CLAUDE_HOME"
                 ;;
             codex)
-                if [[ -d "${CODEX_HOME:-$HOME/.codex}" ]] || have_cmd codex; then
-                    resolved+=("codex")
-                elif [[ -n "$raw" ]]; then
-                    echo "Warning: codex not detected; skipping." >&2
-                fi
+                detected=true
+                home_var="CODEX_HOME"
                 ;;
             opencode)
-                if [[ -d "${OPENCODE_HOME:-$HOME/.config/opencode}" ]] || have_cmd opencode; then
-                    resolved+=("opencode")
-                elif [[ -n "$raw" ]]; then
-                    echo "Warning: opencode not detected; skipping." >&2
-                fi
+                detected=true
+                home_var="OPENCODE_HOME"
                 ;;
             *)
                 echo "Warning: unknown target '$cli'; skipping." >&2
+                continue
                 ;;
         esac
+
+        if [[ "$detected" == "true" ]]; then
+            local home_val="${!home_var:-}"
+            local home_path="${home_val:-$HOME}"
+
+            case "$cli_lower" in
+                claude)  home_path="$home_path/.claude" ;;
+                codex)   home_path="$home_path/.codex" ;;
+                opencode) home_path="$home_path/.config/opencode" ;;
+            esac
+
+            if [[ -d "$home_path" ]] || have_cmd "$cli_lower"; then
+                resolved+=("$cli_lower")
+            elif [[ -n "$raw" ]]; then
+                echo "Warning: $cli not detected; skipping." >&2
+            fi
+        fi
     done
 
     if [[ ${#resolved[@]} -eq 0 ]]; then
@@ -193,13 +204,13 @@ install_agent() {
     local name
     name=$(resolve_agent_name "$dest_dir/$filename")
 
-    if [[ "$target" == "opencode" ]]; then
-        echo "-> Installed $name to $dest_dir/$filename (opencode)"
-    elif [[ "$target" == "claude" ]]; then
-        echo "-> Installed $name to $dest_dir/$filename (claude)"
-    elif [[ "$target" == "codex" ]]; then
-        echo "-> Installed $name to $dest_dir/$filename (codex - profile required)"
-    fi
+    local suffix=""
+    case "$target" in
+        codex) suffix="(codex - profile required)" ;;
+        *)     suffix="($target)" ;;
+    esac
+
+    echo "-> Installed $name to $dest_dir/$filename $suffix"
 }
 
 list_agents() {
@@ -227,23 +238,24 @@ sync_codex_agents() {
         return 0
     fi
 
-    echo "" >> "$agents_md"
-    echo "## Custom Agents" >> "$agents_md"
-    echo "" >> "$agents_md"
-
-    for file in "$agents_dir"/*.md; do
-        [[ -f "$file" ]] || continue
-        local name
-        name=$(resolve_agent_name "$file")
-        if [[ -n "$name" ]]; then
-            echo "### $name" >> "$agents_md"
-            echo "" >> "$agents_md"
-            cat "$file" >> "$agents_md"
-            echo "" >> "$agents_md"
-            echo "---" >> "$agents_md"
-            echo "" >> "$agents_md"
-        fi
-    done
+    {
+        echo ""
+        echo "## Custom Agents"
+        echo ""
+        for file in "$agents_dir"/*.md; do
+            [[ -f "$file" ]] || continue
+            local name
+            name=$(resolve_agent_name "$file")
+            if [[ -n "$name" ]]; then
+                echo "### $name"
+                echo ""
+                cat "$file"
+                echo ""
+                echo "---"
+                echo ""
+            fi
+        done
+    } >> "$agents_md"
 }
 
 add_agent() {
@@ -309,10 +321,9 @@ list_agents_config() {
     echo "Configured agents:"
     echo ""
     while IFS= read -r line || [[ -n "$line" ]]; do
+        line=$(trim "$line")
         [[ -z "$line" || "$line" =~ ^# ]] && continue
-        line="${line#"${line%%[![:space:]]*}"}"
-        line="${line%"${line##*[![:space:]]}"}"
-        [[ -n "$line" ]] && echo "  - $line"
+        echo "  - $line"
     done < "$AGENTS_CONF"
 }
 
@@ -372,13 +383,12 @@ sync_agents() {
                     echo "Warning: failed to install $key for $cli" >&2
                 fi
             else
-                if [[ "$cli" == "opencode" ]]; then
-                    echo "-> $key already installed (opencode)"
-                elif [[ "$cli" == "claude" ]]; then
-                    echo "-> $key already installed (claude)"
-                elif [[ "$cli" == "codex" ]]; then
-                    echo "-> $key already installed (codex)"
-                fi
+                local suffix=""
+                case "$cli" in
+                    codex) suffix=" (codex)" ;;
+                    *)     suffix=" ($cli)" ;;
+                esac
+                echo "-> $key already installed$suffix"
                 apply_cli_overrides "$dest_dir/${key}.md" "$cli"
             fi
         done
@@ -396,7 +406,7 @@ sync_agents() {
     fi
 }
 
-case "${1:-}" in
+case "${1:-sync}" in
     -h|--help)
         usage
         ;;
@@ -415,9 +425,6 @@ case "${1:-}" in
     sync)
         shift
         sync_agents "$@"
-        ;;
-    "")
-        sync_agents
         ;;
     *)
         echo "Unknown command: $1" >&2
