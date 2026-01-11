@@ -30,3 +30,5 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
 export DOTFILES_DIR="$HOME/dotfiles"
 
+# PHP / Composer
+export PHPENV_SHELL=bash
