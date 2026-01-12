@@ -10,6 +10,7 @@ declare -A SERVERS=(
 )
 
 CONFIG_FILE="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.jsonc}"
+CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME:-$HOME/.codex}/config.toml}"
 
 add_server() {
   local name="$1" cmd="$2"
@@ -23,6 +24,51 @@ add_server() {
 
   jq --argjson entry "$entry" '.mcp //= {} | .mcp *= $entry' "$CONFIG_FILE" \
     > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+}
+
+build_codex_block() {
+  local name cmd
+  local -a cmd_parts
+  local toml_command toml_args
+
+  for name in $(printf '%s\n' "${!SERVERS[@]}" | sort); do
+    cmd="${SERVERS[$name]}"
+    read -ra cmd_parts <<< "$cmd"
+    toml_command=$(printf '%s' "${cmd_parts[0]}" | jq -R .)
+    toml_args=$(printf '%s\n' "${cmd_parts[@]:1}" | jq -R . | jq -s -c .)
+
+    printf '[mcp_servers.%s]\n' "$name"
+    printf 'command = %s\n' "$toml_command"
+    printf 'args = %s\n\n' "$toml_args"
+  done
+}
+
+sync_codex_config() {
+  local config="$CODEX_CONFIG"
+  local config_dir tmp
+
+  config_dir=$(dirname "$config")
+  mkdir -p "$config_dir"
+  tmp="${config}.tmp"
+
+  if [[ -f "$config" ]]; then
+    awk '
+      BEGIN { skip = 0 }
+      /^\[mcp_servers\./ { skip = 1; next }
+      /^\[.*\]/ {
+        if (skip == 1) { skip = 0; print; next }
+      }
+      skip == 0 { print }
+    ' "$config" > "$tmp"
+  else
+    : > "$tmp"
+  fi
+
+  if [[ -s "$tmp" ]]; then
+    printf '\n' >> "$tmp"
+  fi
+  build_codex_block >> "$tmp"
+  mv "$tmp" "$config"
 }
 
 remove_server() {
@@ -43,5 +89,7 @@ done
 for name in "${!SERVERS[@]}"; do
   add_server "$name" "${SERVERS[$name]}"
 done
+
+sync_codex_config
 
 echo "✅ MCP sync complete"
