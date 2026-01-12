@@ -6,11 +6,11 @@ declare -A SERVERS=(
   [context7]="npx @upstash/context7-mcp"
   [git]="npx @cyanheads/git-mcp-server"
   [github]="npx @modelcontextprotocol/server-github"
-  [chrome-devtools]="npx chrome-devtools-mcp --browser-url=http://127.0.0.1:9222"
+  [chrome-devtools]="npx -y chrome-devtools-mcp --browser-url=http://127.0.0.1:9222"
 )
 
 CONFIG_FILE="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.jsonc}"
-CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME:-$HOME/.codex}/config.toml}"
+CODEX_CONFIG="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
 
 add_server() {
   local name="$1" cmd="$2"
@@ -77,6 +77,69 @@ remove_server() {
     > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
 }
 
+codex_block_for() {
+    local name="$1"
+    case "$name" in
+        Context7)
+            cat <<'EOF'
+[mcp_servers.Context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+EOF
+            ;;
+        Git)
+            cat <<'EOF'
+[mcp_servers.Git]
+command = "npx"
+args = ["-y", "@cyanheads/git-mcp-server@latest"]
+EOF
+            ;;
+        github)
+            cat <<'EOF'
+[mcp_servers.github]
+command = "npx"
+args = ["@modelcontextprotocol/server-github"]
+EOF
+            ;;
+        chrome-devtools)
+            cat <<'EOF'
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp", "--browser-url=http://127.0.0.1:9222"]
+sandbox_permissions = ["network-access"]
+EOF
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+codex_upsert_server() {
+    local name="$1"
+    local tmp
+
+    [[ -f "$CODEX_CONFIG" ]] || printf '\n' > "$CODEX_CONFIG"
+
+    tmp="$(mktemp)"
+    awk -v section="mcp_servers.${name}" '
+        BEGIN { in_section = 0 }
+        /^\[/ {
+            if (in_section == 1) { in_section = 0 }
+            if ($0 == "[" section "]") { in_section = 1; next }
+        }
+        in_section == 0 { print }
+    ' "$CODEX_CONFIG" > "$tmp"
+
+    cat "$tmp" > "$CODEX_CONFIG"
+    rm -f "$tmp"
+
+    if ! codex_block_for "$name" >> "$CODEX_CONFIG"; then
+        return 1
+    fi
+    printf '\n' >> "$CODEX_CONFIG"
+}
+
 # get current servers from config
 current=$(jq -r '.mcp | keys[]' "$CONFIG_FILE" 2>/dev/null || true)
 
@@ -92,4 +155,9 @@ done
 
 sync_codex_config
 
-echo "✅ MCP sync complete"
+codex_upsert_server "Context7"
+codex_upsert_server "Git"
+codex_upsert_server "github"
+codex_upsert_server "chrome-devtools"
+
+echo "✅ MCP sync complete (opencode + codex)"
