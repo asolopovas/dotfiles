@@ -115,100 +115,100 @@ install_essentials() {
 install_essentials
 install_composer
 
-# load_script() {
-#     local script_name=$1
-#     local script_path="$SCRIPTS_DIR/inst-$script_name.sh"
-#     print_color green "Sourcing $script_path"
-#     [[ -f $script_path ]] && source $script_path
-# }
+load_script() {
+    local script_name=$1
+    local script_path="$SCRIPTS_DIR/inst-$script_name.sh"
+    print_color green "Sourcing $script_path"
+    [[ -f $script_path ]] && source $script_path
+}
 
-# # Serialize and export associative array
-# export features_string=$(declare -p features)
+# Serialize and export associative array
+export features_string=$(declare -p features)
 
-# [[ "$UNATTENDED" = false ]] && source $SCRIPTS_DIR/inst-menu.sh
+[[ "$UNATTENDED" = false ]] && source $SCRIPTS_DIR/inst-menu.sh
 
-# echo -e "FEATURE\t\tSTATUS"
-# separator="------------\t--------"
-# echo -e $separator
-# for feature in "${!features[@]}"; do
-#     if [ "${features[$feature]}" = true ]; then
-#         status="ENABLED"
-#     else
-#         status="DISABLED"
-#     fi
-#     printf "%-15s %s\n" "$feature" "$status"
-# done
-# echo -e "$separator\n"
+echo -e "FEATURE\t\tSTATUS"
+separator="------------\t--------"
+echo -e $separator
+for feature in "${!features[@]}"; do
+    if [ "${features[$feature]}" = true ]; then
+        status="ENABLED"
+    else
+        status="DISABLED"
+    fi
+    printf "%-15s %s\n" "$feature" "$status"
+done
+echo -e "$separator\n"
 
-# source $DOTFILES_DIR/globals.sh
-# source $SCRIPTS_DIR/cfg-default-dirs.sh
+source $DOTFILES_DIR/globals.sh
+source $SCRIPTS_DIR/cfg-default-dirs.sh
 
-# if [ "${features[BUN]}" = true ]; then
-#     curl -fsSL https://bun.sh/install | bash
-# fi
+if [ "${features[BUN]}" = true ]; then
+    curl -fsSL https://bun.sh/install | bash
+fi
 
-# if [ "${features[CARGO]}" = true ]; then
-#     curl https://sh.rustup.rs -sSf | sh
-# fi
+if [ "${features[CARGO]}" = true ]; then
+    curl https://sh.rustup.rs -sSf | sh
+fi
 
-# if [ "${features[DENO]}" = true ]; then
-#     load_script 'deno'
-# fi
+if [ "${features[DENO]}" = true ]; then
+    load_script 'deno'
+fi
 
-# if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
-#     load_script 'fish'
-# fi
+if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
+    load_script 'fish'
+fi
 
-# if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-#     VER="10.2.0"
-#     FILE="fd-v${VER}-x86_64-unknown-linux-gnu"
-#     print_color green "Installing fd find for ${OS^} from ${DOTFILES_URL}..."
-#     curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$FILE.tar.gz
-#     tar -xf $FILE.tar.gz -C . $FILE/fd
-#     mv $FILE/fd $HOME/.local/bin
-#     rm -rf $FILE $FILE.tar.gz
-# fi
+if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
+    VER="10.2.0"
+    FILE="fd-v${VER}-x86_64-unknown-linux-gnu"
+    print_color green "Installing fd find for ${OS^} from ${DOTFILES_URL}..."
+    curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$FILE.tar.gz
+    tar -xf $FILE.tar.gz -C . $FILE/fd
+    mv $FILE/fd $HOME/.local/bin
+    rm -rf $FILE $FILE.tar.gz
+fi
 
-# if [ "${features[FZF]}" = true ]; then
-#     load_script "fzf"
-# fi
+if [ "${features[FZF]}" = true ]; then
+    load_script "fzf"
+fi
 
-# if [ "${features[NODE]}" = true ]; then
-#     load_script "node"
-# fi
+if [ "${features[NODE]}" = true ]; then
+    load_script "node"
+fi
 
-# if [ "${features[NVIM]}" = true ]; then
-#     load_script "nvim"
+if [ "${features[NVIM]}" = true ]; then
+    load_script "nvim"
 
-#     if ! cmd_exist lua; then
-#         sudo apt install -y lua5.1 luarocks
-#     fi
+    if ! cmd_exist lua; then
+        sudo apt install -y lua5.1 luarocks
+    fi
 
-#     if cmd_exist nvim; then
-#         ln -sf "$(which nvim)" "$HOME/.local/bin/vim"
-#     fi
-# fi
+    if cmd_exist nvim; then
+        ln -sf "$(which nvim)" "$HOME/.local/bin/vim"
+    fi
+fi
 
 
-# if [ "${features[OHMYFISH]}" = true ]; then
-#     DEST_DIR="$HOME/.local/share/omf"
-#     if [ ! -d "$DEST_DIR" ]; then
-#         print_color green "Installing OhMyFish for ${OS^} to $DEST_DIR ..."
-#         curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
-#         fish install --noninteractive --path=$DEST_DIR --config=$HOME/.config/omf
-#         fish -c "omf install bass"
-#         rm -f install
-#     fi
-# fi
+if [ "${features[OHMYFISH]}" = true ]; then
+    DEST_DIR="$HOME/.local/share/omf"
+    if [ ! -d "$DEST_DIR" ]; then
+        print_color green "Installing OhMyFish for ${OS^} to $DEST_DIR ..."
+        curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
+        fish install --noninteractive --path=$DEST_DIR --config=$HOME/.config/omf
+        fish -c "omf install bass"
+        rm -f install
+    fi
+fi
 
-# if [ "${features[CHANGE_SHELL]}" = true ]; then
-#     print_color green "CHANGING SHELL TO FISH"
+if [ "${features[CHANGE_SHELL]}" = true ]; then
+    print_color green "CHANGING SHELL TO FISH"
 
-#     if command -v fish &>/dev/null; then
-#         chsh -s $(which fish)
-#     else
-#         print_color red "Fish not installed. Please install fish and run this script again."
-#     fi
-# fi
+    if command -v fish &>/dev/null; then
+        chsh -s $(which fish)
+    else
+        print_color red "Fish not installed. Please install fish and run this script again."
+    fi
+fi
 
-# popd >/dev/null
+popd >/dev/null
