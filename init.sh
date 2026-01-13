@@ -108,8 +108,8 @@ install_essentials() {
         git clone $DOTFILES_URL $DOTFILES_DIR >/dev/null
     fi
 
-    ln -sf "$DOTFILES_DIR/config/fish" "$CONFIG_DIR"
-    ln -sf "$DOTFILES_DIR/config/tmux" "$CONFIG_DIR"
+    ln -sf "$DOTFILES_DIR/.config/fish" "$CONFIG_DIR"
+    ln -sf "$DOTFILES_DIR/.config/tmux" "$CONFIG_DIR"
 }
 
 install_essentials
