@@ -94,6 +94,7 @@ cleanup() {
     rm -rf "$HOME/.local/state/chrome-debug"
     rm -f "$HOME/.local/bin/helpers"
 }
+cleanup
 
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
