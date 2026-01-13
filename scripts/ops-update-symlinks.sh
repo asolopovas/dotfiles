@@ -6,7 +6,7 @@ DOTFILES_DIR=${DOTFILES_DIR:-"$HOME/dotfiles"}
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
 
 # Avoid writing inside the repo if user set a risky value
-if [ "$XDG_CONFIG_HOME" = "$DOTFILES_DIR/config" ]; then
+if [ "$XDG_CONFIG_HOME" = "$DOTFILES_DIR/.config" ]; then
   echo "Refusing to use XDG_CONFIG_HOME=$XDG_CONFIG_HOME (points into repo)" >&2
   exit 1
 fi
