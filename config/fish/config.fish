@@ -17,8 +17,6 @@ end
 
 
 # Volta
-set -gx VOLTA_HOME "$HOME/.volta"
-set -gx PATH "$VOLTA_HOME/bin" $PATH
 
 # Bun
 set --export BUN_INSTALL "$HOME/.bun"
@@ -65,3 +63,5 @@ fish_add_path /home/andrius/.opencode/bin
 function chrome-debug
     bash /home/andrius/dotfiles/scripts/chrome-debug.sh $argv
 end
+set -gx VOLTA_HOME "$HOME/.volta"
+set -gx PATH "$VOLTA_HOME/bin" $PATH
