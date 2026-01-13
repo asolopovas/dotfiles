@@ -27,8 +27,8 @@ CONFDIRS=(
     ".gitconfig"
     ".Xresources"
     ".gitignore"
-    "config/.func"
-    "config/.aliasrc"
+    ".config/.func"
+    ".config/.aliasrc"
 )
 
 if [ "$SYSTEM" = true ]; then
