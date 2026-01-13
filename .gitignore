@@ -19,3 +19,4 @@ todo.md
 task.md
 .config/fish/fish_variables
 *.log
+.config/nvim/lazy-lock.json
