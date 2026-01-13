@@ -69,7 +69,7 @@ fi
 print_color green "Creating Symlinks ..."
 for src in "${CONFDIRS[@]}"; do
     srcPath="$DOTFILES_DIR/$src"
-    destPath="$HOME/.$src"
+    destPath="$HOME/$src"
 
     if [ -L "$destPath" ]; then
         link_target="$(readlink "$destPath" 2>/dev/null || true)"
