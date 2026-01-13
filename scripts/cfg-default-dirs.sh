@@ -59,11 +59,11 @@ if [ "$SYSTEM" = true ]; then
 fi
 
 if [ "$NVIM" = true ]; then
-    CONFDIRS+=("config/nvim")
+    CONFDIRS+=(".config/nvim")
 fi
 
 if [ "$ZSH" = true ]; then
-    CONFDIRS+=("config/.zshrc")
+    CONFDIRS+=(".config/.zshrc")
 fi
 
 print_color green "Creating Symlinks ..."
