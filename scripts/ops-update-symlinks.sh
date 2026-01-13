@@ -21,11 +21,11 @@ while IFS='|' read -r src dst; do
   [ -L "$dst" ] && rm -f "$dst"
   ln -s "$src" "$dst"
 done <<EOF
-$DOTFILES_DIR/config/claude/settings.json|$HOME/.claude/settings.json
-$DOTFILES_DIR/config/claude/commands|$HOME/.claude/commands
-$DOTFILES_DIR/config/fish|$XDG_CONFIG_HOME/fish
-$DOTFILES_DIR/config/nvim|$XDG_CONFIG_HOME/nvim
-$DOTFILES_DIR/config/tmux|$XDG_CONFIG_HOME/tmux
-$DOTFILES_DIR/config/.aliasrc|$XDG_CONFIG_HOME/.aliasrc
-$DOTFILES_DIR/config/.func|$XDG_CONFIG_HOME/.func
+$DOTFILES_DIR/.config/claude/settings.json|$HOME/.claude/settings.json
+$DOTFILES_DIR/.config/claude/commands|$HOME/.claude/commands
+$DOTFILES_DIR/.config/fish|$XDG_CONFIG_HOME/fish
+$DOTFILES_DIR/.config/nvim|$XDG_CONFIG_HOME/nvim
+$DOTFILES_DIR/.config/tmux|$XDG_CONFIG_HOME/tmux
+$DOTFILES_DIR/.config/.aliasrc|$XDG_CONFIG_HOME/.aliasrc
+$DOTFILES_DIR/.config/.func|$XDG_CONFIG_HOME/.func
 EOF

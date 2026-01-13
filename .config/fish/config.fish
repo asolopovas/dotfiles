@@ -10,7 +10,7 @@ set -x EDITOR nvim
 
 fish_default_key_bindings
 load_env "$HOME/.env-vars"
-source $HOME/dotfiles/config/.aliasrc
+source $HOME/dotfiles/.config/.aliasrc
 for line in (cat $HOME/dotfiles/.paths)
     add2path $line
 end
@@ -63,5 +63,9 @@ fish_add_path /home/andrius/.opencode/bin
 function chrome-debug
     bash /home/andrius/dotfiles/scripts/chrome-debug.sh $argv
 end
+
+# bun
+set --export BUN_INSTALL "$HOME/.bun"
+set --export PATH $BUN_INSTALL/bin $PATH
 set -gx VOLTA_HOME "$HOME/.volta"
 set -gx PATH "$VOLTA_HOME/bin" $PATH
