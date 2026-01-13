@@ -29,6 +29,8 @@ CONFDIRS=(
     ".gitignore"
     ".config/.func"
     ".config/.aliasrc"
+    ".config/fish"
+    ".config/tmux"
 )
 
 if [ "$SYSTEM" = true ]; then

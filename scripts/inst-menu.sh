@@ -11,7 +11,7 @@ CHOICES=$(
         "FISH" "Unix shell   " ON \
         "FDFIND" "Unix find replacement   " ON \
         "FZF" "Fuzzy Find   " ON \
-        "NVM" "NVM   " ON \
+        "NODE" "Node.js via Volta" ON \
         "NVIM" "Neovim modern Vim   " ON \
         "OHMYFISH" "The Fishshell Framework   " ON \
         "ZSH" "Z-Shell Shell  " OFF \
@@ -52,9 +52,9 @@ else
             FZF=true
             features[FZF]=true
             ;;
-        "NVM")
-            NVM=true
-            features[NVM]=true
+        "NODE")
+            NODE=true
+            features[NODE]=true
             ;;
         "NVIM")
             NVIM=true

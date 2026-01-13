@@ -3,10 +3,17 @@
 export CONFIG_DIR="$HOME/.config"
 export DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
 export DOTFILES_DIR="$HOME/dotfiles"
-export OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
+export OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 
-# Arguments
+# Bootstrap utilities (self-contained for curl install)
+cmd_exist() { command -v "$1" >/dev/null 2>&1; }
+print_color() {
+    local -A colors=(['red']='\033[31m' ['green']='\033[0;32m' ['yellow']='\033[0;33m')
+    echo -e "${colors[$1]:-}$2\033[0m"
+}
+
+# Feature flags with defaults
 declare -A features=(
     [BUN]=${BUN:-true}
     [DENO]=${DENO:-true}
@@ -28,49 +35,28 @@ declare -A features=(
     [ZSH]=${ZSH:-false}
 )
 
+# Export features for child scripts
+for feature_name in "${!features[@]}"; do
+    export ${feature_name}=${features[$feature_name]}
+done
+
+# Setup sudo wrapper
 if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
     SUDO="sudo"
 else
     SUDO=""
 fi
 
-if ! command -v unzip &> /dev/null; then
-    sudo apt update
-    sudo apt install -y unzip
+# Ensure unzip is available
+if ! command -v unzip &>/dev/null; then
+    $SUDO apt update
+    $SUDO apt install -y unzip
 fi
 
-cmd_exist() {
-    command -v $1 >/dev/null 2>&1
-}
+# Create essential directories
+mkdir -p "$HOME/.tmp" "$HOME/.config" "$HOME/.local/bin"
 
-mkdir -p $HOME/.tmp $HOME/.config $HOME/.local/bin
-
-
-for feature_name in "${!features[@]}"; do
-    export ${feature_name}=${features[$feature_name]}
-done
-
-pushd $HOME
-print_color() {
-    declare -A colors=(
-        ['red']='\033[31m'
-        ['green']='\033[0;32m'
-    )
-    echo -e "${colors[$1]}$2\033[0m"
-}
-
-install_composer() {
-    COMPOSER_PATH="$HOME/.local/bin/composer"
-    if [ ! -f "$COMPOSER_PATH" ]; then
-        echo "Installing Composer..."
-        mkdir -p "$(dirname "$COMPOSER_PATH")"
-        curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o "$COMPOSER_PATH"
-        chmod +x "$COMPOSER_PATH"
-        echo "Composer installed successfully at $COMPOSER_PATH."
-    else
-        echo "Composer is already installed at $COMPOSER_PATH."
-    fi
-}
+pushd "$HOME" >/dev/null
 
 cleanup() {
     rm -rf "$HOME/.config/nvim"
@@ -94,7 +80,11 @@ cleanup() {
     rm -rf "$HOME/.local/state/chrome-debug"
     rm -f "$HOME/.local/bin/helpers"
 }
-cleanup
+
+if [ "${features[FORCE]}" = true ]; then
+    echo -e "\033[0;33mFORCE mode: Cleaning existing installations...\033[0m"
+    cleanup
+fi
 
 install_essentials() {
     print_color green "INSTALLING ESSENTIALS... \n"
@@ -107,13 +97,7 @@ install_essentials() {
         print_color green "DOWNLOADING DOTFILES..."
         git clone $DOTFILES_URL $DOTFILES_DIR >/dev/null
     fi
-
-    ln -sf "$DOTFILES_DIR/.config/fish" "$CONFIG_DIR"
-    ln -sf "$DOTFILES_DIR/.config/tmux" "$CONFIG_DIR"
 }
-
-install_essentials
-install_composer
 
 load_script() {
     local script_name=$1
@@ -121,6 +105,9 @@ load_script() {
     print_color green "Sourcing $script_path"
     [[ -f $script_path ]] && source $script_path
 }
+
+install_essentials
+load_script 'composer'
 
 # Serialize and export associative array
 export features_string=$(declare -p features)
@@ -144,7 +131,7 @@ source $DOTFILES_DIR/globals.sh
 source $SCRIPTS_DIR/cfg-default-dirs.sh
 
 if [ "${features[BUN]}" = true ]; then
-    curl -fsSL https://bun.sh/install | bash
+    load_script 'bun'
 fi
 
 if [ "${features[CARGO]}" = true ]; then
@@ -160,13 +147,7 @@ if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
 fi
 
 if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-    VER="10.2.0"
-    FILE="fd-v${VER}-x86_64-unknown-linux-gnu"
-    print_color green "Installing fd find for ${OS^} from ${DOTFILES_URL}..."
-    curl -fssLO https://github.com/sharkdp/fd/releases/download/v$VER/$FILE.tar.gz
-    tar -xf $FILE.tar.gz -C . $FILE/fd
-    mv $FILE/fd $HOME/.local/bin
-    rm -rf $FILE $FILE.tar.gz
+    load_script 'fd'
 fi
 
 if [ "${features[FZF]}" = true ]; then
@@ -181,7 +162,7 @@ if [ "${features[NVIM]}" = true ]; then
     load_script "nvim"
 
     if ! cmd_exist lua; then
-        sudo apt install -y lua5.1 luarocks
+        $SUDO apt install -y lua5.1 luarocks
     fi
 
     if cmd_exist nvim; then
@@ -191,14 +172,7 @@ fi
 
 
 if [ "${features[OHMYFISH]}" = true ]; then
-    DEST_DIR="$HOME/.local/share/omf"
-    if [ ! -d "$DEST_DIR" ]; then
-        print_color green "Installing OhMyFish for ${OS^} to $DEST_DIR ..."
-        curl -sO https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install
-        fish install --noninteractive --path=$DEST_DIR --config=$HOME/.config/omf
-        fish -c "omf install bass"
-        rm -f install
-    fi
+    load_script 'ohmyfish'
 fi
 
 if [ "${features[CHANGE_SHELL]}" = true ]; then
