@@ -7,10 +7,7 @@ print_color() {
     echo -e "${colors[$1]}$2\033[0m"
 }
 
-[ $# -eq 0 ] && {
-    echo "Usage: $0 [push|pull]"
-    exit 1
-}
+[ $# -eq 0 ] && set -- pull
 
 POWERSHELL_CMD=$(which powershell.exe 2>/dev/null)
 
