@@ -9,7 +9,7 @@ declare -A SERVERS=(
   [chrome-devtools]="npx -y chrome-devtools-mcp --browser-url=http://127.0.0.1:9222"
 )
 
-CONFIG_FILE="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.jsonc}"
+CONFIG_FILE="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.json}"
 CODEX_CONFIG="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
 
 add_server() {
