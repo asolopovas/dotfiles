@@ -17,6 +17,8 @@ ensure_writable_dir() {
 }
 
 start_chrome() {
+    local url="${1:-}"
+
     if [ -z "$chrome_bin" ]; then
         chrome_bin="$(command -v google-chrome-stable 2>/dev/null || true)"
     fi
@@ -34,10 +36,12 @@ start_chrome() {
         --no-default-browser-check \
         --disable-default-apps \
         --noerrdialogs \
+        ${url:+"$url"} \
         >"$log_dir/chrome.log" 2>&1 &
     disown
-    echo "Chrome debug started on port 9222 with profile: $profile_dir"
+    echo "Chrome debug - port 9222: $profile_dir"
     echo "Log: $log_dir/chrome.log"
+    [ -n "$url" ] && echo "Opening: $url"
 }
 
 kill_chrome() {
@@ -48,5 +52,5 @@ kill_chrome() {
 if [ "${1:-}" = "--kill" ]; then
     kill_chrome
 else
-    start_chrome
+    start_chrome "${1:-}"
 fi
