@@ -36,6 +36,7 @@ start_chrome() {
         --no-default-browser-check \
         --disable-default-apps \
         --noerrdialogs \
+        --disable-prompt-on-repost \
         ${url:+"$url"} \
         >"$log_dir/chrome.log" 2>&1 &
     disown
