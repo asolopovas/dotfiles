@@ -36,23 +36,12 @@ dotfiles/
 ## Scripts map
 ```
 scripts/
-├── sec-askpass.sh                  # masked password prompt helper
-├── sec-ban-ips.sh                  # ban IPs from logs via fail2ban
-├── ops-check-err.sh                # view/clear common system logs
-├── ops-git-sync                    # push/pull predefined git paths
-├── ui-gnome-terminal-config.sh     # apply Alacritty-like GNOME Terminal profile
-├── cfg-dev-tools-proxy.sh          # set proxy for git/npm/pip/curl/docker
-├── sec-cpanel-cert-import.sh       # install SSL cert/key via WHM API
-├── ops-db-backup.sh                # export DB tables into per-table SQL
+├── browser.sh                      # install WSL browser opener
 ├── cfg-default-dirs.sh             # create default dirs + symlink dotfiles
-├── ui-disable-mouse-on-touchpad.sh # udev rule to disable touchpad on mouse
-├── ui-disable-ubuntu-shortcuts.sh  # disable GNOME dash hotkeys
-├── sec-fix-cpanel-perms.sh         # fix cPanel user ownership/permissions
-├── sys-fix-nvidia-settings.sh      # fix NVIDIA settings permissions/paths
-├── sys-fix-tearing-intel-adler.sh  # tweak i915 params to reduce tearing
-├── sys-fix-vite.sh                 # raise inotify + nofile limits
-├── ui-flip.sh                      # swap Claude credential files
-├── ui-polybar-fonts.sh             # build polybar fonts from template
+├── cfg-dev-tools-proxy.sh          # set proxy for git/npm/pip/curl/docker
+├── cfg-locale.sh                   # generate/apply locale
+├── cfg-plesk-defaults.sh           # apply Plesk defaults
+├── cfg-terminal-keybindings        # configure Cinnamon terminal hotkeys
 ├── inst-bash.sh                    # build/install bash from source
 ├── inst-bfg.sh                     # install BFG repo cleaner
 ├── inst-cinnamon-settings.sh       # apply Cinnamon desktop settings
@@ -75,56 +64,67 @@ scripts/
 ├── inst-gum.sh                     # install gum
 ├── inst-hubtool.sh                 # install docker hub-tool
 ├── inst-mainline.sh                # install mainline kernel tool
-├── cfg-plesk-defaults.sh           # apply Plesk defaults
 ├── inst-menu.sh                    # interactive feature menu
 ├── inst-node.sh                    # install Node via Volta
 ├── inst-nvim.sh                    # install Neovim + sync plugins
 ├── inst-ohmybash.sh                # install Oh My Bash
 ├── inst-ohmyfish.sh                # install Oh My Fish
 ├── inst-ohmyzsh.sh                 # install Oh My Zsh
+├── inst-php-pkgs                   # install/update/list PHP packages
 ├── inst-php.sh                     # install PHP version packages
 ├── inst-redis-service.sh           # install Redis systemd service
 ├── inst-redis.sh                   # build/install Redis from source
 ├── inst-rye.sh                     # install Rye + Python toolchains
 ├── inst-samba.sh                   # install Samba
 ├── inst-software.sh                # install common OS packages
-├── wsl-win32yank.sh                # download/extract win32yank
-├── wsl-windows-hello.sh            # install WSL Hello sudo (evanphilip)
 ├── inst-wp-cli.sh                  # install WP-CLI
-├── browser.sh                      # install WSL browser opener
-├── wsl-fingerprint.sh              # install WSL Hello sudo (nullpo-head)
-├── wsl-wslu.sh                     # install wslu
 ├── inst-xmonad.sh                  # install xmonad + deps
-├── sys-latest-kernel-ubuntu.sh     # install mainline-kernel helper
-├── sys-load-kmodule.sh             # load kernel modules (+persist
+├── ops-check-err.sh                # view/clear common system logs
+├── ops-db-backup.sh                # export DB tables into per-table SQL
+├── ops-git-sync                    # push/pull predefined git paths
 ├── ops-logout                      # terminate user session (GDM)
-├── ui-natural-scrolling-fix.sh     # enable libinput natural scrolling
-├── sec-pam-keyring-unlock          # unlock GNOME keyring
-├── inst-php-pkgs                   # install/update/list PHP packages
-├── ui-polybar-vram.sh              # print GPU VRAM usage for polybar
-├── ui-polybar-xmonad.sh            # format xmonad log for polybar
 ├── ops-pull-dotfiles.sh            # hard reset + pull dotfiles for all users
-├── sys-remove-nouveau.sh           # blacklist nouveau driver
 ├── ops-remove-thumbs.sh            # remove generated JPG thumbnails
 ├── ops-rm-symlinks-here.sh         # remove symlinks in cwd
-├── ui-screen-laptop-main.sh        # configure LightDM display layout
-├── ui-set-dpi-by-hardware.sh       # set DPI based on ThinkPad detection
-├── ui-set-mouse-speed.sh           # set xinput mouse acceleration
-├── cfg-locale.sh                   # generate/apply locale
-├── cfg-terminal-keybindings        # configure Cinnamon terminal hotkeys
-├── ui-snap-window                  # snap windows across dual monitors
-├── ui-snap-window-dynamic          # snap windows for multi-monitor layouts
-├── sec-ssh-key-auth-cpanel.sh      # install SSH key for cPanel users
-├── sec-ssh-key-auth-plesk.sh       # install SSH key for Plesk users
 ├── ops-start-workers.sh            # start Laravel queue workers
 ├── ops-stop-workers.sh             # stop Laravel queue workers
 ├── ops-sync-mcp-servers.sh         # sync MCP server list
 ├── ops-sync-skills.sh              # sync Codex/Claude skills
-├── ui-terminal-toggle              # toggle Alacritty terminal visibility
 ├── ops-update-git.sh               # update repos + run composer/pnpm builds
 ├── ops-update-plesk-dotfiles.sh    # reset dotfiles for Plesk users
 ├── ops-update-symlinks.sh          # refresh config symlinks
-└── wsl-setup.sh                    # install win32yank for WSL
+├── sec-askpass.sh                  # masked password prompt helper
+├── sec-ban-ips.sh                  # ban IPs from logs via fail2ban
+├── sec-cpanel-cert-import.sh       # install SSL cert/key via WHM API
+├── sec-fix-cpanel-perms.sh         # fix cPanel user ownership/permissions
+├── sec-pam-keyring-unlock          # unlock GNOME keyring
+├── sec-ssh-key-auth-cpanel.sh      # install SSH key for cPanel users
+├── sec-ssh-key-auth-plesk.sh       # install SSH key for Plesk users
+├── sys-fix-nvidia-settings.sh      # fix NVIDIA settings permissions/paths
+├── sys-fix-tearing-intel-adler.sh  # tweak i915 params to reduce tearing
+├── sys-fix-vite.sh                 # raise inotify + nofile limits
+├── sys-latest-kernel-ubuntu.sh     # install mainline-kernel helper
+├── sys-load-kmodule.sh             # load kernel modules (+persist
+├── sys-remove-nouveau.sh           # blacklist nouveau driver
+├── ui-disable-mouse-on-touchpad.sh # udev rule to disable touchpad on mouse
+├── ui-disable-ubuntu-shortcuts.sh  # disable GNOME dash hotkeys
+├── ui-flip.sh                      # swap Claude credential files
+├── ui-gnome-terminal-config.sh     # apply Alacritty-like GNOME Terminal profile
+├── ui-natural-scrolling-fix.sh     # enable libinput natural scrolling
+├── ui-polybar-fonts.sh             # build polybar fonts from template
+├── ui-polybar-vram.sh              # print GPU VRAM usage for polybar
+├── ui-polybar-xmonad.sh            # format xmonad log for polybar
+├── ui-screen-laptop-main.sh        # configure LightDM display layout
+├── ui-set-dpi-by-hardware.sh       # set DPI based on ThinkPad detection
+├── ui-set-mouse-speed.sh           # set xinput mouse acceleration
+├── ui-snap-window                  # snap windows across dual monitors
+├── ui-snap-window-dynamic          # snap windows for multi-monitor layouts
+├── ui-terminal-toggle              # toggle Alacritty terminal visibility
+├── wsl-fingerprint.sh              # install WSL Hello sudo (nullpo-head)
+├── wsl-setup.sh                    # install win32yank for WSL
+├── wsl-win32yank.sh                # download/extract win32yank
+├── wsl-windows-hello.sh            # install WSL Hello sudo (evanphilip)
+└── wsl-wslu.sh                     # install wslu
 ```
 
 ## Key commands
