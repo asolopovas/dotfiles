@@ -19,18 +19,18 @@ Note: `init.sh` removes existing `~/.config/fish` and `~/.config/tmux` before sy
 ## Project structure
 ```
 dotfiles/
-├── config/        # App configs (fish, tmux, nvim, polybar, rofi, gtk)
-├── scripts/       # Installers and system utilities
-├── helpers/       # Small CLI helpers (system, tools, web)
-├── env/           # Environment exports
-├── completions/   # Bash and fish completions
-├── conf.d/        # System config snippets
-├── fzf/           # fzf completion and keybind configs
-├── tests/         # Bats test suites and runners
-├── redis/         # Redis config/service files
-├── pofiles/       # Link and helper scripts
-├── init.sh        # Bootstrap installer
-└── Makefile       # Automation targets
+├── config/      # App configs (fish, tmux, nvim, polybar, rofi, gtk)
+├── scripts/     # Installers and system utilities
+├── helpers/     # Small CLI helpers (system, tools, web)
+├── env/         # Environment exports
+├── completions/ # Bash and fish completions
+├── conf.d/      # System config snippets
+├── fzf/         # fzf completion and keybind configs
+├── tests/       # Bats test suites and runners
+├── redis/       # Redis config/service files
+├── pofiles/     # Link and helper scripts
+├── init.sh      # Bootstrap installer
+└── Makefile     # Automation targets
 ```
 
 ## Scripts map
@@ -51,7 +51,7 @@ scripts/
 ├── inst-cryptomator.sh             # install Cryptomator
 ├── inst-deno.sh                    # install Deno
 ├── inst-docker.sh                  # install Docker
-├── inst-fastcompmgr.sh             # build/install fastcompmgr compositor
+├── inst-fastcompmgr.sh             # install/build fastcompmgr compositor
 ├── inst-fd.sh                      # install fd
 ├── inst-fish.sh                    # install fish shell
 ├── inst-font.sh                    # install fonts
@@ -73,7 +73,7 @@ scripts/
 ├── inst-php-pkgs                   # install/update/list PHP packages
 ├── inst-php.sh                     # install PHP version packages
 ├── inst-redis-service.sh           # install Redis systemd service
-├── inst-redis.sh                   # build/install Redis from source
+├── inst-redis.sh                   # install/build Redis from source
 ├── inst-rye.sh                     # install Rye + Python toolchains
 ├── inst-samba.sh                   # install Samba
 ├── inst-software.sh                # install common OS packages
