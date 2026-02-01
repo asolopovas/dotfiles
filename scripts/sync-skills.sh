@@ -5,7 +5,7 @@ set -euo pipefail
 SKILL_SOURCES=(
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
   "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
-  "https://github.com/steveyegge/beads/tree/main/claude-plugin/skills/beads"
+  "https://github.com/mrgoonie/claudekit-skills/tree/main/.claude/skills/chrome-devtools"
 )
 # Superpowers requires a repo clone and bootstrap, so it is handled separately.
 SUPERPOWERS_REPO="https://github.com/obra/superpowers"
