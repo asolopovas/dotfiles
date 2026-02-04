@@ -1,7 +1,7 @@
 #!/bin/bash
 
-NODE_VER=${1:-23}
-PHP_VER=${2:-8.3}
+NODE_VER=${1:-24}
+PHP_VER=${2:-8.4}
 
 NODE_BIN_DIR="/opt/plesk/node/${NODE_VER}/bin"
 PHP_BIN_DIR="/opt/plesk/php/${PHP_VER}/bin"
