@@ -17,3 +17,37 @@
 	helper = !/usr/bin/gh auth git-credential
 [init]
 	defaultBranch = main
+[safe]
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
+	directory = /home/andrius/actions-runner/_work/wp-vite-blocks/wp-vite-blocks
