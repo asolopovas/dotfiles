@@ -17,10 +17,15 @@ sync_repo() {
 }
 
 target_commit="unknown"
+root_error=""
 if [[ -d /root/dotfiles/.git ]]; then
-    if sync_repo /root/dotfiles >/dev/null 2>&1; then
+    if root_output=$(sync_repo /root/dotfiles 2>&1); then
         target_commit=$(git -C /root/dotfiles log -1 --format='%h %s' 2>/dev/null || echo "unknown")
+    else
+        root_error=$(echo "$root_output" | tail -1)
     fi
+else
+    root_error="no dotfiles repo at /root/dotfiles"
 fi
 
 plesk_users="$(
@@ -69,6 +74,7 @@ if [[ "$target_commit" != "unknown" ]]; then
     printf "  OK    %-${cw}s  root\n" "[1/$total]"
 else
     printf "  FAIL  %-${cw}s  root\n" "[1/$total]"
+    [[ -n "$root_error" ]] && printf "        %-${cw}s  %s\n" "" "$root_error"
 fi
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
