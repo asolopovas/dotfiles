@@ -101,17 +101,21 @@ esac
 - Install scripts may edit system files and proxy settings -- review before running
 - Never commit secrets; `.gitignore` excludes `.claude/settings.local.json`, `.aider*`
 
-## Agent Sync
+## AI Sync
 
-Custom agents synced across OpenCode, Claude Code, and Codex via `scripts/agents.sh`.
+Skills, MCP servers, and agents synced across OpenCode, Claude Code, and Codex
+via `scripts/sync-ai.sh`.
 
 ```bash
-./scripts/agents.sh sync                          # Sync to all CLIs
-./scripts/agents.sh add https://example.com/a.md  # Add agent
-./scripts/agents.sh remove agent-name             # Remove agent
-./scripts/agents.sh list                           # List configured agents
+./scripts/sync-ai.sh                              # Sync everything
+./scripts/sync-ai.sh skills                       # Sync skills only
+./scripts/sync-ai.sh mcp                          # Sync MCP servers only
+./scripts/sync-ai.sh agents sync                  # Sync agents
+./scripts/sync-ai.sh agents add https://example.com/a.md
+./scripts/sync-ai.sh agents remove agent-name
+./scripts/sync-ai.sh agents list
 ```
 
 - Config: `config/agents.conf` (one URL per line, `#` comments)
-- Env: `AGENTS_CONFIG` (config path), `AGENTS_CLI` (target CLIs, comma-separated)
-- Locations: `~/.config/opencode/agent/`, `~/.claude/agents/`, `~/.codex/agents/`
+- Env: `AGENTS_CONFIG`, `SKILLS_TARGETS`, `OPENCODE_CONFIG`, `CODEX_CONFIG`
+- Locations: `~/.config/opencode/`, `~/.claude/`, `~/.codex/`
