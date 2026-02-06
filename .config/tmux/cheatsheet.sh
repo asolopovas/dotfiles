@@ -2,7 +2,7 @@
 # sourced by: less -R ~/.config/tmux/cheatsheet.sh
 # navigate: j/k scroll, / search, q quit
 cat <<'EOF'
-Tmux Cheatsheet            <leader> = Ctrl+Space
+Tmux Cheatsheet            <leader> = Ctrl+a
 
 SHELL COMMANDS (after detach)
   tm              Attach or create "main" session
