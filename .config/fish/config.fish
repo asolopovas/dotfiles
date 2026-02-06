@@ -4,6 +4,7 @@
 set fish_greeting
 set fish_color_search_match --background=blue
 set -U fish_prompt_pwd_dir_length 0
+set -gx COLORFGBG "15;0"
 set -x SUDO_ASKPASS $HOME/dotfiles/scripts/sec-askpass.sh
 set -x TERMINAL alacritty
 set -x EDITOR nvim
