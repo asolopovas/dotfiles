@@ -28,29 +28,40 @@ ok=0
 fail=0
 skip=0
 
+# first pass: compute max width for user column
+max_uw=0
+while IFS=$'\t' read -r _ plesk_user _; do
+    [[ -z "$plesk_user" ]] && continue
+    [[ ${#plesk_user} -gt $max_uw ]] && max_uw=${#plesk_user}
+done <<< "$plesk_users"
+
+# counter column width: "[31/31]" = digits*2 + 3
+digits=${#total}
+cw=$((digits * 2 + 3))
+
 printf "Syncing dotfiles for %d users\n\n" "$total"
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
     current=$((current + 1))
     [[ -z "$domain" || -z "$plesk_user" || -z "$home_dir" ]] && { skip=$((skip + 1)); continue; }
 
-    label="[$current/$total] $domain ($plesk_user)"
+    counter=$(printf "[%d/%d]" "$current" "$total")
 
     if ! id "$plesk_user" &>/dev/null; then
-        printf "  SKIP  %s -- user does not exist\n" "$label"
+        printf "  SKIP  %-${cw}s  %-${max_uw}s  -- user does not exist\n" "$counter" "$plesk_user"
         skip=$((skip + 1))
         continue
     fi
 
     if [[ ! -d "$home_dir" ]]; then
-        printf "  SKIP  %s -- home dir missing\n" "$label"
+        printf "  SKIP  %-${cw}s  %-${max_uw}s  -- home dir missing\n" "$counter" "$plesk_user"
         skip=$((skip + 1))
         continue
     fi
 
     dotfiles_dir="$home_dir/dotfiles"
     if [[ ! -d "$dotfiles_dir/.git" ]]; then
-        printf "  SKIP  %s -- no dotfiles repo\n" "$label"
+        printf "  SKIP  %-${cw}s  %-${max_uw}s  -- no dotfiles repo\n" "$counter" "$plesk_user"
         skip=$((skip + 1))
         continue
     fi
@@ -62,11 +73,11 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
     " 2>&1); then
         commit=$(sudo -u "$plesk_user" bash --norc --noprofile -c \
             "git -C \$HOME/dotfiles log -1 --format='%h %s' 2>/dev/null" 2>/dev/null || echo "unknown")
-        printf "  OK    %s -> %s\n" "$label" "$commit"
+        printf "  OK    %-${cw}s  %-${max_uw}s  -> %s\n" "$counter" "$plesk_user" "$commit"
         ok=$((ok + 1))
     else
-        printf "  FAIL  %s\n" "$label"
-        printf "        %s\n" "$(echo "$output" | tail -1)"
+        printf "  FAIL  %-${cw}s  %-${max_uw}s\n" "$counter" "$plesk_user"
+        printf "        %-${cw}s  %-${max_uw}s  %s\n" "" "" "$(echo "$output" | tail -1)"
         fail=$((fail + 1))
     fi
 done <<< "$plesk_users"
