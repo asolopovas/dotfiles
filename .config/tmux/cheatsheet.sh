@@ -2,59 +2,31 @@
 # sourced by: less -R ~/.config/tmux/cheatsheet.sh
 # navigate: j/k scroll, / search, q quit
 cat <<'EOF'
-Tmux Cheatsheet            <leader> = Ctrl+a
+Tmux Cheatsheet                                              <leader> = Ctrl+a
 
-SHELL COMMANDS (after detach)
-  tm              Attach or create "main" session
-  tx <name>       Attach to session by name
-  ts              List all sessions
-  tl              List windows
-  tk <name>       Kill session by name
-  tmux attach     Attach to last session
-
-PANES
-  Ctrl+h/j/k/l   Move between panes
-  Alt+Arrows      Resize pane
-  <leader> -      Split top/bottom
-  <leader> \      Split left/right
-  <leader> x      Close pane
-  <leader> z      Fullscreen (toggle)
-  <leader> o      Swap pane position
-  <leader> e      Equal size all panes
-  <leader> !      Pane -> own window
-  <leader> @      Pull pane from window
-
-WINDOWS
-  Alt+[ / ]       Prev / next window
-  Alt+{ / }       Move window left / right
-  Alt+1..9        Jump to window
-  <leader> c      New window
-  <leader> ,      Rename window
-  <leader> Tab    Last window (toggle)
-
-SESSIONS
-  <leader> w      Browse sessions/windows
-  <leader> n      New session
-  <leader> ;      Last session (toggle)
-  <leader> q      Kill session
-  <leader> d      Detach
-
-COPY & SEARCH
-  <leader> /      Search
-  <leader> [      Enter copy mode
-  v               Select (copy mode)
-  Ctrl+v          Rectangle select (copy mode)
-  y               Yank (copy mode)
-
-POPUPS
-  <leader> g      Lazygit
-  <leader> G      Floating terminal
-  <leader> t      htop
-
-OTHER
-  <leader> r      Reload config
-  <leader> Ctrl+l Clear screen
-  <leader> Ctrl+s Save sessions
-  <leader> Ctrl+r Restore sessions
-  <leader> ?      This cheatsheet
+ PANES                                    WINDOWS
+ Ctrl+h/j/k/l   Move between panes        Alt+[ / ]       Prev / next window
+ Alt+Arrows      Resize pane               Alt+{ / }       Move window left/right
+ <leader> -      Split top/bottom          Alt+1..9        Jump to window
+ <leader> \      Split left/right          <leader> c      New window
+ <leader> x      Close pane                <leader> ,      Rename window
+ <leader> z      Fullscreen (toggle)       <leader> Tab    Last window (toggle)
+ <leader> o      Swap pane position
+ <leader> e      Equal size all panes     SESSIONS
+ <leader> !      Pane -> own window        <leader> w      Browse sessions/windows
+ <leader> @      Pull pane from window     <leader> n      New session
+                                           <leader> ;      Last session (toggle)
+ COPY & SEARCH                             <leader> q      Kill session
+ <leader> /      Search                    <leader> d      Detach
+ <leader> [      Enter copy mode
+ v               Select (copy mode)       POPUPS
+ Ctrl+v          Rectangle select          <leader> g      Lazygit
+ y               Yank (copy mode)          <leader> G      Floating terminal
+                                           <leader> t      htop
+ OTHER
+ <leader> r      Reload config            SHELL COMMANDS (after detach)
+ <leader> Ctrl+l Clear screen              tm              Create/attach "main"
+ <leader> Ctrl+s Save sessions             tx <name>       Attach to session
+ <leader> Ctrl+r Restore sessions          ts              List sessions
+ <leader> ?      This cheatsheet           tmux attach     Attach to last session
 EOF
