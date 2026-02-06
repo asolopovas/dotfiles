@@ -7,6 +7,22 @@ echo "Connecting to remote server..."
 ssh root bash --norc -s <<'EOF'
 set -euo pipefail
 
+# sync root dotfiles first
+sync_repo() {
+    local dir=$1
+    git -C "$dir" fetch origin main 2>&1 && \
+    git -C "$dir" reset --hard HEAD 2>&1 && \
+    git -C "$dir" checkout -B main origin/main 2>&1 && \
+    git -C "$dir" clean -fd 2>&1
+}
+
+target_commit="unknown"
+if [[ -d /root/dotfiles/.git ]]; then
+    if sync_repo /root/dotfiles >/dev/null 2>&1; then
+        target_commit=$(git -C /root/dotfiles log -1 --format='%h %s' 2>/dev/null || echo "unknown")
+    fi
+fi
+
 plesk_users="$(
   plesk db -N -B -e "
     SELECT d.name, s.login, s.home
@@ -23,10 +39,18 @@ if [[ -z "$plesk_users" ]]; then
 fi
 
 total=$(echo "$plesk_users" | wc -l)
-current=0
+total=$((total + 1))
+current=1
 ok=0
 fail=0
 skip=0
+
+# count root sync result
+if [[ "$target_commit" != "unknown" ]]; then
+    ok=1
+else
+    fail=1
+fi
 
 # first pass: compute max width for user column
 max_uw=0
@@ -39,17 +63,13 @@ done <<< "$plesk_users"
 digits=${#total}
 cw=$((digits * 2 + 3))
 
-# resolve target commit from first available repo
-target_commit="unknown"
-while IFS=$'\t' read -r _ pu hd; do
-    [[ -z "$pu" || -z "$hd" || ! -d "$hd/dotfiles/.git" ]] && continue
-    target_commit=$(sudo -u "$pu" bash --norc --noprofile -c \
-        "git -C \$HOME/dotfiles fetch origin main 2>&1 >/dev/null && \
-         git -C \$HOME/dotfiles log -1 --format='%h %s' origin/main 2>/dev/null" 2>/dev/null || echo "unknown")
-    break
-done <<< "$plesk_users"
-
 printf "Syncing dotfiles for %d users -> %s\n\n" "$total" "$target_commit"
+
+if [[ "$target_commit" != "unknown" ]]; then
+    printf "  OK    root\n"
+else
+    printf "  FAIL  root\n"
+fi
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
     current=$((current + 1))
@@ -77,10 +97,8 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
     fi
 
     if output=$(sudo -u "$plesk_user" bash --norc --noprofile -c "
-        git -C \$HOME/dotfiles fetch origin main 2>&1 && \
-        git -C \$HOME/dotfiles reset --hard HEAD 2>&1 && \
-        git -C \$HOME/dotfiles checkout -B main origin/main 2>&1 && \
-        git -C \$HOME/dotfiles clean -fd 2>&1
+        $(declare -f sync_repo)
+        sync_repo \$HOME/dotfiles
     " 2>&1); then
         printf "  OK    %-${cw}s  %-${max_uw}s\n" "$counter" "$plesk_user"
         ok=$((ok + 1))
