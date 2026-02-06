@@ -33,8 +33,6 @@ SKILL_SOURCES=(
 
 declare -A MCP_SERVERS=(
     [context7]="npx @upstash/context7-mcp"
-    [git]="npx @cyanheads/git-mcp-server"
-    [github]="npx @modelcontextprotocol/server-github"
     [chrome-devtools]="npx -y chrome-devtools-mcp --browser-url=http://127.0.0.1:9222"
 )
 
