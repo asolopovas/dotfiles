@@ -1,5 +1,11 @@
 #!/bin/fish
 
+# Drain any pending OSC 10/11 terminal responses (tmux 3.5+ sends these queries
+# on startup; over SSH the response arrives late and leaks as visible text)
+if set -q TMUX
+    bash -c 'read -t 0.3 -n 256 2>/dev/null' </dev/tty
+end
+
 # Env
 set fish_greeting
 set fish_color_search_match --background=blue
