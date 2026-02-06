@@ -39,7 +39,17 @@ done <<< "$plesk_users"
 digits=${#total}
 cw=$((digits * 2 + 3))
 
-printf "Syncing dotfiles for %d users\n\n" "$total"
+# resolve target commit from first available repo
+target_commit="unknown"
+while IFS=$'\t' read -r _ pu hd; do
+    [[ -z "$pu" || -z "$hd" || ! -d "$hd/dotfiles/.git" ]] && continue
+    target_commit=$(sudo -u "$pu" bash --norc --noprofile -c \
+        "git -C \$HOME/dotfiles fetch origin main 2>&1 >/dev/null && \
+         git -C \$HOME/dotfiles log -1 --format='%h %s' origin/main 2>/dev/null" 2>/dev/null || echo "unknown")
+    break
+done <<< "$plesk_users"
+
+printf "Syncing dotfiles for %d users -> %s\n\n" "$total" "$target_commit"
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
     current=$((current + 1))
@@ -72,9 +82,7 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
         git -C \$HOME/dotfiles checkout -B main origin/main 2>&1 && \
         git -C \$HOME/dotfiles clean -fd 2>&1
     " 2>&1); then
-        commit=$(sudo -u "$plesk_user" bash --norc --noprofile -c \
-            "git -C \$HOME/dotfiles log -1 --format='%h %s' 2>/dev/null" 2>/dev/null || echo "unknown")
-        printf "  OK    %-${cw}s  %-${max_uw}s  -> %s\n" "$counter" "$plesk_user" "$commit"
+        printf "  OK    %-${cw}s  %-${max_uw}s\n" "$counter" "$plesk_user"
         ok=$((ok + 1))
     else
         printf "  FAIL  %-${cw}s  %-${max_uw}s\n" "$counter" "$plesk_user"
