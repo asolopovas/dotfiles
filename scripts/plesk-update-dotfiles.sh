@@ -12,8 +12,8 @@ sync_repo() {
     local dir=$1
     git -C "$dir" fetch origin main 2>&1 && \
     git -C "$dir" reset --hard HEAD 2>&1 && \
-    git -C "$dir" checkout -B main origin/main 2>&1 && \
-    git -C "$dir" clean -fd 2>&1
+    git -C "$dir" clean -fd 2>&1 && \
+    git -C "$dir" checkout -B main origin/main 2>&1
 }
 
 target_commit="unknown"
