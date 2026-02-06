@@ -1,253 +1,173 @@
 # Dotfiles
 
-Personal configurations and automation scripts for terminal tooling, editors, window managers, and developer workflows.
+Personal dotfiles and automation for Linux desktops and servers -- shell, Neovim, xmonad, tmux, and developer tooling.
 
-## Quick start
+## Quick Start
+
 ```bash
-git clone https://github.com/asolopovas/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-./init.sh
+git clone https://github.com/asolopovas/dotfiles.git ~/dotfiles && cd ~/dotfiles && ./init.sh
 ```
 
 Remote bootstrap:
+
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main/init.sh)"
 ```
 
-Note: `init.sh` removes existing `~/.config/fish` and `~/.config/tmux` before symlinking.
+### Feature Flags
 
-## Project structure
-```
-dotfiles/
-├── config/      # App configs (fish, tmux, nvim, polybar, rofi, gtk)
-├── scripts/     # Installers and system utilities
-├── helpers/     # Small CLI helpers (system, tools, web)
-├── env/         # Environment exports
-├── completions/ # Bash and fish completions
-├── conf.d/      # System config snippets
-├── fzf/         # fzf completion and keybind configs
-├── tests/       # Bats test suites and runners
-├── redis/       # Redis config/service files
-├── pofiles/     # Link and helper scripts
-├── init.sh      # Bootstrap installer
-└── Makefile     # Automation targets
+Toggle components via environment variables (all default `true` unless noted):
+
+```bash
+NODE=false FISH=false ./init.sh        # skip Node and fish
+FORCE=true ./init.sh                   # force reinstall
+CARGO=true CHANGE_SHELL=true ./init.sh # opt-in features (default false)
 ```
 
-## Scripts map
+Available flags: `BUN`, `DENO`, `FDFIND`, `FISH`, `FZF`, `NODE`, `NVIM`, `OHMYFISH`, `CARGO`, `CHANGE_SHELL`, `FORCE`, `UNATTENDED`.
+
+> **Note:** `init.sh` removes existing `~/.config/fish` and `~/.config/tmux` before symlinking.
+
+## Structure
+
 ```
-scripts/
-├── browser.sh                      # install WSL browser opener
-├── cfg-default-dirs.sh             # create default dirs + symlink dotfiles
-├── cfg-dev-tools-proxy.sh          # set proxy for git/npm/pip/curl/docker
-├── cfg-locale.sh                   # generate/apply locale
-├── cfg-plesk-defaults.sh           # apply Plesk defaults
-├── cfg-terminal-keybindings        # configure Cinnamon terminal hotkeys
-├── inst-bash.sh                    # build/install bash from source
-├── inst-bfg.sh                     # install BFG repo cleaner
-├── inst-cinnamon-settings.sh       # apply Cinnamon desktop settings
-├── inst-claude.sh                  # install Claude Code CLI
-├── inst-cog.sh                     # install Replicate cog
-├── inst-composer.sh                # install Composer
-├── inst-cryptomator.sh             # install Cryptomator
-├── inst-deno.sh                    # install Deno
-├── inst-docker.sh                  # install Docker
-├── inst-fastcompmgr.sh             # install/build fastcompmgr compositor
-├── inst-fd.sh                      # install fd
-├── inst-fish.sh                    # install fish shell
-├── inst-font.sh                    # install fonts
-├── inst-fzf.sh                     # install fzf
-├── inst-gcloud.sh                  # install Google Cloud SDK
-├── inst-ghc.sh                     # install GHC
-├── inst-git-cache.sh               # install git cache container
-├── inst-gitcli.sh                  # install GitHub CLI (gh)
-├── inst-golang.sh                  # install Go toolchain
-├── inst-gum.sh                     # install gum
-├── inst-hubtool.sh                 # install docker hub-tool
-├── inst-mainline.sh                # install mainline kernel tool
-├── inst-menu.sh                    # interactive feature menu
-├── inst-node.sh                    # install Node via Volta
-├── inst-nvim.sh                    # install Neovim + sync plugins
-├── inst-ohmybash.sh                # install Oh My Bash
-├── inst-ohmyfish.sh                # install Oh My Fish
-├── inst-ohmyzsh.sh                 # install Oh My Zsh
-├── inst-php-pkgs                   # install/update/list PHP packages
-├── inst-php.sh                     # install PHP version packages
-├── inst-redis-service.sh           # install Redis systemd service
-├── inst-redis.sh                   # install/build Redis from source
-├── inst-rye.sh                     # install Rye + Python toolchains
-├── inst-samba.sh                   # install Samba
-├── inst-software.sh                # install common OS packages
-├── inst-wp-cli.sh                  # install WP-CLI
-├── inst-xmonad.sh                  # install xmonad + deps
-├── ops-check-err.sh                # view/clear common system logs
-├── ops-db-backup.sh                # export DB tables into per-table SQL
-├── ops-git-sync                    # push/pull predefined git paths
-├── ops-logout                      # terminate user session (GDM)
-├── ops-pull-dotfiles.sh            # hard reset + pull dotfiles for all users
-├── ops-remove-thumbs.sh            # remove generated JPG thumbnails
-├── ops-rm-symlinks-here.sh         # remove symlinks in cwd
-├── ops-start-workers.sh            # start Laravel queue workers
-├── ops-stop-workers.sh             # stop Laravel queue workers
-├── ops-sync-mcp-servers.sh         # sync MCP server list
-├── ops-sync-skills.sh              # sync Codex/Claude skills
-├── ops-update-git.sh               # update repos + run composer/pnpm builds
-├── ops-update-plesk-dotfiles.sh    # reset dotfiles for Plesk users
-├── ops-update-symlinks.sh          # refresh config symlinks
-├── sec-askpass.sh                  # masked password prompt helper
-├── sec-ban-ips.sh                  # ban IPs from logs via fail2ban
-├── sec-cpanel-cert-import.sh       # install SSL cert/key via WHM API
-├── sec-fix-cpanel-perms.sh         # fix cPanel user ownership/permissions
-├── sec-pam-keyring-unlock          # unlock GNOME keyring
-├── sec-ssh-key-auth-cpanel.sh      # install SSH key for cPanel users
-├── sec-ssh-key-auth-plesk.sh       # install SSH key for Plesk users
-├── sys-fix-nvidia-settings.sh      # fix NVIDIA settings permissions/paths
-├── sys-fix-tearing-intel-adler.sh  # tweak i915 params to reduce tearing
-├── sys-fix-vite.sh                 # raise inotify + nofile limits
-├── sys-latest-kernel-ubuntu.sh     # install mainline-kernel helper
-├── sys-load-kmodule.sh             # load kernel modules (+persist
-├── sys-remove-nouveau.sh           # blacklist nouveau driver
-├── ui-disable-mouse-on-touchpad.sh # udev rule to disable touchpad on mouse
-├── ui-disable-ubuntu-shortcuts.sh  # disable GNOME dash hotkeys
-├── ui-flip.sh                      # swap Claude credential files
-├── ui-gnome-terminal-config.sh     # apply Alacritty-like GNOME Terminal profile
-├── ui-natural-scrolling-fix.sh     # enable libinput natural scrolling
-├── ui-polybar-fonts.sh             # build polybar fonts from template
-├── ui-polybar-vram.sh              # print GPU VRAM usage for polybar
-├── ui-polybar-xmonad.sh            # format xmonad log for polybar
-├── ui-screen-laptop-main.sh        # configure LightDM display layout
-├── ui-set-dpi-by-hardware.sh       # set DPI based on ThinkPad detection
-├── ui-set-mouse-speed.sh           # set xinput mouse acceleration
-├── ui-snap-window                  # snap windows across dual monitors
-├── ui-snap-window-dynamic          # snap windows for multi-monitor layouts
-├── ui-terminal-toggle              # toggle Alacritty terminal visibility
-├── wsl-fingerprint.sh              # install WSL Hello sudo (nullpo-head)
-├── wsl-setup.sh                    # install win32yank for WSL
-├── wsl-win32yank.sh                # download/extract win32yank
-├── wsl-windows-hello.sh            # install WSL Hello sudo (evanphilip)
-└── wsl-wslu.sh                     # install wslu
+.config/         App configs (alacritty, fish, nvim, tmux, polybar, rofi, xmonad, gtk)
+scripts/         ~90 scripts grouped by prefix (see below)
+helpers/         Small CLI wrappers (system/, tools/, web/)
+env/             Environment exports (vars, paths, theme)
+completions/     Bash and fish completions
+conf.d/          System config snippets (Barrier, Synaptics)
+fzf/             fzf completion, keybindings, exclusions
+tests/           Bats test suites
+redis/           Redis config and service files
+init.sh          Bootstrap installer with feature flags
+globals.sh       Shared shell library (logging, OS detection, package helpers)
+autostart.sh     Desktop autostart (compositor, polybar, flameshot)
+Makefile         Build and test automation
 ```
 
-## Key commands
-- `make help` lists available targets.
-- `make install` installs Git cache (sudo required).
-- `make test` runs ui-snap-window tests (may install deps like `bats`/`gum`).
+## Scripts
 
-## Terminal
+~90 scripts in `scripts/`, organized by prefix:
 
-|Shortcut|Description|
-|---|---|
-| `Ctrl + X E` | Edit command line |
-| `Esc + B`    | Move one word back |
-| `Esc + F`    | Move one word forward |
+| Prefix | Purpose | Examples |
+|--------|---------|---------|
+| `inst-` | Install tools/runtimes | docker, node (volta), nvim, fish, golang, php, redis |
+| `cfg-`  | Configure system/tools | locale, proxy settings, default dirs, Plesk defaults |
+| `ops-`  | Operations/maintenance | db backup, git sync, symlink refresh, worker management |
+| `sec-`  | Security | SSH key auth, SSL cert import, fail2ban, permission fixes |
+| `sys-`  | System tweaks | nvidia fixes, kernel modules, inotify limits, nouveau removal |
+| `ui-`   | Desktop/WM | window snapping, polybar widgets, DPI, mouse/touchpad config |
+| `wsl-`  | WSL-specific | win32yank, wslu, Windows Hello sudo |
 
-## Tmux
+## Make Targets
 
-|Shortcut|Description|
-|---|---|
-| `Ctrl + A C`      | Create new window |
-| `Ctrl + A ,`      | Rename window |
-| `Ctrl + A P`      | Previous window |
-| `Ctrl + A N`      | Next window |
-| `Ctrl + A W`      | Select windows |
-| `Ctrl + A %`      | Split vertically |
-| `Ctrl + A :`      | Named commands |
-| `Ctrl + A D`      | Detach from session |
-| `Ctrl + A Alt+-`  | Horizontal Layout |
-| `Ctrl + A Alt+\\|` | Vertical Layout |
+```bash
+make help                  # list all targets
+make install               # install git cache (sudo)
+make test                  # run ui-snap-window bats tests (auto-installs deps)
+make clean-tests           # remove /tmp test artifacts
+```
 
-## Neovim
+## Cheatsheet
 
-Leader key: `Space`
+<details>
+<summary>Terminal / Tmux</summary>
 
-Normal mode:
+**Terminal:**
+`Ctrl+X E` edit command | `Esc+B/F` word back/forward
 
-|Shortcut|Action|
-|---|---|
-| `<leader>pv`     | Open file explorer (`:Ex`) |
-| `J`              | Join lines, keep cursor |
-| `n` / `N`        | Next/previous search result, centered |
-| `<leader>f`      | Auto-format whole file |
-| `<leader><space>` | Clear search highlighting |
-| `<F5>`           | Toggle hidden characters (`list`) |
-| `<M-J>` / `<M-K>` | Indent left/right |
-| `j` / `k`        | Move by display lines (`gj` / `gk`) |
-| `<C-d>` / `<C-u>` | Page down/up, centered |
-| `<leader>q`      | Close all buffers |
-| `<leader>bd`     | Close current buffer |
-| `<leader>bq`     | Close current buffer, keep window |
-| `<leader>to`     | Close other tabs |
-| `<M-q>`          | Close tab |
-| `<M-t>`          | New tab |
-| `<M-H>` / `<M-L>` | Previous/next tab |
-| `<leader>T`      | New empty buffer |
-| `<leader>h` / `<leader>l` | Previous/next buffer |
-| `<M-h>` / `<M-j>` / `<M-k>` / `<M-l>` | Move between splits |
-| `<leader>vh`     | Horizontal split |
-| `<leader>vv`     | Vertical split |
-| `<C-M-h>` / `<C-M-j>` / `<C-M-k>` / `<C-M-l>` | Resize splits |
-| `<leader>er`     | Edit `remap.lua` |
-| `<leader>ev`     | Edit `init.lua` |
-| `<leader>ef`     | Edit `config.fish` |
-| `<leader>es`     | Edit `set.lua` |
-| `<leader>ea`     | Edit `.aliasrc` |
-| `<leader>sv`     | Source `MYVIMRC` |
-| `<leader>fml`    | CellularAutomaton: make it rain |
-| ``<M-`>``        | Toggle NvimTree |
-| `<M-S-q>`        | Force quit Neovim |
+**Tmux** (prefix: `Ctrl+A`):
 
-Visual mode:
+| Key | Action |
+|-----|--------|
+| `C` | New window |
+| `,` | Rename window |
+| `P` / `N` | Previous / next window |
+| `W` | Select window |
+| `%` | Split vertical |
+| `:` | Command mode |
+| `D` | Detach |
+| `Alt+-` | Horizontal layout |
+| `Alt+\|` | Vertical layout |
 
-|Shortcut|Action|
-|---|---|
-| `J` / `K`        | Move selection down/up |
-| `<leader>p`      | Paste without yanking |
-| `<` / `>`        | Indent and keep selection |
+</details>
 
-Insert mode:
+<details>
+<summary>Neovim keybindings (leader: Space)</summary>
 
-|Shortcut|Action|
-|---|---|
-| `jk`             | Exit insert mode |
-| `<M-J>` / `<M-K>` | Indent left/right |
-| `<F5>`           | Toggle hidden characters (`list`) |
+**Navigation & Buffers:**
 
-Command-line mode:
+| Key | Action |
+|-----|--------|
+| `<leader>pv` | File explorer (`:Ex`) |
+| `<leader>h` / `l` | Prev / next buffer |
+| `<leader>bd` | Close buffer |
+| `<leader>q` | Close all buffers |
+| `<M-H>` / `<M-L>` | Prev / next tab |
+| `<M-t>` / `<M-q>` | New / close tab |
+| `<C-d>` / `<C-u>` | Page down/up (centered) |
+| `n` / `N` | Search next/prev (centered) |
 
-|Shortcut|Action|
-|---|---|
-| `<S-Insert>`     | Paste from clipboard |
-| `w!!`            | Write file with sudo (`SudaWrite`) |
-| `<F5>`           | Toggle hidden characters (`list`) |
+**Splits:**
 
-Terminal mode:
+| Key | Action |
+|-----|--------|
+| `<leader>vv` / `vh` | Vertical / horizontal split |
+| `<M-h/j/k/l>` | Move between splits |
+| `<C-M-h/j/k/l>` | Resize splits |
 
-|Shortcut|Action|
-|---|---|
-| ``<M-`>``        | Toggle NvimTree |
-| `<M-h>` / `<M-j>` / `<M-k>` / `<M-l>` | Move between splits |
-| `<M-S-h>` / `<M-S-j>` / `<M-S-k>` / `<M-S-l>` | Resize splits |
-| `<M-q>`          | Close terminal buffer |
-| `<M-S-q>`        | Force quit Neovim |
+**Editing:**
 
-<!-- Telescope -->
-| Shortcut         | Action                                      |
-|------------------|---------------------------------------------|
-| `<C-p>`          | Smart file finder (`smart_find_files`) |
-| `<leader>ff`     | Find files using Telescope's `find_files` |
-| `<leader>fh`     | Search help tags |
-| `<leader>fb`     | Open Telescope file browser |
-| `<leader>fd`     | List document symbols from LSP |
-| `<leader>fs`     | List workspace symbols from LSP |
-| `<leader>fg`     | Live grep with arguments (`live_grep_args`) |
+| Key | Action |
+|-----|--------|
+| `<leader>f` | Format file |
+| `<leader><space>` | Clear search highlight |
+| `<M-J>` / `<M-K>` | Indent left / right |
+| `<F5>` | Toggle hidden chars |
+| `J` (normal) | Join lines, keep cursor |
+| `J` / `K` (visual) | Move selection down / up |
+| `<leader>p` (visual) | Paste without yanking |
+| `jk` (insert) | Exit insert mode |
+| `w!!` (cmdline) | Sudo write |
 
-## Surround.vim plugin memo
+**Telescope:**
 
-| Old Text                     | Command       | New Text |
-|------------------------------|--------------|----------|
-| `surr*ound_words`            | `ysiw)`      | `(surround_words)` |
-| `*make strings`              | `ys$"`       | `"make strings"` |
-| `[delete ar*ound me!]`       | `ds]`        | `delete around me!` |
-| `remove <b>HTML t*ags</b>`   | `dst`        | `remove HTML tags` |
-| `'change quot*es'`           | `cs'"`       | `"change quotes"` |
-| `<b>or tag* types</b>`       | `csth1<CR>`  | `<h1>or tag types</h1>` |
-| `delete(functi*on calls)`    | `dsf`        | `function calls` |
+| Key | Action |
+|-----|--------|
+| `<C-p>` | Smart file finder |
+| `<leader>ff` | Find files |
+| `<leader>fg` | Live grep |
+| `<leader>fh` | Help tags |
+| `<leader>fb` | File browser |
+| `<leader>fd` / `fs` | Document / workspace symbols |
+
+**Quick Edit:**
+
+| Key | File |
+|-----|------|
+| `<leader>ev` | `init.lua` |
+| `<leader>er` | `remap.lua` |
+| `<leader>es` | `set.lua` |
+| `<leader>ef` | `config.fish` |
+| `<leader>ea` | `.aliasrc` |
+| `<leader>sv` | Source `MYVIMRC` |
+
+**Other:** ``<M-`>`` toggle NvimTree | `<M-S-q>` force quit
+
+</details>
+
+<details>
+<summary>Surround.vim</summary>
+
+| Old Text | Command | New Text |
+|----------|---------|----------|
+| `surr*ound_words` | `ysiw)` | `(surround_words)` |
+| `*make strings` | `ys$"` | `"make strings"` |
+| `[delete ar*ound me!]` | `ds]` | `delete around me!` |
+| `remove <b>HTML t*ags</b>` | `dst` | `remove HTML tags` |
+| `'change quot*es'` | `cs'"` | `"change quotes"` |
+| `<b>or tag* types</b>` | `csth1<CR>` | `<h1>or tag types</h1>` |
+| `delete(functi*on calls)` | `dsf` | `function calls` |
+
+</details>
