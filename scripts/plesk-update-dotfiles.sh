@@ -66,9 +66,9 @@ cw=$((digits * 2 + 3))
 printf "Syncing dotfiles for %d users -> %s\n\n" "$total" "$target_commit"
 
 if [[ "$target_commit" != "unknown" ]]; then
-    printf "  OK    root\n"
+    printf "  OK    %-${cw}s  root\n" "[1/$total]"
 else
-    printf "  FAIL  root\n"
+    printf "  FAIL  %-${cw}s  root\n" "[1/$total]"
 fi
 
 while IFS=$'\t' read -r domain plesk_user home_dir; do
