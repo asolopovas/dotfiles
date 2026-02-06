@@ -77,46 +77,38 @@ make clean-tests           # remove /tmp test artifacts
 **Terminal:**
 `Ctrl+X E` edit command | `Esc+B/F` word back/forward
 
-**Tmux** (prefix: `Ctrl+A`, `?` for in-tmux cheatsheet popup):
+**Tmux** (prefix: `Ctrl+Space`, `?` for in-tmux cheatsheet popup):
 
 | Key | Action |
 |-----|--------|
-| **Windows** | |
-| `n` | New window |
-| `A` | Rename window |
-| `Alt-1..9` | Jump to window 1-9 |
-| `Alt-h` / `Alt-l` | Previous / next window |
-| `Alt-H` / `Alt-L` | Move window left / right |
-| **Splits** | |
-| `c` | Split horizontal |
-| `v` | Split vertical |
-| `C-h/j/k/l` | Move between panes (vim-aware) |
-| `H/J/K/L` | Resize pane |
-| `z` | Toggle pane zoom |
-| `Enter` | Break pane to window |
-| `Space` | Join pane from another window |
-| `x` / `X` | Kill pane / Kill window |
-| **Layouts** | |
-| `Tab` | Cycle layouts |
-| `M-1..5` | Even-h, Even-v, Main-h, Main-v, Tiled |
+| **No prefix (instant)** | |
+| `Ctrl+h/j/k/l` | Move between panes (vim-aware) |
+| `Alt+Arrows` | Resize pane |
+| `Alt+[` / `Alt+]` | Prev / next window |
+| `Alt+{` / `Alt+}` | Move window left / right |
+| `Alt+1..9` | Jump to window |
+| **Prefix + key** | |
+| `-` / `\` | Split horizontal / vertical |
+| `c` | New window |
+| `,` | Rename window |
+| `Tab` | Last window (toggle) |
+| `x` | Kill pane |
+| `z` | Zoom pane (toggle) |
+| `!` | Break pane to window |
+| `@` | Join pane from window |
+| `o` / `e` | Swap pane / spread evenly |
 | **Sessions** | |
-| `s` | Session/window tree picker |
-| `S` | New named session |
-| `K` | Kill session |
-| `f` | Find window |
-| **Copy mode** | |
-| `/` | Enter search |
-| `v` / `C-v` | Selection / rectangle select |
-| `y` | Yank |
-| **Popups** | |
-| `g` | Lazygit |
-| `G` | Floating shell |
-| `t` | htop |
-| **Other** | |
-| `r` | Reload config |
-| `C-l` | Clear screen |
+| `w` | Session/window tree |
+| `n` | New named session |
+| `q` | Kill session |
 | `d` | Detach |
-| `C-s` / `C-r` | Save / restore session (resurrect) |
+| `;` | Last session (toggle) |
+| **Copy mode** | |
+| `/` | Search |
+| `[` | Enter copy mode |
+| `v` / `C-v` / `y` | Select / rectangle / yank |
+| **Popups** | |
+| `g` / `G` / `t` | Lazygit / shell / htop |
 
 **Aliases:** `tm` attach/create main session | `tx <name>` attach | `ts` list | `tl` list windows | `tk <name>` kill
 

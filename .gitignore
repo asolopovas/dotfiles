@@ -20,3 +20,4 @@ task.md
 .config/fish/fish_variables
 *.log
 .config/nvim/lazy-lock.json
+.config/tmux/plugins/
