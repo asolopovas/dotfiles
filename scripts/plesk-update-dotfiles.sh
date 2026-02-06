@@ -4,7 +4,7 @@ set -euo pipefail
 
 echo "🔄 Connecting to root-new to retrieve Plesk users and execute 'ops-git-sync pull'..."
 
-ssh root bash -s <<'EOF'
+ssh root bash --norc -s <<'EOF'
 set -euo pipefail
 
 echo "🔄 Retrieving all Plesk virtual hosting users..."
