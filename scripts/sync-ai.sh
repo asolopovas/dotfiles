@@ -25,6 +25,8 @@ set -euo pipefail
 # Configuration
 # ---------------------------------------------------------------------------
 
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+
 SKILL_SOURCES=(
     "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
     "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
@@ -36,11 +38,10 @@ declare -A MCP_SERVERS=(
     [chrome-devtools]="npx -y chrome-devtools-mcp --browser-url=http://127.0.0.1:9222"
 )
 
-AGENTS_CONF="${AGENTS_CONFIG:-$HOME/dotfiles/config/agents.conf}"
+AGENTS_CONF="${AGENTS_CONFIG:-$DOTFILES_DIR/agents.conf}"
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.json}"
 CODEX_CONFIG_FILE="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
 
-# Resolved once, used by all subsystems
 TARGETS=()
 
 # ---------------------------------------------------------------------------
@@ -49,7 +50,7 @@ TARGETS=()
 
 die() { echo "Error: $*" >&2; exit 1; }
 
-have_cmd() { command -v "$1" >/dev/null 2>&1; }
+have_cmd() { command -v "$1" &>/dev/null; }
 
 require_cmd() { have_cmd "$1" || die "$1 not found in PATH."; }
 
@@ -66,7 +67,6 @@ normalize_key() {
     printf '%s' "$name"
 }
 
-# Return the home directory for a given CLI target.
 cli_home() {
     case "$1" in
         codex)    printf '%s' "${CODEX_HOME:-$HOME/.codex}" ;;
@@ -76,16 +76,13 @@ cli_home() {
     esac
 }
 
-# Return the subdirectory under a CLI home for a given resource type.
 target_dir() {
-    local target="$1" resource="$2"
     local home
-    home=$(cli_home "$target") || return 1
-
-    case "$resource" in
+    home=$(cli_home "$1") || return 1
+    case "$2" in
         skills) printf '%s' "$home/skills" ;;
         agents)
-            case "$target" in
+            case "$1" in
                 opencode) printf '%s' "$home/agent" ;;
                 *)        printf '%s' "$home/agents" ;;
             esac ;;
@@ -94,34 +91,32 @@ target_dir() {
 }
 
 # ---------------------------------------------------------------------------
-# Target resolution (called once from main)
+# Target resolution
 # ---------------------------------------------------------------------------
 
 resolve_targets() {
-    local raw="${SYNC_TARGETS:-${SKILLS_TARGETS:-${SKILLS_CLI:-${AGENTS_CLI:-}}}}"
+    local raw="${SYNC_TARGETS:-}"
     local -a candidates=()
 
     if [[ -n "$raw" ]]; then
-        raw="${raw//,/ }"
-        read -ra candidates <<< "$raw"
+        IFS=', ' read -ra candidates <<< "$raw"
     else
         candidates=(codex claude opencode)
     fi
 
     local home
     for t in "${candidates[@]}"; do
+        t=$(trim "${t,,}")
         [[ -n "$t" ]] || continue
-        t="${t,,}"
         home=$(cli_home "$t" 2>/dev/null) || { echo "Warning: unknown target '$t'; skipping." >&2; continue; }
-
         if [[ -d "$home" ]] || have_cmd "$t"; then
             TARGETS+=("$t")
-        elif [[ -n "${raw:-}" ]]; then
+        else
             echo "Warning: $t not detected; skipping." >&2
         fi
     done
 
-    [[ ${#TARGETS[@]} -gt 0 ]] || die "no supported CLI detected (codex, claude, opencode)."
+    (( ${#TARGETS[@]} )) || die "no supported CLI detected (codex, claude, opencode)."
 }
 
 # ---------------------------------------------------------------------------
@@ -131,44 +126,42 @@ resolve_targets() {
 resolve_skill_installer() {
     if [[ -n "${SKILL_INSTALLER:-}" ]]; then
         [[ -f "$SKILL_INSTALLER" ]] || die "skill-installer not found at $SKILL_INSTALLER"
-        printf '%s\n' "$SKILL_INSTALLER"
+        printf '%s' "$SKILL_INSTALLER"
         return 0
     fi
 
-    local home candidate
+    local candidate
     for home in "$(cli_home codex)" "$(cli_home claude)"; do
         candidate="$home/skills/.system/skill-installer/scripts/install-skill-from-github.py"
-        [[ -f "$candidate" ]] && { printf '%s\n' "$candidate"; return 0; }
+        [[ -f "$candidate" ]] && { printf '%s' "$candidate"; return 0; }
     done
 
     die "skill-installer not found (set SKILL_INSTALLER or install skill-installer)."
 }
 
 normalize_skill_source() {
-    local src="$1"
-    src="${src%%\#*}"
-    src="${src%%\?*}"
+    local src="${1%%[#?]*}"
     if [[ -n "${SKILLS_REF:-}" ]]; then
         src="${src/\/tree\/main\//\/tree\/$SKILLS_REF/}"
         src="${src/\/blob\/main\//\/blob\/$SKILLS_REF/}"
     fi
     src="${src%/SKILL.md}"
     src="${src%/skill.md}"
-    printf '%s\n' "$src"
+    printf '%s' "$src"
 }
 
 skill_name_from_url() {
     local path="${1#*github.com/}"
-    path="${path#*/}"          # strip owner
-    path="${path#*/}"          # strip repo
+    path="${path#*/}"   # strip owner
+    path="${path#*/}"   # strip repo
     if [[ "$path" == tree/* || "$path" == blob/* ]]; then
-        path="${path#*/}"      # strip tree|blob
-        path="${path#*/}"      # strip branch
+        path="${path#*/}"   # strip tree|blob
+        path="${path#*/}"   # strip branch
     fi
     path="${path%/}"
     path="${path%/SKILL.md}"
     path="${path%/skill.md}"
-    printf '%s\n' "${path##*/}"
+    printf '%s' "${path##*/}"
 }
 
 sync_skills() {
@@ -193,27 +186,25 @@ sync_skills() {
         dest_root="$(target_dir "$target" skills)" || continue
         mkdir -p "$dest_root"
 
+        # Remove skills not in desired set
         for installed in "$dest_root"/*/; do
             [[ -d "$installed" ]] || continue
             base="$(basename "$installed")"
-            [[ "$base" == .* ]] && continue
-            [[ -f "$installed/SKILL.md" ]] || continue
+            [[ "$base" == .* || ! -f "$installed/SKILL.md" ]] && continue
             if [[ -z "${desired[$base]:-}" ]]; then
                 rm -rf "$installed"
                 echo "Removed $base ($dest_root)"
             fi
         done
 
+        # Install missing skills
         for key in "${!desired[@]}"; do
             dest_dir="$dest_root/$key"
-            if [[ -e "$dest_dir" ]]; then
-                if [[ -f "$dest_dir/SKILL.md" ]]; then
-                    echo "-> $key already installed in $dest_root"
-                    continue
-                fi
-                echo "-> $key missing SKILL.md in $dest_root; reinstalling"
-                rm -rf "$dest_dir"
+            if [[ -d "$dest_dir" && -f "$dest_dir/SKILL.md" ]]; then
+                echo "-> $key already installed in $dest_root"
+                continue
             fi
+            [[ -e "$dest_dir" ]] && rm -rf "$dest_dir"
             python3 "$installer" --url "${desired[$key]}" --dest "$dest_root"
             [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
         done
@@ -227,16 +218,17 @@ sync_skills() {
 mcp_opencode_sync() {
     local config="$OPENCODE_CONFIG_FILE"
     [[ -f "$config" ]] || return 0
+    require_cmd jq
 
-    local name current
-    current=$(jq -r '.mcp | keys[]' "$config" 2>/dev/null || true)
-    for name in $current; do
-        if [[ ! -v MCP_SERVERS[$name] ]]; then
-            jq --arg n "$name" 'del(.mcp[$n])' "$config" > "$config.tmp" \
-                && mv "$config.tmp" "$config"
-        fi
+    # Remove servers not in MCP_SERVERS
+    local name
+    for name in $(jq -r '.mcp // {} | keys[]' "$config" 2>/dev/null); do
+        [[ -v MCP_SERVERS[$name] ]] && continue
+        jq --arg n "$name" 'del(.mcp[$n])' "$config" > "$config.tmp" \
+            && mv "$config.tmp" "$config"
     done
 
+    # Add/update servers
     local cmd entry
     local -a parts
     for name in "${!MCP_SERVERS[@]}"; do
@@ -256,26 +248,33 @@ mcp_codex_sync() {
 
     local tmp="${config}.tmp"
 
+    # Strip existing [mcp_servers.*] sections
     if [[ -f "$config" ]]; then
         awk '
-            BEGIN { skip = 0 }
             /^\[mcp_servers\./ { skip = 1; next }
-            /^\[.*\]/ { if (skip) { skip = 0; print; next } }
-            skip == 0 { print }
-        ' "$config" | sed -e :a -e '/^\n*$/{$d;N;ba}' > "$tmp"
+            /^\[/              { skip = 0 }
+            !skip
+        ' "$config" > "$tmp"
+        # Trim trailing blank lines
+        sed -i -e :a -e '/^[[:space:]]*$/{ $d; N; ba; }' "$tmp"
     else
         : > "$tmp"
     fi
 
     [[ -s "$tmp" ]] && printf '\n\n' >> "$tmp"
 
+    # Write server entries sorted by name
     local name cmd toml_cmd toml_args
     local -a parts
     for name in $(printf '%s\n' "${!MCP_SERVERS[@]}" | sort); do
         cmd="${MCP_SERVERS[$name]}"
         read -ra parts <<< "$cmd"
         toml_cmd=$(printf '%s' "${parts[0]}" | jq -R .)
-        toml_args=$(printf '%s\n' "${parts[@]:1}" | jq -R . | jq -s -c .)
+        if (( ${#parts[@]} > 1 )); then
+            toml_args=$(printf '%s\n' "${parts[@]:1}" | jq -R . | jq -s -c .)
+        else
+            toml_args="[]"
+        fi
         printf '[mcp_servers.%s]\ncommand = %s\nargs = %s\n\n' \
             "$name" "$toml_cmd" "$toml_args" >> "$tmp"
     done
@@ -285,7 +284,6 @@ mcp_codex_sync() {
 
 sync_mcp() {
     echo "--- MCP Servers ---"
-    require_cmd jq
 
     for target in "${TARGETS[@]}"; do
         case "$target" in
@@ -307,16 +305,15 @@ load_agent_sources() {
     local line
     while IFS= read -r line || [[ -n "$line" ]]; do
         line=$(trim "$line")
-        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        [[ -z "$line" || "$line" == \#* ]] && continue
         AGENT_SOURCES+=("$line")
     done < "$AGENTS_CONF"
 }
 
 apply_agent_overrides() {
     local file="$1" cli="$2"
-    if [[ "$cli" == "opencode" && -f "$file" ]]; then
-        sed -i '/^model:/d' "$file" 2>/dev/null || true
-    fi
+    [[ "$cli" == "opencode" && -f "$file" ]] || return 0
+    sed -i '/^model:/d' "$file" 2>/dev/null || true
 }
 
 resolve_agent_name() {
@@ -330,17 +327,19 @@ resolve_agent_name() {
 
 download_agent() {
     local url="$1" dest_dir="$2"
-    local tmp_dir filename
-    tmp_dir=$(mktemp -d)
-    # shellcheck disable=SC2064
-    trap "rm -rf '$tmp_dir'" RETURN
+    local tmp_file
+    tmp_file=$(mktemp)
 
-    curl -fsSLo "$tmp_dir/downloaded" "$url" 2>/dev/null \
-        || { echo "Failed to download: $url" >&2; return 1; }
+    if ! curl -fsSLo "$tmp_file" "$url" 2>/dev/null; then
+        rm -f "$tmp_file"
+        echo "Failed to download: $url" >&2
+        return 1
+    fi
 
+    local filename
     filename=$(basename "$url")
     [[ "$filename" == *.md ]] || filename="${filename}.md"
-    mv "$tmp_dir/downloaded" "$dest_dir/$filename"
+    mv "$tmp_file" "$dest_dir/$filename"
     printf '%s' "$filename"
 }
 
@@ -360,7 +359,6 @@ sync_codex_agents_md() {
     codex_home=$(cli_home codex)
     local agents_dir="$codex_home/agents"
     local agents_md="$codex_home/AGENTS.md"
-
     [[ -d "$agents_dir" ]] || return 0
 
     local file name
@@ -371,11 +369,10 @@ sync_codex_agents_md() {
         for file in "$agents_dir"/*.md; do
             [[ -f "$file" ]] || continue
             name=$(resolve_agent_name "$file")
-            if [[ -n "$name" ]]; then
-                printf '### %s\n\n' "$name"
-                cat "$file"
-                printf '\n---\n\n'
-            fi
+            [[ -n "$name" ]] || continue
+            printf '### %s\n\n' "$name"
+            cat "$file"
+            printf '\n---\n\n'
         done
     } >> "$agents_md"
 }
@@ -384,7 +381,7 @@ sync_agents() {
     echo "--- Agents ---"
     load_agent_sources
 
-    if [[ ${#AGENT_SOURCES[@]} -eq 0 ]]; then
+    if (( ${#AGENT_SOURCES[@]} == 0 )); then
         echo "No agent sources configured. Add URLs to $AGENTS_CONF or pass as arguments."
         return 0
     fi
@@ -395,23 +392,23 @@ sync_agents() {
         src=$(trim "$src")
         [[ -n "$src" ]] || continue
         filename=$(basename "$src")
-        filename="${filename%.md}"
-        key=$(normalize_key "$filename")
+        key=$(normalize_key "${filename%.md}")
         [[ -n "$key" ]] || { echo "Warning: unable to resolve agent name from '$src'; skipping."; continue; }
         desired["$key"]="$src"
     done
 
-    [[ ${#desired[@]} -gt 0 ]] || die "no valid agent sources found."
+    (( ${#desired[@]} )) || die "no valid agent sources found."
 
-    local dest_dir agent
+    local dest_dir
     for cli in "${TARGETS[@]}"; do
         dest_dir=$(target_dir "$cli" agents) || continue
         mkdir -p "$dest_dir"
 
-        declare -A current_keys=()
+        # Build current keys fresh for each target
+        local -A current_keys=()
+        local agent
         while IFS= read -r agent; do
-            [[ -n "$agent" ]] || continue
-            current_keys["$(normalize_key "$agent")"]=1
+            [[ -n "$agent" ]] && current_keys["$agent"]=1
         done < <(list_agents_in_dir "$dest_dir")
 
         for key in "${!desired[@]}"; do
@@ -452,15 +449,15 @@ agents_remove() {
     [[ -n "$name" ]] || die "Agent name required"
     [[ -f "$AGENTS_CONF" ]] || die "Config not found: $AGENTS_CONF"
 
-    local tmp
-    tmp=$(mktemp)
-    if grep -v "$name" "$AGENTS_CONF" > "$tmp" 2>/dev/null; then
-        mv "$tmp" "$AGENTS_CONF"
-        echo "Removed: $name — run 'sync-ai.sh agents sync' to update CLIs."
-    else
-        rm -f "$tmp"
+    if ! grep -qF "$name" "$AGENTS_CONF" 2>/dev/null; then
         die "Agent not found: $name"
     fi
+
+    local tmp
+    tmp=$(mktemp)
+    grep -vF "$name" "$AGENTS_CONF" > "$tmp" || true
+    mv "$tmp" "$AGENTS_CONF"
+    echo "Removed: $name — run 'sync-ai.sh agents sync' to update CLIs."
 }
 
 agents_list() {
@@ -472,7 +469,7 @@ agents_list() {
     local line
     while IFS= read -r line || [[ -n "$line" ]]; do
         line=$(trim "$line")
-        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        [[ -z "$line" || "$line" == \#* ]] && continue
         echo "  - $line"
     done < "$AGENTS_CONF"
 }
@@ -496,7 +493,7 @@ Options:
 
 Environment:
   SYNC_TARGETS      Comma-separated CLIs (default: codex,claude,opencode)
-  AGENTS_CONFIG     Path to agents.conf (default: \$HOME/dotfiles/config/agents.conf)
+  AGENTS_CONFIG     Path to agents.conf (default: \$DOTFILES_DIR/agents.conf)
   OPENCODE_CONFIG   Path to opencode.json
   CODEX_CONFIG      Path to codex config.toml
 EOF

@@ -116,6 +116,6 @@ via `scripts/sync-ai.sh`.
 ./scripts/sync-ai.sh agents list
 ```
 
-- Config: `config/agents.conf` (one URL per line, `#` comments)
-- Env: `AGENTS_CONFIG`, `SKILLS_TARGETS`, `OPENCODE_CONFIG`, `CODEX_CONFIG`
+- Config: `agents.conf` (one URL per line, `#` comments)
+- Env: `AGENTS_CONFIG`, `SYNC_TARGETS`, `OPENCODE_CONFIG`, `CODEX_CONFIG`
 - Locations: `~/.config/opencode/`, `~/.claude/`, `~/.codex/`
