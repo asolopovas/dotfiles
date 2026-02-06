@@ -11,9 +11,11 @@ alias mosh='mosh --no-init'
 
 # Cleanup
 # alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
-alias tm='tmux -f $HOME/.config/tmux/tmux.conf'
-alias tx='tmux a -t '
-alias ts='tmux list-sessions'
+alias tm='tmux new-session -A -s main'             # attach or create "main" session
+alias tx='tmux a -t '                               # attach to named session
+alias ts='tmux list-sessions'                        # list sessions
+alias tl='tmux list-windows'                         # list windows in current session
+alias tk='tmux kill-session -t '                     # kill named session
 
 alias gpg2='gpg2 --homedir "$XDG_DATA_HOME"/gnupg'
 

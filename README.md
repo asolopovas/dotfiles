@@ -77,19 +77,48 @@ make clean-tests           # remove /tmp test artifacts
 **Terminal:**
 `Ctrl+X E` edit command | `Esc+B/F` word back/forward
 
-**Tmux** (prefix: `Ctrl+A`):
+**Tmux** (prefix: `Ctrl+A`, `?` for in-tmux cheatsheet popup):
 
 | Key | Action |
 |-----|--------|
-| `C` | New window |
-| `,` | Rename window |
-| `P` / `N` | Previous / next window |
-| `W` | Select window |
-| `%` | Split vertical |
-| `:` | Command mode |
-| `D` | Detach |
-| `Alt+-` | Horizontal layout |
-| `Alt+\|` | Vertical layout |
+| **Windows** | |
+| `n` | New window |
+| `A` | Rename window |
+| `Alt-1..9` | Jump to window 1-9 |
+| `Alt-h` / `Alt-l` | Previous / next window |
+| `Alt-H` / `Alt-L` | Move window left / right |
+| **Splits** | |
+| `c` | Split horizontal |
+| `v` | Split vertical |
+| `C-h/j/k/l` | Move between panes (vim-aware) |
+| `H/J/K/L` | Resize pane |
+| `z` | Toggle pane zoom |
+| `Enter` | Break pane to window |
+| `Space` | Join pane from another window |
+| `x` / `X` | Kill pane / Kill window |
+| **Layouts** | |
+| `Tab` | Cycle layouts |
+| `M-1..5` | Even-h, Even-v, Main-h, Main-v, Tiled |
+| **Sessions** | |
+| `s` | Session/window tree picker |
+| `S` | New named session |
+| `K` | Kill session |
+| `f` | Find window |
+| **Copy mode** | |
+| `/` | Enter search |
+| `v` / `C-v` | Selection / rectangle select |
+| `y` | Yank |
+| **Popups** | |
+| `g` | Lazygit |
+| `G` | Floating shell |
+| `t` | htop |
+| **Other** | |
+| `r` | Reload config |
+| `C-l` | Clear screen |
+| `d` | Detach |
+| `C-s` / `C-r` | Save / restore session (resurrect) |
+
+**Aliases:** `tm` attach/create main session | `tx <name>` attach | `ts` list | `tl` list windows | `tk <name>` kill
 
 </details>
 
