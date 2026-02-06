@@ -47,16 +47,19 @@ autocmd('LspAttach', {
     group = AUGroup,
     callback = function(e)
         local opts = { buffer = e.buf }
-        vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
-        vim.keymap.set("n", "gb", "<C-o>", { noremap = false, silent = true })
-        vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, opts)
-        vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end, opts)
-        vim.keymap.set("n", "<leader>vca", function() vim.lsp.buf.code_action() end, opts)
-        vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, opts)
-        vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
-        vim.keymap.set("i", "<M-h>", function() vim.lsp.buf.signature_help() end, opts)
-        vim.keymap.set("n", "[d", function() vim.diagnostic.goto_next() end, opts)
-        vim.keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end, opts)
+        local function lopts(desc)
+            return { buffer = e.buf, desc = desc }
+        end
+        vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, lopts("go to definition"))
+        vim.keymap.set("n", "gb", "<C-o>", { noremap = false, silent = true, desc = "go back" })
+        vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, lopts("hover docs"))
+        vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end, lopts("workspace symbols"))
+        vim.keymap.set("n", "<leader>vca", function() vim.lsp.buf.code_action() end, lopts("code action"))
+        vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, lopts("find references"))
+        vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, lopts("rename symbol"))
+        vim.keymap.set("i", "<M-h>", function() vim.lsp.buf.signature_help() end, lopts("signature help"))
+        vim.keymap.set("n", "[d", function() vim.diagnostic.goto_next() end, lopts("next diagnostic"))
+        vim.keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end, lopts("prev diagnostic"))
     end
 })
 

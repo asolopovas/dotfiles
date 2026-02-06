@@ -3,7 +3,7 @@ vim.g.mapleader = " "
 
 local map = vim.api.nvim_set_keymap
 
-vim.keymap.set("n", "<leader>pv", "<cmd>Ex<CR>")
+vim.keymap.set("n", "<leader>pv", "<cmd>Ex<CR>", { desc = "open file explorer" })
 
 -- Move Selected Bock of Text
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
@@ -19,9 +19,12 @@ vim.keymap.set("x", "<leader>p", [["_dP]])
 
 -- Key Mappings
 local opts = { noremap = true, silent = true }
+local function dopts(desc)
+    return { noremap = true, silent = true, desc = desc }
+end
 
 -- Auto format file
-map('n', '<leader>f', 'mzgg=G`z', opts)
+map('n', '<leader>f', 'mzgg=G`z', dopts("format file (indent)"))
 
 -- Paste from clipboard using Shift+Insert
 map('c', '<S-Insert>', '<C-R>+', {})
@@ -46,12 +49,12 @@ map('i', '<M-K>', '<C-T>', opts)
 map('i', 'jk', '<Esc>', opts)
 
 -- Edit common files
-map('n', '<leader>er', ':e $HOME/.config/nvim/lua/andrius/remap.lua<CR>', opts)
-map('n', '<leader>ev', ':e $HOME/.config/nvim/lua/andrius/init.lua<CR>', opts)
-map('n', '<leader>ef', ':e $HOME/.config/fish/config.fish<CR>', opts)
-map('n', '<leader>es', ':e $HOME/.config/nvim/lua/andrius/set.lua<CR>', opts)
-map('n', '<leader>ea', ':e $HOME/.config/.aliasrc<CR>', opts)
-map('n', '<leader>sv', ':so $MYVIMRC<CR>', opts)
+map('n', '<leader>er', ':e $HOME/.config/nvim/lua/andrius/remap.lua<CR>', dopts("edit remap.lua"))
+map('n', '<leader>ev', ':e $HOME/.config/nvim/lua/andrius/init.lua<CR>', dopts("edit init.lua"))
+map('n', '<leader>ef', ':e $HOME/.config/fish/config.fish<CR>', dopts("edit fish config"))
+map('n', '<leader>es', ':e $HOME/.config/nvim/lua/andrius/set.lua<CR>', dopts("edit set.lua"))
+map('n', '<leader>ea', ':e $HOME/.config/.aliasrc<CR>', dopts("edit aliases"))
+map('n', '<leader>sv', ':so $MYVIMRC<CR>', dopts("source vimrc"))
 -- Open remap.lua instead of init.vim
 
 -- Navigation improvements
@@ -61,26 +64,26 @@ map('n', '<C-d>', '<C-d>zz', opts)
 map('n', '<C-u>', '<C-u>zz', opts)
 
 -- Remove search highlighting
-map('n', '<leader><space>', ':nohlsearch<CR>', opts)
+map('n', '<leader><space>', ':nohlsearch<CR>', dopts("clear search highlight"))
 
 -- Manage buffers
-map('n', '<leader>q', ':bufdo bd!<CR>', opts)
-map('n', '<leader>bd', ':bd<CR>', opts)
-map('n', '<leader>bq', ':bp | bd #<CR>', opts)
+map('n', '<leader>q', ':bufdo bd!<CR>', dopts("close all buffers"))
+map('n', '<leader>bd', ':bd<CR>', dopts("close buffer"))
+map('n', '<leader>bq', ':bp | bd #<CR>', dopts("close buffer keep window"))
 
 -- Tab management
-map('n', '<leader>to', ':tabonly<CR>', opts)
+map('n', '<leader>to', ':tabonly<CR>', dopts("close other tabs"))
 map('n', '<M-q>', ':tabclose<CR>', opts)
 map('n', '<M-t>', ':tabnew<CR>', opts)
 map('n', '<M-H>', ':tabprevious<CR>', opts)
 map('n', '<M-L>', ':tabnext<CR>', opts)
 
 -- Open a new empty buffer
-map('n', '<leader>T', ':enew<CR>', opts)
+map('n', '<leader>T', ':enew<CR>', dopts("new empty buffer"))
 
 -- Buffer switching
-map('n', '<leader>l', ':bnext<CR>', opts)
-map('n', '<leader>h', ':bprevious<CR>', opts)
+map('n', '<leader>l', ':bnext<CR>', dopts("next buffer"))
+map('n', '<leader>h', ':bprevious<CR>', dopts("prev buffer"))
 
 -- Splits Management
 vim.o.splitbelow = true
@@ -89,8 +92,8 @@ map('n', '<M-h>', '<C-w>h', opts)
 map('n', '<M-j>', '<C-w>j', opts)
 map('n', '<M-k>', '<C-w>k', opts)
 map('n', '<M-l>', '<C-w>l', opts)
-map('n', '<leader>vh', ':split<CR>', opts)
-map('n', '<leader>vv', ':vsplit<CR>', opts)
+map('n', '<leader>vh', ':split<CR>', dopts("horizontal split"))
+map('n', '<leader>vv', ':vsplit<CR>', dopts("vertical split"))
 
 -- Resize split windows (using different keys to avoid terminal conflicts)
 vim.keymap.set('n', '<C-M-h>', '<C-w><', opts)
@@ -114,7 +117,7 @@ vim.api.nvim_create_autocmd("TermOpen", {
   end
 })
 
-vim.keymap.set("n", "<leader>fml", "<cmd>CellularAutomaton make_it_rain<CR>")
+vim.keymap.set("n", "<leader>fml", "<cmd>CellularAutomaton make_it_rain<CR>", { desc = "make it rain" })
 vim.keymap.set("n", "<M-`>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
 vim.keymap.set("t", "<M-`>", "<C-\\><C-n>:NvimTreeToggle<CR>", { noremap = true, silent = true })
 

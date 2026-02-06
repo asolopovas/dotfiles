@@ -87,8 +87,8 @@ return {
     end
 
     -- Custom keymapping
-    vim.keymap.set("n", "<C-j>", smart_terminal_toggle, { noremap = true, silent = true })
-    vim.keymap.set("t", "<C-j>", smart_terminal_toggle, { noremap = true, silent = true })
+    vim.keymap.set("n", "<C-j>", smart_terminal_toggle, { noremap = true, silent = true, desc = "toggle terminal" })
+    vim.keymap.set("t", "<C-j>", smart_terminal_toggle, { noremap = true, silent = true, desc = "toggle terminal" })
 
     -- Telescope-ToggleTerm setup
     require("telescope-toggleterm").setup{
@@ -98,7 +98,7 @@ return {
     }
 
     -- Keymap for Telescope-ToggleTerm picker
-    vim.keymap.set("n", "<leader>tt", "<cmd>Telescope toggleterm<CR>", { noremap = true, silent = true })
+    vim.keymap.set("n", "<leader>tt", "<cmd>Telescope toggleterm<CR>", { noremap = true, silent = true, desc = "terminal picker" })
   end,
 }
 

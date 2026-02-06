@@ -112,23 +112,23 @@ return {
         end
 
         -- Key mappings
-        vim.keymap.set('n', '<C-p>', smart_find_files, {})
-        vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-        vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
-        vim.keymap.set('n', '<leader>fb', ":Telescope file_browser<cr>", {})
-        vim.keymap.set('n', '<leader>fd', builtin.lsp_document_symbols, {})
-        vim.keymap.set('n', '<leader>fs', builtin.lsp_workspace_symbols, {})
+        vim.keymap.set('n', '<C-p>', smart_find_files, { desc = "smart find files" })
+        vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = "find files" })
+        vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = "help tags" })
+        vim.keymap.set('n', '<leader>fb', ":Telescope file_browser<cr>", { desc = "file browser" })
+        vim.keymap.set('n', '<leader>fd', builtin.lsp_document_symbols, { desc = "document symbols" })
+        vim.keymap.set('n', '<leader>fs', builtin.lsp_workspace_symbols, { desc = "workspace symbols" })
 
         -- live_grep_args mapping
         vim.keymap.set(
             'n',
             '<leader>fg',
             "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>",
-            { desc = "Live Grep" }
+            { desc = "live grep" }
         )
 
         -- Logs key mappings (corrected)
-        vim.keymap.set('n', '<leader>fl', preview_server_logs, { desc = "Preview Server Logs" })
-        vim.keymap.set('n', '<leader>gl', grep_server_logs, { desc = "Live Grep Server Logs" })
+        vim.keymap.set('n', '<leader>fl', preview_server_logs, { desc = "preview server logs" })
+        vim.keymap.set('n', '<leader>gl', grep_server_logs, { desc = "grep server logs" })
     end
 }
