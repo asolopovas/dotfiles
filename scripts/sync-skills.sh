@@ -6,10 +6,8 @@ SKILL_SOURCES=(
   "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
   "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
   "https://github.com/mrgoonie/claudekit-skills/tree/main/.claude/skills/chrome-devtools"
+  "https://github.com/huynguyen03dev/opencode-setup/tree/main/skills/github"
 )
-# Superpowers requires a repo clone and bootstrap, so it is handled separately.
-SUPERPOWERS_REPO="https://github.com/obra/superpowers"
-
 if [[ $# -gt 0 ]]; then
   SKILL_SOURCES+=("$@")
 fi
@@ -21,82 +19,6 @@ die() {
 
 have_cmd() {
   command -v "$1" >/dev/null 2>&1
-}
-
-superpowers_block() {
-    cat <<'EOF'
-## Superpowers System
-
-<EXTREMELY_IMPORTANT>
-You have superpowers. Superpowers teach you new skills and capabilities. RIGHT NOW run: `~/.codex/superpowers/.codex/superpowers-codex bootstrap` and follow the instructions it returns.
-</EXTREMELY_IMPORTANT>
-EOF
-}
-
-ensure_superpowers_agents() {
-    local codex_home="$1"
-    local agents_file="$codex_home/AGENTS.md"
-    local block
-
-    block="$(superpowers_block)"
-
-    if [[ -f "$agents_file" ]]; then
-        if grep -q "superpowers-codex bootstrap" "$agents_file"; then
-            return 0
-        fi
-        if [[ -s "$agents_file" ]]; then
-            printf '\n%s\n' "$block" >> "$agents_file"
-        else
-            printf '%s\n' "$block" > "$agents_file"
-        fi
-        return 0
-    fi
-
-    mkdir -p "$codex_home"
-    printf '%s\n' "$block" > "$agents_file"
-}
-
-sync_superpowers() {
-    local codex_home="$1"
-    local repo_url="$2"
-    local repo_dir="$codex_home/superpowers"
-    local cli="$repo_dir/.codex/superpowers-codex"
-    local skills_output
-
-    if ! have_cmd git; then
-        die "Error: git not found in PATH."
-    fi
-
-    if [[ -d "$repo_dir/.git" ]]; then
-        git -C "$repo_dir" pull --ff-only
-    elif [[ -e "$repo_dir" ]]; then
-        die "Error: $repo_dir exists but is not a git repository."
-    else
-        mkdir -p "$codex_home"
-        git clone "$repo_url" "$repo_dir"
-    fi
-
-    if [[ -f "$cli" && ! -x "$cli" ]]; then
-        chmod +x "$cli"
-    fi
-
-    mkdir -p "$codex_home/skills"
-    ensure_superpowers_agents "$codex_home"
-
-    if ! have_cmd node; then
-        die "Error: node not found in PATH (required for superpowers)."
-    fi
-
-    if [[ ! -x "$cli" ]]; then
-        die "Error: superpowers CLI not executable at $cli."
-    fi
-
-    if ! skills_output="$("$cli" find-skills)"; then
-        die "Error: superpowers find-skills failed."
-    fi
-    if [[ -z "$skills_output" ]]; then
-        die "Error: superpowers returned no skills."
-    fi
 }
 
 resolve_installer() {
@@ -257,16 +179,7 @@ for source in "${SKILL_SOURCES[@]}"; do
 done
 
 for target in "${TARGETS[@]}"; do
-  if [[ "$target" == "codex" ]]; then
-    sync_superpowers "${CODEX_HOME:-$HOME/.codex}" "$SUPERPOWERS_REPO"
-  fi
-
   dest_root="$(target_root "$target")" || continue
-
-  # Skip superpowers for opencode (not supported)
-  if [[ "$target" == "opencode" ]]; then
-    echo "Note: Superpowers not supported for OpenCode, skipping AGENTS.md integration"
-  fi
 
   mkdir -p "$dest_root"
 
