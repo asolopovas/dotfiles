@@ -6,5 +6,5 @@ function st
         return 1
     end
 
-    ssh $host -t 'tmux attach || tmux new'
+    ssh $host -t 'bash -c "exec tmux new -A -s main"'
 end
