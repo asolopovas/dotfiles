@@ -68,7 +68,8 @@ while IFS=$'\t' read -r domain plesk_user home_dir; do
 
     if output=$(sudo -u "$plesk_user" bash --norc --noprofile -c "
         git -C \$HOME/dotfiles fetch origin main 2>&1 && \
-        git -C \$HOME/dotfiles reset --hard origin/main 2>&1 && \
+        git -C \$HOME/dotfiles reset --hard HEAD 2>&1 && \
+        git -C \$HOME/dotfiles checkout -B main origin/main 2>&1 && \
         git -C \$HOME/dotfiles clean -fd 2>&1
     " 2>&1); then
         commit=$(sudo -u "$plesk_user" bash --norc --noprofile -c \
