@@ -70,7 +70,7 @@ cli_home() {
     case "$1" in
         codex)    printf '%s' "${CODEX_HOME:-$HOME/.codex}" ;;
         claude)   printf '%s' "${CLAUDE_HOME:-$HOME/.claude}" ;;
-        opencode) printf '%s' "${OPENCODE_HOME:-$HOME/.config/opencode}" ;;
+        opencode) printf '%s' "${OPENCODE_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode}" ;;
         *)        return 1 ;;
     esac
 }
@@ -89,23 +89,62 @@ target_dir() {
     esac
 }
 
-resolve_opencode_config_file() {
+resolve_opencode_config_files() {
     if [[ -n "$OPENCODE_CONFIG_FILE" ]]; then
-        printf '%s' "$OPENCODE_CONFIG_FILE"
+        printf '%s\n' "$OPENCODE_CONFIG_FILE"
         return 0
     fi
 
-    if [[ -f "$HOME/.config/opencode/opencode.json" ]]; then
-        printf '%s' "$HOME/.config/opencode/opencode.json"
+    local home
+    home="$(cli_home opencode)"
+
+    local primary="$home/opencode.json"
+    local legacy="$home/config.json"
+
+    if [[ -f "$primary" || -f "$legacy" ]]; then
+        [[ -f "$primary" ]] && printf '%s\n' "$primary"
+        [[ -f "$legacy" ]] && printf '%s\n' "$legacy"
         return 0
     fi
 
-    if [[ -f "$HOME/.config/opencode/config.json" ]]; then
-        printf '%s' "$HOME/.config/opencode/config.json"
-        return 0
+    printf '%s\n' "$primary"
+}
+
+mcp_opencode_sync_file() {
+    local config="$1"
+
+    mkdir -p "$(dirname "$config")"
+
+    if [[ ! -f "$config" ]]; then
+        jq -n --arg schema_key '$schema' '{($schema_key): "https://opencode.ai/config.json", "mcp": {}}' > "$config"
     fi
 
-    printf '%s' "$HOME/.config/opencode/opencode.json"
+    jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
+
+    # Repair accidental invalid top-level key created by bad shell quoting.
+    jq 'if has("") then if has("$schema") then del(.[""]) else .["$schema"] = .[""] | del(.[""]) end else . end' \
+        "$config" > "$config.tmp" && mv "$config.tmp" "$config"
+
+    # Remove servers not in MCP_SERVERS
+    local name
+    for name in $(jq -r '.mcp // {} | keys[]' "$config" 2>/dev/null); do
+        [[ -v MCP_SERVERS[$name] ]] && continue
+        jq --arg n "$name" 'del(.mcp[$n])' "$config" > "$config.tmp" \
+            && mv "$config.tmp" "$config"
+    done
+
+    # Add/update servers
+    local cmd entry
+    local -a parts
+    for name in "${!MCP_SERVERS[@]}"; do
+        cmd="${MCP_SERVERS[$name]}"
+        read -ra parts <<< "$cmd"
+        entry=$(jq -n --arg name "$name" \
+            --argjson cmd "$(printf '%s\n' "${parts[@]}" | jq -R . | jq -s .)" \
+            '{($name): {type: "local", command: $cmd, enabled: true}}')
+        jq --argjson entry "$entry" '.mcp //= {} | .mcp *= $entry' "$config" \
+            > "$config.tmp" && mv "$config.tmp" "$config"
+    done
 }
 
 # ---------------------------------------------------------------------------
@@ -312,42 +351,24 @@ sync_skills() {
 # ---------------------------------------------------------------------------
 
 mcp_opencode_sync() {
-    local config
-    config="$(resolve_opencode_config_file)"
-
-    mkdir -p "$(dirname "$config")"
     require_cmd jq
 
-    if [[ ! -f "$config" ]]; then
-        jq -n --arg schema_key '$schema' '{($schema_key): "https://opencode.ai/config.json", "mcp": {}}' > "$config"
+    local config
+    while IFS= read -r config; do
+        [[ -n "$config" ]] || continue
+        mcp_opencode_sync_file "$config"
+    done < <(resolve_opencode_config_files)
+
+    local home primary legacy
+    home="$(cli_home opencode)"
+    primary="$home/opencode.json"
+    legacy="$home/config.json"
+    if [[ ! -f "$primary" && -f "$legacy" ]]; then
+        cp "$legacy" "$primary"
     fi
-
-    jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
-
-    # Repair accidental invalid top-level key created by bad shell quoting.
-    jq 'if has("") then if has("$schema") then del(."") else .["$schema"] = .[""] | del(."") end else . end' \
-        "$config" > "$config.tmp" && mv "$config.tmp" "$config"
-
-    # Remove servers not in MCP_SERVERS
-    local name
-    for name in $(jq -r '.mcp // {} | keys[]' "$config" 2>/dev/null); do
-        [[ -v MCP_SERVERS[$name] ]] && continue
-        jq --arg n "$name" 'del(.mcp[$n])' "$config" > "$config.tmp" \
-            && mv "$config.tmp" "$config"
-    done
-
-    # Add/update servers
-    local cmd entry
-    local -a parts
-    for name in "${!MCP_SERVERS[@]}"; do
-        cmd="${MCP_SERVERS[$name]}"
-        read -ra parts <<< "$cmd"
-        entry=$(jq -n --arg name "$name" \
-            --argjson cmd "$(printf '%s\n' "${parts[@]}" | jq -R . | jq -s .)" \
-            '{($name): {type: "local", command: $cmd, enabled: true}}')
-        jq --argjson entry "$entry" '.mcp //= {} | .mcp *= $entry' "$config" \
-            > "$config.tmp" && mv "$config.tmp" "$config"
-    done
+    if [[ -f "$primary" && ! -f "$legacy" ]]; then
+        cp "$primary" "$legacy"
+    fi
 }
 
 mcp_codex_sync() {
