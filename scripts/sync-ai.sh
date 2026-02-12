@@ -135,7 +135,68 @@ resolve_skill_installer() {
         [[ -f "$candidate" ]] && { printf '%s' "$candidate"; return 0; }
     done
 
-    die "skill-installer not found (set SKILL_INSTALLER or install skill-installer)."
+    return 1
+}
+
+parse_github_skill_source() {
+    local src="$1"
+    local path
+    path="${src#https://github.com/}"
+
+    local owner repo kind rest ref subpath
+    owner="${path%%/*}"
+    rest="${path#*/}"
+    repo="${rest%%/*}"
+    rest="${rest#*/}"
+    kind="${rest%%/*}"
+    rest="${rest#*/}"
+    ref="${rest%%/*}"
+    subpath="${rest#*/}"
+
+    [[ -n "$owner" && -n "$repo" && -n "$kind" && -n "$ref" && -n "$subpath" ]] || return 1
+    [[ "$kind" == "tree" || "$kind" == "blob" ]] || return 1
+
+    printf '%s|%s|%s|%s\n' "$owner" "$repo" "$ref" "$subpath"
+}
+
+install_skill_from_github_builtin() {
+    local src="$1" dest_root="$2" key="$3"
+
+    have_cmd git || die "git not found in PATH (required for built-in skill installer)."
+
+    local parsed owner repo ref subpath
+    parsed="$(parse_github_skill_source "$src")" || die "unsupported skill URL format: $src"
+    IFS='|' read -r owner repo ref subpath <<< "$parsed"
+
+    local tmp_dir tmp_repo src_dir dest_dir
+    tmp_dir=$(mktemp -d)
+    tmp_repo="$tmp_dir/repo"
+    dest_dir="$dest_root/$key"
+
+    rm -rf "$dest_dir"
+
+    if ! git clone --depth 1 --filter=blob:none --sparse --branch "$ref" \
+        "https://github.com/$owner/$repo.git" "$tmp_repo" >/dev/null 2>&1; then
+        rm -rf "$tmp_dir"
+        die "failed to clone $owner/$repo (ref: $ref)"
+    fi
+
+    if ! git -C "$tmp_repo" sparse-checkout set "$subpath" >/dev/null 2>&1; then
+        rm -rf "$tmp_dir"
+        die "failed to checkout '$subpath' from $owner/$repo"
+    fi
+
+    src_dir="$tmp_repo/$subpath"
+    [[ -d "$src_dir" ]] || { rm -rf "$tmp_dir"; die "skill path not found in repo: $subpath"; }
+
+    cp -R "$src_dir" "$dest_dir"
+    if [[ ! -f "$dest_dir/SKILL.md" && -f "$dest_dir/skill.md" ]]; then
+        mv "$dest_dir/skill.md" "$dest_dir/SKILL.md"
+    fi
+
+    [[ -f "$dest_dir/SKILL.md" ]] || { rm -rf "$tmp_dir"; die "skill install missing SKILL.md at $dest_dir"; }
+
+    rm -rf "$tmp_dir"
 }
 
 normalize_skill_source() {
@@ -164,11 +225,24 @@ skill_name_from_url() {
 }
 
 sync_skills() {
+    local strict="${1:-false}"
     echo "--- Skills ---"
     require_cmd python3
 
     local installer
-    installer="$(resolve_skill_installer)"
+    local use_builtin="false"
+    if ! installer="$(resolve_skill_installer)"; then
+        if have_cmd git; then
+            use_builtin="true"
+            echo "-> skill-installer not found; using built-in GitHub installer"
+        else
+            if [[ "$strict" == "true" ]]; then
+                die "skill-installer not found and git is unavailable (install git or set SKILL_INSTALLER)."
+            fi
+            echo "Warning: skill-installer not found and git unavailable; skipping skills sync." >&2
+            return 0
+        fi
+    fi
 
     declare -A desired=()
     local src name
@@ -204,8 +278,12 @@ sync_skills() {
                 continue
             fi
             [[ -e "$dest_dir" ]] && rm -rf "$dest_dir"
-            python3 "$installer" --url "${desired[$key]}" --dest "$dest_root"
-            [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
+            if [[ "$use_builtin" == "true" ]]; then
+                install_skill_from_github_builtin "${desired[$key]}" "$dest_root" "$key"
+            else
+                python3 "$installer" --url "${desired[$key]}" --dest "$dest_root"
+                [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
+            fi
         done
     done
 }
@@ -512,7 +590,7 @@ main() {
                     echo ""
                     echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
                     ;;
-                skills) sync_skills ;;
+                skills) sync_skills true ;;
                 mcp)    sync_mcp ;;
             esac
             ;;
