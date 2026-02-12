@@ -30,6 +30,7 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 SKILL_SOURCES=(
     "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
     "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
+    "https://github.com/microsoft/playwright-cli/tree/main/skills/playwright-cli"
     "https://github.com/mrgoonie/claudekit-skills/tree/main/.claude/skills/chrome-devtools"
 )
 
