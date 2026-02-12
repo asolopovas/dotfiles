@@ -38,7 +38,7 @@ declare -A MCP_SERVERS=(
 )
 
 AGENTS_CONF="${AGENTS_CONFIG:-$DOTFILES_DIR/agents.conf}"
-OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG:-$HOME/.config/opencode/opencode.json}"
+OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG:-}"
 CODEX_CONFIG_FILE="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
 
 TARGETS=()
@@ -87,6 +87,25 @@ target_dir() {
             esac ;;
         *) return 1 ;;
     esac
+}
+
+resolve_opencode_config_file() {
+    if [[ -n "$OPENCODE_CONFIG_FILE" ]]; then
+        printf '%s' "$OPENCODE_CONFIG_FILE"
+        return 0
+    fi
+
+    if [[ -f "$HOME/.config/opencode/opencode.json" ]]; then
+        printf '%s' "$HOME/.config/opencode/opencode.json"
+        return 0
+    fi
+
+    if [[ -f "$HOME/.config/opencode/config.json" ]]; then
+        printf '%s' "$HOME/.config/opencode/config.json"
+        return 0
+    fi
+
+    printf '%s' "$HOME/.config/opencode/opencode.json"
 }
 
 # ---------------------------------------------------------------------------
@@ -293,9 +312,17 @@ sync_skills() {
 # ---------------------------------------------------------------------------
 
 mcp_opencode_sync() {
-    local config="$OPENCODE_CONFIG_FILE"
-    [[ -f "$config" ]] || return 0
+    local config
+    config="$(resolve_opencode_config_file)"
+
+    mkdir -p "$(dirname "$config")"
     require_cmd jq
+
+    if [[ ! -f "$config" ]]; then
+        jq -n '{"$schema": "https://opencode.ai/config.json", "mcp": {}}' > "$config"
+    fi
+
+    jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
 
     # Remove servers not in MCP_SERVERS
     local name
