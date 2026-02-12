@@ -319,10 +319,14 @@ mcp_opencode_sync() {
     require_cmd jq
 
     if [[ ! -f "$config" ]]; then
-        jq -n '{"$schema": "https://opencode.ai/config.json", "mcp": {}}' > "$config"
+        jq -n --arg schema_key '$schema' '{($schema_key): "https://opencode.ai/config.json", "mcp": {}}' > "$config"
     fi
 
     jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
+
+    # Repair accidental invalid top-level key created by bad shell quoting.
+    jq 'if has("") then if has("$schema") then del(."") else .["$schema"] = .[""] | del(."") end else . end' \
+        "$config" > "$config.tmp" && mv "$config.tmp" "$config"
 
     # Remove servers not in MCP_SERVERS
     local name
