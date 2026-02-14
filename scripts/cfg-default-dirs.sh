@@ -29,6 +29,7 @@ CONFDIRS=(
     ".gitignore"
     ".config/.func"
     ".config/.aliasrc"
+    ".config/btop/btop.conf"
     ".config/fish"
     ".config/tmux"
 )
