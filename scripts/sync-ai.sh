@@ -101,14 +101,22 @@ resolve_opencode_config_files() {
 
     local primary="$home/opencode.json"
     local legacy="$home/config.json"
+    local jsonc="$home/opencode.jsonc"
 
-    if [[ -f "$primary" || -f "$legacy" ]]; then
+    if [[ -f "$primary" || -f "$legacy" || -f "$jsonc" ]]; then
         [[ -f "$primary" ]] && printf '%s\n' "$primary"
         [[ -f "$legacy" ]] && printf '%s\n' "$legacy"
+        [[ -f "$jsonc" ]] && printf '%s\n' "$jsonc"
         return 0
     fi
 
     printf '%s\n' "$primary"
+}
+
+strip_jsonc_comments() {
+    # Strip // and /* */ comments from JSONC, preserving strings.
+    sed -e ':a' -e 's|//[^"]*$||' \
+        -e 's|/\*.*\*/||g' "$1" | jq .
 }
 
 mcp_opencode_sync_file() {
@@ -118,6 +126,15 @@ mcp_opencode_sync_file() {
 
     if [[ ! -f "$config" ]]; then
         jq -n --arg schema_key '$schema' '{($schema_key): "https://opencode.ai/config.json", "mcp": {}}' > "$config"
+    fi
+
+    # For .jsonc files, strip comments so jq can parse them.
+    if [[ "$config" == *.jsonc ]]; then
+        if ! jq empty "$config" >/dev/null 2>&1; then
+            strip_jsonc_comments "$config" > "$config.tmp" \
+                && mv "$config.tmp" "$config" \
+                || die "failed to strip comments from JSONC: $config"
+        fi
     fi
 
     jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
@@ -132,6 +149,7 @@ mcp_opencode_sync_file() {
         [[ -v MCP_SERVERS[$name] ]] && continue
         jq --arg n "$name" 'del(.mcp[$n])' "$config" > "$config.tmp" \
             && mv "$config.tmp" "$config"
+        echo "Removed $name from $config"
     done
 
     # Add/update servers
