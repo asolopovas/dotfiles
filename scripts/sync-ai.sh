@@ -412,6 +412,47 @@ mcp_codex_sync() {
     mv "$tmp" "$config"
 }
 
+mcp_claude_sync() {
+    require_cmd claude
+
+    # Discover currently installed user-scope servers
+    local -a installed=()
+    local line
+    while IFS= read -r line; do
+        # claude mcp list output lines: "<name>: <command> - <status>"
+        local name="${line%%:*}"
+        name=$(trim "$name")
+        [[ -n "$name" ]] && installed+=("$name")
+    done < <(claude mcp list 2>/dev/null | grep -E '^[^ ].*:' || true)
+
+    # Remove servers not in MCP_SERVERS
+    local name
+    for name in "${installed[@]}"; do
+        [[ -v MCP_SERVERS[$name] ]] && continue
+        claude mcp remove "$name" -s user 2>/dev/null \
+            && echo "Removed $name from claude" \
+            || echo "Warning: failed to remove $name from claude" >&2
+    done
+
+    # Add/update servers from MCP_SERVERS
+    local cmd
+    local -a parts
+    for name in "${!MCP_SERVERS[@]}"; do
+        cmd="${MCP_SERVERS[$name]}"
+        read -ra parts <<< "$cmd"
+
+        # Check if already installed
+        if claude mcp get "$name" >/dev/null 2>&1; then
+            # Remove and re-add to ensure config matches
+            claude mcp remove "$name" -s user >/dev/null 2>&1 || true
+        fi
+
+        claude mcp add -s user -t stdio "$name" -- "${parts[@]}" >/dev/null 2>&1 \
+            && echo "-> $name added to claude" \
+            || echo "Warning: failed to add $name to claude" >&2
+    done
+}
+
 sync_mcp() {
     echo "--- MCP Servers ---"
 
@@ -419,7 +460,7 @@ sync_mcp() {
         case "$target" in
             opencode) mcp_opencode_sync; echo "Synced MCP servers to opencode" ;;
             codex)    mcp_codex_sync;    echo "Synced MCP servers to codex" ;;
-            claude)   echo "Note: Claude Code MCP managed via settings.json, skipping." ;;
+            claude)   mcp_claude_sync;   echo "Synced MCP servers to claude" ;;
         esac
     done
 }
