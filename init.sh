@@ -93,9 +93,14 @@ install_essentials() {
         DOTFILES_URL="git@github.com:asolopovas/dotfiles.git"
     fi
 
-    if [ ! -d $DOTFILES_DIR ]; then
+    if [ ! -d "$DOTFILES_DIR" ]; then
         print_color green "DOWNLOADING DOTFILES..."
-        git clone $DOTFILES_URL $DOTFILES_DIR >/dev/null
+        git clone "$DOTFILES_URL" "$DOTFILES_DIR" >/dev/null
+    elif [ -d "$DOTFILES_DIR/.git" ]; then
+        print_color green "UPDATING DOTFILES..."
+        git -C "$DOTFILES_DIR" fetch origin main 2>/dev/null
+        git -C "$DOTFILES_DIR" reset --hard origin/main 2>/dev/null
+        git -C "$DOTFILES_DIR" clean -fd 2>/dev/null
     fi
 }
 
@@ -114,6 +119,15 @@ if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
 fi
 
 install_essentials
+
+# Plesk root: sync shared data and exit — full bootstrap not needed
+if [ "$(id -u)" -eq 0 ] && command -v plesk &>/dev/null; then
+    print_color green "Plesk server detected — running plesk-init.sh sync"
+    "$SCRIPTS_DIR/plesk-init.sh" sync
+    popd >/dev/null
+    exit 0
+fi
+
 load_script 'composer'
 
 # Serialize and export associative array
