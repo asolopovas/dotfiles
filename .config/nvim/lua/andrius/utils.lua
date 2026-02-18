@@ -1,20 +1,23 @@
 local mod = {}
 
 function mod.run_once(name, fn)
-    local post_install_file = vim.fn.stdpath("data") .. "/post_installs/" .. name
+    -- Use state dir for marker files (writable even when data dir is shared/read-only)
+    local state_dir = vim.fn.stdpath("state") .. "/post_installs"
+    local post_install_file = state_dir .. "/" .. name
 
-    if vim.fn.filereadable(post_install_file) == 1 then
+    -- Also check legacy data dir location for backwards compat
+    local legacy_file = vim.fn.stdpath("data") .. "/post_installs/" .. name
+    if vim.fn.filereadable(post_install_file) == 1
+        or vim.fn.filereadable(legacy_file) == 1 then
         return
     end
 
     fn()
 
-    -- Create directory if it doesn't exist
-    vim.fn.mkdir(vim.fn.fnamemodify(post_install_file, ":h"), "p")
-
-    -- Create empty file
+    -- Write marker to state dir (always writable)
+    vim.fn.mkdir(state_dir, "p")
     local file = io.open(post_install_file, "w")
-    file:close()
+    if file then file:close() end
 end
 
 return mod

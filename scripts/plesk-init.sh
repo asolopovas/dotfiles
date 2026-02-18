@@ -219,6 +219,8 @@ setup_nvim() {
     cat > /usr/local/bin/nvim << 'WRAPPER'
 #!/bin/bash
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/nvim-data/nvim/lazy ]; then
+    # Ensure writable dirs exist for plugin state/cache
+    mkdir -p "$HOME/.local/state/nvim" "$HOME/.cache/nvim"
     exec env \
         XDG_CONFIG_HOME=/opt/nvim-config \
         XDG_DATA_HOME=/opt/nvim-data \
@@ -515,7 +517,8 @@ setup_vhosts() {
             "$home_dir/.config" \
             "$home_dir/.local/bin" \
             "$home_dir/.local/share" \
-            "$home_dir/.cache"
+            "$home_dir/.local/state/nvim" \
+            "$home_dir/.cache/nvim"
 
         # Config symlinks
         local src
@@ -543,6 +546,12 @@ setup_vhosts() {
 
         # Plesk node/php binaries
         setup_vhost_plesk_bins "$home_dir"
+
+        # Writable state/cache dirs (telescope history, shada, treesitter cache)
+        chown -R "$plesk_user:" \
+            "$home_dir/.local/state" \
+            "$home_dir/.cache/nvim" \
+            2>/dev/null || true
 
         # Fix symlink ownership
         chown -h "$plesk_user:" \

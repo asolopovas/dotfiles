@@ -15,6 +15,9 @@ return {
 
         telescope.setup({
             defaults = {
+                history = {
+                    path = vim.fn.stdpath("state") .. "/telescope_history",
+                },
                 file_ignore_patterns = {
                     "node_modules/",
                     "vendor/",

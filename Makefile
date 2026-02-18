@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-init test-init-shell test-init-clean test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -14,6 +14,9 @@ help:
 	@echo ""
 	@echo "Testing:"
 	@echo "  test                Run all project tests"
+	@echo "  test-init              Full init.sh + plesk-init.sh deploy test (Docker)"
+	@echo "  test-init-shell        Debug shell inside test container"
+	@echo "  test-init-clean        Remove test image and cache"
 	@echo "  test-ui-snap-window    Run ui-snap-window functionality tests"
 	@echo ""
 	@echo "Git Cache:"
@@ -28,8 +31,17 @@ help:
 	@echo "Usage: make <target>"
 
 # Test targets
-test: test-ui-snap-window
-	@echo "✅ All project tests completed successfully!"
+test: test-init
+	@echo "All project tests completed successfully!"
+
+test-init:
+	@./tests/run-init-tests.sh
+
+test-init-shell:
+	@./tests/run-init-tests.sh shell
+
+test-init-clean:
+	@./tests/run-init-tests.sh clean
 
 test-ui-snap-window: install-test-deps
 	@echo "Running ui-snap-window functionality tests..."
