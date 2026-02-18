@@ -1,7 +1,7 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 local writable = vim.fn.filewritable(vim.fn.stdpath("data")) == 2
 
-if not vim.loop.fs_stat(lazypath) then
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
     if not writable then
         vim.notify("Shared nvim data not found: " .. lazypath, vim.log.levels.ERROR)
         return

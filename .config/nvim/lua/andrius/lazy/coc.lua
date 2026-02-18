@@ -2,7 +2,10 @@ return {
    {
       "neoclide/coc.nvim",
       branch="release",
-    cond = function() return vim.fn.executable("npm") == 1 end, -- Only install if npm is available
+    cond = function()
+        return vim.fn.executable("npm") == 1
+            and vim.fn.filewritable(vim.fn.stdpath("data")) == 2
+    end,
       config = function()
          utils = require("andrius.utils")
          utils.run_once("coc", function()

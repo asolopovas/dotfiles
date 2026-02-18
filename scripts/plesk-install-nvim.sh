@@ -55,7 +55,12 @@ print_color green "Installing nvim wrapper at ${NVIM_WRAPPER}..."
 cat > "$NVIM_WRAPPER" << 'WRAPPER'
 #!/bin/bash
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/nvim-data/nvim/lazy ]; then
-    exec env XDG_DATA_HOME=/opt/nvim-data XDG_CONFIG_HOME=/opt/nvim-config /opt/nvim/bin/nvim "$@"
+    exec env \
+        XDG_CONFIG_HOME=/opt/nvim-config \
+        XDG_DATA_HOME=/opt/nvim-data \
+        XDG_STATE_HOME="$HOME/.local/state" \
+        XDG_CACHE_HOME="$HOME/.cache" \
+        /opt/nvim/bin/nvim "$@"
 fi
 exec /opt/nvim/bin/nvim "$@"
 WRAPPER
