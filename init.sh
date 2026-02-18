@@ -120,10 +120,15 @@ fi
 
 install_essentials
 
-# Plesk root: sync shared data and exit — full bootstrap not needed
-if [ "$(id -u)" -eq 0 ] && command -v plesk &>/dev/null; then
-    print_color green "Plesk server detected — running plesk-init.sh sync"
-    "$SCRIPTS_DIR/plesk-init.sh" sync
+# Plesk root: install or sync shared data, then exit
+if [ "$(id -u)" -eq 0 ] && [ -d /etc/psa ]; then
+    if [ -d /opt/dotfiles ]; then
+        print_color green "Plesk server detected — syncing"
+        "$SCRIPTS_DIR/plesk-init.sh" sync
+    else
+        print_color green "Plesk server detected — full install"
+        "$SCRIPTS_DIR/plesk-init.sh" all
+    fi
     popd >/dev/null
     exit 0
 fi
