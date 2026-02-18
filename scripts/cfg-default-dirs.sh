@@ -2,6 +2,12 @@
 
 source $HOME/dotfiles/globals.sh
 
+# Skip for non-root users with shared dotfiles (managed by plesk-install-dotfiles.sh)
+if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
+    print_color green "Shared dotfiles detected — symlinks managed by plesk-install-dotfiles.sh"
+    return 0 2>/dev/null || exit 0
+fi
+
 print_color green "Creating Defaults Directories ..."
 
 DEFAULT_DIRS=(

@@ -106,6 +106,13 @@ load_script() {
     [[ -f $script_path ]] && source $script_path
 }
 
+# Skip full bootstrap for non-root users with shared dotfiles
+if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
+    print_color green "Shared dotfiles detected at /opt/dotfiles — skipping bootstrap"
+    popd >/dev/null 2>/dev/null || true
+    exit 0
+fi
+
 install_essentials
 load_script 'composer'
 

@@ -53,13 +53,13 @@ if [ -f "$HOME/.local/google-cloud-sdk/path.fish.inc" ]
     . "$HOME/.local/google-cloud-sdk/path.fish.inc"
 end
 
-if [ -f "$HOME/.local/google-cloud-sdk/path.fish.inc" ]
-    set -x LD_LIBRARY_PATH "/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:/home/andrius/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
+if [ -f "$HOME/.rmodel_cuda_setup.sh" ]
+    set -x LD_LIBRARY_PATH "$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
 end
 
 # opencode
-fish_add_path /home/andrius/.opencode/bin
+fish_add_path $HOME/.opencode/bin
 
 function chrome-debug
-    bash /home/andrius/dotfiles/scripts/chrome-debug.sh $argv
+    bash $HOME/dotfiles/scripts/chrome-debug.sh $argv
 end
