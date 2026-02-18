@@ -53,7 +53,7 @@ link_binaries() {
 
 ensure_nvim_config() {
     local nvim_config="$HOME/.config/nvim"
-    local source_config="$DOTFILES_DIR/config/nvim"
+    local source_config="$DOTFILES_DIR/.config/nvim"
     local resolved_target
 
     if [ -L "$nvim_config" ]; then
@@ -205,6 +205,14 @@ sync_existing() {
 
 main() {
     local nvim_bin
+
+    # Shared install: non-root with shared data + wrapper present — skip all installs
+    # Config symlink is NOT created here; it was removed by plesk-install-nvim.sh
+    # and cfg-default-dirs.sh skips it too when shared install is detected.
+    if [ "$(id -u)" -ne 0 ] && [ -d "/opt/nvim-data/nvim/lazy" ] && [ -x "/usr/local/bin/nvim" ]; then
+        mkdir -p "$HOME/.vim/undodir" "$HOME/.local/state/nvim"
+        return
+    fi
 
     if command -v nvim >/dev/null 2>&1; then
         nvim_bin="$(command -v nvim 2>/dev/null || true)"

@@ -61,7 +61,7 @@ if [ "$SYSTEM" = true ]; then
     )
 fi
 
-if [ "$NVIM" = true ]; then
+if [ "$NVIM" = true ] && ! { [ "$(id -u)" -ne 0 ] && [ -d "/opt/nvim-data/nvim/lazy" ]; }; then
     CONFDIRS+=(".config/nvim")
 fi
 

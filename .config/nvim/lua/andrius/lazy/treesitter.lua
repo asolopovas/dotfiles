@@ -10,18 +10,30 @@ return {
             return
         end
 
+        local writable = vim.fn.filewritable(vim.fn.stdpath("data")) == 2
+
+        -- When data dir is read-only (shared Plesk setup), redirect treesitter's
+        -- install dir to a writable user path to suppress the read/write warning.
+        -- Parsers already exist in the shared dir and are found via runtimepath.
+        local parser_install_dir = nil
+        if not writable then
+            parser_install_dir = vim.fn.stdpath("cache") .. "/treesitter"
+            vim.fn.mkdir(parser_install_dir .. "/parser", "p")
+        end
+
         configs.setup({
+            parser_install_dir = parser_install_dir,
+
             -- A list of parser names, or "all"
-            ensure_installed = {
-                "vimdoc", "javascript", "typescript", "lua", "jsdoc", "bash", "php", "fish"
-            },
+            ensure_installed = writable
+                and { "vimdoc", "javascript", "typescript", "lua", "jsdoc", "bash", "php", "fish" }
+                or {},
 
             -- Install parsers synchronously (only applied to `ensure_installed`)
             sync_install = false,
 
-            -- Automatically install missing parsers when entering buffer
-            -- Recommendation: set to false if you don"t have `tree-sitter` CLI installed locally
-            auto_install = true,
+            -- Disable auto-install when data dir is read-only (shared Plesk setup)
+            auto_install = writable,
 
             indent = {
                 enable = true
