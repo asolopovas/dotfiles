@@ -93,7 +93,8 @@ setup_file() {
 @test "plesk-nvim: wrapper at /usr/local/bin/nvim" {
     [ -x /usr/local/bin/nvim ]
     run cat /usr/local/bin/nvim
-    [[ "$output" == *"XDG_CONFIG_HOME=/opt/nvim-config"* ]]
+    # Must NOT override XDG_CONFIG_HOME (breaks child processes like fish)
+    [[ "$output" != *"XDG_CONFIG_HOME="* ]]
     [[ "$output" == *"XDG_DATA_HOME=/opt/nvim-data"* ]]
     [[ "$output" == *"XDG_STATE_HOME"* ]]
     [[ "$output" == *"mkdir -p"* ]]
@@ -257,6 +258,12 @@ setup_file() {
     local h="/var/www/vhosts/test1.com"
     # Mock plesk has node and php binaries
     [ -L "$h/.local/bin/node" ] || [ -L "$h/.local/bin/php" ]
+}
+
+@test "vhost: nvim config symlinked to shared config" {
+    local h="/var/www/vhosts/test1.com"
+    [ -L "$h/.config/nvim" ]
+    [ "$(readlink "$h/.config/nvim")" = "/opt/nvim-config/nvim" ]
 }
 
 @test "vhost: stale per-user dirs absent" {

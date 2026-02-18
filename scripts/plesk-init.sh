@@ -221,8 +221,9 @@ setup_nvim() {
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/nvim-data/nvim/lazy ]; then
     # Ensure writable dirs exist for plugin state/cache
     mkdir -p "$HOME/.local/state/nvim" "$HOME/.cache/nvim"
+    # Only override data/state/cache — config comes from ~/.config/nvim
+    # symlink so XDG_CONFIG_HOME stays untouched for child processes (fish etc.)
     exec env \
-        XDG_CONFIG_HOME=/opt/nvim-config \
         XDG_DATA_HOME=/opt/nvim-data \
         XDG_STATE_HOME="$HOME/.local/state" \
         XDG_CACHE_HOME="$HOME/.cache" \
@@ -542,7 +543,8 @@ setup_vhosts() {
         for d in "${CLEANUP_DIRS[@]}"; do
             [[ -d "$home_dir/$d" ]] && rm -rf "${home_dir:?}/$d"
         done
-        [[ -L "$home_dir/.config/nvim" ]] && rm -f "$home_dir/.config/nvim"
+        # Nvim config: symlink so nvim finds shared config without overriding XDG_CONFIG_HOME
+        replace_with_symlink /opt/nvim-config/nvim "$home_dir/.config/nvim"
 
         # Plesk node/php binaries
         setup_vhost_plesk_bins "$home_dir"
@@ -564,6 +566,7 @@ setup_vhosts() {
             "$home_dir/.config/.func" \
             "$home_dir/.config/.aliasrc" \
             "$home_dir/.config/tmux" \
+            "$home_dir/.config/nvim" \
             "$home_dir/.local/bin/helpers" \
             2>/dev/null || true
 
