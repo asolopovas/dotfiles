@@ -90,7 +90,10 @@ for src in "${CONFDIRS[@]}"; do
     if [ -e "$destPath" ] || [ -L "$destPath" ]; then
         rm -rf "$destPath"
     fi
-    ln -sf $srcPath $destPath
+
+    # Ensure parent directory exists before creating symlink
+    mkdir -p "$(dirname "$destPath")"
+    ln -sf "$srcPath" "$destPath"
 done
 
 ln -sf $DOTFILES_DIR/helpers $HOME/.local/bin

@@ -25,7 +25,7 @@ declare -A features=(
     [UNATTENDED]=${UNATTENDED:-true}
     [OHMYFISH]=${OHMYFISH:-true}
     [NVIM]=${NVIM:-true}
-    [CHANGE_SHELL]=${CHANGE_SHELL:-false}
+    [CHANGE_SHELL]=${CHANGE_SHELL:-true}
     [CARGO]=${CARGO:-false}
     [FORCE]=${FORCE:-false}
     [OHMYBASH]=${OHMYBASH:-false}
@@ -56,7 +56,7 @@ fi
 # Create essential directories
 mkdir -p "$HOME/.tmp" "$HOME/.config" "$HOME/.local/bin"
 
-pushd "$HOME" >/dev/null
+cd "$HOME"
 
 cleanup() {
     rm -rf "$HOME/.config/nvim"
@@ -114,7 +114,6 @@ load_script() {
 # Skip full bootstrap for non-root users with shared dotfiles
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
     print_color green "Shared dotfiles detected at /opt/dotfiles — skipping bootstrap"
-    popd >/dev/null 2>/dev/null || true
     exit 0
 fi
 
@@ -129,7 +128,6 @@ if [ "$(id -u)" -eq 0 ] && [ "$HOME" = "/root" ] && [ -d /etc/psa ]; then
         print_color green "Plesk server detected — full install"
         "$SCRIPTS_DIR/plesk-init.sh" all
     fi
-    popd >/dev/null
     exit 0
 fi
 
@@ -205,10 +203,10 @@ if [ "${features[CHANGE_SHELL]}" = true ]; then
     print_color green "CHANGING SHELL TO FISH"
 
     if command -v fish &>/dev/null; then
-        chsh -s $(which fish)
+        $SUDO chsh -s "$(which fish)" "$(whoami)"
     else
         print_color red "Fish not installed. Please install fish and run this script again."
     fi
 fi
 
-popd >/dev/null
+

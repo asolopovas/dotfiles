@@ -1,7 +1,11 @@
 require("andrius.set")
 require("andrius.remap")
 require("andrius.lazy_init")
-require('sg').setup()
+
+local sg_ok, sg = pcall(require, 'sg')
+if sg_ok then
+    sg.setup()
+end
 
 local augroup = vim.api.nvim_create_augroup
 local AUGroup = augroup('AUGroup', {})

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -eu
 
 INSTALL_ARCHIVE="nvim-linux-x86_64.tar.gz"
 URL="https://github.com/neovim/neovim/releases/latest/download/$INSTALL_ARCHIVE"
@@ -173,24 +172,24 @@ install_user() {
     local bin="$dir/bin"
 
     mkdir -p "$bin"
-    download_and_extract "$dir"
+    download_and_extract "$dir" || { echo "Failed to download nvim"; return 1; }
     reset_install_dir "$dir/nvim"
     mv "$dir/nvim-linux-x86_64" "$dir/nvim"
     link_binaries "$dir/nvim/bin/nvim" "$bin/nvim" "$bin/vim"
     ensure_nvim_config
-    ensure_node
-    ensure_deno
+    ensure_node || echo "Warning: Node setup failed (non-fatal)"
+    ensure_deno || echo "Warning: Deno setup failed (non-fatal)"
     sync_plugins "$dir/nvim/bin/nvim"
 }
 
 install_root() {
     reset_install_dir /opt/nvim
-    download_and_extract /opt
+    download_and_extract /opt || { echo "Failed to download nvim"; return 1; }
     mv /opt/nvim-linux-x86_64 /opt/nvim
     link_binaries "/opt/nvim/bin/nvim" "/usr/bin/nvim" "/usr/bin/vim"
     ensure_nvim_config
-    ensure_node
-    ensure_deno
+    ensure_node || echo "Warning: Node setup failed (non-fatal)"
+    ensure_deno || echo "Warning: Deno setup failed (non-fatal)"
     sync_plugins /opt/nvim/bin/nvim
 }
 
@@ -198,8 +197,8 @@ sync_existing() {
     local nvim_bin=$1
 
     ensure_nvim_config
-    ensure_node
-    ensure_deno
+    ensure_node || echo "Warning: Node setup failed (non-fatal)"
+    ensure_deno || echo "Warning: Deno setup failed (non-fatal)"
     sync_plugins "$nvim_bin"
 }
 
