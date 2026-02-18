@@ -121,7 +121,7 @@ fi
 install_essentials
 
 # Plesk root: install or sync shared data, then exit
-if [ "$(id -u)" -eq 0 ] && [ -d /etc/psa ]; then
+if [ "$(id -u)" -eq 0 ] && [ "$HOME" = "/root" ] && [ -d /etc/psa ]; then
     if [ -d /opt/dotfiles ]; then
         print_color green "Plesk server detected — syncing"
         "$SCRIPTS_DIR/plesk-init.sh" sync
