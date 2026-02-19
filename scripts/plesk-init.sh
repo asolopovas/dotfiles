@@ -517,9 +517,7 @@ setup_vhosts() {
         mkdir -p \
             "$home_dir/.config" \
             "$home_dir/.local/bin" \
-            "$home_dir/.local/share" \
-            "$home_dir/.local/state/nvim" \
-            "$home_dir/.cache/nvim"
+            "$home_dir/.local/share"
 
         # Config symlinks
         local src
@@ -538,18 +536,24 @@ setup_vhosts() {
             chown -h "$plesk_user:" "$home_dir/.config/opencode" 2>/dev/null || true
         fi
 
-        # Cleanup stale per-user installs
+        # Cleanup stale per-user installs (must run before creating nvim dirs)
         local d
         for d in "${CLEANUP_DIRS[@]}"; do
             [[ -d "$home_dir/$d" ]] && rm -rf "${home_dir:?}/$d"
         done
+
         # Nvim config: symlink so nvim finds shared config without overriding XDG_CONFIG_HOME
         replace_with_symlink /opt/nvim-config/nvim "$home_dir/.config/nvim"
+
+        # Writable nvim state/cache dirs (created after cleanup so they survive)
+        mkdir -p \
+            "$home_dir/.local/state/nvim" \
+            "$home_dir/.cache/nvim"
 
         # Plesk node/php binaries
         setup_vhost_plesk_bins "$home_dir"
 
-        # Writable state/cache dirs (telescope history, shada, treesitter cache)
+        # Fix ownership on writable dirs
         chown -R "$plesk_user:" \
             "$home_dir/.local/state" \
             "$home_dir/.cache/nvim" \

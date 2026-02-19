@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-stduser test-plesk test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -13,10 +13,9 @@ help:
 	@echo "  install               Install everything (Git cache)"
 	@echo ""
 	@echo "Testing (Docker — 3 suites):"
-	@echo "  test                  Run ALL suites (stduser + plesk + vhost)"
-	@echo "  test-stduser          Stduser bootstrap + script unit tests"
-	@echo "  test-plesk            Plesk root bootstrap + vhost assertions"
-	@echo "  test-init-shell       Debug shell inside test container"
+	@echo "  test                  Run bats tests (auto-bootstraps on first run)"
+	@echo "  test-bootstrap        Run init.sh bootstrap and save snapshot (~5min)"
+	@echo "  test-init-shell       Debug shell inside bootstrapped container"
 	@echo "  test-init-clean       Remove test images and cache"
 	@echo "  test-init-rebuild     Force full rebuild then run all tests"
 	@echo ""
@@ -37,11 +36,8 @@ help:
 test:
 	@./tests/run-init-tests.sh
 
-test-stduser:
-	@./tests/run-init-tests.sh stduser
-
-test-plesk:
-	@./tests/run-init-tests.sh plesk
+test-bootstrap:
+	@./tests/run-init-tests.sh bootstrap
 
 test-init-shell:
 	@./tests/run-init-tests.sh shell

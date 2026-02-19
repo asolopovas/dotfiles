@@ -2,23 +2,27 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Docker test runner.  Two-layer image:
-#   dotfiles-base       Heavy deps + mock Plesk env (built once, cached)
-#   dotfiles-init-test  Thin entrypoint (rebuilds in <1s)
+# Docker test runner — three-layer image strategy:
 #
-# Usage:
-#   ./tests/run-init-tests.sh              Run ALL 3 suites
-#   ./tests/run-init-tests.sh stduser      Stduser bootstrap + script tests
-#   ./tests/run-init-tests.sh plesk        Plesk root + vhost tests
-#   ./tests/run-init-tests.sh shell        Debug shell
-#   ./tests/run-init-tests.sh clean        Remove images
-#   ./tests/run-init-tests.sh rebuild      Force full rebuild then test
+#   dotfiles-base          Heavy deps + mock Plesk env (built once, cached)
+#   dotfiles-bootstrapped  Base + both bootstraps done (stduser + plesk)
+#                          Created by 'make test-bootstrap', committed as image.
+#
+# Workflow:
+#   make test-bootstrap    Run init.sh for both users, commit snapshot (~5min)
+#   make test              Run bats from snapshot (<30s). Auto-bootstraps if needed.
+#   make test-init-shell   Debug shell in bootstrapped container
+#   make test-init-clean   Remove all images
+#
+# The key insight: bootstrapping (downloading bun/deno/nvim/node) is slow
+# and only needs to run once. Subsequent 'make test' runs mount the latest
+# test files and run bats against the already-installed state.
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BASE_IMAGE="dotfiles-base"
-TEST_IMAGE="dotfiles-init-test"
+BOOT_IMAGE="dotfiles-bootstrapped"
 CONTAINER="dotfiles-test-run"
 
 log()  { printf '\033[0;32m%s\033[0m\n' "$*"; }
@@ -32,44 +36,77 @@ require_docker() {
 
 build_base() {
     if docker image inspect "$BASE_IMAGE" &>/dev/null; then
-        info "Base image cached. Use 'make test-init-clean' to force rebuild."
+        info "Base image cached."
         return 0
     fi
     log "Building base image (first time, will be cached)..."
     docker build -f "$SCRIPT_DIR/Dockerfile.base" -t "$BASE_IMAGE" "$REPO_DIR"
 }
 
-build_test() {
-    log "Building test image..."
-    docker build -f "$SCRIPT_DIR/Dockerfile.init-test" -t "$TEST_IMAGE" "$REPO_DIR"
+# Run both bootstraps inside a container, then commit as dotfiles-bootstrapped
+do_bootstrap() {
+    build_base
+
+    # Build thin entrypoint image (temporary, for bootstrap only)
+    local tmp_image="dotfiles-bootstrap-runner"
+    docker build -f "$SCRIPT_DIR/Dockerfile.init-test" -t "$tmp_image" "$REPO_DIR"
+
+    log "Running bootstrap (stduser + plesk)..."
+    docker rm -f "$CONTAINER" 2>/dev/null || true
+    docker run --name "$CONTAINER" \
+        -v "$REPO_DIR:/mnt/dotfiles:ro" \
+        "$tmp_image" bootstrap
+
+    log "Committing bootstrapped snapshot..."
+    docker commit "$CONTAINER" "$BOOT_IMAGE"
+    docker rm -f "$CONTAINER" 2>/dev/null || true
+    docker rmi -f "$tmp_image" 2>/dev/null || true
+
+    log "Snapshot saved as $BOOT_IMAGE"
 }
 
-run_container() {
-    local mode="$1"
-    local it_flag=""
-    [[ "$mode" == "shell" ]] && it_flag="-it"
+# Run bats suites from the bootstrapped snapshot
+do_test() {
+    if ! docker image inspect "$BOOT_IMAGE" &>/dev/null; then
+        info "No bootstrap snapshot found. Running bootstrap first..."
+        do_bootstrap
+    fi
+
+    log "Running bats tests..."
+    docker rm -f "$CONTAINER" 2>/dev/null || true
+    docker run --name "$CONTAINER" --rm \
+        -v "$REPO_DIR:/mnt/dotfiles:ro" \
+        --entrypoint /entrypoint.sh \
+        "$BOOT_IMAGE" test
+}
+
+do_shell() {
+    if ! docker image inspect "$BOOT_IMAGE" &>/dev/null; then
+        info "No bootstrap snapshot found. Running bootstrap first..."
+        do_bootstrap
+    fi
 
     docker rm -f "$CONTAINER" 2>/dev/null || true
-    docker run --name "$CONTAINER" --rm $it_flag \
+    docker run --name "$CONTAINER" --rm -it \
         -v "$REPO_DIR:/mnt/dotfiles:ro" \
-        "$TEST_IMAGE" "$mode"
+        --entrypoint /entrypoint.sh \
+        "$BOOT_IMAGE" shell
 }
 
 do_clean() {
     log "Cleaning..."
     docker rm -f "$CONTAINER" 2>/dev/null || true
-    docker rmi -f "$TEST_IMAGE" "$BASE_IMAGE" 2>/dev/null || true
+    docker rmi -f "$BOOT_IMAGE" "$BASE_IMAGE" "dotfiles-bootstrap-runner" \
+        "dotfiles-init-test" 2>/dev/null || true
     log "Done"
 }
 
 require_docker
 
 case "${1:-}" in
-    clean)    do_clean ;;
-    rebuild)  do_clean; build_base; build_test; run_container test-all ;;
-    build)    build_base; build_test ;;
-    shell)    build_base; build_test; run_container shell ;;
-    stduser)  build_base; build_test; run_container test-stduser ;;
-    plesk)    build_base; build_test; run_container test-plesk ;;
-    *)        build_base; build_test; run_container test-all ;;
+    clean)     do_clean ;;
+    bootstrap) do_bootstrap ;;
+    rebuild)   do_clean; do_bootstrap; do_test ;;
+    shell)     do_shell ;;
+    *)         do_test ;;
 esac
