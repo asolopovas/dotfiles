@@ -38,26 +38,28 @@ teardown() {
 #  ops-update-symlinks.sh
 # =====================================================================
 
+symlinks_run() {
+    # Unset XDG_CONFIG_HOME so the script derives it from HOME.
+    # CI runners may export XDG_CONFIG_HOME pointing elsewhere.
+    env -u XDG_CONFIG_HOME \
+        HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
+        bash "$REPO_DIR/scripts/ops-update-symlinks.sh" "$@"
+}
+
 @test "symlinks: creates all expected symlinks" {
-    local real_home="$FAKE_HOME"
-    run bash -c "HOME='$real_home' DOTFILES_DIR='$real_home/dotfiles' bash '$REPO_DIR/scripts/ops-update-symlinks.sh' && ls -la '$real_home/.config/'"
-    echo "$output" >&2
+    symlinks_run
 
-    HOME="$real_home" DOTFILES_DIR="$real_home/dotfiles" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
-
-    [ -L "$real_home/.config/fish" ]
-    [ -L "$real_home/.config/nvim" ]
-    [ -L "$real_home/.config/tmux" ]
-    [ -L "$real_home/.config/.aliasrc" ]
-    [ -L "$real_home/.config/.func" ]
-    [ -L "$real_home/.claude/settings.json" ]
-    [ -L "$real_home/.claude/commands" ]
+    [ -L "$FAKE_HOME/.config/fish" ]
+    [ -L "$FAKE_HOME/.config/nvim" ]
+    [ -L "$FAKE_HOME/.config/tmux" ]
+    [ -L "$FAKE_HOME/.config/.aliasrc" ]
+    [ -L "$FAKE_HOME/.config/.func" ]
+    [ -L "$FAKE_HOME/.claude/settings.json" ]
+    [ -L "$FAKE_HOME/.claude/commands" ]
 }
 
 @test "symlinks: targets point to dotfiles repo" {
-    HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
+    symlinks_run
 
     local target
     target=$(readlink "$FAKE_HOME/.config/nvim")
@@ -65,9 +67,8 @@ teardown() {
 }
 
 @test "symlinks: idempotent (second run succeeds)" {
-    HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
-    run bash -c "HOME='$FAKE_HOME' DOTFILES_DIR='$FAKE_HOME/dotfiles' bash '$REPO_DIR/scripts/ops-update-symlinks.sh'"
+    symlinks_run
+    run symlinks_run
     [[ "$status" -eq 0 ]]
 }
 
@@ -75,8 +76,7 @@ teardown() {
     mkdir -p "$FAKE_HOME/.config"
     ln -s /old/target "$FAKE_HOME/.config/nvim"
 
-    HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
+    symlinks_run
 
     local target
     target=$(readlink "$FAKE_HOME/.config/nvim")
@@ -84,7 +84,9 @@ teardown() {
 }
 
 @test "symlinks: rejects XDG_CONFIG_HOME inside repo" {
-    run bash -c "HOME='$FAKE_HOME' DOTFILES_DIR='$FAKE_HOME/dotfiles' XDG_CONFIG_HOME='$FAKE_HOME/dotfiles/.config' bash '$REPO_DIR/scripts/ops-update-symlinks.sh'"
+    run env XDG_CONFIG_HOME="$FAKE_HOME/dotfiles/.config" \
+        HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
+        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
     [[ "$status" -eq 1 ]]
     [[ "$output" == *"Refusing"* ]]
 }
@@ -93,7 +95,8 @@ teardown() {
     local custom_xdg="$TMPDIR/custom-config"
     mkdir -p "$custom_xdg"
 
-    HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" XDG_CONFIG_HOME="$custom_xdg" \
+    env -u XDG_CONFIG_HOME \
+        HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" XDG_CONFIG_HOME="$custom_xdg" \
         bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
 
     [ -L "$custom_xdg/fish" ]
