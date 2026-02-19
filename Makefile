@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-globals test-scripts test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -12,8 +12,13 @@ help:
 	@echo "Main Installation:"
 	@echo "  install               Install everything (Git cache)"
 	@echo ""
-	@echo "Testing (Docker — 3 suites):"
-	@echo "  test                  Run bats tests (auto-bootstraps on first run)"
+	@echo "Testing (local, fast — core script tests):"
+	@echo "  test                  Run all local bats tests (~2-5s)"
+	@echo "  test-globals          Run globals.sh unit tests"
+	@echo "  test-scripts          Run script unit tests"
+	@echo ""
+	@echo "Testing (Docker — full integration):"
+	@echo "  test-init             Run Docker-based init.sh integration tests"
 	@echo "  test-bootstrap        Run init.sh bootstrap and save snapshot (~5min)"
 	@echo "  test-init-shell       Debug shell inside bootstrapped container"
 	@echo "  test-init-clean       Remove test images and cache"
@@ -31,9 +36,20 @@ help:
 	@echo "  clean-tests           Clean up test artifacts"
 	@echo "  install-test-deps     Install local testing dependencies"
 
-# ---------- Docker test targets ----------
+# ---------- Local fast test targets ----------
 
-test:
+test: install-test-deps
+	@./tests/run-tests.sh
+
+test-globals: install-test-deps
+	@./tests/run-tests.sh globals
+
+test-scripts: install-test-deps
+	@./tests/run-tests.sh scripts
+
+# ---------- Docker integration test targets ----------
+
+test-init:
 	@./tests/run-init-tests.sh
 
 test-bootstrap:
@@ -65,15 +81,6 @@ clean-tests:
 	@echo "Test artifacts cleaned"
 
 install-test-deps:
-	@echo "Checking test dependencies..."
-	@if ! command -v gum >/dev/null 2>&1; then \
-		echo "Installing gum..."; \
-		if command -v apt-get >/dev/null 2>&1; then \
-			$(SUDO_NO_PROXY) apt-get update -qq && sudo apt-get install -y gum; \
-		elif command -v brew >/dev/null 2>&1; then \
-			brew install gum; \
-		fi \
-	fi
 	@if ! command -v bats >/dev/null 2>&1; then \
 		echo "Installing bats..."; \
 		if command -v apt-get >/dev/null 2>&1; then \
@@ -82,8 +89,6 @@ install-test-deps:
 			brew install bats-core; \
 		fi \
 	fi
-	@chmod +x tests/bash/*.sh 2>/dev/null || true
-	@echo "Dependencies ready"
 
 # Main installation target
 install: install-git-cache
