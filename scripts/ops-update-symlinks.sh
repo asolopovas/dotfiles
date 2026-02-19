@@ -18,7 +18,7 @@ while IFS='|' read -r src dst; do
   [ -n "$src" ] || continue
   dstdir=$(dirname "$dst")
   [ -d "$dstdir" ] || mkdir -p "$dstdir"
-  [ -L "$dst" ] && rm -f "$dst"
+  [ -L "$dst" ] && rm -f "$dst" || true
   ln -s "$src" "$dst"
 done <<EOF
 $DOTFILES_DIR/.config/claude/settings.json|$HOME/.claude/settings.json
