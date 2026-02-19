@@ -142,7 +142,10 @@ do_test() {
     # Summary
     local total=$((PASS + FAIL))
     log "SUMMARY: $PASS/$total suites passed"
-    [ "$FAIL" -gt 0 ] && { fail "$FAIL suite(s) failed"; exit 1; }
+    if [ "$FAIL" -gt 0 ]; then
+        fail "$FAIL suite(s) failed"
+        exit 1
+    fi
 }
 
 # ---- Main ----

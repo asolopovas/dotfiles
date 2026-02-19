@@ -76,6 +76,7 @@ do_test() {
     docker rm -f "$CONTAINER" 2>/dev/null || true
     docker run --name "$CONTAINER" --rm \
         -v "$REPO_DIR:/mnt/dotfiles:ro" \
+        -v "$SCRIPT_DIR/entrypoint.sh:/entrypoint.sh:ro" \
         --entrypoint /entrypoint.sh \
         "$BOOT_IMAGE" test
 }
@@ -89,6 +90,7 @@ do_shell() {
     docker rm -f "$CONTAINER" 2>/dev/null || true
     docker run --name "$CONTAINER" --rm -it \
         -v "$REPO_DIR:/mnt/dotfiles:ro" \
+        -v "$SCRIPT_DIR/entrypoint.sh:/entrypoint.sh:ro" \
         --entrypoint /entrypoint.sh \
         "$BOOT_IMAGE" shell
 }
