@@ -152,44 +152,62 @@ cmd_update() {
     log "Checking latest version..."
 
     local commit; commit=$(curl -fsSL \
-        "https://update.code.visualstudio.com/api/commits/latest/stable" \
-        2>/dev/null | python3 -c "import sys,json;print(json.load(sys.stdin)[0])") \
+        "https://update.code.visualstudio.com/api/latest/server-linux-x64/stable" \
+        2>/dev/null | python3 -c "import sys,json;print(json.load(sys.stdin)['version'])") \
         || error "Failed to fetch latest commit"
 
-    [[ -d "$SHARED/cli/servers/Stable-$commit" ]] && { log "Already up to date"; return 0; }
+    if [[ -d "$SHARED/cli/servers/Stable-$commit" ]]; then
+        log "Server already up to date"
+    else
+        log "Downloading $commit..."
+        local tmp; tmp=$(mktemp -d); trap "rm -rf '$tmp'" EXIT
 
-    log "Downloading $commit..."
-    local tmp; tmp=$(mktemp -d); trap "rm -rf '$tmp'" EXIT
+        curl -fsSL "https://update.code.visualstudio.com/commit:$commit/server-linux-x64/stable" \
+            -o "$tmp/server.tar.gz" || error "Download failed"
+        mkdir -p "$tmp/x" && tar -xzf "$tmp/server.tar.gz" -C "$tmp/x"
+        local ex; ex=$(ls -1d "$tmp/x"/*/ | head -1)
+        mkdir -p "$SHARED/cli/servers/Stable-$commit"
+        mv "$ex" "$SHARED/cli/servers/Stable-$commit/server"
 
-    curl -fsSL "https://update.code.visualstudio.com/commit:$commit/server-linux-x64/stable" \
-        -o "$tmp/server.tar.gz" || error "Download failed"
-    mkdir -p "$tmp/x" && tar -xzf "$tmp/server.tar.gz" -C "$tmp/x"
-    local ex; ex=$(ls -1d "$tmp/x"/*/ | head -1)
-    mkdir -p "$SHARED/cli/servers/Stable-$commit"
-    mv "$ex" "$SHARED/cli/servers/Stable-$commit/server"
+        if curl -fsSL "https://update.code.visualstudio.com/commit:$commit/cli-linux-x64/stable" \
+            -o "$tmp/cli.tar.gz" 2>/dev/null; then
+            tar -xzf "$tmp/cli.tar.gz" -C "$tmp/" 2>/dev/null
+            [[ -f "$tmp/code" ]] && mv "$tmp/code" "$SHARED/code-$commit"
+        fi
 
-    if curl -fsSL "https://update.code.visualstudio.com/commit:$commit/cli-linux-x64/stable" \
-        -o "$tmp/cli.tar.gz" 2>/dev/null; then
-        tar -xzf "$tmp/cli.tar.gz" -C "$tmp/" 2>/dev/null
-        [[ -f "$tmp/code" ]] && mv "$tmp/code" "$SHARED/code-$commit"
+        fix_perms
+        while IFS= read -r h; do migrate_one "$h"; done < <(all_vhosts)
+        trap - EXIT; rm -rf "$tmp"
     fi
 
-    fix_perms
-    while IFS= read -r h; do migrate_one "$h"; done < <(all_vhosts)
-    trap - EXIT; rm -rf "$tmp"
+    cmd_update_ext
     log "Update complete"
+}
+
+latest_code_server() {
+    local srv; srv=$(ls -1dt "$SHARED"/cli/servers/Stable-*/server 2>/dev/null | head -1)
+    [[ -n "$srv" ]] || error "No server found"
+    echo "$srv/bin/code-server"
 }
 
 cmd_install_ext() {
     need_root
     [[ -d "$SHARED" ]] || error "Run 'setup' first"
     local id="${1:-}"; [[ -n "$id" ]] || error "Usage: $0 install-ext <extension-id>"
-    local cli; cli=$(ls -1t "$SHARED"/code-* 2>/dev/null | head -1)
-    [[ -n "$cli" ]] || error "No CLI binary found"
-    "$cli" --extensions-dir "$SHARED/extensions" --install-extension "$id" \
-        --accept-server-license-terms 2>&1 || warn "Install may have failed"
+    "$(latest_code_server)" --extensions-dir "$SHARED/extensions" \
+        --install-extension "$id" --force 2>&1 || warn "Install may have failed"
     rebuild_ext_json && fix_perms
     log "Extension installed"
+}
+
+cmd_update_ext() {
+    need_root
+    [[ -d "$SHARED" ]] || error "Run 'setup' first"
+    log "Updating all extensions..."
+    "$(latest_code_server)" --extensions-dir "$SHARED/extensions" \
+        --update-extensions 2>&1 || warn "Some extensions may have failed to update"
+    rebuild_ext_json && fix_perms
+    log "Extensions updated"
 }
 
 cmd_status() {
@@ -272,6 +290,7 @@ case "${1:-}" in
     migrate)     cmd_migrate "${2:-}" ;;
     update)      cmd_update ;;
     install-ext) cmd_install_ext "${2:-}" ;;
+    update-ext)  cmd_update_ext ;;
     status)      cmd_status ;;
     cleanup)     cmd_cleanup ;;
     cleanup-ext) cmd_cleanup_ext ;;
@@ -284,7 +303,8 @@ Usage: ops-vscode-server.sh <command> [args]
 
   setup              Seed shared dir from existing vhosts
   migrate [domain]   Migrate one or all vhosts to shared server
-  update             Download latest VS Code Server
+  update             Download latest server + update extensions
+  update-ext         Update extensions only
   install-ext <id>   Install extension to shared dir
   status             Show shared vs per-vhost usage
   cleanup            Remove old server versions (keep 2)
