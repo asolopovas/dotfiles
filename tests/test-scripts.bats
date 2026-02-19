@@ -40,6 +40,9 @@ teardown() {
 
 @test "symlinks: creates all expected symlinks" {
     local real_home="$FAKE_HOME"
+    run bash -c "HOME='$real_home' DOTFILES_DIR='$real_home/dotfiles' bash '$REPO_DIR/scripts/ops-update-symlinks.sh' && ls -la '$real_home/.config/'"
+    echo "$output" >&2
+
     HOME="$real_home" DOTFILES_DIR="$real_home/dotfiles" \
         bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
 
