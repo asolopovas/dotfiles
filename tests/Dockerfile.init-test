@@ -1,42 +1,7 @@
-FROM ubuntu:24.04
+FROM dotfiles-base
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV HOME=/root
-
-# Minimal base -- init.sh and plesk-init.sh install the rest
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends \
-        git curl ca-certificates sudo bats rsync cmake build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-# ---------- Mock Plesk environment ----------
-# /etc/psa triggers Plesk detection in init.sh
-RUN mkdir -p /etc/psa /opt/plesk/node/22.0.0/bin /opt/plesk/php/8.3/bin
-
-# Mock plesk binary -- only responds to "db" subcommand
-RUN printf '#!/bin/bash\n\
-if [ "$1" = "db" ]; then\n\
-    printf "test1.com\\ttestuser1\\t/var/www/vhosts/test1.com\\n"\n\
-    printf "test2.org\\ttestuser2\\t/var/www/vhosts/test2.org\\n"\n\
-fi\n' > /usr/local/bin/plesk && chmod 755 /usr/local/bin/plesk
-
-# Mock node/php binaries (just need to exist for symlink test)
-RUN touch /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php && \
-    chmod 755 /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php
-
-# Create mock vhost users and home dirs
-RUN for u in testuser1 testuser2; do \
-        useradd -m -s /bin/bash "$u" 2>/dev/null || true; \
-    done && \
-    mkdir -p /var/www/vhosts/test1.com /var/www/vhosts/test2.org && \
-    chown testuser1: /var/www/vhosts/test1.com && \
-    chown testuser2: /var/www/vhosts/test2.org && \
-    usermod -d /var/www/vhosts/test1.com testuser1 && \
-    usermod -d /var/www/vhosts/test2.org testuser2
-
-# Fish shell (needed by omf setup in plesk-init.sh)
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends fish && \
-    rm -rf /var/lib/apt/lists/*
+COPY tests/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 WORKDIR /root
+ENTRYPOINT ["/entrypoint.sh"]

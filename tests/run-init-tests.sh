@@ -2,115 +2,74 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Runs full init.sh + plesk-init.sh deployment tests inside Docker.
+# Docker test runner.  Two-layer image:
+#   dotfiles-base       Heavy deps + mock Plesk env (built once, cached)
+#   dotfiles-init-test  Thin entrypoint (rebuilds in <1s)
 #
 # Usage:
-#   ./tests/run-init-tests.sh           Build image + run tests
-#   ./tests/run-init-tests.sh build     Build image only
-#   ./tests/run-init-tests.sh shell     Drop into container for debugging
-#   ./tests/run-init-tests.sh clean     Remove image and build cache
+#   ./tests/run-init-tests.sh              Run ALL 3 suites
+#   ./tests/run-init-tests.sh stduser      Stduser bootstrap + script tests
+#   ./tests/run-init-tests.sh plesk        Plesk root + vhost tests
+#   ./tests/run-init-tests.sh shell        Debug shell
+#   ./tests/run-init-tests.sh clean        Remove images
+#   ./tests/run-init-tests.sh rebuild      Force full rebuild then test
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-IMAGE_NAME="dotfiles-init-test"
-CONTAINER_NAME="dotfiles-init-test-run"
+BASE_IMAGE="dotfiles-base"
+TEST_IMAGE="dotfiles-init-test"
+CONTAINER="dotfiles-test-run"
 
-log() { printf '\033[0;32m%s\033[0m\n' "$*"; }
-err() { printf '\033[31m%s\033[0m\n' "$*" >&2; }
+log()  { printf '\033[0;32m%s\033[0m\n' "$*"; }
+err()  { printf '\033[0;31m%s\033[0m\n' "$*" >&2; }
+info() { printf '\033[0;33m%s\033[0m\n' "$*"; }
 
 require_docker() {
-    if ! command -v docker &>/dev/null; then
-        err "Docker is required. Install it first."
-        exit 1
-    fi
-    if ! docker info &>/dev/null 2>&1; then
-        err "Docker daemon not running."
-        exit 1
-    fi
+    command -v docker &>/dev/null || { err "Docker required."; exit 1; }
+    docker info &>/dev/null 2>&1  || { err "Docker daemon not running."; exit 1; }
 }
 
-build_image() {
+build_base() {
+    if docker image inspect "$BASE_IMAGE" &>/dev/null; then
+        info "Base image cached. Use 'make test-init-clean' to force rebuild."
+        return 0
+    fi
+    log "Building base image (first time, will be cached)..."
+    docker build -f "$SCRIPT_DIR/Dockerfile.base" -t "$BASE_IMAGE" "$REPO_DIR"
+}
+
+build_test() {
     log "Building test image..."
-    docker build \
-        -f "$SCRIPT_DIR/Dockerfile.init-test" \
-        -t "$IMAGE_NAME" \
-        "$REPO_DIR"
+    docker build -f "$SCRIPT_DIR/Dockerfile.init-test" -t "$TEST_IMAGE" "$REPO_DIR"
 }
 
-# Bootstrap script run inside the container.
-# Simulates: bash -c "$(curl -fsSL .../init.sh)"
-read -r -d '' CONTAINER_SCRIPT << 'INNER' || true
-set -euo pipefail
+run_container() {
+    local mode="$1"
+    local it_flag=""
+    [[ "$mode" == "shell" ]] && it_flag="-it"
 
-# Copy repo files (mount is read-only)
-cp -a /mnt/dotfiles /root/dotfiles
-
-# init.sh expects ~/dotfiles to either not exist (clone) or be a git repo
-# (fetch+reset). Create a minimal git repo so the update path succeeds.
-cd /root/dotfiles
-git init -q
-git add -A
-git -c user.name=test -c user.email=test@test commit -q -m "init" --allow-empty
-
-# Run the full bootstrap
-export CHANGE_SHELL=false
-bash /root/dotfiles/init.sh
-
-# Run bats tests
-bats /root/dotfiles/tests/test-init.bats --tap
-INNER
-
-run_tests() {
-    log "Running init deployment tests..."
-    docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-
-    docker run \
-        --name "$CONTAINER_NAME" \
-        --rm \
+    docker rm -f "$CONTAINER" 2>/dev/null || true
+    docker run --name "$CONTAINER" --rm $it_flag \
         -v "$REPO_DIR:/mnt/dotfiles:ro" \
-        "$IMAGE_NAME" \
-        bash -c "$CONTAINER_SCRIPT"
-
-    local rc=$?
-    if [ $rc -eq 0 ]; then
-        log "All tests passed!"
-    else
-        err "Tests failed (exit $rc)"
-    fi
-    return $rc
-}
-
-run_shell() {
-    docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-    log "Dropping into test container shell..."
-    docker run \
-        --name "$CONTAINER_NAME" \
-        --rm -it \
-        -v "$REPO_DIR:/mnt/dotfiles:ro" \
-        "$IMAGE_NAME" \
-        bash -c '
-            cp -a /mnt/dotfiles /root/dotfiles
-            cd /root/dotfiles
-            git init -q && git add -A
-            git -c user.name=test -c user.email=test@test commit -q -m "init" --allow-empty
-            echo "Dotfiles at ~/dotfiles. Run: CHANGE_SHELL=false bash ~/dotfiles/init.sh"
-            exec bash
-        '
+        "$TEST_IMAGE" "$mode"
 }
 
 do_clean() {
-    log "Cleaning up..."
-    docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-    docker rmi -f "$IMAGE_NAME" 2>/dev/null || true
+    log "Cleaning..."
+    docker rm -f "$CONTAINER" 2>/dev/null || true
+    docker rmi -f "$TEST_IMAGE" "$BASE_IMAGE" 2>/dev/null || true
     log "Done"
 }
 
 require_docker
 
 case "${1:-}" in
-    build) build_image ;;
-    shell) build_image; run_shell ;;
-    clean) do_clean ;;
-    *)     build_image; run_tests ;;
+    clean)    do_clean ;;
+    rebuild)  do_clean; build_base; build_test; run_container test-all ;;
+    build)    build_base; build_test ;;
+    shell)    build_base; build_test; run_container shell ;;
+    stduser)  build_base; build_test; run_container test-stduser ;;
+    plesk)    build_base; build_test; run_container test-plesk ;;
+    *)        build_base; build_test; run_container test-all ;;
 esac

@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-init test-init-shell test-init-clean test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-stduser test-plesk test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -10,38 +10,49 @@ help:
 	@echo "Dotfiles Project - Available targets:"
 	@echo ""
 	@echo "Main Installation:"
-	@echo "  install             Install everything (Git cache)"
+	@echo "  install               Install everything (Git cache)"
 	@echo ""
-	@echo "Testing:"
-	@echo "  test                Run all project tests"
-	@echo "  test-init              Full init.sh + plesk-init.sh deploy test (Docker)"
-	@echo "  test-init-shell        Debug shell inside test container"
-	@echo "  test-init-clean        Remove test image and cache"
-	@echo "  test-ui-snap-window    Run ui-snap-window functionality tests"
+	@echo "Testing (Docker — 3 suites):"
+	@echo "  test                  Run ALL suites (stduser + plesk + vhost)"
+	@echo "  test-stduser          Stduser bootstrap + script unit tests"
+	@echo "  test-plesk            Plesk root bootstrap + vhost assertions"
+	@echo "  test-init-shell       Debug shell inside test container"
+	@echo "  test-init-clean       Remove test images and cache"
+	@echo "  test-init-rebuild     Force full rebuild then run all tests"
+	@echo ""
+	@echo "Testing (local, requires X11):"
+	@echo "  test-ui-snap-window   Run ui-snap-window functionality tests"
 	@echo ""
 	@echo "Git Cache:"
-	@echo "  install-git-cache               Install Git caching container (10-100x faster clones)"
-	@echo "  test-git-cache                  Test Git cache configuration"
-	@echo "  uninstall-git-cache             Remove Git cache container and configuration"
+	@echo "  install-git-cache     Install Git caching container"
+	@echo "  test-git-cache        Test Git cache configuration"
+	@echo "  uninstall-git-cache   Remove Git cache container"
 	@echo ""
 	@echo "Maintenance:"
-	@echo "  clean-tests         Clean up test artifacts"
-	@echo "  install-test-deps   Install testing dependencies"
-	@echo ""
-	@echo "Usage: make <target>"
+	@echo "  clean-tests           Clean up test artifacts"
+	@echo "  install-test-deps     Install local testing dependencies"
 
-# Test targets
-test: test-init
-	@echo "All project tests completed successfully!"
+# ---------- Docker test targets ----------
 
-test-init:
+test:
 	@./tests/run-init-tests.sh
+
+test-stduser:
+	@./tests/run-init-tests.sh stduser
+
+test-plesk:
+	@./tests/run-init-tests.sh plesk
 
 test-init-shell:
 	@./tests/run-init-tests.sh shell
 
 test-init-clean:
 	@./tests/run-init-tests.sh clean
+
+test-init-rebuild:
+	@./tests/run-init-tests.sh rebuild
+
+# ---------- Local UI test targets ----------
 
 test-ui-snap-window: install-test-deps
 	@echo "Running ui-snap-window functionality tests..."
@@ -60,32 +71,27 @@ clean-tests:
 install-test-deps:
 	@echo "Checking test dependencies..."
 	@if ! command -v gum >/dev/null 2>&1; then \
-		echo "Installing gum for better output formatting..."; \
+		echo "Installing gum..."; \
 		if command -v apt-get >/dev/null 2>&1; then \
 			$(SUDO_NO_PROXY) apt-get update -qq && sudo apt-get install -y gum; \
 		elif command -v brew >/dev/null 2>&1; then \
 			brew install gum; \
-		else \
-			echo "Warning: gum not found, tests will use mock version"; \
 		fi \
 	fi
 	@if ! command -v bats >/dev/null 2>&1; then \
-		echo "Installing bats testing framework..."; \
+		echo "Installing bats..."; \
 		if command -v apt-get >/dev/null 2>&1; then \
 			$(SUDO_NO_PROXY) apt-get update -qq && sudo apt-get install -y bats; \
 		elif command -v brew >/dev/null 2>&1; then \
 			brew install bats-core; \
-		else \
-			echo "Warning: bats not found, ui-snap-window tests may fail"; \
 		fi \
 	fi
-	@chmod +x tests/bash/*.sh
+	@chmod +x tests/bash/*.sh 2>/dev/null || true
 	@echo "Dependencies ready"
 
 # Main installation target
 install: install-git-cache
 	@echo "Complete installation finished!"
-	@echo "Git cache is now configured."
 
 # Git Cache targets
 install-git-cache:

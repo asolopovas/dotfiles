@@ -1,0 +1,43 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV HOME=/root
+
+# ---- Heavy dependencies (cached across test runs) ----
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+        git curl ca-certificates sudo bats rsync cmake build-essential \
+        locales unzip fish && \
+    rm -rf /var/lib/apt/lists/*
+
+# ---- Mock Plesk environment ----
+RUN mkdir -p /etc/psa /opt/plesk/node/22.0.0/bin /opt/plesk/php/8.3/bin
+
+RUN printf '#!/bin/bash\n\
+if [ "$1" = "db" ]; then\n\
+    printf "test1.com\\ttestuser1\\t/var/www/vhosts/test1.com\\n"\n\
+    printf "test2.org\\ttestuser2\\t/var/www/vhosts/test2.org\\n"\n\
+fi\n' > /usr/local/bin/plesk && chmod 755 /usr/local/bin/plesk
+
+RUN touch /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php && \
+    chmod 755 /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php
+
+# ---- Vhost users ----
+RUN for u in testuser1 testuser2; do \
+        useradd -m -s /bin/bash "$u" 2>/dev/null || true; \
+    done && \
+    mkdir -p /var/www/vhosts/test1.com /var/www/vhosts/test2.org && \
+    chown testuser1: /var/www/vhosts/test1.com && \
+    chown testuser2: /var/www/vhosts/test2.org && \
+    usermod -d /var/www/vhosts/test1.com testuser1 && \
+    usermod -d /var/www/vhosts/test2.org testuser2
+
+# ---- Standard test user (non-root sudoer) ----
+RUN useradd -m -s /bin/bash stduser && \
+    echo 'stduser ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/stduser && \
+    chmod 440 /etc/sudoers.d/stduser
+
+# ---- Git safety for mounted/copied repos ----
+RUN git config --global --add safe.directory '*'
+
+WORKDIR /root
