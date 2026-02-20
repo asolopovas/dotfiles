@@ -74,7 +74,8 @@ do_bootstrap() {
     # 2. Plesk root bootstrap
     log "BOOTSTRAP: plesk root"
     rm -rf /root/dotfiles /opt/dotfiles /opt/omf /opt/nvim /opt/nvim-config \
-           /opt/nvim-data /opt/opencode-config /var/www/bun-cache \
+           /opt/nvim-data /opt/opencode-config /opt/opencode-cache /opt/opencode-bin \
+           /opt/vscode-server /var/www/bun-cache \
            /usr/local/bin/bun* /usr/local/bin/nvim /usr/local/bin/vim \
            /etc/sudoers.d/bun-cache /etc/profile.d/bun.sh /etc/profile.d/nvim.sh
     run_bootstrap root /root

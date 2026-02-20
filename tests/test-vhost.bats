@@ -111,6 +111,36 @@ setup_file() {
     [ ! -d "$h/.bun" ]
 }
 
+# ===== opencode =====
+
+@test "vhost1: opencode config -> shared" {
+    local h="/var/www/vhosts/test1.com"
+    if [ ! -d /opt/opencode-config ]; then skip "no opencode config"; fi
+    [ -L "$h/.config/opencode" ]
+    [ "$(readlink "$h/.config/opencode")" = "/opt/opencode-config" ]
+}
+
+@test "vhost1: opencode cache -> shared" {
+    local h="/var/www/vhosts/test1.com"
+    if [ ! -d /opt/opencode-cache ]; then skip "no opencode cache"; fi
+    [ -L "$h/.cache/opencode" ]
+    [ "$(readlink "$h/.cache/opencode")" = "/opt/opencode-cache" ]
+}
+
+@test "vhost1: opencode bin -> shared" {
+    local h="/var/www/vhosts/test1.com"
+    if [ ! -d /opt/opencode-bin ]; then skip "no opencode bin"; fi
+    [ -L "$h/.local/share/opencode/bin" ]
+    [ "$(readlink "$h/.local/share/opencode/bin")" = "/opt/opencode-bin" ]
+}
+
+@test "vhost1: vscode-server -> shared" {
+    local h="/var/www/vhosts/test1.com"
+    if [ ! -d /opt/vscode-server ]; then skip "no vscode-server"; fi
+    [ -L "$h/.vscode-server" ]
+    [ "$(readlink "$h/.vscode-server")" = "/opt/vscode-server" ]
+}
+
 @test "vhost1: plesk node/php binaries symlinked" {
     local h="/var/www/vhosts/test1.com"
     [ -L "$h/.local/bin/node" ] || [ -L "$h/.local/bin/php" ]

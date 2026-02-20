@@ -169,6 +169,55 @@ setup_file() {
     [ "$status" -eq 0 ]
 }
 
+# ===== opencode section =====
+
+@test "plesk-opencode: config dir shared" {
+    [ -d /opt/opencode-config ]
+    [ "$(stat -c '%G' /opt/opencode-config)" = "psacln" ]
+    run stat -c '%A' /opt/opencode-config
+    [[ "$output" == *"rws"* ]]
+}
+
+@test "plesk-opencode: config.json exists" {
+    [ -f /opt/opencode-config/config.json ]
+}
+
+@test "plesk-opencode: cache dir shared" {
+    if [ ! -d /opt/opencode-cache ]; then skip "no cache synced"; fi
+    [ "$(stat -c '%G' /opt/opencode-cache)" = "psacln" ]
+}
+
+@test "plesk-opencode: bin dir shared" {
+    if [ ! -d /opt/opencode-bin ]; then skip "no bin synced"; fi
+    [ "$(stat -c '%G' /opt/opencode-bin)" = "psacln" ]
+}
+
+@test "plesk-opencode: group-writable" {
+    run stat -c '%a' /opt/opencode-config
+    [[ "$output" == "2775" ]]
+}
+
+# ===== vscode section =====
+
+@test "plesk-vscode: shared dir exists" {
+    if [ ! -d /opt/vscode-server ]; then skip "no vscode-server"; fi
+    [ -d /opt/vscode-server/cli ]
+    [ -d /opt/vscode-server/extensions ]
+}
+
+@test "plesk-vscode: group-writable" {
+    if [ ! -d /opt/vscode-server ]; then skip "no vscode-server"; fi
+    [ "$(stat -c '%G' /opt/vscode-server)" = "psacln" ]
+    run stat -c '%a' /opt/vscode-server
+    [[ "$output" == "2775" ]]
+}
+
+@test "plesk-vscode: root symlinked" {
+    if [ ! -d /opt/vscode-server ]; then skip "no vscode-server"; fi
+    [ -L /root/.vscode-server ]
+    [ "$(readlink /root/.vscode-server)" = "/opt/vscode-server" ]
+}
+
 # ===== sync mode =====
 
 @test "plesk-sync: updates shared config" {
