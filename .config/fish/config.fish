@@ -2,6 +2,10 @@
 
 # Env
 set fish_greeting
+
+# Disable CSI u (kitty keyboard protocol) - causes garbled input in terminals
+# that don't support it (e.g. VS Code, older Alacritty)
+set -g fish_csi_u 0
 set -g fish_prompt_pwd_dir_length 0
 set -gx COLORFGBG "15;0"
 set -x SUDO_ASKPASS $HOME/dotfiles/scripts/sec-askpass.sh
