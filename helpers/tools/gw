@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Disable kitty keyboard protocol if active (fish 4.x enables it)
+printf '\e[<u' 2>/dev/null
+
+trap 'printf "\n"; exit 130' INT
 read -e -p "Enter commit message (default: save): " commit_message
 commit_message=${commit_message:-"save"}
 git add -A && git commit -m "$commit_message"
