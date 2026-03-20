@@ -2,7 +2,6 @@
 
 set -e
 
-base="$HOME/dotfiles/config/claude"
 target="$HOME/.claude"
 
 if [ "$1" == "--force" ]; then
@@ -16,12 +15,11 @@ npm install -g @anthropic-ai/claude-code
 
 mkdir -p "$target"
 
-items=(settings.json CLAUDE.md commands agents hooks)
-
-for item in "${items[@]}"; do
-  rm -f "$target/$item"
-  ln -sf "$base/$item" "$target/$item"
-done
+cat > "$target/settings.json" <<'EOF'
+{
+  "includeCoAuthoredBy": false,
+  "includeGitInstructions": false
+}
+EOF
 
 echo "Claude Code installation complete!"
-echo "Configuration linked from $base"
