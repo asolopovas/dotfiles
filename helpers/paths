@@ -1,9 +1,3 @@
 #!/bin/bash
-
-INCLUDE=()
-STORE=()
-while IFS= read -r line; do INCLUDE+=("$line"); done <$HOME/dotfiles/paths.txt
-
-for i in ${INCLUDE[@]}; do
-    echo $i;
-done
+# Print lines from paths.txt
+cat "$HOME/dotfiles/paths.txt"

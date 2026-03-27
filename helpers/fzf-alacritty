@@ -1,8 +1,9 @@
 #!/bin/bash
+# Fuzzy-pick a directory and open Alacritty there
 
 result=$(fd -d 1 -t d --base-directory ~ --search-path ~/www --search-path ~/src -E node_modules -E vendor | fzf)
 
-[  -z $result ] && exit 0
+[ -z "$result" ] && exit 0
 
-(nohup alacritty --working-directory $result >/dev/null 2>&1 &)
+(nohup alacritty --working-directory "$result" >/dev/null 2>&1 &)
 pkill -f fzf-menu

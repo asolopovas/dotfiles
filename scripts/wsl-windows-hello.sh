@@ -1,11 +1,11 @@
 #!/bin/bash
+set -euo pipefail
 
-curl -fsSLO https://github.com/evanphilip/WSL-Hello-sudo/releases/download/v2.1.1/release.tar.gz
-tar xvf release.tar.gz
-pushd ./release
-source install.sh
-popd
+VER="v2.1.1"
+URL="https://github.com/evanphilip/WSL-Hello-sudo/releases/download/$VER/release.tar.gz"
+TMP=$(mktemp -d)
 
-rm -f release.tar.gz
-rm -rf release
-
+curl -fsSL "$URL" -o "$TMP/release.tar.gz"
+tar xzf "$TMP/release.tar.gz" -C "$TMP"
+source "$TMP/release/install.sh"
+rm -rf "$TMP"

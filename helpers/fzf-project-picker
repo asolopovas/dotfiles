@@ -1,0 +1,74 @@
+#!/bin/bash
+# Shared project picker for fzf-code and vp.
+# Usage: fzf-project-picker <command> [args...]
+# Outputs selected path to stdout if no command given.
+
+set -euo pipefail
+
+detect_wsl() { [ -n "${WSL_DISTRO_NAME:-}" ]; }
+
+get_windows_username() {
+    if command -v wslvar &>/dev/null; then
+        wslvar USERNAME
+    else
+        powershell.exe '$env:USERNAME' | tr -d '\r'
+    fi
+}
+
+get_vscode_data() {
+    local db_path
+    if detect_wsl; then
+        local username
+        username=$(get_windows_username)
+        db_path=$(wslpath -u "C:/Users/$username/AppData/Roaming/Code/User/globalStorage/state.vscdb")
+    else
+        db_path="$HOME/.config/Code/User/globalStorage/state.vscdb"
+    fi
+
+    if [ ! -f "$db_path" ]; then
+        echo "Error: VS Code database not found at $db_path" >&2
+        return 1
+    fi
+
+    sqlite3 "$db_path" "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'" 2>/dev/null
+}
+
+declare -A STORE_MAP
+
+# Populate from VS Code recent folders
+if JSON_DATA=$(get_vscode_data 2>/dev/null); then
+    while IFS= read -r folder; do
+        [ -n "$folder" ] && STORE_MAP["$(basename "$folder")"]="$folder"
+    done < <(echo "$JSON_DATA" | jq -r '.entries[] | .folderUri // .workspace.configPath | select(type == "string" and startswith("file://")) | sub("^file://"; "")')
+fi
+
+# Add bookmarked directories
+if [ -f "$HOME/dotfiles/bookmarks.txt" ]; then
+    while IFS= read -r line; do
+        local dir_path="$HOME/$line"
+        for dir in "$dir_path"/*; do
+            [ -d "$dir" ] && STORE_MAP["$(basename "$dir")"]="$dir"
+        done
+    done <"$HOME/dotfiles/bookmarks.txt"
+fi
+
+STORE_MAP["dotfiles"]="$HOME/dotfiles"
+
+RESULT_KEY=$(printf "%s\n" "${!STORE_MAP[@]}" | fzf) || exit 1
+
+if [ -z "$RESULT_KEY" ]; then
+    echo "No selection made." >&2
+    exit 1
+fi
+
+RESULT="${STORE_MAP["$RESULT_KEY"]}"
+
+if detect_wsl; then
+    RESULT="${RESULT//wsl.localhost\/Ubuntu/}"
+fi
+
+if [ $# -gt 0 ]; then
+    "$@" "$RESULT"
+else
+    echo "$RESULT"
+fi

@@ -1,13 +1,9 @@
 #!/bin/bash
+# Fuzzy-pick a directory and open it in Thunar
 
-result=$(fd --full-path $HOME -d 4 -t d \
-    -E "node_modules" \
-    -E "vendor" \
-    -E "go" \
-    -E "share" \
-    -E ".git" |
-    fzf)
+result=$(fd --full-path "$HOME" -d 4 -t d \
+    -E node_modules -E vendor -E go -E share -E .git | fzf)
 
-[ ! -z $result ] && thunar $result
+[ -n "$result" ] && thunar "$result"
 
 pkill -f fzf-menu

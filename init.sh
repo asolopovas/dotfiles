@@ -4,7 +4,8 @@ export CONFIG_DIR="$HOME/.config"
 export DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
-export OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
+OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
+export OS
 
 # Bootstrap utilities (self-contained for curl install)
 cmd_exist() { command -v "$1" >/dev/null 2>&1; }
@@ -37,7 +38,7 @@ declare -A features=(
 
 # Export features for child scripts
 for feature_name in "${!features[@]}"; do
-    export ${feature_name}=${features[$feature_name]}
+    export "${feature_name}"="${features[$feature_name]}"
 done
 
 # Setup sudo wrapper
@@ -56,28 +57,15 @@ fi
 # Create essential directories
 mkdir -p "$HOME/.tmp" "$HOME/.config" "$HOME/.local/bin"
 
-cd "$HOME"
+cd "$HOME" || exit 1
 
 cleanup() {
-    rm -rf "$HOME/.config/nvim"
-    rm -rf "$HOME/.config/fish"
-    rm -rf "$HOME/.config/tmux"
-    rm -rf "$HOME/.volta"
-    rm -rf "$HOME/.bun"
-    rm -rf "$HOME/.npm"
-    rm -rf "$HOME/.deno"
-    rm -rf "$HOME/.cache"
-    rm -rf "$HOME/.cursor-server"
-    rm -rf "$HOME/.local/nvim"
-    rm -rf "$HOME/.local/share/nvim"
-    rm -rf "$HOME/.local/share/omf"
-    rm -rf "$HOME/.local/share/zsh"
-    rm -rf "$HOME/.local/share/fish"
-    rm -rf "$HOME/.local/share/deno-wrasmbuild"
-    rm -rf "$HOME/.local/share/bash-completion"
-    rm -rf "$HOME/.local/share/composer"
-    rm -rf "$HOME/.local/state/nvim"
-    rm -rf "$HOME/.local/state/chrome-debug"
+    local dirs=(
+        .config/{nvim,fish,tmux} .volta .bun .npm .deno .cache .cursor-server
+        .local/nvim .local/share/{nvim,omf,zsh,fish,deno-wrasmbuild,bash-completion,composer}
+        .local/state/{nvim,chrome-debug}
+    )
+    for d in "${dirs[@]}"; do rm -rf "${HOME:?}/$d"; done
     rm -f "$HOME/.local/bin/helpers"
 }
 
@@ -108,7 +96,8 @@ load_script() {
     local script_name=$1
     local script_path="$SCRIPTS_DIR/inst-$script_name.sh"
     print_color green "Sourcing $script_path"
-    [[ -f $script_path ]] && source $script_path
+    # shellcheck disable=SC1090
+    [[ -f $script_path ]] && source "$script_path"
 }
 
 # Skip full bootstrap for non-root users with shared dotfiles
@@ -134,74 +123,39 @@ fi
 load_script 'composer'
 
 # Serialize and export associative array
-export features_string=$(declare -p features)
+features_string=$(declare -p features)
+export features_string
 
-[[ "$UNATTENDED" = false ]] && source $SCRIPTS_DIR/inst-menu.sh
+[[ "$UNATTENDED" = false ]] && source "$SCRIPTS_DIR/inst-menu.sh"
 
-echo -e "FEATURE\t\tSTATUS"
-separator="------------\t--------"
-echo -e $separator
+printf "%-15s %s\n" "FEATURE" "STATUS"
+printf '%.0s-' {1..25}; echo
 for feature in "${!features[@]}"; do
-    if [ "${features[$feature]}" = true ]; then
-        status="ENABLED"
-    else
-        status="DISABLED"
-    fi
-    printf "%-15s %s\n" "$feature" "$status"
+    printf "%-15s %s\n" "$feature" "$( [[ "${features[$feature]}" = true ]] && echo ENABLED || echo DISABLED )"
 done
-echo -e "$separator\n"
+echo
 
-source $DOTFILES_DIR/globals.sh
-source $SCRIPTS_DIR/cfg-default-dirs.sh
+source "$DOTFILES_DIR/globals.sh"
+source "$SCRIPTS_DIR/cfg-default-dirs.sh"
 
-if [ "${features[BUN]}" = true ]; then
-    load_script 'bun'
+[[ "${features[BUN]}" = true ]]    && load_script 'bun'
+[[ "${features[CARGO]}" = true ]]  && curl https://sh.rustup.rs -sSf | sh
+[[ "${features[DENO]}" = true ]]   && load_script 'deno'
+[[ "${features[FISH]}" = true ]]   && ! cmd_exist fish && load_script 'fish'
+[[ "${features[FDFIND]}" = true ]] && ! cmd_exist fd   && load_script 'fd'
+[[ "${features[FZF]}" = true ]]    && load_script 'fzf'
+[[ "${features[NODE]}" = true ]]   && load_script 'node'
+
+if [[ "${features[NVIM]}" = true ]]; then
+    load_script 'nvim'
+    cmd_exist lua || $SUDO apt install -y lua5.1 luarocks
+    cmd_exist nvim && ln -sf "$(which nvim)" "$HOME/.local/bin/vim"
 fi
 
-if [ "${features[CARGO]}" = true ]; then
-    curl https://sh.rustup.rs -sSf | sh
-fi
+[[ "${features[OHMYFISH]}" = true ]] && load_script 'ohmyfish'
 
-if [ "${features[DENO]}" = true ]; then
-    load_script 'deno'
-fi
-
-if [ "${features[FISH]}" = true ] && ! cmd_exist fish; then
-    load_script 'fish'
-fi
-
-if [ "${features[FDFIND]}" = true ] && ! cmd_exist fd; then
-    load_script 'fd'
-fi
-
-if [ "${features[FZF]}" = true ]; then
-    load_script "fzf"
-fi
-
-if [ "${features[NODE]}" = true ]; then
-    load_script "node"
-fi
-
-if [ "${features[NVIM]}" = true ]; then
-    load_script "nvim"
-
-    if ! cmd_exist lua; then
-        $SUDO apt install -y lua5.1 luarocks
-    fi
-
-    if cmd_exist nvim; then
-        ln -sf "$(which nvim)" "$HOME/.local/bin/vim"
-    fi
-fi
-
-
-if [ "${features[OHMYFISH]}" = true ]; then
-    load_script 'ohmyfish'
-fi
-
-if [ "${features[CHANGE_SHELL]}" = true ]; then
+if [[ "${features[CHANGE_SHELL]}" = true ]]; then
     print_color green "CHANGING SHELL TO FISH"
-
     if command -v fish &>/dev/null; then
         $SUDO chsh -s "$(which fish)" "$(whoami)"
     else
