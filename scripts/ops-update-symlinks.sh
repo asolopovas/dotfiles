@@ -31,5 +31,4 @@ $DOTFILES_DIR/.config/.func|$XDG_CONFIG_HOME/.func
 $DOTFILES_DIR/.config/opencode/config.json|$XDG_CONFIG_HOME/opencode/config.json
 $DOTFILES_DIR/.config/opencode/opencode.jsonc|$XDG_CONFIG_HOME/opencode/opencode.jsonc
 $DOTFILES_DIR/.config/opencode/agents|$XDG_CONFIG_HOME/opencode/agents
-$DOTFILES_DIR/.config/opencode/skills|$XDG_CONFIG_HOME/opencode/skills
 EOF

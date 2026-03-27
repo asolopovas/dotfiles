@@ -13,7 +13,14 @@ CONFIGS=(
     "config.json"
     "opencode.jsonc"
     "agents"
-    "skills"
+)
+
+# Skills installed via bunx skills add (owner/repo format)
+# Browse available skills at https://skills.sh
+SKILLS=(
+    "github/awesome-copilot@chrome-devtools"
+    "microsoft/playwright-cli@playwright-cli"
+    "davila7/claude-code-templates@Error Resolver"
 )
 
 install_opencode() {
@@ -23,6 +30,21 @@ install_opencode() {
         print_color green "Installing OpenCode..."
         curl -fsSL https://opencode.ai/install | bash
     fi
+}
+
+install_skills() {
+    if ! cmd_exist bunx; then
+        print_color yellow "bunx not found, skipping skills install"
+        return 0
+    fi
+
+    print_color green "Installing OpenCode skills..."
+    for skill in "${SKILLS[@]}"; do
+        print_color green "  skill: $skill"
+        bunx skills add "$skill" -g -a opencode -y 2>/dev/null || {
+            print_color yellow "  failed to install: $skill"
+        }
+    done
 }
 
 link_config() {
@@ -49,11 +71,8 @@ copy_config() {
 
     mkdir -p "$(dirname "$dst")"
     if [ -d "$src" ]; then
-        # Copy directory, exclude node_modules and generated files
         rm -rf "$dst"
         cp -r "$src" "$dst"
-        # Clean up node_modules in copied skills
-        find "$dst" -name node_modules -type d -exec rm -rf {} + 2>/dev/null || true
     else
         cp -f "$src" "$dst"
     fi
@@ -95,5 +114,6 @@ setup_windows() {
 install_opencode
 setup_linux
 setup_windows
+install_skills
 
 print_color green "OpenCode setup complete!"

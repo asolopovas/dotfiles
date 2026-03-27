@@ -41,7 +41,6 @@ CONFDIRS=(
     ".config/opencode/config.json"
     ".config/opencode/opencode.jsonc"
     ".config/opencode/agents"
-    ".config/opencode/skills"
 )
 
 if [ "$SYSTEM" = true ]; then
