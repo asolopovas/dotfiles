@@ -6,7 +6,7 @@
 	tag-del = "!f() { git tag -d \"$1\" && git push origin :refs/tags/\"$1\"; }; f"
 	tag-replace = "!f() { git tag -d \"$1\" && git push origin :refs/tags/\"$1\" && git tag \"$1\" && git push origin \"$1\"; }; f"
 [core]
-	excludesfile = ~/.globignore
+	excludesFile = /home/andrius/.gitignore
 [pull]
 	rebase = true
 [credential "https://github.com"]

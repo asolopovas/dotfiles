@@ -21,3 +21,4 @@ task.md
 *.log
 .config/nvim/lazy-lock.json
 .config/tmux/plugins/
+.playwright-cli/
