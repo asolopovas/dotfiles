@@ -32,10 +32,32 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 
 SKILL_SOURCES=(
-    "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
-    "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
+    # Core dev tools
+    "https://github.com/github/awesome-copilot/tree/main/skills/chrome-devtools"
     "https://github.com/microsoft/playwright-cli/tree/main/skills/playwright-cli"
-    "https://github.com/mrgoonie/claudekit-skills/tree/main/.claude/skills/chrome-devtools"
+    "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
+    "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
+
+    # Language & framework patterns
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-security"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-patterns"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-tdd"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/golang-testing"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/golang-patterns"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/docker-patterns"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/database-migrations"
+    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/verification-loop"
+
+    # Scripting & web
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/bash-scripting"
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/progressive-web-app"
+
+    # WordPress
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress"
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-plugin-development"
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-theme-development"
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-woocommerce-development"
+    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-penetration-testing"
 )
 
 declare -A MCP_SERVERS=(
