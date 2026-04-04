@@ -211,19 +211,60 @@ setup_opencode() {
         print_color green "  /opt/opencode-bin synced ($(du -sh /opt/opencode-bin | cut -f1))"
     fi
 
-    # Copy native binary to /usr/local/bin if newer or missing
+    # Native binary copied to /usr/local/bin/opencode-bin (the actual ELF).
+    # /usr/local/bin/opencode is a thin wrapper that intercepts "upgrade" to
+    # keep the shared binary in sync with root's bun-managed copy.
     local oc_src="$HOME/.bun/install/global/node_modules/opencode-linux-x64/bin/opencode"
     if [[ -x "$oc_src" ]]; then
-        if [[ ! -x /usr/local/bin/opencode ]] || [[ "$oc_src" -nt /usr/local/bin/opencode ]]; then
-            if cp "$oc_src" /usr/local/bin/opencode 2>/dev/null; then
-                chmod 755 /usr/local/bin/opencode
-                print_color green "  /usr/local/bin/opencode installed"
+        if [[ ! -x /usr/local/bin/opencode-bin ]] || ! cmp -s "$oc_src" /usr/local/bin/opencode-bin; then
+            if cp "$oc_src" /usr/local/bin/opencode-bin 2>/dev/null; then
+                chmod 755 /usr/local/bin/opencode-bin
+                print_color green "  /usr/local/bin/opencode-bin installed (v$("$oc_src" --version 2>/dev/null))"
             else
-                print_color yellow "  /usr/local/bin/opencode busy (in use) — skipped"
+                print_color yellow "  /usr/local/bin/opencode-bin busy (in use) — skipped"
             fi
         else
-            print_color green "  /usr/local/bin/opencode up to date"
+            print_color green "  /usr/local/bin/opencode-bin up to date"
         fi
+    fi
+
+    # Shared wrapper at /usr/local/bin/opencode — used by vhost users directly.
+    # Runs the shared native binary for all commands.
+    cat > /usr/local/bin/opencode << 'WRAPPER'
+#!/bin/bash
+exec /usr/local/bin/opencode-bin "$@"
+WRAPPER
+    chmod 755 /usr/local/bin/opencode
+
+    # Root wrapper: replaces the bun symlink at ~/.bun/bin/opencode so that
+    # "opencode upgrade" (run as root) auto-syncs the new binary to the shared
+    # /usr/local/bin/opencode-bin that all vhost users run.
+    local bun_link="$HOME/.bun/bin/opencode"
+    local bun_shim="$HOME/.bun/install/global/node_modules/opencode-ai/bin/opencode"
+    if [[ -e "$bun_link" ]]; then
+        rm -f "$bun_link"
+        cat > "$bun_link" << ROOTWRAPPER
+#!/bin/bash
+OC_BIN="/usr/local/bin/opencode-bin"
+OC_BUN_SHIM="$bun_shim"
+OC_BUN_SRC="$HOME/.bun/install/global/node_modules/opencode-linux-x64/bin/opencode"
+
+if [[ "\${1:-}" == "upgrade" ]]; then
+    "\$OC_BUN_SHIM" "\$@"
+    status=\$?
+    if [[ \$status -eq 0 && -x "\$OC_BUN_SRC" ]]; then
+        if ! cmp -s "\$OC_BUN_SRC" "\$OC_BIN" 2>/dev/null; then
+            cp "\$OC_BUN_SRC" "\$OC_BIN" 2>/dev/null && chmod 755 "\$OC_BIN" \
+                && echo "Shared binary updated: \$(\$OC_BIN --version 2>/dev/null)"
+        fi
+    fi
+    exit \$status
+fi
+
+exec "\$OC_BIN" "\$@"
+ROOTWRAPPER
+        chmod 755 "$bun_link"
+        print_color green "  ~/.bun/bin/opencode wrapper installed (upgrade syncs to shared)"
     fi
 }
 
@@ -529,6 +570,7 @@ readonly CLEANUP_DIRS=(
 # Stale opencode per-user dirs replaced by shared symlinks.
 # Removed BEFORE creating symlinks so rm -rf doesn't follow them.
 readonly OPENCODE_CLEANUP_DIRS=(
+    .opencode
     .cache/opencode
     .local/share/opencode/bin
 )
