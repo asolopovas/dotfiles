@@ -180,7 +180,23 @@ readonly OPENCODE_EXCLUDES=(
 setup_opencode() {
     print_color bold_green "=== Opencode ==="
 
+    # Install/update skills into the canonical location (~/.agents/skills)
+    # before syncing opencode config, so the shared config gets all skills.
+    local sync_ai="${SCRIPT_DIR}/sync-ai.sh"
+    if [[ -x "$sync_ai" ]]; then
+        print_color green "  Syncing skills via sync-ai.sh..."
+        SYNC_TARGETS=opencode "$sync_ai" skills 2>&1 | sed 's/^/    /'
+    fi
+
+    # Copy canonical skills into root's opencode config so the rsync below
+    # picks them up into /opt/opencode-config/skills/ for all vhosts.
     local root_oc="$HOME/.config/opencode"
+    local agents_skills="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
+    if [[ -d "$agents_skills" ]]; then
+        mkdir -p "$root_oc/skills"
+        rsync -a --delete "$agents_skills/" "$root_oc/skills/"
+    fi
+
     if [[ -d "$root_oc" ]]; then
         mkdir -p /opt/opencode-config
         rsync -a --delete "${OPENCODE_EXCLUDES[@]}" \
