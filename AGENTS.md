@@ -117,5 +117,9 @@ via `scripts/sync-ai.sh`.
 ```
 
 - Config: `agents.conf` (one URL per line, `#` comments)
-- Env: `AGENTS_CONFIG`, `SYNC_TARGETS`, `OPENCODE_CONFIG`, `CODEX_CONFIG`
-- Locations: `~/.config/opencode/`, `~/.claude/`, `~/.codex/`
+- Env: `AGENTS_CONFIG`, `AGENTS_SKILLS_DIR`, `SYNC_TARGETS`, `OPENCODE_CONFIG`, `CODEX_CONFIG`
+- Skills: installed once to `~/.agents/skills/` (canonical location)
+  - `~/.claude/skills` → symlink to `~/.agents/skills`
+  - `~/.codex/skills` → symlink to `~/.agents/skills` (if codex present)
+  - OpenCode reads `~/.agents/skills` natively
+- Locations: `~/.agents/`, `~/.config/opencode/`, `~/.claude/`, `~/.codex/`

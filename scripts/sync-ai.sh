@@ -14,11 +14,12 @@ set -euo pipefail
 #   sync-ai.sh agents list
 #
 # Environment:
-#   SYNC_TARGETS     Comma-separated CLIs (default: auto-detect codex,claude,opencode)
-#   AGENTS_CONFIG    Path to agents.conf
-#   SKILL_INSTALLER  Path to skill-installer python script
-#   OPENCODE_CONFIG  Path to opencode.json
-#   CODEX_CONFIG     Path to codex config.toml
+#   SYNC_TARGETS      Comma-separated CLIs (default: auto-detect codex,claude,opencode)
+#   AGENTS_CONFIG     Path to agents.conf
+#   AGENTS_SKILLS_DIR Canonical skill directory (default: ~/.agents/skills)
+#   SKILL_INSTALLER   Path to skill-installer python script
+#   OPENCODE_CONFIG   Path to opencode.json
+#   CODEX_CONFIG      Path to codex config.toml
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -26,6 +27,9 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+
+# Canonical skill location — all CLIs read from here (directly or via symlink)
+AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 
 SKILL_SOURCES=(
     "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
@@ -207,8 +211,9 @@ resolve_skill_installer() {
     fi
 
     local candidate
-    for home in "$(cli_home codex)" "$(cli_home claude)"; do
-        candidate="$home/skills/.system/skill-installer/scripts/install-skill-from-github.py"
+    # Check canonical location first, then CLI-specific paths
+    for dir in "$AGENTS_SKILLS_DIR" "$(cli_home codex)/skills" "$(cli_home claude)/skills"; do
+        candidate="$dir/.system/skill-installer/scripts/install-skill-from-github.py"
         [[ -f "$candidate" ]] && { printf '%s' "$candidate"; return 0; }
     done
 
@@ -301,6 +306,25 @@ skill_name_from_url() {
     printf '%s' "${path##*/}"
 }
 
+ensure_skill_symlink() {
+    local link_path="$1"
+
+    if [[ -L "$link_path" ]]; then
+        local current_target
+        current_target="$(readlink "$link_path" 2>/dev/null || true)"
+        if [[ "$current_target" == "$AGENTS_SKILLS_DIR" ]]; then
+            return 0
+        fi
+        rm -f "$link_path"
+    elif [[ -d "$link_path" ]]; then
+        rm -rf "$link_path"
+    fi
+
+    mkdir -p "$(dirname "$link_path")"
+    ln -sf "$AGENTS_SKILLS_DIR" "$link_path"
+    echo "-> symlink: $link_path -> $AGENTS_SKILLS_DIR"
+}
+
 sync_skills() {
     local strict="${1:-false}"
     echo "--- Skills ---"
@@ -331,37 +355,49 @@ sync_skills() {
         desired["$name"]="$src"
     done
 
-    local dest_root base dest_dir key
+    # Install skills to the canonical location (~/.agents/skills)
+    mkdir -p "$AGENTS_SKILLS_DIR"
+
+    # Remove skills not in desired set
+    local base
+    for installed in "$AGENTS_SKILLS_DIR"/*/; do
+        [[ -d "$installed" ]] || continue
+        base="$(basename "$installed")"
+        [[ "$base" == .* || ! -f "$installed/SKILL.md" ]] && continue
+        if [[ -z "${desired[$base]:-}" ]]; then
+            rm -rf "$installed"
+            echo "Removed $base ($AGENTS_SKILLS_DIR)"
+        fi
+    done
+
+    # Install missing skills
+    local dest_dir key
+    for key in "${!desired[@]}"; do
+        dest_dir="$AGENTS_SKILLS_DIR/$key"
+        if [[ -d "$dest_dir" && -f "$dest_dir/SKILL.md" ]]; then
+            echo "-> $key already installed in $AGENTS_SKILLS_DIR"
+            continue
+        fi
+        [[ -e "$dest_dir" ]] && rm -rf "$dest_dir"
+        if [[ "$use_builtin" == "true" ]]; then
+            install_skill_from_github_builtin "${desired[$key]}" "$AGENTS_SKILLS_DIR" "$key"
+        else
+            python3 "$installer" --url "${desired[$key]}" --dest "$AGENTS_SKILLS_DIR"
+            [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
+        fi
+    done
+
+    # Create symlinks so claude and codex read from the canonical location.
+    # OpenCode reads ~/.agents/skills natively — no symlink needed.
     for target in "${TARGETS[@]}"; do
-        dest_root="$(target_dir "$target" skills)" || continue
-        mkdir -p "$dest_root"
-
-        # Remove skills not in desired set
-        for installed in "$dest_root"/*/; do
-            [[ -d "$installed" ]] || continue
-            base="$(basename "$installed")"
-            [[ "$base" == .* || ! -f "$installed/SKILL.md" ]] && continue
-            if [[ -z "${desired[$base]:-}" ]]; then
-                rm -rf "$installed"
-                echo "Removed $base ($dest_root)"
-            fi
-        done
-
-        # Install missing skills
-        for key in "${!desired[@]}"; do
-            dest_dir="$dest_root/$key"
-            if [[ -d "$dest_dir" && -f "$dest_dir/SKILL.md" ]]; then
-                echo "-> $key already installed in $dest_root"
-                continue
-            fi
-            [[ -e "$dest_dir" ]] && rm -rf "$dest_dir"
-            if [[ "$use_builtin" == "true" ]]; then
-                install_skill_from_github_builtin "${desired[$key]}" "$dest_root" "$key"
-            else
-                python3 "$installer" --url "${desired[$key]}" --dest "$dest_root"
-                [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
-            fi
-        done
+        case "$target" in
+            claude)
+                ensure_skill_symlink "$(cli_home claude)/skills"
+                ;;
+            codex)
+                ensure_skill_symlink "$(cli_home codex)/skills"
+                ;;
+        esac
     done
 }
 
@@ -683,6 +719,7 @@ Options:
 Environment:
   SYNC_TARGETS      Comma-separated CLIs (default: codex,claude,opencode)
   AGENTS_CONFIG     Path to agents.conf (default: \$DOTFILES_DIR/agents.conf)
+  AGENTS_SKILLS_DIR Canonical skill directory (default: ~/.agents/skills)
   OPENCODE_CONFIG   Path to opencode.json
   CODEX_CONFIG      Path to codex config.toml
 EOF

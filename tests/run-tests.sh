@@ -27,6 +27,8 @@ fi
 SUITES=(
     "$SCRIPT_DIR/test-globals.bats"
     "$SCRIPT_DIR/test-scripts.bats"
+    "$SCRIPT_DIR/test-sync-ai.bats"
+    "$SCRIPT_DIR/test-inst-opencode.bats"
 )
 
 # Handle arguments
@@ -37,6 +39,12 @@ case "${1:-}" in
     scripts)
         SUITES=("$SCRIPT_DIR/test-scripts.bats")
         ;;
+    sync-ai)
+        SUITES=("$SCRIPT_DIR/test-sync-ai.bats")
+        ;;
+    inst-opencode)
+        SUITES=("$SCRIPT_DIR/test-inst-opencode.bats")
+        ;;
     -*)
         # Pass all args to bats with all suites
         exec bats "$@" "${SUITES[@]}"
@@ -45,7 +53,7 @@ case "${1:-}" in
         ;; # run all
     *)
         err "Unknown suite: $1"
-        echo "Usage: $0 [globals|scripts|-f pattern]"
+        echo "Usage: $0 [globals|scripts|sync-ai|inst-opencode|-f pattern]"
         exit 1
         ;;
 esac

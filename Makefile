@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-globals test-scripts test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-globals test-scripts test-sync-ai test-inst-opencode test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -16,6 +16,8 @@ help:
 	@echo "  test                  Run all local bats tests (~2-5s)"
 	@echo "  test-globals          Run globals.sh unit tests"
 	@echo "  test-scripts          Run script unit tests"
+	@echo "  test-sync-ai          Run sync-ai.sh unit tests"
+	@echo "  test-inst-opencode    Run inst-opencode.sh unit tests"
 	@echo ""
 	@echo "Testing (Docker — full integration):"
 	@echo "  test-init             Run Docker-based init.sh integration tests"
@@ -46,6 +48,12 @@ test-globals: install-test-deps
 
 test-scripts: install-test-deps
 	@./tests/run-tests.sh scripts
+
+test-sync-ai: install-test-deps
+	@./tests/run-tests.sh sync-ai
+
+test-inst-opencode: install-test-deps
+	@./tests/run-tests.sh inst-opencode
 
 # ---------- Docker integration test targets ----------
 
