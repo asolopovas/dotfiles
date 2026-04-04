@@ -309,17 +309,13 @@ skill_name_from_url() {
 ensure_skill_symlink() {
     local link_path="$1"
 
-    if [[ -L "$link_path" ]]; then
-        local current_target
-        current_target="$(readlink "$link_path" 2>/dev/null || true)"
-        if [[ "$current_target" == "$AGENTS_SKILLS_DIR" ]]; then
-            return 0
-        fi
-        rm -f "$link_path"
-    elif [[ -d "$link_path" ]]; then
-        rm -rf "$link_path"
+    # Already correct — nothing to do
+    if [[ -L "$link_path" && "$(readlink "$link_path" 2>/dev/null)" == "$AGENTS_SKILLS_DIR" ]]; then
+        return 0
     fi
 
+    # Remove whatever is there (stale symlink, directory, or file)
+    rm -rf "$link_path" 2>/dev/null || true
     mkdir -p "$(dirname "$link_path")"
     ln -sf "$AGENTS_SKILLS_DIR" "$link_path"
     echo "-> symlink: $link_path -> $AGENTS_SKILLS_DIR"
