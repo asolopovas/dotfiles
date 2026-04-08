@@ -38,9 +38,7 @@ CONFDIRS=(
     ".config/btop/btop.conf"
     ".config/fish"
     ".config/tmux"
-    ".config/opencode/config.json"
     ".config/opencode/opencode.jsonc"
-    ".config/opencode/agents"
 )
 
 if [ "$SYSTEM" = true ]; then

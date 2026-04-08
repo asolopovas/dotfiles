@@ -28,7 +28,5 @@ $DOTFILES_DIR/.config/nvim|$XDG_CONFIG_HOME/nvim
 $DOTFILES_DIR/.config/tmux|$XDG_CONFIG_HOME/tmux
 $DOTFILES_DIR/.config/.aliasrc|$XDG_CONFIG_HOME/.aliasrc
 $DOTFILES_DIR/.config/.func|$XDG_CONFIG_HOME/.func
-$DOTFILES_DIR/.config/opencode/config.json|$XDG_CONFIG_HOME/opencode/config.json
 $DOTFILES_DIR/.config/opencode/opencode.jsonc|$XDG_CONFIG_HOME/opencode/opencode.jsonc
-$DOTFILES_DIR/.config/opencode/agents|$XDG_CONFIG_HOME/opencode/agents
 EOF

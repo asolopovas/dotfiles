@@ -10,9 +10,7 @@ OPENCODE_DST="$HOME/.config/opencode"
 
 # Files/dirs to symlink (Linux) or copy (Windows)
 CONFIGS=(
-    "config.json"
     "opencode.jsonc"
-    "agents"
 )
 
 install_opencode() {
@@ -88,9 +86,25 @@ setup_windows() {
     done
 }
 
+setup_shared_plesk() {
+    # On a Plesk server running as root, also propagate the install to the
+    # shared locations (/opt/opencode-{config,cache,bin} + /usr/local/bin/opencode)
+    # so that vhost users (psacln) can run opencode too. Delegated to
+    # plesk-init.sh's setup_opencode, which is the single source of truth.
+    [[ $EUID -eq 0 ]] || return 0
+    command -v plesk >/dev/null 2>&1 || return 0
+
+    local plesk_init="$DOTFILES_DIR/scripts/plesk-init.sh"
+    [[ -x "$plesk_init" ]] || return 0
+
+    print_color green "Plesk detected — propagating to shared locations..."
+    "$plesk_init" opencode
+}
+
 install_opencode
 setup_linux
 setup_windows
+setup_shared_plesk
 
 print_color green "OpenCode setup complete!"
 print_color green "Run 'sync-ai.sh' to install skills and MCP servers."

@@ -199,10 +199,10 @@ setup_opencode() {
 
     if [[ -d "$root_oc" ]]; then
         mkdir -p /opt/opencode-config
-        rsync -a --delete "${OPENCODE_EXCLUDES[@]}" \
+        # -L dereferences symlinks (root's ~/.config/opencode contains symlinks
+        # into /root/dotfiles which vhost users cannot read).
+        rsync -aL --delete "${OPENCODE_EXCLUDES[@]}" \
             "$root_oc/" /opt/opencode-config/
-        # Ensure config.json exists (opencode expects it)
-        [[ -f /opt/opencode-config/config.json ]] || echo '{}' > /opt/opencode-config/config.json
         shared_perms /opt/opencode-config
         print_color green "  /opt/opencode-config synced ($(du -sh /opt/opencode-config | cut -f1))"
     else

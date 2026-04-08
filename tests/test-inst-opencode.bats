@@ -21,10 +21,8 @@ setup() {
                                               > "$FAKE_BIN/bunx"    && chmod +x "$FAKE_BIN/bunx"
 
     # Dotfiles source config
-    mkdir -p "$FAKE_HOME/dotfiles/.config/opencode/agents"
-    echo '{"key": "val"}'  > "$FAKE_HOME/dotfiles/.config/opencode/config.json"
+    mkdir -p "$FAKE_HOME/dotfiles/.config/opencode"
     echo '// test jsonc'   > "$FAKE_HOME/dotfiles/.config/opencode/opencode.jsonc"
-    echo '# agent'         > "$FAKE_HOME/dotfiles/.config/opencode/agents/test-agent.md"
 
     # Minimal globals.sh stub
     cat > "$FAKE_HOME/dotfiles/globals.sh" <<'G'
@@ -57,7 +55,7 @@ assert_opencode_symlink() {
 
 @test "opencode: symlinks all config items to dotfiles" {
     opencode_run
-    for item in config.json opencode.jsonc agents; do
+    for item in opencode.jsonc; do
         assert_opencode_symlink "$item"
     done
 }
@@ -70,16 +68,16 @@ assert_opencode_symlink() {
 
 @test "opencode: replaces existing file with symlink" {
     mkdir -p "$FAKE_HOME/.config/opencode"
-    echo "old" > "$FAKE_HOME/.config/opencode/config.json"
+    echo "old" > "$FAKE_HOME/.config/opencode/opencode.jsonc"
     opencode_run
-    [ -L "$FAKE_HOME/.config/opencode/config.json" ]
+    [ -L "$FAKE_HOME/.config/opencode/opencode.jsonc" ]
 }
 
 @test "opencode: replaces wrong symlink target" {
     mkdir -p "$FAKE_HOME/.config/opencode"
-    ln -s /wrong/path "$FAKE_HOME/.config/opencode/config.json"
+    ln -s /wrong/path "$FAKE_HOME/.config/opencode/opencode.jsonc"
     opencode_run
-    assert_opencode_symlink "config.json"
+    assert_opencode_symlink "opencode.jsonc"
 }
 
 @test "opencode: creates destination dir if missing" {

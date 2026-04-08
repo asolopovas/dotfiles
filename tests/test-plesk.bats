@@ -178,10 +178,6 @@ setup_file() {
     [[ "$output" == *"rws"* ]]
 }
 
-@test "plesk-opencode: config.json exists" {
-    [ -f /opt/opencode-config/config.json ]
-}
-
 @test "plesk-opencode: cache dir shared" {
     if [ ! -d /opt/opencode-cache ]; then skip "no cache synced"; fi
     [ "$(stat -c '%G' /opt/opencode-cache)" = "psacln" ]
