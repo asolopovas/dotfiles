@@ -126,12 +126,10 @@ resolve_opencode_config_files() {
     home="$(cli_home opencode)"
 
     local primary="$home/opencode.json"
-    local legacy="$home/config.json"
     local jsonc="$home/opencode.jsonc"
 
-    if [[ -f "$primary" || -f "$legacy" || -f "$jsonc" ]]; then
+    if [[ -f "$primary" || -f "$jsonc" ]]; then
         [[ -f "$primary" ]] && printf '%s\n' "$primary"
-        [[ -f "$legacy" ]] && printf '%s\n' "$legacy"
         [[ -f "$jsonc" ]] && printf '%s\n' "$jsonc"
         return 0
     fi
@@ -432,16 +430,6 @@ mcp_opencode_sync() {
         mcp_opencode_sync_file "$config"
     done < <(resolve_opencode_config_files)
 
-    local home primary legacy
-    home="$(cli_home opencode)"
-    primary="$home/opencode.json"
-    legacy="$home/config.json"
-    if [[ ! -f "$primary" && -f "$legacy" ]]; then
-        cp "$legacy" "$primary"
-    fi
-    if [[ -f "$primary" && ! -f "$legacy" ]]; then
-        cp "$primary" "$legacy"
-    fi
 }
 
 mcp_codex_sync() {
