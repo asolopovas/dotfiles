@@ -461,11 +461,13 @@ myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
 --------------------------------------------
 -- Event handling
 --------------------------------------------
+-- Wrap swallowEventHook to suppress Enum.toEnum{Word8} and getWindowAttributes errors
 winSwallowHook :: Event -> X All
-winSwallowHook = swallowEventHook ( className =? "Alacritty" ) (return True)
+winSwallowHook ev =
+    swallowEventHook (className =? "Alacritty") (return True) ev
+        `catchX` return (All True)
 
 myHandleEventHook = winSwallowHook
--- myHandleEventHook = winSwallowHook
 
 spawnToWorkspace :: String -> String -> X ()
 spawnToWorkspace workspace program = do
