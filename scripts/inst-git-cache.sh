@@ -14,6 +14,7 @@ install_git_cache() {
     
     # Set cache directory via environment variable
     run_as_user bash -c "echo 'export GITCACHE_DIR=\"$CACHE_DIR\"' >> /home/$SUDO_USER/.bashrc"
+    run_as_user bash -c "echo 'export GITCACHE_LOGLEVEL=\"ERROR\"' >> /home/$SUDO_USER/.bashrc"
     
     # Initialize gitcache with proper cache directory
     run_as_user env GITCACHE_DIR="$CACHE_DIR" "/home/$SUDO_USER/.local/bin/gitcache" --help >/dev/null 2>&1 || true
@@ -50,6 +51,7 @@ test_git_cache() {
 uninstall_git_cache() {
     run_as_user rm -f "/home/$SUDO_USER/.local/bin/gitcache" "/home/$SUDO_USER/.local/bin/git"
     run_as_user sed -i '/export GITCACHE_DIR=/d' "/home/$SUDO_USER/.bashrc" 2>/dev/null || true
+    run_as_user sed -i '/export GITCACHE_LOGLEVEL=/d' "/home/$SUDO_USER/.bashrc" 2>/dev/null || true
     log "Gitcache removed"
 }
 
