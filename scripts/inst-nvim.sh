@@ -133,15 +133,24 @@ is_managed_nvim() {
         return 1
     fi
 
-    if [ "$nvim_bin" = "$HOME/.local/nvim/bin/nvim" ] || [ "$nvim_bin" = "/opt/nvim/bin/nvim" ]; then
-        return 0
-    fi
+    # Match known managed paths (including the unrenamed tarball directory)
+    case "$nvim_bin" in
+        "$HOME/.local/nvim/bin/nvim"|\
+        "$HOME/.local/nvim"*/bin/nvim|\
+        /opt/nvim/bin/nvim|\
+        /opt/nvim-*/bin/nvim)
+            return 0 ;;
+    esac
 
     if command -v readlink >/dev/null 2>&1; then
         resolved="$(readlink -f "$nvim_bin" 2>/dev/null || true)"
-        if [ "$resolved" = "$HOME/.local/nvim/bin/nvim" ] || [ "$resolved" = "/opt/nvim/bin/nvim" ]; then
-            return 0
-        fi
+        case "$resolved" in
+            "$HOME/.local/nvim/bin/nvim"|\
+            "$HOME/.local/nvim"*/bin/nvim|\
+            /opt/nvim/bin/nvim|\
+            /opt/nvim-*/bin/nvim)
+                return 0 ;;
+        esac
     fi
 
     return 1
