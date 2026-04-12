@@ -216,7 +216,13 @@ main() {
     if command -v nvim >/dev/null 2>&1; then
         nvim_bin="$(command -v nvim 2>/dev/null || true)"
         if is_managed_nvim "$nvim_bin"; then
-            sync_existing "$nvim_bin"
+            # Only sync plugins when --force is set; otherwise just ensure config
+            if [ "${FORCE:-false}" = true ]; then
+                sync_existing "$nvim_bin"
+            else
+                ensure_nvim_config
+                echo "nvim already installed — skipping plugin sync (use --force to resync)"
+            fi
             return
         fi
     fi
