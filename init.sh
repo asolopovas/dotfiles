@@ -154,6 +154,8 @@ fi
 
 [[ "${features[OHMYFISH]}" = true ]] && load_script 'ohmyfish'
 
+source "$SCRIPTS_DIR/cfg-libreoffice.sh"
+
 if [[ "${features[CHANGE_SHELL]}" = true ]]; then
     print_color green "CHANGING SHELL TO FISH"
     if command -v fish &>/dev/null; then
