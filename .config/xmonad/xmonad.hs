@@ -204,6 +204,7 @@ myManageHook = composeAll
         className =? "flameshot"                  --> doRectFloat lgFloat,
         className =? "Anydesk"                    --> doRectFloat mdFloat,
         className =? "Psi"                        --> doCenterFloat,
+        className =? "Xviewer"                     --> doCenterFloat,
         className =? "Image Lounge"               --> doCenterFloat,
         className =? "Seahorse"                   --> doCenterFloat,
         className =? "Xarchiver"                  --> doCenterFloat,
