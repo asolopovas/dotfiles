@@ -6,8 +6,10 @@
 ~/dotfiles/scripts/ui-polybar-fonts.sh
 
 gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
-# Start compositor (fastcompmgr preferred, fallback to picom)
-if command -v fastcompmgr &> /dev/null; then
+# Start compositor (picom preferred, fallback to fastcompmgr)
+if command -v picom &> /dev/null; then
+    nohup picom --config ~/.config/picom.conf > /tmp/picom.log 2>&1 &
+elif command -v fastcompmgr &> /dev/null; then
     nohup fastcompmgr -r 7 -l -7 -t -7 -i 1.0 -c -C > /dev/null 2>&1 &
 fi
 .config/polybar/launch.sh > /tmp/polybar.log 2>&1 &

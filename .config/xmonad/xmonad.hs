@@ -103,7 +103,7 @@ myKeyb =
     ("M-S-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
-    ("M-d",            spawn "ulauncher"              ),
+    ("M-d",            spawn "ulauncher --no-window-shadow"),
     ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
     ("M-S-d",          spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
@@ -168,6 +168,7 @@ myManageHook = composeAll
     [
         stringProperty "WM_WINDOW_ROLE" =? "GtkFileChooserDialog"  -->doCenterFloat,
         stringProperty "WM_WINDOW_ROLE" =? "pop-up" --> doCenterFloat,
+        appName   =? "ulauncher"                    --> (doNoBorder <+> doCenterFloat),
         appName   =? "fzf-menu"                    --> doCenterFloat,
         appName   =? "pcmanfmTerm"                --> doCenterFloat,
         appName   =? "gnome-tweaks"               --> doCenterFloat,
@@ -321,6 +322,9 @@ fixWorkspaceAssignment = do
 -------------------------------------------
 -- Floating functions
 -------------------------------------------
+doNoBorder :: ManageHook
+doNoBorder = ask >>= \w -> liftX (withDisplay $ \d -> io $ setWindowBorderWidth d w 0) >> idHook
+
 centerRect = W.RationalRect 0.25 0.25 0.5 0.5
 
 -- If the window is floating then (f), if tiled then (n)
