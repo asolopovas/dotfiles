@@ -12,7 +12,7 @@ if [ "$1" == "--force" ]; then
   done
 fi
 
-npm install -g @anthropic-ai/claude-code
+curl -fsSL https://claude.ai/install.sh | bash
 
 # Config is synced from dotfiles via sync-ai.sh
 SYNC_TARGETS=claude "$DOTFILES_DIR/scripts/sync-ai.sh" config

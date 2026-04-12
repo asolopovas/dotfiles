@@ -45,7 +45,7 @@ fi
 # Add bookmarked directories
 if [ -f "$HOME/dotfiles/bookmarks.txt" ]; then
     while IFS= read -r line; do
-        local dir_path="$HOME/$line"
+        dir_path="$HOME/$line"
         for dir in "$dir_path"/*; do
             [ -d "$dir" ] && STORE_MAP["$(basename "$dir")"]="$dir"
         done
