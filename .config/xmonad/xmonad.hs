@@ -3,6 +3,7 @@
 -------------------------------------------
 import XMonad
 import XMonad.ManageHook
+import Data.List (isSuffixOf)
 import XMonad.Config.Desktop
 import Control.Concurrent (threadDelay)
 import Graphics.X11.ExtraTypes.XF86
@@ -178,7 +179,8 @@ myManageHook = composeAll
         appName   =? "gnome-tweaks"               --> doCenterFloat,
         appName   =? "gnome-calculator"           --> doRectFloat smFloat,
         appName   =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
-        title     =? "Attention"                   --> doFloat,
+        className =? "Thunar" <&&> fmap (isSuffixOf "- Thunar") title        --> doCenterFloat,
+        className =? "Thunar" <&&> fmap (not . isSuffixOf "- Thunar") title --> doFloat,
         title     =? "Picture-in-picture"         --> doRectFloat smFloat,
         title     =? "Media viewer"               --> doCenterFloat,
         title     =? "Cryptomator"                --> doRectFloat mdFloat,
