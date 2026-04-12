@@ -103,9 +103,8 @@ myKeyb =
     ("M-S-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
-    ("M-d",            spawn "ulauncher --no-window-shadow"),
     ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
-    ("M-S-d",          spawn "su_dmenu_run"           ),
+    ("M-d",            spawn "su_dmenu_run"           ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
     ("M-o",            spawn "fzf-menu fzf-code"      ),

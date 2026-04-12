@@ -1,8 +1,0 @@
-@import url("theme.css");
-
-.input {
-    caret-color: @caret_color;
-}
-.selected.item-box {
-    border: none;
-}
