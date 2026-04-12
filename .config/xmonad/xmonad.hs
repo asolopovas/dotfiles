@@ -120,7 +120,7 @@ myKeyb =
     ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
     ("M-m",              namedScratchpadAction myScratchPads "aimp"           ),
-    ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
+    ("<F7>",             spawn "aimp-delete-track"                            ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
     ("M-x",              namedScratchpadAction myScratchPads "filebrowser"   ),

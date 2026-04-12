@@ -1,0 +1,45 @@
+#!/bin/bash
+# Delete current AIMP track and skip to next
+# Linux equivalent of F7 AHK script
+
+DBUS_DEST="org.mpris.MediaPlayer2.AIMP"
+DBUS_PATH="/org/mpris/MediaPlayer2"
+DBUS_IFACE="org.mpris.MediaPlayer2.Player"
+
+# Get current track URL from MPRIS metadata
+file_url=$(dbus-send --print-reply --dest="$DBUS_DEST" "$DBUS_PATH" \
+    org.freedesktop.DBus.Properties.Get \
+    string:"$DBUS_IFACE" string:"Metadata" 2>/dev/null \
+    | grep -A1 'string "xesam:url"' \
+    | grep 'variant' \
+    | sed 's/.*string "\(.*\)"/\1/')
+
+if [ -z "$file_url" ]; then
+    notify-send -u normal "AIMP" "No track info from AIMP"
+    exit 1
+fi
+
+# Convert file:// URI to path
+file_path=$(python3 -c "import urllib.parse, sys; print(urllib.parse.unquote(urllib.parse.urlparse(sys.argv[1]).path))" "$file_url" 2>/dev/null)
+
+if [ -z "$file_path" ] || [ ! -f "$file_path" ]; then
+    notify-send -u normal "AIMP" "Track file not found: $file_path"
+    exit 1
+fi
+
+track_name=$(basename "$file_path")
+file_size=$(stat -c%s "$file_path" 2>/dev/null || echo 0)
+size_mb=$(awk "BEGIN {printf \"%.1f\", $file_size / 1048576}")
+
+# Skip to next track so AIMP releases the file
+dbus-send --print-reply --dest="$DBUS_DEST" "$DBUS_PATH" "$DBUS_IFACE.Next" >/dev/null 2>&1
+
+# Delete after delay so AIMP releases the file handle
+(
+    sleep 2
+    if rm -f "$file_path" 2>/dev/null; then
+        notify-send -u normal "AIMP" "Deleted: $track_name ($size_mb MB)"
+    else
+        notify-send -u critical "AIMP" "Delete failed: $track_name"
+    fi
+) &
