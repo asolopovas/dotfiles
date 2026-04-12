@@ -1,2 +1,25 @@
 #!/bin/bash
-sudo guestmount --add /mnt/c/Users/asolo/AppData/Local/wsl/{14d65ac5-e341-44e1-a742-1f0a2aa49f90}/ext4.vhdx --inspector --rw /mnt/wsl -o allow_other
+set -e
+
+VHDX="/mnt/c/Users/asolo/AppData/Local/Packages/CanonicalGroupLimited.Ubuntu_79rhkp1fndgsc/LocalState/ext4.vhdx"
+NBD=/dev/nbd0
+MNT=/mnt/wsl
+
+# Load NBD kernel module
+sudo modprobe nbd max_part=8
+
+# Replay dirty VHDX log if needed
+sudo qemu-img check -r all "$VHDX" 2>/dev/null || true
+
+# Connect VHDX via NBD
+sudo qemu-nbd --connect="$NBD" "$VHDX"
+sleep 1
+
+# Mount the filesystem
+sudo mkdir -p "$MNT"
+if sudo mount -o rw "$NBD" "$MNT" 2>/dev/null; then
+  echo "Mounted at $MNT"
+else
+  sudo mount -o rw "${NBD}p1" "$MNT"
+  echo "Mounted at $MNT (partition 1)"
+fi

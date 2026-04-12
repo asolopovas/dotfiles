@@ -1,0 +1,97 @@
+#!/bin/bash
+set -e
+
+# Mount Windows NTFS partitions using the ntfs3 kernel driver
+# Safe to run multiple times — skips partitions already in fstab
+
+FSTYPE="ntfs3"
+OPTS="defaults,force,uid=1000,gid=1000"
+
+# Load ntfs3 kernel module
+sudo modprobe ntfs3 2>/dev/null || sudo insmod "/lib/modules/$(uname -r)/kernel/fs/ntfs3/ntfs3.ko"
+
+# Discover NTFS partitions
+mapfile -t PARTS < <(blkid -t TYPE=ntfs -o device | sort)
+
+if [ ${#PARTS[@]} -eq 0 ]; then
+  echo "No NTFS partitions found"
+  exit 0
+fi
+
+echo "Found NTFS partitions:"
+for dev in "${PARTS[@]}"; do
+  label=$(blkid -s LABEL -o value "$dev" 2>/dev/null || true)
+  uuid=$(blkid -s UUID -o value "$dev")
+  size=$(blockdev --getsize64 "$dev" 2>/dev/null || echo 0)
+  printf "  %-20s UUID=%-20s LABEL=%-12s SIZE=%sG\n" "$dev" "$uuid" "${label:-(none)}" "$((size / 1073741824))"
+done
+echo ""
+
+changed=false
+
+for dev in "${PARTS[@]}"; do
+  label=$(blkid -s LABEL -o value "$dev" 2>/dev/null || true)
+  uuid=$(blkid -s UUID -o value "$dev")
+
+  # Skip Recovery and small (<2GB) partitions
+  if [[ "${label,,}" == "recovery" ]]; then
+    echo "Skipping $dev (Recovery partition)"
+    continue
+  fi
+  size_bytes=$(blockdev --getsize64 "$dev" 2>/dev/null || echo 0)
+  if (( size_bytes < 2147483648 )); then
+    echo "Skipping $dev (too small — likely recovery/system)"
+    continue
+  fi
+
+  # Determine mount point from label
+  case "${label,,}" in
+    system|"") mount_point="/mnt/c" ;;
+    data)      mount_point="/mnt/d" ;;
+    *)         mount_point="/mnt/${label,,}" ;;
+  esac
+
+  # Check if UUID already in fstab
+  if grep -q "UUID=$uuid" /etc/fstab; then
+    if grep "UUID=$uuid" /etc/fstab | grep -q "$FSTYPE"; then
+      echo "Already in fstab: $dev → $mount_point (skipping)"
+    else
+      echo "Updating $dev ($mount_point) — switching to $FSTYPE"
+      sudo sed -i "s|UUID=$uuid.*|UUID=$uuid $mount_point $FSTYPE $OPTS 0 0|" /etc/fstab
+      changed=true
+    fi
+    continue
+  fi
+
+  entry="UUID=$uuid $mount_point $FSTYPE $OPTS 0 0"
+  echo "Adding: $entry"
+  echo "$entry" | sudo tee -a /etc/fstab >/dev/null
+  changed=true
+done
+
+# Remount if fstab changed
+if $changed; then
+  echo ""
+  echo "Remounting..."
+fi
+# Always ensure mount points exist and try mounting
+for dev in "${PARTS[@]}"; do
+  label=$(blkid -s LABEL -o value "$dev" 2>/dev/null || true)
+  case "${label,,}" in
+    system|"") mp="/mnt/c" ;;
+    data)      mp="/mnt/d" ;;
+    recovery)  continue ;;
+    *)         mp="/mnt/${label,,}" ;;
+  esac
+  sudo mkdir -p "$mp"
+  if ! mountpoint -q "$mp" 2>/dev/null; then
+    sudo mount "$mp" 2>&1 || true
+  fi
+done
+
+echo ""
+echo "fstab NTFS entries:"
+grep -i ntfs /etc/fstab || echo "  (none)"
+echo ""
+echo "Current mounts:"
+mount | grep -i ntfs || echo "  (none)"
