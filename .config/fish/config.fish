@@ -67,3 +67,4 @@ fish_add_path $HOME/.opencode/bin
 function chrome-debug
     bash $HOME/dotfiles/scripts/chrome-debug.sh $argv
 end
+alias claude="/home/andrius/.claude/local/claude"
