@@ -2,6 +2,7 @@
 
 set -e
 
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 target="$HOME/.claude"
 
 if [ "$1" == "--force" ]; then
@@ -13,13 +14,8 @@ fi
 
 npm install -g @anthropic-ai/claude-code
 
-mkdir -p "$target"
-
-cat > "$target/settings.json" <<'EOF'
-{
-  "includeCoAuthoredBy": false,
-  "includeGitInstructions": false
-}
-EOF
+# Config is synced from dotfiles via sync-ai.sh
+SYNC_TARGETS=claude "$DOTFILES_DIR/scripts/sync-ai.sh" config
 
 echo "Claude Code installation complete!"
+echo "Run 'sync-ai.sh' to install skills and MCP servers."

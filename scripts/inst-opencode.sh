@@ -6,12 +6,6 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 source "$DOTFILES_DIR/globals.sh"
 
 OPENCODE_SRC="$DOTFILES_DIR/.config/opencode"
-OPENCODE_DST="$HOME/.config/opencode"
-
-# Files/dirs to symlink (Linux) or copy (Windows)
-CONFIGS=(
-    "opencode.jsonc"
-)
 
 install_opencode() {
     if cmd_exist opencode; then
@@ -22,26 +16,7 @@ install_opencode() {
     fi
 }
 
-link_config() {
-    local src="$1" dst="$2"
-
-    if [ -L "$dst" ]; then
-        local target
-        target="$(readlink "$dst" 2>/dev/null || true)"
-        if [ "$target" = "$src" ]; then
-            return 0
-        fi
-        rm -f "$dst"
-    elif [ -e "$dst" ]; then
-        rm -rf "$dst"
-    fi
-
-    mkdir -p "$(dirname "$dst")"
-    ln -sf "$src" "$dst"
-    print_color green "  symlink: $dst -> $src"
-}
-
-copy_config() {
+copy_config_windows() {
     local src="$1" dst="$2"
 
     mkdir -p "$(dirname "$dst")"
@@ -54,20 +29,9 @@ copy_config() {
     print_color green "  copied: $src -> $dst"
 }
 
-setup_linux() {
-    print_color green "Setting up OpenCode config (Linux)..."
-    mkdir -p "$OPENCODE_DST"
-
-    for item in "${CONFIGS[@]}"; do
-        link_config "$OPENCODE_SRC/$item" "$OPENCODE_DST/$item"
-    done
-}
-
 setup_windows() {
-    # Only run under WSL
-    if ! grep -qi microsoft /proc/version 2>/dev/null; then
-        return 0
-    fi
+    # Only run under WSL — Windows can't use symlinks, so copy instead
+    grep -qi microsoft /proc/version 2>/dev/null || return 0
 
     local win_home
     win_home="$(wslpath "$(cmd.exe /C 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")" || return 0
@@ -80,17 +44,10 @@ setup_windows() {
     local win_dst="$win_home/.config/opencode"
     print_color green "Setting up OpenCode config (Windows: $win_dst)..."
     mkdir -p "$win_dst"
-
-    for item in "${CONFIGS[@]}"; do
-        copy_config "$OPENCODE_SRC/$item" "$win_dst/$item"
-    done
+    copy_config_windows "$OPENCODE_SRC/opencode.jsonc" "$win_dst/opencode.jsonc"
 }
 
 setup_shared_plesk() {
-    # On a Plesk server running as root, also propagate the install to the
-    # shared locations (/opt/opencode-{config,cache,bin} + /usr/local/bin/opencode)
-    # so that vhost users (psacln) can run opencode too. Delegated to
-    # plesk-init.sh's setup_opencode, which is the single source of truth.
     [[ $EUID -eq 0 ]] || return 0
     command -v plesk >/dev/null 2>&1 || return 0
 
@@ -102,7 +59,10 @@ setup_shared_plesk() {
 }
 
 install_opencode
-setup_linux
+
+# Config is synced from dotfiles via sync-ai.sh (Linux symlinks)
+SYNC_TARGETS=opencode "$DOTFILES_DIR/scripts/sync-ai.sh" config
+
 setup_windows
 setup_shared_plesk
 

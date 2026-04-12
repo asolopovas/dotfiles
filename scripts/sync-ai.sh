@@ -2,10 +2,11 @@
 set -euo pipefail
 
 # =============================================================================
-# sync-ai.sh — Sync skills, MCP servers, and agents across AI CLIs
+# sync-ai.sh — Sync config, skills, MCP servers, and agents across AI CLIs
 #
 # Usage:
 #   sync-ai.sh [sync]           Sync everything (default)
+#   sync-ai.sh config           Sync config files only
 #   sync-ai.sh skills           Sync skills only
 #   sync-ai.sh mcp              Sync MCP servers only
 #   sync-ai.sh agents [sync]    Sync agents
@@ -67,6 +68,15 @@ declare -A MCP_SERVERS=(
 AGENTS_CONF="${AGENTS_CONFIG:-$DOTFILES_DIR/agents.conf}"
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG:-}"
 CODEX_CONFIG_FILE="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
+
+# Config files to symlink from dotfiles to $HOME, grouped by CLI.
+# Each entry is a path relative to both $DOTFILES_DIR (source) and $HOME (dest).
+CLAUDE_CONFIGS=(
+    ".claude/settings.json"
+)
+OPENCODE_CONFIGS=(
+    ".config/opencode/opencode.jsonc"
+)
 
 TARGETS=()
 
@@ -217,6 +227,49 @@ resolve_targets() {
     done
 
     (( ${#TARGETS[@]} )) || die "no supported CLI detected (codex, claude, opencode)."
+}
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+ensure_config_symlink() {
+    local src="$1" dst="$2"
+
+    if [[ -L "$dst" ]]; then
+        [[ "$(readlink "$dst" 2>/dev/null)" == "$src" ]] && return 0
+        rm -f "$dst"
+    elif [[ -e "$dst" ]]; then
+        rm -rf "$dst"
+    fi
+
+    mkdir -p "$(dirname "$dst")"
+    ln -sf "$src" "$dst"
+    echo "-> symlink: $dst -> $src"
+}
+
+sync_config_for_cli() {
+    local cli="$1"
+    shift
+    local -a configs=("$@")
+
+    for relpath in "${configs[@]}"; do
+        local src="$DOTFILES_DIR/$relpath"
+        local dst="$HOME/$relpath"
+        [[ -e "$src" ]] || { echo "Warning: $src not found; skipping." >&2; continue; }
+        ensure_config_symlink "$src" "$dst"
+    done
+}
+
+sync_config() {
+    echo "--- Config ---"
+
+    for target in "${TARGETS[@]}"; do
+        case "$target" in
+            claude)   sync_config_for_cli claude   "${CLAUDE_CONFIGS[@]}" ;;
+            opencode) sync_config_for_cli opencode "${OPENCODE_CONFIGS[@]}" ;;
+        esac
+    done
 }
 
 # ---------------------------------------------------------------------------
@@ -714,7 +767,8 @@ usage() {
 Usage: $(basename "$0") [command]
 
 Commands:
-  sync              Sync everything: skills, MCP servers, agents (default)
+  sync              Sync everything: config, skills, MCP servers, agents (default)
+  config            Sync config files only
   skills            Sync skills only
   mcp               Sync MCP servers only
   agents [sub]      Manage agents (sync|add|remove|list)
@@ -735,16 +789,18 @@ EOF
 main() {
     case "${1:-sync}" in
         -h|--help) usage ;;
-        skills|mcp|sync)
+        config|skills|mcp|sync)
             resolve_targets
             case "${1:-sync}" in
                 sync)
+                    sync_config
                     sync_skills
                     sync_mcp
                     sync_agents
                     echo ""
                     echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
                     ;;
+                config) sync_config ;;
                 skills) sync_skills true ;;
                 mcp)    sync_mcp ;;
             esac
