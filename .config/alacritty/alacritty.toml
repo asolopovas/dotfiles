@@ -94,7 +94,7 @@ save_to_clipboard = true
 
 [window]
 dynamic_padding = true
-opacity = 0.85
+opacity = 0.95
 title = "Alacritty"
 
 [window.class]
