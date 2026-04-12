@@ -106,7 +106,7 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
-    ("M-d",            spawn "su_dmenu_run"           ),
+    ("M-d",            spawn "dmenu_run"              ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
     ("M-o",            spawn "fzf-menu fzf-code"      ),
@@ -449,7 +449,7 @@ myLogHook dbus = def
 dbusOutput :: D.Client -> String -> IO ()
 dbusOutput dbus str = do
     let signal = (D.signal objectPath interfaceName memberName) {
-            D.signalBody = [D.toVariant $ UTF8.decodeString str]
+            D.signalBody = [D.toVariant $ UTF8.encodeString str]
         }
     D.emit dbus signal
   where
