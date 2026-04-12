@@ -1,8 +1,43 @@
 #!/bin/bash
 
 export DOTFILES_DIR="$HOME/dotfiles"
-OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
-export OS
+
+# Cross-platform OS detection
+detect_os() {
+    case "$(uname -s)" in
+        Darwin) echo "macos" ;;
+        Linux)
+            if [ -f /etc/os-release ]; then
+                awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release
+            elif [ -f /etc/debian_version ]; then
+                echo "debian"
+            elif [ -f /etc/fedora-release ]; then
+                echo "fedora"
+            elif [ -f /etc/arch-release ]; then
+                echo "arch"
+            else
+                echo "linux"
+            fi
+            ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+# Architecture detection (normalised labels)
+detect_arch() {
+    local machine
+    machine="$(uname -m)"
+    case "$machine" in
+        x86_64|amd64)  echo "x86_64" ;;
+        aarch64|arm64) echo "aarch64" ;;
+        armv7l)        echo "armv7l" ;;
+        *)             echo "$machine" ;;
+    esac
+}
+
+OS="${OS:-$(detect_os)}"
+ARCH="${ARCH:-$(detect_arch)}"
+export OS ARCH
 
 add_paths_from_file() {
     local file_path="$1"
@@ -155,4 +190,53 @@ source_script() {
     local script_path="$DOTFILES/env/$script_name.sh"
     # shellcheck disable=SC1090
     [[ -f "$script_path" ]] && source "$script_path" || echo "Failed to source $script_path"
+}
+
+# Fix broken symlinks in a directory (non-recursive by default)
+# Usage: fix_broken_symlinks /path/to/dir [--recursive]
+fix_broken_symlinks() {
+    local dir="${1:-.}"
+    local recursive="${2:-}"
+    local depth_args=(-maxdepth 1)
+    local count=0
+
+    if [ "$recursive" = "--recursive" ]; then
+        depth_args=()
+    fi
+
+    if [ ! -d "$dir" ]; then
+        return 0
+    fi
+
+    while IFS= read -r -d '' link; do
+        local target
+        target="$(readlink "$link")"
+        print_color yellow "Removing broken symlink: $link -> $target"
+        rm -f "$link"
+        count=$((count + 1))
+    done < <(find "$dir" "${depth_args[@]}" -xtype l -print0 2>/dev/null)
+
+    if [ "$count" -gt 0 ]; then
+        print_color green "Fixed $count broken symlink(s) in $dir"
+    fi
+    return 0
+}
+
+# Portable package install (apt/brew/dnf/pacman)
+pkg_install() {
+    case "$OS" in
+        ubuntu|debian|linuxmint|pop)
+            ${SUDO:-} apt install -y "$@" ;;
+        fedora)
+            ${SUDO:-} dnf install -y "$@" ;;
+        centos)
+            ${SUDO:-} yum install -y "$@" ;;
+        arch)
+            ${SUDO:-} pacman -S --noconfirm "$@" ;;
+        macos)
+            brew install "$@" ;;
+        *)
+            echo "Unsupported OS for package install: $OS"
+            return 1 ;;
+    esac
 }

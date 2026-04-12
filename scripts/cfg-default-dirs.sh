@@ -77,9 +77,25 @@ if [ "$ZSH" = true ]; then
 fi
 
 print_color green "Creating Symlinks ..."
+
+# Clean up broken symlinks in managed directories
+for check_dir in "$HOME/.config" "$HOME/.local/bin"; do
+    if [ -d "$check_dir" ]; then
+        while IFS= read -r -d '' broken; do
+            print_color yellow "Removing broken symlink: $broken"
+            rm -f "$broken"
+        done < <(find "$check_dir" -maxdepth 2 -xtype l -print0 2>/dev/null)
+    fi
+done
+
 for src in "${CONFDIRS[@]}"; do
     srcPath="$DOTFILES_DIR/$src"
     destPath="$HOME/$src"
+
+    if [ ! -e "$srcPath" ]; then
+        print_color yellow "Source missing, skipping: $srcPath"
+        continue
+    fi
 
     if [ -L "$destPath" ]; then
         link_target="$(readlink "$destPath" 2>/dev/null || true)"

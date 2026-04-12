@@ -4,8 +4,6 @@ export CONFIG_DIR="$HOME/.config"
 export DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
-OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
-export OS
 
 # Bootstrap utilities (self-contained for curl install)
 cmd_exist() { command -v "$1" >/dev/null 2>&1; }
@@ -13,6 +11,41 @@ print_color() {
     local -A colors=(['red']='\033[31m' ['green']='\033[0;32m' ['yellow']='\033[0;33m')
     echo -e "${colors[$1]:-}$2\033[0m"
 }
+
+# Cross-platform OS & arch detection (standalone, before globals.sh)
+_detect_os() {
+    case "$(uname -s)" in
+        Darwin) echo "macos" ;;
+        Linux)
+            if [ -f /etc/os-release ]; then
+                awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release
+            else echo "linux"; fi ;;
+        *) echo "unknown" ;;
+    esac
+}
+_detect_arch() {
+    case "$(uname -m)" in
+        x86_64|amd64)  echo "x86_64" ;;
+        aarch64|arm64) echo "aarch64" ;;
+        *)             echo "$(uname -m)" ;;
+    esac
+}
+OS="${OS:-$(_detect_os)}"
+ARCH="${ARCH:-$(_detect_arch)}"
+export OS ARCH
+
+# Parse CLI arguments (--force, --type=ssh, etc.)
+for arg in "$@"; do
+    case "$arg" in
+        --force)    FORCE=true ;;
+        --type=*)   TYPE="${arg#--type=}" ;;
+        --no-fish)  FISH=false ;;
+        --no-node)  NODE=false ;;
+        --no-bun)   BUN=false ;;
+        --no-deno)  DENO=false ;;
+        --no-nvim)  NVIM=false ;;
+    esac
+done
 
 # Feature flags with defaults
 declare -A features=(
@@ -50,8 +83,18 @@ fi
 
 # Ensure unzip is available
 if ! command -v unzip &>/dev/null; then
-    $SUDO apt update
-    $SUDO apt install -y unzip
+    case "$OS" in
+        ubuntu|debian|linuxmint|pop)
+            $SUDO apt update && $SUDO apt install -y unzip ;;
+        fedora)
+            $SUDO dnf install -y unzip ;;
+        centos)
+            $SUDO yum install -y unzip ;;
+        arch)
+            $SUDO pacman -S --noconfirm unzip ;;
+        macos)
+            ;; # unzip ships with macOS
+    esac
 fi
 
 # Create essential directories
@@ -138,17 +181,34 @@ echo
 source "$DOTFILES_DIR/globals.sh"
 source "$SCRIPTS_DIR/cfg-default-dirs.sh"
 
-[[ "${features[BUN]}" = true ]]    && load_script 'bun'
-[[ "${features[CARGO]}" = true ]]  && curl https://sh.rustup.rs -sSf | sh
-[[ "${features[DENO]}" = true ]]   && load_script 'deno'
-[[ "${features[FISH]}" = true ]]   && ! cmd_exist fish && load_script 'fish'
-[[ "${features[FDFIND]}" = true ]] && ! cmd_exist fd   && load_script 'fd'
-[[ "${features[FZF]}" = true ]]    && load_script 'fzf'
-[[ "${features[NODE]}" = true ]]   && load_script 'node'
+# Fix broken symlinks in config and bin directories
+fix_broken_symlinks "$HOME/.config" --recursive
+fix_broken_symlinks "$HOME/.local/bin"
+
+FORCE_FLAG="${features[FORCE]}"
+
+# Install a tool only if not already present (or FORCE is set)
+ensure_tool() {
+    local feature_key=$1 cmd_name=$2 script_name=$3
+    [[ "${features[$feature_key]}" = true ]] || return 0
+    if [[ "$FORCE_FLAG" != true ]] && cmd_exist "$cmd_name"; then
+        print_color green "$cmd_name already installed — skipping (use --force to reinstall)"
+        return 0
+    fi
+    load_script "$script_name"
+}
+
+ensure_tool BUN    bun   bun
+ensure_tool CARGO  cargo cargo
+ensure_tool DENO   deno  deno
+ensure_tool FISH   fish  fish
+ensure_tool FDFIND fd    fd
+ensure_tool FZF    fzf   fzf
+ensure_tool NODE   node  node
 
 if [[ "${features[NVIM]}" = true ]]; then
     load_script 'nvim'
-    cmd_exist lua || $SUDO apt install -y lua5.1 luarocks
+    cmd_exist lua || pkg_install lua5.1 luarocks
     cmd_exist nvim && ln -sf "$(which nvim)" "$HOME/.local/bin/vim"
 fi
 

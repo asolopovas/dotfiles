@@ -27,6 +27,7 @@ fi
 SUITES=(
     "$SCRIPT_DIR/test-globals.bats"
     "$SCRIPT_DIR/test-scripts.bats"
+    "$SCRIPT_DIR/test-init.bats"
     "$SCRIPT_DIR/test-sync-ai.bats"
     "$SCRIPT_DIR/test-inst-opencode.bats"
 )
@@ -38,6 +39,9 @@ case "${1:-}" in
         ;;
     scripts)
         SUITES=("$SCRIPT_DIR/test-scripts.bats")
+        ;;
+    init)
+        SUITES=("$SCRIPT_DIR/test-init.bats")
         ;;
     sync-ai)
         SUITES=("$SCRIPT_DIR/test-sync-ai.bats")
