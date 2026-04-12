@@ -178,6 +178,7 @@ myManageHook = composeAll
         appName   =? "gnome-tweaks"               --> doCenterFloat,
         appName   =? "gnome-calculator"           --> doRectFloat smFloat,
         appName   =? "xdg-desktop-portal-gnome"   --> doCenterFloat,
+        title     =? "Attention"                   --> doFloat,
         title     =? "Picture-in-picture"         --> doRectFloat smFloat,
         title     =? "Media viewer"               --> doCenterFloat,
         title     =? "Cryptomator"                --> doRectFloat mdFloat,
