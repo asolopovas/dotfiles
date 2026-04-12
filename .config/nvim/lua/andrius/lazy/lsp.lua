@@ -50,10 +50,11 @@ return {
         --   Mason LSP Config
         -- ======================
         require("mason-lspconfig").setup({
+            automatic_enable = false,
             ensure_installed = {
                 "lua_ls",
                 "intelephense",
-                "jsonls",         -- <-- Add JSON LS here
+                "jsonls",
             },
             handlers = {
                 function(server_name) -- default handler (optional)
