@@ -95,12 +95,13 @@ myKeyb =
     ("M-S-j",          windows W.swapDown              ), -- Swap focused window with next window
     ("M-S-k",          windows W.swapUp                ), -- Swap focused window with prev window
     ("M-<Backspace>",  promote                         ), -- Moves focused window to master
-    ("M-f",            sendMessage (T.Toggle "full")   ), -- Toggle layout full layout
-    ("M-S-<Space>",    sendMessage NextLayout          ), -- Toggle layout full layout
-    ("M-S-y",          sendMessage Shrink              ), -- Expand Layout
-    ("M-S-o",          sendMessage Expand              ), -- Shrink Layout
-    ("M-S-u",          sendMessage MirrorShrink        ), -- Vertical Shrink Layout
-    ("M-S-i",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
+    ("M-f",            sendMessage (T.Toggle "full")   ), -- Toggle fullscreen
+    ("M-S-<Space>",    sendMessage (MT.Toggle MIRROR)  ), -- Toggle horizontal/vertical
+    ("M-S-y",          sendMessage Expand              ), -- Expand Layout
+    ("M-S-o",          sendMessage Shrink              ), -- Shrink Layout
+    ("M-S-u",          sendMessage MirrorExpand        ), -- Vertical Expand Layout
+    ("M-S-i",          sendMessage MirrorShrink        ), -- Vertical Shrink Layout
+    ("M-S-0",          resetLayout                              ), -- Reset layout
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
@@ -227,11 +228,13 @@ mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spaci
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
 tiled   =    renamed [Replace "tiled"]
+           $ mkToggle (single MIRROR)
            $ smartBorders
            $ limitWindows 12
            $ mySpacing 5
            $ ResizableTall 1 (3/100) (1/2) []
 tiledR  =   renamed [Replace "tiledR"]
+           $ mkToggle (single MIRROR)
            $ smartBorders
            $ limitWindows 12
            $ mySpacing 5
@@ -267,6 +270,13 @@ myKeys conf@XConfig {XMonad.modMask = modm} = M.fromList $
 --------------------------------------------
 -- Functions and Configurations
 --------------------------------------------
+-- Reset layout to default (fresh layout from config, clears resize ratios and mirror)
+resetLayout :: X ()
+resetLayout = do
+    layout <- asks (XMonad.layoutHook . XMonad.config)
+    setLayout layout
+    refresh
+
 -- Enum to represent screen cycling direction
 data Direction = Prev | Next
 

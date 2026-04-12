@@ -17,11 +17,11 @@
 ```
  Key             │ Action                Key             │ Action             
  ────────────────┼────────────────────   ────────────────┼────────────────────
- M-S-Space       │ Next layout           M-f             │ Toggle fullscreen  
- M-S-y           │ Shrink horiz          M-S-o           │ Expand horiz       
- M-S-u           │ Shrink vert           M-S-i           │ Expand vert        
+ M-S-Space       │ Toggle h/v split      M-f             │ Toggle fullscreen  
+ M-S-y           │ Expand horiz          M-S-o           │ Shrink horiz       
+ M-S-u           │ Expand vert           M-S-i           │ Shrink vert        
  M-. / M-,       │ +/- master count      M-t             │ Toggle float       
- M-Delete        │ Sink floating                         │                    
+ M-Delete        │ Sink floating         M-S-0           │ Reset layout       
 ```
 
 ## Apps & Scratchpads

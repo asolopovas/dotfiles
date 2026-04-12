@@ -62,11 +62,11 @@ echo "## Layout & Resize"
 echo ""
 echo '```'
 hdr "Key" "Action" "Key" "Action"
-row "M-S-Space"      "Next layout"      "M-f"            "Toggle fullscreen"
-row "M-S-y"          "Shrink horiz"     "M-S-o"          "Expand horiz"
-row "M-S-u"          "Shrink vert"      "M-S-i"          "Expand vert"
+row "M-S-Space"      "Toggle h/v split" "M-f"            "Toggle fullscreen"
+row "M-S-y"          "Expand horiz"     "M-S-o"          "Shrink horiz"
+row "M-S-u"          "Expand vert"      "M-S-i"          "Shrink vert"
 row "M-. / M-,"      "+/- master count" "M-t"            "Toggle float"
-row "M-Delete"       "Sink floating"    ""               ""
+row "M-Delete"       "Sink floating"    "M-S-0"          "Reset layout"
 echo '```'
 
 echo ""
