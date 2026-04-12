@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# Generates docs/help.md with perfectly aligned columns
+set -euo pipefail
+
+DOTFILES="${DOTFILES:-$HOME/dotfiles}"
+OUT="$DOTFILES/docs/help.md"
+
+# Column widths
+K=15  # key
+A=19  # action
+G=3   # gap between tables
+
+ksep=$(printf '─%.0s' $(seq 1 $K))
+asep=$(printf '─%.0s' $(seq 1 $A))
+gsep=$(printf ' %.0s' $(seq 1 $G))
+gline=$(printf '─%.0s' $(seq 1 $G))
+
+pad() { printf "%-${2}s" "$1"; }
+
+row() {
+    printf " %s │ %s%s%s │ %s\n" \
+        "$(pad "$1" $K)" "$(pad "$2" $A)" "$gsep" "$(pad "$3" $K)" "$(pad "$4" $A)"
+}
+
+hdr() {
+    row "$1" "$2" "$3" "$4"
+    printf " %s─┼─%s%s%s─┼─%s\n" "$ksep" "$asep" "$gsep" "$ksep" "$asep"
+}
+
+row3() {
+    printf " %s │ %s │ %s%s%s │ %s │ %s\n" \
+        "$(pad "$1" $K)" "$(pad "$2" 6)" "$(pad "$3" 10)" "$gsep" \
+        "$(pad "$4" $K)" "$(pad "$5" 6)" "$(pad "$6" 10)"
+}
+
+hdr3() {
+    local c3sep=$(printf '─%.0s' $(seq 1 6))
+    local r3sep=$(printf '─%.0s' $(seq 1 10))
+    row3 "$1" "$2" "$3" "$4" "$5" "$6"
+    printf " %s─┼─%s─┼─%s%s%s─┼─%s─┼─%s\n" "$ksep" "$c3sep" "$r3sep" "$gsep" "$ksep" "$c3sep" "$r3sep"
+}
+
+{
+cat << 'HEADER'
+# Dotfiles Help                                    F1 toggle | q quit
+
+HEADER
+
+echo "## Focus & Move"
+echo ""
+echo '```'
+hdr "Key" "Action" "Key" "Action"
+row "M-j / M-k"      "Focus down / up"  "M-S-j / M-S-k"  "Swap down / up"
+row "M-s"            "Focus master"      "M-Backspace"    "Promote to master"
+row "M-h / M-l"      "Cycle screens"    "M-S-h / M-S-l"  "Move win to screen"
+row "M-1..9"         "Go to workspace"  "M-S-1..9"       "Move win to ws"
+row "M-q"            "Kill window"      "M-S-q"          "Kill all ws wins"
+echo '```'
+
+echo ""
+echo "## Layout & Resize"
+echo ""
+echo '```'
+hdr "Key" "Action" "Key" "Action"
+row "M-S-Space"      "Next layout"      "M-f"            "Toggle fullscreen"
+row "M-S-y"          "Shrink horiz"     "M-S-o"          "Expand horiz"
+row "M-S-u"          "Shrink vert"      "M-S-i"          "Expand vert"
+row "M-. / M-,"      "+/- master count" "M-t"            "Toggle float"
+row "M-Delete"       "Sink floating"    ""               ""
+echo '```'
+
+echo ""
+echo "## Apps & Scratchpads"
+echo ""
+echo '```'
+hdr "Key" "Action" "Key" "Action"
+row "M-Return"       "Terminal"          "M-S-Return"     "Float terminal"
+row "M-d"            "Dmenu"             "M-0"            "Sysact menu"
+row "M-b"            "Firefox"           "M-c"            "Brave"
+row "M-x"            "Thunar"            "M-S-x"          "Pcmanfm search"
+row "M-m"            "AIMP"              "F7"             "AIMP delete track"
+row "F6"             "Thunderbird"       "F8"             "Stacer"
+row "Calculator"     "Calculator"        "Launch6"        "Pavucontrol"
+row "M-p"            "fzf Thunar"        "M-o"            "fzf Code"
+row "M-S-p"          "fzf Alacritty"     "Print"          "Flameshot"
+row "M-F6"           "Recompile xmonad" "M-S-e"          "Quit xmonad"
+echo '```'
+
+echo ""
+echo "## Tmux - Ctrl+Space"
+echo ""
+echo '```'
+hdr "Key" "Action" "Key" "Action"
+row "C-h/j/k/l"      "Move panes (nopfx)" "Alt+Arrows"   "Resize pane"
+row "Alt+[ / ]"       "Prev / next win"  "Alt+1..9"       "Jump to window"
+row "- / \\"          "Split h / v"      "c"              "New window"
+row "Tab"             "Last window"      "x"              "Kill pane"
+row "z"               "Zoom toggle"      "!"              "Break pane to win"
+row "w"               "Session tree"     "n"              "New session"
+row "g / G / t"       "Lazygit / sh / ht" "?"             "Cheatsheet popup"
+echo '```'
+
+echo ""
+echo "## Neovim - Space"
+echo ""
+echo '```'
+hdr "Key" "Action" "Key" "Action"
+row "<C-p>"          "Smart file finder" "<leader>ff"     "Find files"
+row "<leader>fg"     "Live grep"         "<leader>fb"     "File browser"
+row "<leader>h/l"    "Prev / next buf"   "<leader>bd"     "Close buffer"
+row "<leader>vv/vh"  "Split vert / hori" "<M-h/j/k/l>"    "Move splits"
+row "<leader>f"      "Format"            "<leader><spc>"  "Clear search"
+row "<leader>pv"     "File explorer"     "<M-\`>"         "Toggle NvimTree"
+row "<leader>ev/er"  "Edit init / remap" "<leader>ef/ea"  "Edit fish / alias"
+row "J/K visual"     "Move selection"    "<F5>"           "Toggle hidden chr"
+echo '```'
+
+echo ""
+echo "## Git"
+echo ""
+echo '```'
+hdr "Alias" "Action" "Alias" "Action"
+row "gs"             "status"            "gc"             "add + commit"
+row "gp"             "push"              "gl"             "pull"
+row "gd"             "diff"              "ga"             "amend"
+row "gk"             "checkout"          "gg"             "log"
+row "gundo"          "reset HEAD~1"      "nah"            "hard reset + clean"
+echo '```'
+
+echo ""
+echo "## Shell"
+echo ""
+echo '```'
+hdr "Alias" "Action" "Alias" "Action"
+row "tm"             "tmux main"         "tx"             "attach session"
+row "ts"             "list sessions"     "dt"             "cd dotfiles"
+row "scr"            "cd scripts"        "l"              "ls -lha"
+row "dc"             "docker compose"    "dk"             "docker"
+row "rs"             "rsync"             "m"              "mosh"
+row "upd"            "apt upgrade"       "pn"             "pnpm"
+echo '```'
+
+echo ""
+echo "## Surround.vim"
+echo ""
+echo '```'
+hdr3 "Old Text" "Cmd" "Result" "Old Text" "Cmd" "Result"
+row3 "surr*ound"      "ysiw)" "(surround)" "[del*ete]"     "ds]"   "delete"
+row3 "'quot*es'"      "cs'\"" "\"quotes\"" "<b>ta*g</b>"   "dst"   "tag"
+echo '```'
+
+} > "$OUT"
+
+echo "Generated $OUT"

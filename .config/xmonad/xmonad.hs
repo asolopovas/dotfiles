@@ -130,6 +130,9 @@ myKeyb =
     ("<F8>",             namedScratchpadAction myScratchPads "stacer"        ),
     ("<XF86Calculator>", namedScratchpadAction myScratchPads "calc"          ),
 
+    --Help
+    ("<F1>",             namedScratchpadAction myScratchPads "help"              ),
+
     --Media Keys
     ("<XF86AudioLowerVolume>",  spawn "lmc down"                             ),
     ("<XF86AudioRaiseVolume>",  spawn "lmc up"                               ),
@@ -157,7 +160,8 @@ myScratchPads =
         buildNS "aimp"         "aimp"                                        "className" "Aimp"              "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
-        buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
+        buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg",
+        NS "help" "alacritty --class help-viewer,help-viewer -o window.dimensions.columns=82 -o window.dimensions.lines=50 -e glow -w 90 -p ~/dotfiles/docs/help.md" (appName =? "help-viewer") (customFloating helpFloat)
     ]
 
     where
@@ -369,6 +373,7 @@ lgFloatCustom  = customFloating $ makeFloat 0.9
 smFloat = makeFloat 0.5
 mdFloat = makeFloat 0.7
 lgFloat = makeFloat 0.9
+helpFloat = W.RationalRect 0.25 0.1 0.5 0.8
 
 -- A helper function to build the NS row more concisely
 buildNS :: String -> String -> String -> String -> String -> NamedScratchpad
