@@ -119,7 +119,7 @@ myKeyb =
     ("M-<F6>",         spawn "xmonad --recompile; xmonad --restart; notify-send 'Xmonad Recompiled'"), -- Restarts xmonad
     ("M-S-e",          io exitSuccess                                    ), -- Quits xmonad
     --Scratchpads
-    ("M-m",              namedScratchpadAction myScratchPads "rhythmbox"     ),
+    ("M-m",              namedScratchpadAction myScratchPads "aimp"           ),
     ("<F7>",             namedScratchpadAction myScratchPads "chatGPT"       ),
     ("<F6>",             namedScratchpadAction myScratchPads "thunderbird"   ),
     ("M-b"  ,            namedScratchpadAction myScratchPads "firefox"       ),
@@ -154,7 +154,7 @@ myScratchPads =
         buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"   "className" "stacer"            "md",
         buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
         buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "rhythmbox"    "rhythmbox"                                   "className" "Rhythmbox"         "lg",
+        buildNS "aimp"         "aimp"                                        "className" "Aimp"              "lg",
         buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
         buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
         buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg"
@@ -208,6 +208,7 @@ myManageHook = composeAll
         className =? "Image Lounge"               --> doCenterFloat,
         className =? "Seahorse"                   --> doCenterFloat,
         className =? "Xarchiver"                  --> doCenterFloat,
+        className =? "Aimp"                      --> doCenterFloat,
         className =? "whatsapp-nativefier-d40211" --> doShift "1_7",
         className =? "TelegramDesktop"            --> doRectFloat lgFloat,
         className =? "Signal"                     --> doRectFloat lgFloat,
