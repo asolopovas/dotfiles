@@ -181,6 +181,7 @@ myManageHook = composeAll
         title     =? "Picture-in-picture"         --> doRectFloat smFloat,
         title     =? "Media viewer"               --> doCenterFloat,
         title     =? "Cryptomator"                --> doRectFloat mdFloat,
+        title     =? "Preferences" <&&> className =? "org.cryptomator.launcher.Cryptomator$MainApp" --> doFloat,
         title     =? "Bitwarden"                  --> doFloat,
         className =? "Pavucontrol"                --> doCenterFloat,
         className =? "qt5ct"                      --> doCenterFloat,
