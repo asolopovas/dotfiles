@@ -1,0 +1,14 @@
+[Unit]
+Description=Mount NAS SMB shares
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/andrius/dotfiles/scripts/mount-nas.sh
+RemainAfterExit=yes
+User=andrius
+Environment=HOME=/home/andrius
+
+[Install]
+WantedBy=multi-user.target
