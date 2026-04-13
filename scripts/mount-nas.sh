@@ -1,19 +1,23 @@
 #!/bin/bash
 
+source $HOME/dotfiles/globals.sh
+
 NAS_IP="${NAS_IP:-192.168.1.100}"
 MOUNT_POINT="${MOUNT_POINT:-/mnt/nas}"
-CREDS_FILE="${CREDS_FILE:-$HOME/.nascredentials}"
+SUDO_HOME=$(eval echo "~${SUDO_USER:-$USER}")
+CREDS_FILE="${CREDS_FILE:-$SUDO_HOME/.nascredentials}"
 
-if mountpoint -q "$MOUNT_POINT" 2>/dev/null; then
-    echo "Already mounted at $MOUNT_POINT"
-    exit 0
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root: sudo $0"
+    exit 1
 fi
 
+# --- Credentials setup ---
 if [ ! -f "$CREDS_FILE" ]; then
     creds="$1"
 
-    if [ -z "$creds" ] && [ -f "$HOME/naspass.txt" ]; then
-        creds=$(head -1 "$HOME/naspass.txt")
+    if [ -z "$creds" ] && [ -f "$SUDO_HOME/naspass.txt" ]; then
+        creds=$(head -1 "$SUDO_HOME/naspass.txt")
     fi
 
     if [ -z "$creds" ]; then
@@ -31,9 +35,7 @@ if [ ! -f "$CREDS_FILE" ]; then
     echo "Credentials stored in $CREDS_FILE"
 fi
 
-sudo mkdir -p "$MOUNT_POINT"
-sudo chown "$(id -u):$(id -g)" "$MOUNT_POINT"
-
+# --- Discover shares ---
 SHARES=$(smbclient -L "$NAS_IP" -A "$CREDS_FILE" -g 2>/dev/null | grep '^Disk|' | cut -d'|' -f2 | grep -v 'IPC\$')
 
 if [ -z "$SHARES" ]; then
@@ -41,30 +43,30 @@ if [ -z "$SHARES" ]; then
     exit 1
 fi
 
-FAILED=0
-MOUNTED=0
+# --- Create mount points and add fstab entries ---
+ADDED=0
+EXISTING=0
+UID_NUM=$(id -u "$SUDO_USER")
+GID_NUM=$(id -g "$SUDO_USER")
 
 for share in $SHARES; do
     dir="$MOUNT_POINT/$share"
     mkdir -p "$dir"
 
-    if mountpoint -q "$dir"; then
-        echo "$share: already mounted"
-        MOUNTED=$((MOUNTED + 1))
-        continue
-    fi
+    fstab_entry="//$NAS_IP/$share $dir cifs credentials=$CREDS_FILE,uid=$UID_NUM,gid=$GID_NUM,file_mode=0777,dir_mode=0777,_netdev,nofail 0 0"
 
-    sudo mount -t cifs "//$NAS_IP/$share" "$dir" \
-        -o credentials="$CREDS_FILE",uid=$(id -u),gid=$(id -g),file_mode=0777,dir_mode=0777 2>/dev/null
-
-    if mountpoint -q "$dir"; then
-        echo "$share: mounted"
-        MOUNTED=$((MOUNTED + 1))
+    if grep -qF "//$NAS_IP/$share " /etc/fstab; then
+        echo "$share: already in fstab"
+        EXISTING=$((EXISTING + 1))
     else
-        echo "$share: failed"
-        rmdir "$dir" 2>/dev/null
-        FAILED=$((FAILED + 1))
+        echo "$fstab_entry" >> /etc/fstab
+        echo "$share: added to fstab"
+        ADDED=$((ADDED + 1))
     fi
 done
 
-echo "Done: $MOUNTED mounted, $FAILED failed"
+echo "Done: $ADDED added, $EXISTING already in fstab"
+
+# --- Mount all new entries ---
+mount -a
+echo "All shares mounted"
