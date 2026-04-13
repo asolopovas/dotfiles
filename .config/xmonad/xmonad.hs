@@ -106,7 +106,6 @@ myKeyb =
     --Applications
     ("M-<Return>",     spawn myTerminal               ),
     ("M-c",            namedScratchpadAction myScratchPads "brave"         ),
-    ("M-d",            spawn "dmenu_run"              ),
     ("M-0",            spawn "sysact"                 ),
     ("M-p",            spawn "fzf-menu fzf-thunar"    ),
     ("M-o",            spawn "fzf-menu fzf-code"      ),
