@@ -3,7 +3,7 @@
 -------------------------------------------
 import XMonad
 import XMonad.ManageHook
-import Data.List (isSuffixOf)
+import Data.List (isSuffixOf, isPrefixOf)
 import XMonad.Config.Desktop
 import Control.Concurrent (threadDelay)
 import Graphics.X11.ExtraTypes.XF86
@@ -170,6 +170,7 @@ myScratchPads =
 
 myManageHook = composeAll
     [
+        fmap (isPrefixOf "Mint") className                          --> doCenterFloat,
         stringProperty "WM_WINDOW_ROLE" =? "GtkFileChooserDialog"  -->doCenterFloat,
         stringProperty "WM_WINDOW_ROLE" =? "pop-up" --> doCenterFloat,
         appName   =? "fzf-menu"                    --> doCenterFloat,
