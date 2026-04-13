@@ -16,10 +16,6 @@ fi
 if [ ! -f "$CREDS_FILE" ]; then
     creds="$1"
 
-    if [ -z "$creds" ] && [ -f "$SUDO_HOME/naspass.txt" ]; then
-        creds=$(head -1 "$SUDO_HOME/naspass.txt")
-    fi
-
     if [ -z "$creds" ]; then
         read -rp "NAS credentials (user:password): " creds
     fi
