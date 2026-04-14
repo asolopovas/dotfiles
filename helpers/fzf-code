@@ -10,40 +10,97 @@ else
 fi
 [ -f "$db" ] || { echo "VS Code DB not found: $db" >&2; exit 1; }
 
-mapfile -t entries < <(
-    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key IN ('history.recentlyOpenedPathsList','recently.opened')" |
+normalize_uri() {
+    local uri=$1
+    if [[ $uri =~ ^(vscode-vfs://github)%2[Bb][0-9a-fA-F]+(/.*)$ ]] \
+       || [[ $uri =~ ^(vscode-vfs://github)\+[0-9a-fA-F]+(/.*)$ ]]; then
+        uri="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
+    fi
+    if [[ $uri =~ ^file://+/?(wsl\.localhost|wsl\$)/([^/]+)(/.*)$ ]]; then
+        uri="vscode-remote://wsl+${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    fi
+    printf '%s' "$uri"
+}
+
+mapfile -t raw < <(
+    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'" |
         jq -r '.entries[] |
-            if .folderUri   then "folder\t\(.folderUri)"
-            elif .workspace then "workspace\t\(.workspace.configPath)"
-            else empty end' |
-        awk '!seen[$0]++'
+            (.label // "") as $l |
+            if   .folderUri   then "folder\u001f\($l)\u001f\(.folderUri)"
+            elif .workspace   then "workspace\u001f\($l)\u001f\(.workspace.configPath)"
+            elif .fileUri     then "file\u001f\($l)\u001f\(.fileUri)"
+            else empty end'
 )
+SEP=$'\x1f'
+priority() {
+    case $1 in
+        file://*)         echo 0 ;;
+        vscode-remote://*) echo 1 ;;
+        vscode-vfs://*)   echo 2 ;;
+        *)                echo 3 ;;
+    esac
+}
+tmp_entries=()
+declare -A seen_uri
+for e in "${raw[@]}"; do
+    IFS=$'\x1f' read -r k lbl u <<<"$e"
+    [[ $u == vscode-vfs://* ]] && continue
+    u=$(normalize_uri "$u")
+    dedup="$k$SEP$u"
+    [ -n "${seen_uri[$dedup]:-}" ] && continue
+    seen_uri[$dedup]=1
+    tmp_entries+=("$(priority "$u")$SEP$k$SEP$lbl$SEP$u")
+done
+mapfile -t entries < <(printf '%s\n' "${tmp_entries[@]}" | sort -s | cut -d$'\x1f' -f2-)
 (( ${#entries[@]} )) || { echo "No recent projects." >&2; exit 1; }
 
 label() {
-    local kind=$1 uri=$2 name tag=''
+    local kind=$1 lbl=$2 uri=$3 name tag=''
     case $uri in
-        vscode-remote://*) tag=' [ssh]' ;;
+        vscode-remote://ssh-remote*) tag=' [ssh]' ;;
+        vscode-remote://wsl*)        tag=' [wsl]' ;;
+        vscode-remote://*)           tag=' [remote]' ;;
+        vscode-vfs://github*)        tag=' [github]' ;;
+        vscode-vfs://*)              tag=' [vfs]' ;;
     esac
-    name=${uri##*/}
+    name=${uri%/}
+    name=${name##*/}
     [ "$kind" = workspace ] && name=${name%.code-workspace}
     printf '%s%s\n' "$name" "$tag"
 }
 
 display=()
 for e in "${entries[@]}"; do
-    IFS=$'\t' read -r k u <<<"$e"
-    display+=("$(label "$k" "$u")")
+    IFS=$'\x1f' read -r k lbl u <<<"$e"
+    display+=("$(label "$k" "$lbl" "$u")")
 done
 
 pick=$(printf '%s\n' "${display[@]}" | fzf) || exit 1
 [ -n "$pick" ] || exit 1
 
+urldecode() { printf '%b' "${1//%/\\x}"; }
+
+open_folder() {
+    local uri=$1
+    if [[ $uri =~ ^file:///[^/] ]]; then
+        exec code "$(urldecode "${uri#file://}")"
+    fi
+    exec code --folder-uri "$uri"
+}
+
+open_workspace() {
+    local uri=$1
+    if [[ $uri =~ ^file:///[^/] ]]; then
+        exec code "$(urldecode "${uri#file://}")"
+    fi
+    exec code --file-uri "$uri"
+}
+
 for i in "${!display[@]}"; do
     [ "${display[$i]}" = "$pick" ] || continue
-    IFS=$'\t' read -r kind uri <<<"${entries[$i]}"
+    IFS=$'\x1f' read -r kind _lbl uri <<<"${entries[$i]}"
     case $kind in
-        folder)    exec code --folder-uri "$uri" ;;
-        workspace) exec code --file-uri   "$uri" ;;
+        folder)    open_folder "$uri" ;;
+        workspace|file) open_workspace "$uri" ;;
     esac
 done
