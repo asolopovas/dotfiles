@@ -1,3 +1,48 @@
 #!/bin/bash
-# Open a project in VS Code via fuzzy picker
-exec "$(dirname "$0")/fzf-project-picker" code
+# VS Code recent projects picker (mirrors Ctrl+R).
+set -euo pipefail
+
+if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+    u=$(command -v wslvar >/dev/null && wslvar USERNAME || powershell.exe '$env:USERNAME' | tr -d '\r')
+    db=$(wslpath -u "C:/Users/$u/AppData/Roaming/Code/User/globalStorage/state.vscdb")
+else
+    db=$HOME/.config/Code/User/globalStorage/state.vscdb
+fi
+[ -f "$db" ] || { echo "VS Code DB not found: $db" >&2; exit 1; }
+
+mapfile -t entries < <(
+    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'" |
+        jq -r '.entries[] |
+            if .folderUri   then "folder\t\(.folderUri)"
+            elif .workspace then "workspace\t\(.workspace.configPath)"
+            else empty end'
+)
+(( ${#entries[@]} )) || { echo "No recent projects." >&2; exit 1; }
+
+label() {
+    local kind=$1 uri=$2 name tag=''
+    case $uri in
+        vscode-remote://*) tag=' [ssh]' ;;
+    esac
+    name=${uri##*/}
+    [ "$kind" = workspace ] && name=${name%.code-workspace}
+    printf '%s%s\n' "$name" "$tag"
+}
+
+display=()
+for e in "${entries[@]}"; do
+    IFS=$'\t' read -r k u <<<"$e"
+    display+=("$(label "$k" "$u")")
+done
+
+pick=$(printf '%s\n' "${display[@]}" | fzf) || exit 1
+[ -n "$pick" ] || exit 1
+
+for i in "${!display[@]}"; do
+    [ "${display[$i]}" = "$pick" ] || continue
+    IFS=$'\t' read -r kind uri <<<"${entries[$i]}"
+    case $kind in
+        folder)    exec code --folder-uri "$uri" ;;
+        workspace) exec code --file-uri   "$uri" ;;
+    esac
+done
