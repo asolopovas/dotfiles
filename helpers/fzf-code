@@ -11,11 +11,12 @@ fi
 [ -f "$db" ] || { echo "VS Code DB not found: $db" >&2; exit 1; }
 
 mapfile -t entries < <(
-    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'" |
+    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key IN ('history.recentlyOpenedPathsList','recently.opened')" |
         jq -r '.entries[] |
             if .folderUri   then "folder\t\(.folderUri)"
             elif .workspace then "workspace\t\(.workspace.configPath)"
-            else empty end'
+            else empty end' |
+        awk '!seen[$0]++'
 )
 (( ${#entries[@]} )) || { echo "No recent projects." >&2; exit 1; }
 
