@@ -42,8 +42,8 @@
     "M-<F5>":            "reload-config",
     "M-<F6>":            "recompile",
     "M-<F7>":            "edit-config",
+    "M-<F12>":           "spawn:alacritty --class=xmonad-config -o window.dimensions.columns=110 -o window.dimensions.lines=40 -t xmonad-config -e xmonad-config",
     "M-S-e":             "exit",
-    "M-S-r":             "window-rules-menu",
 
     "M-c":               "scratchpad:brave",
     "M-m":               "scratchpad:aimp",
@@ -125,6 +125,7 @@
     { "className": "Windscribe2",               "float": "float" },
     { "className": "whatsapp-nativefier-d40211","workspace": "1_7" },
     { "appName":   "fzf-menu",                  "float": "center" },
+    { "className": "xmonad-config",              "float": "large"  },
     { "appName":   "pcmanfmTerm",               "float": "center" },
     { "appName":   "gnome-tweaks",              "float": "center" },
     { "appName":   "gnome-calculator",          "float": "small"  },

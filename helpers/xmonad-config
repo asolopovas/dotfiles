@@ -1,0 +1,436 @@
+#!/usr/bin/env bash
+# xmonad-config — TUI over ~/.config/xmonad/config.json.
+# No JSON shown to the user; every field is a form prompt or a picker.
+# All jq writes use --arg / --argjson so values can contain any character.
+
+set -uo pipefail
+trap '' INT QUIT     # Esc / Ctrl-C never kill the top-level script.
+
+CONFIG="$HOME/.config/xmonad/config.json"
+LOG="$HOME/.cache/xmonad/windows.tsv"
+
+for cmd in gum jq; do
+    command -v "$cmd" >/dev/null || { echo "$cmd is required"; sleep 2; exit 1; }
+done
+[[ -f "$CONFIG" ]] || { echo "config.json not found at $CONFIG"; sleep 2; exit 1; }
+
+# ── styling ──────────────────────────────────────────────────────────────────
+# All of these write to stderr. That way functions that `echo` a value for
+# capture via $(...) (e.g. compose_rule) are not polluted by UI output.
+H1()  { gum style --foreground 212 --bold "$*" >&2; }
+DIM() { gum style --foreground 244 "$*" >&2; }
+OK()  { gum style --foreground 46  "✔ $*" >&2; sleep 0.6; }
+ERR() { gum style --foreground 196 "✘ $*" >&2; sleep 1.0; }
+HDR() {
+    clear >&2
+    gum style --foreground 212 --bold --border normal --padding "0 2" "  XMonad config  " >&2
+}
+
+# ── save: atomically apply a jq program, then restart xmonad ──────────────────
+save() {
+    # Usage: save '<jq program>' [additional jq args e.g. --arg k v ...]
+    local prog="$1"; shift
+    local out err
+    out=$(mktemp); err=$(mktemp)
+    if jq "$@" "$prog" "$CONFIG" > "$out" 2>"$err"; then
+        mv "$out" "$CONFIG"
+        rm -f "$err"
+        xmonad --restart >/dev/null 2>&1 || true
+        return 0
+    else
+        local msg; msg=$(cat "$err")
+        rm -f "$out" "$err"
+        ERR "save failed: $msg"
+        return 1
+    fi
+}
+
+# ── value pickers ────────────────────────────────────────────────────────────
+FLOAT_LABELS=(
+    "center"
+    "small"
+    "medium"
+    "large"
+    "float (native size)"
+    "tile (no floating)"
+    "ignore"
+    "(skip / no change)"
+)
+
+float_label_to_value() {
+    case "$1" in
+        center|small|medium|large|ignore) printf '%s' "$1" ;;
+        "float (native size)")            printf 'float' ;;
+        "tile (no floating)")             printf '' ;;
+        "(skip / no change)"|"")          printf '__SKIP__' ;;
+        *)                                printf '%s' "$1" ;;
+    esac
+}
+
+pick_float_mode() {
+    local cur="${1:-}"
+    local label
+    label=$(gum choose --header="Float mode ${cur:+(current: $cur)}" "${FLOAT_LABELS[@]}") || return 1
+    float_label_to_value "$label"
+}
+
+# Prompt for an action string. Args: [current action]
+pick_action() {
+    local cur="${1:-}"
+    local category
+    category=$(gum choose --header="Action category" \
+        "window management" "layout control" "spawn a shell command" \
+        "open a scratchpad" "workspace switch" "xmonad control") || return 1
+
+    case "$category" in
+        "window management")
+            gum choose --header="Action" \
+                kill kill-all focus-master focus-down focus-up \
+                swap-down swap-up promote sink toggle-float || return 1
+            ;;
+        "layout control")
+            gum choose --header="Action" \
+                toggle-full toggle-mirror expand shrink \
+                mirror-expand mirror-shrink reset-layout \
+                increment-master decrement-master || return 1
+            ;;
+        "spawn a shell command")
+            local prefill=""
+            [[ "$cur" == spawn:* ]] && prefill="${cur#spawn:}"
+            local cmd
+            cmd=$(gum input --header="Shell command" --value="$prefill" --width=80) || return 1
+            [[ -z "$cmd" ]] && return 1
+            printf 'spawn:%s' "$cmd"
+            ;;
+        "open a scratchpad")
+            local names
+            names=$(jq -r '.scratchpads // [] | .[].name' "$CONFIG")
+            if [[ -z "$names" ]]; then ERR "no scratchpads defined"; return 1; fi
+            local sp
+            sp=$(printf '%s\n' $names | gum choose --header="Scratchpad") || return 1
+            printf 'scratchpad:%s' "$sp"
+            ;;
+        "workspace switch")
+            local kind
+            kind=$(gum choose --header="What?" "view workspace" "send window to workspace") || return 1
+            local ws
+            ws=$(gum input --header="Workspace id" --placeholder="e.g. 1_7") || return 1
+            [[ -z "$ws" ]] && return 1
+            if [[ "$kind" == "view workspace" ]]; then
+                printf 'workspace-view:%s' "$ws"
+            else
+                printf 'workspace-shift:%s' "$ws"
+            fi
+            ;;
+        "xmonad control")
+            gum choose --header="Action" reload-config recompile edit-config exit || return 1
+            ;;
+    esac
+}
+
+describe_action() {
+    case "$1" in
+        spawn:*)           printf 'run: %s'                "${1#spawn:}" ;;
+        scratchpad:*)      printf 'scratchpad → %s'        "${1#scratchpad:}" ;;
+        workspace-view:*)  printf 'view workspace %s'      "${1#workspace-view:}" ;;
+        workspace-shift:*) printf 'send to workspace %s'   "${1#workspace-shift:}" ;;
+        *)                 printf '%s' "$1" ;;
+    esac
+}
+
+# ── window rules ─────────────────────────────────────────────────────────────
+rule_count() { jq '.windowRules | length' "$CONFIG"; }
+
+rule_label() {
+    jq -r --argjson i "$1" '
+        .windowRules[$i] as $r |
+        ($r.className // $r.appName // $r.title // $r.role // "(?)") as $m |
+        (if $r.float then
+            "float=" + (if ($r.float | type) == "string" then $r.float else "custom" end)
+         else "" end) as $f |
+        (if $r.workspace then " ws=" + $r.workspace else "" end) as $w |
+        (if $r.titleSuffix then " (suffix " + $r.titleSuffix + ")" else "" end) as $s |
+        $m + " → " + $f + $w + $s' "$CONFIG"
+}
+
+rule_rows() {
+    local n; n=$(rule_count)
+    for ((i=0; i<n; i++)); do
+        printf "%s|%s\n" "$i" "$(rule_label "$i")"
+    done | column -t -s'|'
+}
+
+pick_rule_idx() {
+    local row
+    row=$(rule_rows | gum filter --placeholder="${1:-pick a rule}" --height=20) || return 1
+    awk '{print $1}' <<<"$row"
+}
+
+# Build a jq object filter from individual fields (all may be empty).
+# Emits a JSON object as stdout using jq itself so values are always
+# safely encoded.
+compose_rule() {
+    local class="$1" app="$2" suffix="$3" fmode="$4" ws="$5"
+    jq -nc \
+        --arg class  "$class"  \
+        --arg app    "$app"    \
+        --arg suffix "$suffix" \
+        --arg fmode  "$fmode"  \
+        --arg ws     "$ws"     '
+        {}
+        | (if $class  != "" then . + {className:   $class}  else . end)
+        | (if $app    != "" then . + {appName:     $app}    else . end)
+        | (if $suffix != "" then . + {titleSuffix: $suffix} else . end)
+        | (if $fmode  != "" then . + {float:       $fmode}  else . end)
+        | (if $ws     != "" then . + {workspace:   $ws}     else . end)
+        '
+}
+
+rule_form() {
+    # Args: class app suffix fmode ws  →  echoes composed JSON or returns 1.
+    local class="$1" app="$2" suffix="$3" fmode="$4" ws="$5"
+
+    DIM "Match — leave blank to skip. At least one matcher required."
+    class=$(gum input --header="className" --value="$class") || return 1
+    app=$(gum input --header="appName (optional)" --value="$app") || return 1
+    suffix=$(gum input --header="title suffix (optional)" --value="$suffix") || return 1
+
+    if [[ -z "$class$app$suffix" ]]; then
+        ERR "at least one of className / appName / titleSuffix is required"
+        return 1
+    fi
+
+    DIM "Action:"
+    local picked; picked=$(pick_float_mode "$fmode") || return 1
+    if [[ "$picked" == "__SKIP__" ]]; then picked="$fmode"; fi
+    fmode="$picked"
+
+    ws=$(gum input --header="Workspace to send to (optional)" --value="$ws") || return 1
+
+    if [[ -z "$fmode" && -z "$ws" ]]; then
+        ERR "action required: pick a float mode or set a workspace"
+        return 1
+    fi
+
+    compose_rule "$class" "$app" "$suffix" "$fmode" "$ws"
+}
+
+rule_add_manual() {
+    HDR; H1 "Add window rule"
+    local j; j=$(rule_form "" "" "" "" "") || return
+    save '.windowRules += [$r]' --argjson r "$j" && OK "rule added"
+}
+
+rule_add_from_log() {
+    HDR; H1 "Add rule from window log"
+    if [[ ! -f "$LOG" ]]; then ERR "no windows logged yet at $LOG"; return; fi
+
+    local row class
+    row=$(awk -F'\t' '!seen[$1]++ && $1 != "" {
+            printf "%-35s  %-25s  %s\n", $1, $2, $3
+          }' "$LOG" \
+          | gum filter --placeholder="pick a window class" --height=20) || return
+    class=$(awk '{print $1}' <<<"$row")
+    [[ -z "$class" ]] && return
+
+    DIM "class = $class"
+    local picked fmode ws
+    picked=$(pick_float_mode "") || return
+    [[ "$picked" == "__SKIP__" ]] && picked=""
+    fmode="$picked"
+    ws=$(gum input --header="Workspace to send to (optional)") || return
+
+    if [[ -z "$fmode" && -z "$ws" ]]; then
+        ERR "action required: pick a float mode or set a workspace"
+        return
+    fi
+
+    local j; j=$(compose_rule "$class" "" "" "$fmode" "$ws")
+    # Replace any existing rule matching this className, then append.
+    save '.windowRules = ((.windowRules // []) | map(select(.className != $c))) + [$r]' \
+         --arg c "$class" --argjson r "$j" \
+         && OK "$class → ${fmode:+float=$fmode }${ws:+ws=$ws}"
+}
+
+rule_edit() {
+    HDR; H1 "Edit window rule"
+    local idx; idx=$(pick_rule_idx "edit which rule") || return
+    [[ -z "$idx" ]] && return
+
+    local class app suffix fmode ws
+    class=$(jq -r  --argjson i "$idx" '.windowRules[$i].className   // ""' "$CONFIG")
+    app=$(jq -r    --argjson i "$idx" '.windowRules[$i].appName     // ""' "$CONFIG")
+    suffix=$(jq -r --argjson i "$idx" '.windowRules[$i].titleSuffix // ""' "$CONFIG")
+    fmode=$(jq -r  --argjson i "$idx" '.windowRules[$i].float       // ""' "$CONFIG")
+    ws=$(jq -r     --argjson i "$idx" '.windowRules[$i].workspace   // ""' "$CONFIG")
+
+    local j; j=$(rule_form "$class" "$app" "$suffix" "$fmode" "$ws") || return
+    save '.windowRules[$i] = $r' --argjson i "$idx" --argjson r "$j" \
+         && OK "rule $idx updated"
+}
+
+rule_delete() {
+    HDR; H1 "Delete window rule"
+    local idx; idx=$(pick_rule_idx "delete which rule") || return
+    [[ -z "$idx" ]] && return
+    local label; label=$(rule_label "$idx")
+    gum confirm "Delete rule: $label ?" || return
+    save 'del(.windowRules[$i])' --argjson i "$idx" && OK "deleted"
+}
+
+rule_menu() {
+    while :; do
+        HDR; H1 "Window rules"
+        DIM "$(rule_count) rules defined — take effect on next new window"
+        local c
+        c=$(gum choose --header=" " \
+            "Add from logged windows" "Add manually" "Edit" "Delete" "← back") || return
+        case "$c" in
+            "Add from logged windows") rule_add_from_log ;;
+            "Add manually")            rule_add_manual ;;
+            Edit)                      rule_edit ;;
+            Delete)                    rule_delete ;;
+            "← back"|"")               return ;;
+        esac
+    done
+}
+
+# ── keybindings ──────────────────────────────────────────────────────────────
+key_count() { jq '.keys | length' "$CONFIG"; }
+
+key_rows() {
+    jq -r '.keys // {} | to_entries[] | "\(.key)|\(.value)"' "$CONFIG" \
+    | while IFS='|' read -r k v; do
+        printf "%s|%s\n" "$k" "$(describe_action "$v")"
+    done | column -t -s'|'
+}
+
+pick_key() {
+    local row
+    row=$(key_rows | gum filter --placeholder="${1:-pick a binding}" --height=25) || return 1
+    awk '{print $1}' <<<"$row"
+}
+
+key_add() {
+    HDR; H1 "Add keybinding"
+    DIM "EZConfig syntax: M-/C-/S-/M1-, e.g. M-S-x, <F7>, <XF86AudioPlay>"
+    local key action
+    key=$(gum input --header="Key chord") || return
+    [[ -z "$key" ]] && return
+    action=$(pick_action "") || return
+    [[ -z "$action" ]] && return
+    save '.keys[$k] = $v' --arg k "$key" --arg v "$action" \
+         && OK "$key → $(describe_action "$action")"
+}
+
+key_edit() {
+    HDR; H1 "Edit keybinding"
+    local key action cur
+    key=$(pick_key "edit which binding") || return
+    [[ -z "$key" ]] && return
+    cur=$(jq -r --arg k "$key" '.keys[$k] // ""' "$CONFIG")
+    DIM "current: $(describe_action "$cur")"
+    action=$(pick_action "$cur") || return
+    [[ -z "$action" ]] && return
+    save '.keys[$k] = $v' --arg k "$key" --arg v "$action" \
+         && OK "$key → $(describe_action "$action")"
+}
+
+key_delete() {
+    HDR; H1 "Delete keybinding"
+    local key; key=$(pick_key "delete which binding") || return
+    [[ -z "$key" ]] && return
+    gum confirm "Delete $key ?" || return
+    save 'del(.keys[$k])' --arg k "$key" && OK "$key deleted"
+}
+
+key_list() {
+    HDR; H1 "Keybindings"
+    key_rows | gum pager
+}
+
+key_menu() {
+    while :; do
+        HDR; H1 "Keybindings"
+        DIM "$(key_count) bindings defined"
+        local c
+        c=$(gum choose --header=" " "List / browse" "Add" "Edit" "Delete" "← back") || return
+        case "$c" in
+            "List / browse") key_list ;;
+            Add)             key_add ;;
+            Edit)            key_edit ;;
+            Delete)          key_delete ;;
+            "← back"|"")     return ;;
+        esac
+    done
+}
+
+# ── general settings ─────────────────────────────────────────────────────────
+SETTING_KEYS=(
+    terminal browser filebrowser modMask borderWidth
+    normalBorderColor focusedBorderColor focusFollowsMouse clickJustFocuses
+)
+
+setting_row() {
+    local k="$1" v
+    v=$(jq -r ".$k" "$CONFIG")
+    printf "%-22s = %s\n" "$k" "$v"
+}
+
+edit_setting() {
+    local key="$1" v cur
+    cur=$(jq -r ".$key" "$CONFIG")
+    case "$key" in
+        modMask)
+            v=$(gum choose --header="mod key (current: $cur)" mod1 mod4 alt super) || return
+            save ".modMask = \$v" --arg v "$v" && OK "modMask = $v"
+            ;;
+        focusFollowsMouse|clickJustFocuses)
+            v=$(gum choose --header="value (current: $cur)" true false) || return
+            save ".$key = \$v" --argjson v "$v" && OK "$key = $v"
+            ;;
+        borderWidth)
+            v=$(gum input --header="integer (current: $cur)" --value="$cur") || return
+            [[ "$v" =~ ^[0-9]+$ ]] || { ERR "not a non-negative integer"; return; }
+            save ".borderWidth = \$v" --argjson v "$v" && OK "borderWidth = $v"
+            ;;
+        terminal|browser|filebrowser|normalBorderColor|focusedBorderColor)
+            v=$(gum input --header="$key (current: $cur)" --value="$cur" --width=80) || return
+            save ".$key = \$v" --arg v "$v" && OK "$key = $v"
+            ;;
+    esac
+}
+
+settings_menu() {
+    while :; do
+        HDR; H1 "General settings"
+        local rows=()
+        for k in "${SETTING_KEYS[@]}"; do
+            rows+=("$(setting_row "$k")")
+        done
+        rows+=("← back")
+        local c
+        c=$(gum choose --header=" " "${rows[@]}") || return
+        case "$c" in
+            "← back"|"") return ;;
+        esac
+        local key; key=$(awk '{print $1}' <<<"$c")
+        edit_setting "$key"
+    done
+}
+
+# ── main loop ────────────────────────────────────────────────────────────────
+while :; do
+    HDR
+    choice=$(gum choose --header="What do you want to edit?" \
+        "Keybindings" "Window rules" "General settings" \
+        "Reload xmonad (restart)" "Open raw config.json" "Quit") || continue
+    case "$choice" in
+        Keybindings)              key_menu ;;
+        "Window rules")           rule_menu ;;
+        "General settings")       settings_menu ;;
+        "Reload xmonad"*)         xmonad --restart && notify-send "xmonad" "restarted" ;;
+        "Open raw config.json")   "${EDITOR:-vi}" "$CONFIG" ;;
+        Quit)                     exit 0 ;;
+    esac
+done
