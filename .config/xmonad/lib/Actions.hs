@@ -60,7 +60,7 @@ actionFromString scratchpads raw =
         "recompile"             -> spawn "xmonad --recompile && xmonad --restart && notify-send 'Xmonad Recompiled'"
         "reload-config"         -> spawn "xmonad --restart && notify-send 'Xmonad config reloaded'"
         "edit-config"           -> spawn "alacritty -e $(command -v ${EDITOR:-nvim} || echo vi) $HOME/.config/xmonad/config.json"
-        "window-rules-menu"     -> spawn "xmonad-window-rules"
+        "window-rules-menu"     -> spawn "fzf-menu xmonad-window-rules"
         other                   -> spawn ("notify-send 'xmonad: unknown action' " ++ shellQuote other)
     shellQuote s = "'" ++ concatMap esc s ++ "'"
     esc '\'' = "'\\''"
