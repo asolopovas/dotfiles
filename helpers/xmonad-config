@@ -498,7 +498,7 @@ settings_menu() {
 while :; do
     HDR
     choice=$(gum choose --header="What do you want to edit?" \
-        "Keybindings" "Window rules" "General settings" \
+        "General settings" "Keybindings" "Window rules" \
         "Reload xmonad (restart)" "Open raw config.json" "Quit") || continue
     case "$choice" in
         Keybindings)              key_menu ;;
