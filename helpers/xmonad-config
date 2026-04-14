@@ -128,6 +128,74 @@ pick_action() {
     esac
 }
 
+# ── color picker ─────────────────────────────────────────────────────────────
+# Quick palette of sensible xmonad border colors. Labels look like
+# "#rrggbb  name" so the hex is easy to eyeball.
+COLOR_PALETTE=(
+    "#ffffff  white"
+    "#dddddd  light grey"
+    "#888888  grey"
+    "#000000  black"
+    "#fb4934  red"
+    "#fabd2f  yellow"
+    "#fff323  bright yellow"
+    "#b8bb26  green"
+    "#83a598  blue"
+    "#2266d0  deep blue"
+    "#d3869b  pink"
+    "#8ec07c  teal"
+    "#fe8019  orange"
+)
+
+pick_color() {
+    local cur="${1:-}"
+    local method
+    method=$(gum choose --header="How do you want to pick a color?" \
+        "Palette" "GUI color picker (zenity)" "Type a hex value" "(keep current: $cur)") \
+        || return 1
+    case "$method" in
+        Palette)
+            local row; row=$(printf '%s\n' "${COLOR_PALETTE[@]}" \
+                | gum choose --header="Choose a color") || return 1
+            awk '{print $1}' <<<"$row"
+            ;;
+        "GUI color picker"*)
+            if ! command -v zenity >/dev/null; then
+                ERR "zenity is not installed"; return 1
+            fi
+            local z
+            z=$(zenity --color-selection --show-palette --color="$cur" 2>/dev/null) || return 1
+            zenity_hex "$z"
+            ;;
+        "Type a hex value")
+            local v
+            v=$(gum input --header="hex color (e.g. #fb4934)" --value="$cur") || return 1
+            if [[ ! "$v" =~ ^#[0-9a-fA-F]{6}$ ]]; then
+                ERR "not a valid #rrggbb hex color"; return 1
+            fi
+            printf '%s' "$v"
+            ;;
+        "(keep current"*)
+            printf '%s' "$cur"
+            ;;
+    esac
+}
+
+# zenity outputs either "#rrggbb" or "rgb(r,g,b)"/"rgba(r,g,b,a)". Normalise.
+zenity_hex() {
+    local s="$1"
+    if [[ "$s" =~ ^#[0-9a-fA-F]{6}$ ]]; then
+        printf '%s' "$s"
+        return
+    fi
+    local r g b
+    # strip rgb(a)( and trailing )
+    s="${s#rgba(}"; s="${s#rgb(}"; s="${s%)}"
+    IFS=',' read -r r g b _ <<<"$s"
+    r=${r// /}; g=${g// /}; b=${b// /}
+    printf '#%02x%02x%02x' "$r" "$g" "$b"
+}
+
 describe_action() {
     case "$1" in
         spawn:*)           printf 'run: %s'                "${1#spawn:}" ;;
@@ -394,7 +462,12 @@ edit_setting() {
             [[ "$v" =~ ^[0-9]+$ ]] || { ERR "not a non-negative integer"; return; }
             save ".borderWidth = \$v" --argjson v "$v" && OK "borderWidth = $v"
             ;;
-        terminal|browser|filebrowser|normalBorderColor|focusedBorderColor)
+        normalBorderColor|focusedBorderColor)
+            v=$(pick_color "$cur") || return
+            [[ -z "$v" ]] && return
+            save ".$key = \$v" --arg v "$v" && OK "$key = $v"
+            ;;
+        terminal|browser|filebrowser)
             v=$(gum input --header="$key (current: $cur)" --value="$cur" --width=80) || return
             save ".$key = \$v" --arg v "$v" && OK "$key = $v"
             ;;
