@@ -221,7 +221,8 @@ myManageHook = composeAll
         className =? "TelegramDesktop"            --> doRectFloat lgFloat,
         className =? "Signal"                     --> doRectFloat lgFloat,
         className =? "Skype"                      --> doRectFloat lgFloat,
-        className =? "Teamviewer"                 --> doRectFloat lgFloat
+        className =? "Teamviewer"                 --> doRectFloat lgFloat,
+        className =? "Windscribe2"                --> doFloat
     ] <+> namedScratchpadManageHook myScratchPads
 
 --------------------------------------------
