@@ -17,14 +17,60 @@ done
 # ── styling ──────────────────────────────────────────────────────────────────
 # All of these write to stderr. That way functions that `echo` a value for
 # capture via $(...) (e.g. compose_rule) are not polluted by UI output.
+TCOLS() { tput cols  2>/dev/null || echo 80; }
+TLINES(){ tput lines 2>/dev/null || echo 28; }
+
 H1()  { gum style --foreground 212 --bold "$*" >&2; }
 DIM() { gum style --foreground 244 "$*" >&2; }
 OK()  { gum style --foreground 46  "✔ $*" >&2; sleep 0.6; }
 ERR() { gum style --foreground 196 "✘ $*" >&2; sleep 1.0; }
 HDR() {
     clear >&2
-    gum style --foreground 212 --bold --border normal --padding "0 2" "  XMonad config  " >&2
+    # border adds 1 column on each side -> subtract 2 so the box spans the
+    # full terminal width exactly (no padding needed; title is already
+    # align-centered inside).
+    local w=$(( $(TCOLS) - 2 ))
+    (( w < 10 )) && w=10
+    gum style --foreground 212 --bold --border normal \
+        --align center --width "$w" "XMonad config" >&2
 }
+
+# Push the cursor down by (term_height - content_height)/2 - 1 blank lines
+# so a block of N lines is roughly vertically centered in the window.
+vcenter() {
+    local content_h="$1"
+    local pad=$(( ( $(TLINES) - content_h ) / 2 - 2 ))
+    (( pad < 0 )) && pad=0
+    local i
+    for ((i=0; i<pad; i++)); do printf '\n' >&2; done
+}
+
+# Horizontal-center a gum choose menu. Gum renders the cursor prefix at
+# the start of each row, so to push the whole block (cursor + text) into
+# the centre we give the cursor itself a left-indent — gum then pads the
+# non-focused rows with the same number of spaces, keeping items aligned.
+ccenter_choose() {
+    local cols; cols=$(TCOLS)
+    local maxw=0 o
+    for o in "$@"; do (( ${#o} > maxw )) && maxw=${#o}; done
+
+    # Indent aligns the whole block (cursor + option text) centrally.
+    local pad=$(( ( cols - maxw - 2 ) / 2 ))
+    (( pad < 0 )) && pad=0
+    local indent; indent=$(printf '%*s' "$pad" '')
+
+    # gum's default header is literally "Choose:", so we explicitly blank
+    # it out. The built-in navigation help still shows at the bottom.
+    gum choose \
+        --header="" \
+        --cursor="${indent}▶ " \
+        --cursor.foreground=212 --cursor.bold \
+        --selected.foreground=212 --selected.bold \
+        "$@"
+}
+
+# Centered helper / hint line (placeholder text above a menu, etc.).
+HINT() { gum style --foreground 244 --italic --align center --width "$(TCOLS)" "$*" >&2; }
 
 # ── save: atomically apply a jq program, then restart xmonad ──────────────────
 save() {
@@ -497,7 +543,8 @@ settings_menu() {
 # ── main loop ────────────────────────────────────────────────────────────────
 while :; do
     HDR
-    choice=$(gum choose --header="What do you want to edit?" \
+    vcenter 8
+    choice=$(ccenter_choose \
         "General settings" "Keybindings" "Window rules" \
         "Reload xmonad (restart)" "Open raw config.json" "Quit") || continue
     case "$choice" in
@@ -505,7 +552,12 @@ while :; do
         "Window rules")           rule_menu ;;
         "General settings")       settings_menu ;;
         "Reload xmonad"*)         xmonad --restart && notify-send "xmonad" "restarted" ;;
-        "Open raw config.json")   "${EDITOR:-vi}" "$CONFIG" ;;
+        "Open raw config.json")
+            ed="${VISUAL:-${EDITOR:-vi}}"
+            command -v "$ed" >/dev/null || ed=vi
+            stty sane 2>/dev/null || true
+            "$ed" "$CONFIG" </dev/tty >/dev/tty 2>&1
+            ;;
         Quit)                     exit 0 ;;
     esac
 done
