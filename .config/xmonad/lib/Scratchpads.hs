@@ -1,46 +1,36 @@
-module Scratchpads (myScratchPads, buildNS, buildNSTiled) where
+module Scratchpads (buildScratchpads) where
 
 import XMonad
 import XMonad.Util.NamedScratchpad
+import qualified XMonad.StackSet as W
 
-import Settings
-import Floats
+import Config (Scratchpad(..), FloatMode(..))
 
-myScratchPads :: [NamedScratchpad]
-myScratchPads =
-    [
-        buildNSTiled "firefox" "firefox --class='FirefoxScratchpad' --enable-features=WebUIDarkMode --force-dark-mode" "className" "FirefoxScratchpad",
-        buildNSTiled "brave"   "sh -c '$BROWSER --class=BraveScratchpad'"    "className" "BraveScratchpad",
-        buildNS "filebrowser"  myFilebrowser                                 "className" "Thunar"            "lg",
-        buildNS "terminal"     spawnTerm                                     "title"     "scratchpad"        "md",
-        buildNS "stacer"       "sudo -A /usr/bin/stacer > /tmp/stacer.log"   "className" "stacer"            "md",
-        buildNS "pavucontrol"  "pavucontrol"                                 "className" "Pavucontrol"       "md",
-        buildNS "spotify"      "spotify"                                     "className" "Spotify"           "lg",
-        buildNS "aimp"         "aimp"                                        "className" "Aimp"              "lg",
-        buildNS "chatGPT"      "chat-gpt"                                    "className" "Chat-gpt"          "lg",
-        buildNS "thunderbird"  "thunderbird"                                 "className" "thunderbird"       "lg",
-        buildNS "calc"         "gnome-calculator"                            "className" "Gnome-calculator"  "lg",
-        NS "help" "alacritty --class help-viewer,help-viewer -o window.dimensions.columns=82 -o window.dimensions.lines=50 -e glow -w 90 -p ~/dotfiles/docs/help.md" (appName =? "help-viewer") (customFloating helpFloat)
-    ]
-    where
-      spawnTerm = myTerminal ++ " -t scratchpad"
+buildScratchpads :: [Scratchpad] -> [NamedScratchpad]
+buildScratchpads = map toNS
 
--- A helper function to build the NS row more concisely
-buildNS :: String -> String -> String -> String -> String -> NamedScratchpad
-buildNS name cmd prop value floatTypeStr = NS name cmd (property =? value) (floatType floatTypeStr)
-    where
-        property
-            | prop == "title"    = title
-            | prop == "className" = className
-        floatType "sm" = smFloatCustom
-        floatType "md" = mdFloatCustom
-        floatType "lg" = lgFloatCustom
-        floatType "tiled" = doIgnore
+toNS :: Scratchpad -> NamedScratchpad
+toNS sp = NS (spName sp) (spCommand sp) (matcher sp) (floater (spFloat sp))
 
--- Build scratchpad without floating
-buildNSTiled :: String -> String -> String -> String -> NamedScratchpad
-buildNSTiled name cmd prop value = NS name cmd (property =? value) nonFloating
-    where
-        property
-            | prop == "title"    = title
-            | prop == "className" = className
+matcher :: Scratchpad -> Query Bool
+matcher sp = case spMatchBy sp of
+    "title"     -> title     =? spMatch sp
+    "appName"   -> appName   =? spMatch sp
+    "className" -> className =? spMatch sp
+    _           -> className =? spMatch sp
+
+floater :: FloatMode -> ManageHook
+floater FloatCenter         = customFloating (rect 0.25 0.25 0.5 0.5)
+floater FloatSmall          = customFloating (centeredRect 0.5)
+floater FloatMedium         = customFloating (centeredRect 0.7)
+floater FloatLarge          = customFloating (centeredRect 0.9)
+floater FloatTile           = nonFloating
+floater FloatDefault        = customFloating (centeredRect 0.7)
+floater FloatIgnore         = nonFloating
+floater (FloatCustom x y w h) = customFloating (rect x y w h)
+
+centeredRect :: Double -> W.RationalRect
+centeredRect d = rect ((1 - d) / 2) ((1 - d) / 2) d d
+
+rect :: Double -> Double -> Double -> Double -> W.RationalRect
+rect x y w h = W.RationalRect (toRational x) (toRational y) (toRational w) (toRational h)

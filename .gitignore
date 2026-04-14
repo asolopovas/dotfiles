@@ -9,6 +9,8 @@
 !.config/xmonad/stack.yaml
 !.config/xmonad/lib/
 !.config/xmonad/lib/*.hs
+!.config/xmonad/build
+!.config/xmonad/config.json
 !.config/nvim/autoload/.gitkeep
 .aider*
 .php-ini

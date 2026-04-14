@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Pick a window class from the xmonad log and attach / remove a floating
+# rule in ~/.config/xmonad/config.json. Changes take effect immediately
+# on the next new window (no restart).
+set -euo pipefail
+
+LOG="$HOME/.cache/xmonad/windows.tsv"
+CONFIG="$HOME/.config/xmonad/config.json"
+
+[[ -f "$LOG" ]] || { notify-send "xmonad-window-rules" "No windows have been logged yet."; exit 0; }
+[[ -f "$CONFIG" ]] || { notify-send "xmonad-window-rules" "config.json not found at $CONFIG"; exit 1; }
+
+command -v jq >/dev/null || { notify-send "xmonad-window-rules" "jq is required"; exit 1; }
+
+pick=$(
+    awk -F'\t' '!seen[$1]++ && $1 != "" {printf "%-35s  %-25s  %s\n", $1, $2, $3}' "$LOG" \
+    | fzf --prompt='Window > ' --height=100% --layout=reverse
+) || exit 0
+
+class=$(awk '{print $1}' <<<"$pick")
+[[ -z "$class" ]] && exit 0
+
+current=$(jq -r --arg c "$class" \
+    '.windowRules // [] | map(select(.className == $c)) | .[0] // empty' "$CONFIG")
+
+action=$(printf '%s\n' \
+    "float: center" \
+    "float: small" \
+    "float: medium" \
+    "float: large" \
+    "float: float (native size)" \
+    "tile (remove rule)" \
+    "ignore" \
+    "shift to workspace..." \
+    "(show current rule)" \
+    "(cancel)" \
+    | fzf --prompt="$class > " --height=40% --layout=reverse) || exit 0
+
+tmp=$(mktemp)
+case "$action" in
+    "float: center")  mode=center ;;
+    "float: small")   mode=small ;;
+    "float: medium")  mode=medium ;;
+    "float: large")   mode=large ;;
+    "float: float"*)  mode=float ;;
+    "ignore")         mode=ignore ;;
+    "tile"*)
+        jq --arg c "$class" \
+            '.windowRules = ((.windowRules // []) | map(select(.className != $c)))' \
+            "$CONFIG" > "$tmp"
+        mv "$tmp" "$CONFIG"
+        notify-send "xmonad rule" "$class → rule removed"
+        exit 0
+        ;;
+    "shift to workspace...")
+        ws=$(printf '0_1\n0_2\n0_3\n0_4\n0_5\n0_6\n0_7\n0_8\n0_9\n1_1\n1_2\n1_3\n1_4\n1_5\n1_6\n1_7\n1_8\n1_9\n' \
+             | fzf --prompt="Workspace > " --height=40% --layout=reverse) || exit 0
+        jq --arg c "$class" --arg w "$ws" \
+            '.windowRules = ((.windowRules // []) | map(select(.className != $c)) + [{className: $c, workspace: $w}])' \
+            "$CONFIG" > "$tmp"
+        mv "$tmp" "$CONFIG"
+        notify-send "xmonad rule" "$class → workspace $ws"
+        exit 0
+        ;;
+    "(show current rule)")
+        notify-send "xmonad rule for $class" "${current:-<none>}"
+        exit 0
+        ;;
+    *) exit 0 ;;
+esac
+
+jq --arg c "$class" --arg m "$mode" \
+    '.windowRules = ((.windowRules // []) | map(select(.className != $c)) + [{className: $c, float: $m}])' \
+    "$CONFIG" > "$tmp"
+mv "$tmp" "$CONFIG"
+notify-send "xmonad rule" "$class → float:$mode"
