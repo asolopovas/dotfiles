@@ -29,12 +29,14 @@ HDR() {
 # ── save: atomically apply a jq program, then restart xmonad ──────────────────
 save() {
     # Usage: save '<jq program>' [additional jq args e.g. --arg k v ...]
+    # Writes *through* $CONFIG so a symlink stays a symlink (important
+    # when ~/.config/xmonad/config.json symlinks to dotfiles).
     local prog="$1"; shift
     local out err
     out=$(mktemp); err=$(mktemp)
     if jq "$@" "$prog" "$CONFIG" > "$out" 2>"$err"; then
-        mv "$out" "$CONFIG"
-        rm -f "$err"
+        cat "$out" > "$CONFIG"
+        rm -f "$out" "$err"
         xmonad --restart >/dev/null 2>&1 || true
         return 0
     else
