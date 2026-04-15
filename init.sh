@@ -216,6 +216,14 @@ fi
 
 source "$SCRIPTS_DIR/cfg-libreoffice.sh"
 
+# Dual-boot fix: keep hardware clock in local time to match Windows
+if [[ "$OS" != "macos" ]] && command -v timedatectl &>/dev/null; then
+    if ! timedatectl show --property=LocalRTC --value 2>/dev/null | grep -qx yes; then
+        print_color green "Setting hardware clock to local time (dual-boot Windows fix)"
+        $SUDO timedatectl set-local-rtc 1 --adjust-system-clock
+    fi
+fi
+
 if [[ "${features[CHANGE_SHELL]}" = true ]]; then
     print_color green "CHANGING SHELL TO FISH"
     if command -v fish &>/dev/null; then
