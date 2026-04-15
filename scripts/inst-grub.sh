@@ -39,14 +39,21 @@ if ! grep -q '"Linux Mint"' /etc/grub.d/05_debian_theme; then
 fi
 
 # --- Windows 11 custom entry ---
-# Detect Windows EFI partition UUID
-WIN_UUID=$(grub-probe --target=fs_uuid /boot/efi/EFI/Microsoft/Boot/bootmgfw.efi 2>/dev/null)
+# Detect Windows EFI partition UUID via os-prober (works even when Windows
+# lives on a different ESP than the one mounted at /boot/efi).
+WIN_DEV=$(os-prober 2>/dev/null | awk -F'[@:]' '/Windows/ {print $1; exit}')
+WIN_UUID=""
+if [ -n "$WIN_DEV" ]; then
+    WIN_UUID=$(blkid -s UUID -o value "$WIN_DEV")
+fi
 
 if [ -n "$WIN_UUID" ]; then
-    cat > /etc/grub.d/40_custom << EOF
+    # Place Windows entry as 06_* so it's emitted before 10_linux,
+    # making Windows 11 the first item in the GRUB menu.
+    cat > /etc/grub.d/06_windows << EOF
 #!/bin/sh
 exec tail -n +3 \$0
-# Custom menu entries
+# Windows 11 entry (placed before Linux so it appears first)
 
 menuentry "Windows 11" --class windows --class os \$menuentry_id_option 'osprober-efi-${WIN_UUID}' {
 	insmod part_gpt
@@ -54,6 +61,16 @@ menuentry "Windows 11" --class windows --class os \$menuentry_id_option 'osprobe
 	search --no-floppy --fs-uuid --set=root ${WIN_UUID}
 	chainloader /efi/Microsoft/Boot/bootmgfw.efi
 }
+EOF
+    chmod +x /etc/grub.d/06_windows
+
+    # Reset 40_custom to its default stub (in case a previous run wrote Windows there)
+    cat > /etc/grub.d/40_custom << 'EOF'
+#!/bin/sh
+exec tail -n +3 $0
+# This file provides an easy way to add custom menu entries.  Simply type the
+# menu entries you want to add after this comment.  Be careful not to change
+# the 'exec tail' line above.
 EOF
     chmod +x /etc/grub.d/40_custom
 
