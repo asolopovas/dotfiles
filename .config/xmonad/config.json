@@ -372,6 +372,10 @@
       "className": "Thunar",
       "titleSuffix": "- Thunar",
       "float": "center"
+    },
+    {
+      "className": "Rustdesk",
+      "float": "float"
     }
   ]
 }
