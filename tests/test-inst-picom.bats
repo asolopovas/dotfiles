@@ -133,11 +133,13 @@ P
     grep -q '^unredir-if-possible = true' "$FAKE_HOME/.config/picom.conf"
 }
 
+# bats does not implicitly `set -e`; chain assertions with && so each one gates.
+
 @test "picom: config disables shadow, fading, corner-radius" {
     run_script
-    grep -q '^shadow = false'         "$FAKE_HOME/.config/picom.conf"
-    grep -q '^fading = false'         "$FAKE_HOME/.config/picom.conf"
-    grep -q '^corner-radius = 0'      "$FAKE_HOME/.config/picom.conf"
+    grep -q '^shadow = false'    "$FAKE_HOME/.config/picom.conf" && \
+    grep -q '^fading = false'    "$FAKE_HOME/.config/picom.conf" && \
+    grep -q '^corner-radius = 0' "$FAKE_HOME/.config/picom.conf"
 }
 
 @test "picom: config has no blur-method or blur-kern lines" {
@@ -147,18 +149,21 @@ P
 
 @test "picom: config enables NVIDIA GLX tuning flags" {
     run_script
-    grep -q '^backend = "glx"'         "$FAKE_HOME/.config/picom.conf"
-    grep -q '^vsync = true'            "$FAKE_HOME/.config/picom.conf"
-    grep -q '^xrender-sync-fence = true' "$FAKE_HOME/.config/picom.conf"
-    grep -q '^use-damage = true'       "$FAKE_HOME/.config/picom.conf"
-    # glx-no-stencil / glx-no-rebind-pixmap are deprecated in picom v13 — must not appear.
+    grep -q '^backend = "glx"'           "$FAKE_HOME/.config/picom.conf" && \
+    grep -q '^vsync = true'              "$FAKE_HOME/.config/picom.conf" && \
+    grep -q '^xrender-sync-fence = true' "$FAKE_HOME/.config/picom.conf" && \
+    grep -q '^use-damage = true'         "$FAKE_HOME/.config/picom.conf"
+}
+
+@test "picom: config omits deprecated GLX options (v11+)" {
+    run_script
     ! grep -Eq '^glx-no-(stencil|rebind-pixmap)' "$FAKE_HOME/.config/picom.conf"
 }
 
 @test "picom: config sets all opacity to 1.0" {
     run_script
-    grep -q '^inactive-opacity = 1.0' "$FAKE_HOME/.config/picom.conf"
-    grep -q '^active-opacity = 1.0'   "$FAKE_HOME/.config/picom.conf"
+    grep -q '^inactive-opacity = 1.0' "$FAKE_HOME/.config/picom.conf" && \
+    grep -q '^active-opacity = 1.0'   "$FAKE_HOME/.config/picom.conf" && \
     grep -q '^frame-opacity = 1.0'    "$FAKE_HOME/.config/picom.conf"
 }
 
