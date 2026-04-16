@@ -30,6 +30,7 @@ SUITES=(
     "$SCRIPT_DIR/test-init.bats"
     "$SCRIPT_DIR/test-sync-ai.bats"
     "$SCRIPT_DIR/test-inst-opencode.bats"
+    "$SCRIPT_DIR/test-inst-picom.bats"
 )
 
 # Handle arguments
@@ -49,6 +50,9 @@ case "${1:-}" in
     inst-opencode)
         SUITES=("$SCRIPT_DIR/test-inst-opencode.bats")
         ;;
+    inst-picom)
+        SUITES=("$SCRIPT_DIR/test-inst-picom.bats")
+        ;;
     -*)
         # Pass all args to bats with all suites
         exec bats "$@" "${SUITES[@]}"
@@ -57,7 +61,7 @@ case "${1:-}" in
         ;; # run all
     *)
         err "Unknown suite: $1"
-        echo "Usage: $0 [globals|scripts|sync-ai|inst-opencode|-f pattern]"
+        echo "Usage: $0 [globals|scripts|sync-ai|inst-opencode|inst-picom|-f pattern]"
         exit 1
         ;;
 esac
