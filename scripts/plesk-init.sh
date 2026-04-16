@@ -199,11 +199,17 @@ setup_opencode() {
 
     if [[ -d "$root_oc" ]]; then
         mkdir -p /opt/opencode-config
+        # Strip any top-level symlinks a vhost user may have dropped in — they
+        # often point into a per-user home that other vhost users can't read.
+        find /opt/opencode-config -maxdepth 1 -type l -delete 2>/dev/null || true
         # -L dereferences symlinks (root's ~/.config/opencode contains symlinks
         # into /root/dotfiles which vhost users cannot read).
         rsync -aL --delete "${OPENCODE_EXCLUDES[@]}" \
             "$root_oc/" /opt/opencode-config/
         shared_perms /opt/opencode-config
+        # Sticky bit: only file owner (or root) may delete/rename within this
+        # dir, so a vhost user can't clobber root's config files.
+        chmod +t /opt/opencode-config
         print_color green "  /opt/opencode-config synced ($(du -sh /opt/opencode-config | cut -f1))"
     else
         print_color yellow "  No opencode config at $root_oc — skipping"
