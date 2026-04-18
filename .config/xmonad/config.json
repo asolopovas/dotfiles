@@ -50,7 +50,8 @@
     "M-<F7>": "edit-config",
     "M-<F12>": "scratchpad:xmonad-config",
     "M-S-e": "exit",
-    "M-c": "scratchpad:brave",
+    "M-c": "toggle-browser",
+    "M-S-c": "spawn:brave-browser --new-window",
     "M-m": "scratchpad:aimp",
     "M-b": "scratchpad:firefox",
     "M-x": "scratchpad:filebrowser",
@@ -81,14 +82,7 @@
       "match": "FirefoxScratchpad",
       "float": "tile"
     },
-    {
-      "name": "brave",
-      "command": "sh -c '$BROWSER --class=BraveScratchpad'",
-      "matchBy": "className",
-      "match": "BraveScratchpad",
-      "float": "tile"
-    },
-    {
+{
       "name": "filebrowser",
       "command": "thunar",
       "matchBy": "className",

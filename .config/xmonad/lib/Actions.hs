@@ -16,6 +16,7 @@ import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 import Floats (toggleFloat)
 import Layouts (resetLayout)
 import Screens (Direction(..), cycleScreens, shiftAndFollowScreen)
+import BrowserToggle (toggleActiveBrowser, autoRevealBrowserHook)
 
 -- Translate a string action from config.json into an X () action.
 -- Unrecognized strings become no-ops (with a spawn-warning fallback).
@@ -34,9 +35,9 @@ actionFromString scratchpads raw =
     namedAction n = case n of
         "kill"                  -> kill1
         "kill-all"              -> killAll
-        "focus-master"          -> windows W.focusMaster
-        "focus-down"            -> windows W.focusDown
-        "focus-up"              -> windows W.focusUp
+        "focus-master"          -> windows W.focusMaster >> autoRevealBrowserHook
+        "focus-down"            -> windows W.focusDown   >> autoRevealBrowserHook
+        "focus-up"              -> windows W.focusUp     >> autoRevealBrowserHook
         "swap-down"             -> windows W.swapDown
         "swap-up"               -> windows W.swapUp
         "promote"               -> promote
@@ -55,6 +56,7 @@ actionFromString scratchpads raw =
         "cycle-screen-next"     -> cycleScreens Next
         "shift-screen-prev"     -> shiftAndFollowScreen Prev
         "shift-screen-next"     -> shiftAndFollowScreen Next
+        "toggle-browser"        -> toggleActiveBrowser
         "exit"                  -> io exitSuccess
         "restart"               -> spawn "xmonad --restart"
         "recompile"             -> spawn "xmonad --recompile && xmonad --restart && notify-send 'Xmonad Recompiled'"
