@@ -374,6 +374,12 @@
       "float": "center"
     },
     {
+      "className": "Thunar",
+      "appName": "thunar",
+      "title": "Attention",
+      "float": "center"
+    },
+    {
       "className": "Rustdesk",
       "float": "float"
     }

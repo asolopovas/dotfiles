@@ -1,5 +1,6 @@
 {
   "includeCoAuthoredBy": false,
   "includeGitInstructions": false,
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "medium"
 }
