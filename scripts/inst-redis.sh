@@ -1,43 +1,54 @@
 #!/bin/bash
 set -euo pipefail
-source $HOME/dotfiles/globals.sh
+source "$HOME/dotfiles/globals.sh"
 
-VER="8.0.3"; USER="redis"; HOME="/var/lib/redis"; LOG="/var/log/redis"; CONF="/etc/redis/redis.conf"
+VER="$(gh_latest_release redis/redis)"
+SVC_USER="redis"
+SVC_HOME="/var/lib/redis"
+LOG_DIR="/var/log/redis"
+CONF="/etc/redis/redis.conf"
 
 [[ $EUID -eq 0 ]] && { echo "Don't run as root"; exit 1; }
 sudo -n true 2>/dev/null || { echo "Need sudo access"; exit 1; }
 
-command -v redis-server &>/dev/null && [[ "$(redis-server --version | grep -oE 'v=[0-9.]+' | cut -d= -f2)" == "$VER" ]] && { echo "Redis $VER already installed"; exit 0; }
+if command -v redis-server &>/dev/null \
+    && [[ "$(redis-server --version | grep -oE 'v=[0-9.]+' | cut -d= -f2)" == "$VER" ]]; then
+    echo "Redis $VER already installed"
+    exit 0
+fi
 
 echo "Installing Redis $VER..."
 
-# Install deps
 if command -v apt-get &>/dev/null; then
-    sudo apt-get update -qq && sudo apt-get install -y build-essential tcl pkg-config libsystemd-dev
+    sudo apt-get update -qq
+    sudo apt-get install -y build-essential tcl pkg-config libsystemd-dev
 elif command -v dnf &>/dev/null; then
-    sudo dnf grouinst-php-pkgsall -y "Development Tools" && sudo dnf install -y tcl pkgconfig systemd-devel
+    sudo dnf groupinstall -y "Development Tools"
+    sudo dnf install -y tcl pkgconfig systemd-devel
 elif command -v yum &>/dev/null; then
-    sudo yum grouinst-php-pkgsall -y "Development Tools" && sudo yum install -y tcl pkgconfig systemd-devel
+    sudo yum groupinstall -y "Development Tools"
+    sudo yum install -y tcl pkgconfig systemd-devel
 fi
 
-# System config
-grep -q "vm.overcommit_memory = 1" /etc/sysctl.conf 2>/dev/null || echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf >/dev/null
-grep -q "net.core.somaxconn = 65535" /etc/sysctl.conf 2>/dev/null || echo "net.core.somaxconn = 65535" | sudo tee -a /etc/sysctl.conf >/dev/null
+# Kernel tunables
+grep -q "vm.overcommit_memory = 1" /etc/sysctl.conf 2>/dev/null \
+    || echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf >/dev/null
+grep -q "net.core.somaxconn = 65535" /etc/sysctl.conf 2>/dev/null \
+    || echo "net.core.somaxconn = 65535" | sudo tee -a /etc/sysctl.conf >/dev/null
 sudo sysctl vm.overcommit_memory=1 net.core.somaxconn=65535 2>/dev/null || true
-[[ -f /sys/kernel/mm/transparent_hugepage/enabled ]] && echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null 2>&1 || true
+[[ -f /sys/kernel/mm/transparent_hugepage/enabled ]] \
+    && echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null 2>&1 || true
 
-# Create user/dirs
-id "$USER" &>/dev/null || sudo useradd --system --home "$HOME" --shell /bin/false "$USER"
-sudo mkdir -p "$HOME" "$LOG" "$(dirname "$CONF")" /var/run/redis
-sudo chown "$USER:$USER" "$HOME" "$LOG" /var/run/redis
+id "$SVC_USER" &>/dev/null || sudo useradd --system --home "$SVC_HOME" --shell /bin/false "$SVC_USER"
+sudo mkdir -p "$SVC_HOME" "$LOG_DIR" "$(dirname "$CONF")" /var/run/redis
+sudo chown "$SVC_USER:$SVC_USER" "$SVC_HOME" "$LOG_DIR" /var/run/redis
 
-# Install Redis
-TMP=$(mktemp -d) && cd "$TMP"
-curl -fsSL "https://github.com/redis/redis/archive/$VER.tar.gz" | tar xz
-cd "redis-$VER" && make -j$(nproc) PREFIX=/usr/local && sudo make install PREFIX=/usr/local
-cd / && rm -rf "$TMP"
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+curl -fsSL "https://github.com/redis/redis/archive/${VER}.tar.gz" | tar xz -C "$TMP"
+make -C "$TMP/redis-${VER}" -j"$(nproc)" PREFIX=/usr/local
+sudo make -C "$TMP/redis-${VER}" install PREFIX=/usr/local
 
-# Config
 sudo tee "$CONF" >/dev/null <<EOF
 bind 127.0.0.1
 port 6379
@@ -47,7 +58,7 @@ tcp-keepalive 300
 daemonize yes
 pidfile /var/run/redis/redis.pid
 loglevel notice
-logfile $LOG/redis-server.log
+logfile $LOG_DIR/redis-server.log
 databases 16
 save 900 1
 save 300 10
@@ -56,7 +67,7 @@ stop-writes-on-bgsave-error yes
 rdbcompression yes
 rdbchecksum yes
 dbfilename dump.rdb
-dir $HOME
+dir $SVC_HOME
 maxclients 10000
 appendonly yes
 appendfilename "appendonly.aof"
@@ -80,7 +91,6 @@ aof-rewrite-incremental-fsync yes
 rdb-save-incremental-fsync yes
 EOF
 
-# Service
 sudo tee /etc/systemd/system/redis.service >/dev/null <<EOF
 [Unit]
 Description=Advanced key-value store
@@ -90,8 +100,8 @@ After=network.target
 Type=forking
 ExecStart=/usr/local/bin/redis-server $CONF
 Restart=always
-User=$USER
-Group=$USER
+User=$SVC_USER
+Group=$SVC_USER
 RuntimeDirectory=redis
 RuntimeDirectoryMode=2755
 UMask=007
@@ -105,17 +115,20 @@ NoNewPrivileges=true
 WantedBy=multi-user.target
 EOF
 
-# Limits
 sudo tee /etc/security/limits.d/redis.conf >/dev/null <<EOF
-$USER soft nofile 65535
-$USER hard nofile 65535
-$USER soft nproc 32768
-$USER hard nproc 32768
+$SVC_USER soft nofile 65535
+$SVC_USER hard nofile 65535
+$SVC_USER soft nproc 32768
+$SVC_USER hard nproc 32768
 EOF
 
-sudo systemctl daemon-reload && sudo systemctl enable --now redis.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now redis.service
 sleep 2
 
-# Test
-redis-cli ping | grep -q "PONG" && echo "✓ Redis $VER installed successfully" || { echo "✗ Redis test failed"; exit 1; }
-
+if redis-cli ping 2>/dev/null | grep -q "PONG"; then
+    echo "✓ Redis $VER installed successfully"
+else
+    echo "✗ Redis test failed" >&2
+    exit 1
+fi

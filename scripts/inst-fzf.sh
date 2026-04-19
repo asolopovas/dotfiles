@@ -1,7 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
 FORCE=${1:-${FORCE:-false}}
-VER="0.42.0"
 
 if [ "$FORCE" = true ]; then
     rm -f "$HOME/.local/bin/fzf"
@@ -16,15 +17,19 @@ case "$(uname -s)" in
     *)      PLATFORM="linux" ;;
 esac
 
-case "$(uname -m)" in
-    x86_64|amd64)  FZF_ARCH="amd64" ;;
-    aarch64|arm64) FZF_ARCH="arm64" ;;
-    *)             FZF_ARCH="amd64" ;;
+case "$ARCH" in
+    x86_64)  FZF_ARCH="amd64" ;;
+    aarch64) FZF_ARCH="arm64" ;;
+    *)       FZF_ARCH="amd64" ;;
 esac
 
-print_color green "INSTALLING FZF..."
-curl -fsSLO "https://github.com/junegunn/fzf/releases/download/$VER/fzf-$VER-${PLATFORM}_${FZF_ARCH}.tar.gz"
-tar -xf "fzf-$VER-${PLATFORM}_${FZF_ARCH}.tar.gz"
+VER="$(gh_latest_release junegunn/fzf)"
+TARBALL="fzf-$VER-${PLATFORM}_${FZF_ARCH}.tar.gz"
+
+print_color green "Installing fzf ${VER}..."
 mkdir -p "$HOME/.local/bin"
-mv fzf "$HOME/.local/bin"
-rm -f "fzf-$VER-${PLATFORM}_${FZF_ARCH}.tar.gz"
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+curl -fsSL "https://github.com/junegunn/fzf/releases/download/$VER/$TARBALL" -o "$TMP/$TARBALL"
+tar -xf "$TMP/$TARBALL" -C "$TMP"
+mv "$TMP/fzf" "$HOME/.local/bin/"

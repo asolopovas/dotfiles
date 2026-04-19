@@ -222,6 +222,25 @@ fix_broken_symlinks() {
     return 0
 }
 
+# Resolve latest release tag for a GitHub repo (strips leading 'v' by default).
+# Usage: gh_latest_release owner/repo [--keep-v]
+gh_latest_release() {
+    local repo="$1"
+    local keep_v="${2:-}"
+    local tag
+
+    tag=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null \
+        | grep -m1 '"tag_name"' | cut -d'"' -f4)
+
+    if [ -z "$tag" ]; then
+        echo "Failed to fetch latest release for $repo" >&2
+        return 1
+    fi
+
+    [ "$keep_v" = "--keep-v" ] || tag="${tag#v}"
+    printf '%s\n' "$tag"
+}
+
 # Portable package install (apt/brew/dnf/pacman)
 pkg_install() {
     case "$OS" in

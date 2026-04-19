@@ -2,7 +2,7 @@
 
 source $HOME/dotfiles/globals.sh
 
-NODE_VERSION=${NODE_VERSION:-24.12.0}
+NODE_VERSION=${NODE_VERSION:-lts}
 VOLTA_HOME=${VOLTA_HOME:-$HOME/.volta}
 
 ensure_volta() {

@@ -1,5 +1,5 @@
 # Dotfiles Project Makefile
-.PHONY: help test test-globals test-scripts test-sync-ai test-inst-opencode test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install install-git-cache test-git-cache uninstall-git-cache kill-alacritty
+.PHONY: help test test-globals test-scripts test-sync-ai test-inst-opencode test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window clean-tests install-test-deps install kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -28,11 +28,6 @@ help:
 	@echo ""
 	@echo "Testing (local, requires X11):"
 	@echo "  test-ui-snap-window   Run ui-snap-window functionality tests"
-	@echo ""
-	@echo "Git Cache:"
-	@echo "  install-git-cache     Install Git caching container"
-	@echo "  test-git-cache        Test Git cache configuration"
-	@echo "  uninstall-git-cache   Remove Git cache container"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean-tests           Clean up test artifacts"
@@ -97,23 +92,6 @@ install-test-deps:
 			brew install bats-core; \
 		fi \
 	fi
-
-# Main installation target
-install: install-git-cache
-	@echo "Complete installation finished!"
-
-# Git Cache targets
-install-git-cache:
-	@echo "Installing Git caching container..."
-	@$(SUDO_NO_PROXY) ./scripts/inst-git-cache.sh install
-
-test-git-cache:
-	@echo "Testing Git cache configuration..."
-	@sudo ./scripts/inst-git-cache.sh test
-
-uninstall-git-cache:
-	@echo "Removing Git cache container and configuration..."
-	@sudo ./scripts/inst-git-cache.sh uninstall
 
 # Utility targets
 kill-alacritty:

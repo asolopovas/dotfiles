@@ -1,30 +1,33 @@
 #!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
+
+VER="$(gh_latest_release ryanoasis/nerd-fonts --keep-v)"
+print_color green "Installing Nerd Fonts ${VER}..."
 
 install_font() {
-    font=$1
-    mkdir -p ~/.local/share/fonts/$font
+    local font="$1"
+    local dest="$HOME/.local/share/fonts/$font"
+    mkdir -p "$dest"
     for ext in zip tar.xz; do
-        url="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/$font.$ext"
-        file="/tmp/$font.$ext"
-        if curl -L --progress-bar "$url" -o "$file"; then
+        local url="https://github.com/ryanoasis/nerd-fonts/releases/download/${VER}/${font}.${ext}"
+        local file="/tmp/${font}.${ext}"
+        if curl -fL --progress-bar "$url" -o "$file"; then
             case $ext in
-                zip) unzip "$file" -d ~/.local/share/fonts/$font ;;
-                tar.xz) tar -xf "$file" -C ~/.local/share/fonts/$font ;;
+                zip)    unzip -oq "$file" -d "$dest" ;;
+                tar.xz) tar -xf "$file" -C "$dest" ;;
             esac
-            rm "$file"
-            break  # Exit the loop once a file has been successfully downloaded and extracted
+            rm -f "$file"
+            return 0
         fi
     done
+    return 1
 }
 
-# If no arguments are provided, set the default fonts
-if [ "$#" -eq 0 ]; then
-    set -- FiraMono JetBrainsMono
-fi
+[ "$#" -eq 0 ] && set -- FiraMono JetBrainsMono
 
 for font in "$@"; do
-    install_font "$font"
+    install_font "$font" || print_color red "Failed to install $font"
 done
 
-# Update the font cache
-fc-cache -fv
+fc-cache -fv >/dev/null
