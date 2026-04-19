@@ -31,7 +31,6 @@
     "M-<Backspace>": "promote",
     "M-f": "toggle-full",
     "M-S-<Space>": "toggle-mirror",
-    "M--": "toggle-mirror",
     "M-\\": "toggle-mirror",
     "M-S-y": "expand",
     "M-S-o": "shrink",
