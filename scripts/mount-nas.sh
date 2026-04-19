@@ -12,7 +12,6 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# --- Credentials setup ---
 if [ ! -f "$CREDS_FILE" ]; then
     creds="$1"
 
@@ -31,7 +30,6 @@ if [ ! -f "$CREDS_FILE" ]; then
     echo "Credentials stored in $CREDS_FILE"
 fi
 
-# --- Discover shares ---
 SHARES=$(smbclient -L "$NAS_IP" -A "$CREDS_FILE" -g 2>/dev/null | grep '^Disk|' | cut -d'|' -f2 | grep -v 'IPC\$')
 
 if [ -z "$SHARES" ]; then
@@ -39,7 +37,6 @@ if [ -z "$SHARES" ]; then
     exit 1
 fi
 
-# --- Create mount points and add fstab entries ---
 ADDED=0
 EXISTING=0
 UID_NUM=$(id -u "$SUDO_USER")
@@ -63,6 +60,5 @@ done
 
 echo "Done: $ADDED added, $EXISTING already in fstab"
 
-# --- Mount all new entries ---
 mount -a
 echo "All shares mounted"

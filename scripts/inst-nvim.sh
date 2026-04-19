@@ -133,7 +133,6 @@ is_managed_nvim() {
         return 1
     fi
 
-    # Match known managed paths (including the unrenamed tarball directory)
     case "$nvim_bin" in
         "$HOME/.local/nvim/bin/nvim" | \
             "$HOME/.local/nvim"*/bin/nvim | \
@@ -222,9 +221,6 @@ sync_existing() {
 main() {
     local nvim_bin
 
-    # Shared install: non-root with shared data + wrapper present — skip all installs
-    # Config symlink is NOT created here; it was removed by plesk-init.sh
-    # and cfg-default-dirs.sh skips it too when shared install is detected.
     if [ "$(id -u)" -ne 0 ] && [ -d "/opt/nvim-data/nvim/lazy" ] && [ -x "/usr/local/bin/nvim" ]; then
         mkdir -p "$HOME/.vim/undodir" "$HOME/.local/state/nvim"
         return
@@ -233,7 +229,6 @@ main() {
     if command -v nvim >/dev/null 2>&1; then
         nvim_bin="$(command -v nvim 2>/dev/null || true)"
         if is_managed_nvim "$nvim_bin"; then
-            # Only sync plugins when --force is set; otherwise just ensure config
             if [ "${FORCE:-false}" = true ]; then
                 sync_existing "$nvim_bin"
             else

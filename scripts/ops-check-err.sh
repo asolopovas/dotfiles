@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Check dependencies
 for cmd in fzf less sudo; do
     if ! command -v "$cmd" &>/dev/null; then
         echo "$cmd is not installed. Please install it first."
@@ -8,7 +7,6 @@ for cmd in fzf less sudo; do
     fi
 done
 
-# Define logs and commands
 declare -A LOG_COMMANDS=(
     ["System Errors (journalctl)"]="journalctl -p 3 -xb"
     ["Kernel Errors (dmesg)"]="dmesg --level=err,warn"
@@ -27,7 +25,6 @@ declare -A CLEAR_COMMANDS=(
     ["Apache Error Log"]="sudo truncate -s 0 /var/log/apache2/error.log /var/log/httpd/error_log 2>/dev/null"
 )
 
-# Interactive selection using fzf
 selected=$(printf '%s\n' "${!LOG_COMMANDS[@]}" | fzf --prompt="Select logs to view: " --height=40% --reverse)
 
 if [[ -z $selected ]]; then
@@ -35,10 +32,8 @@ if [[ -z $selected ]]; then
     exit 0
 fi
 
-# Execute selected command and view logs
 eval "${LOG_COMMANDS[$selected]}" | less -R
 
-# Prompt to clear logs with safe default (no)
 echo
 read -rp "Do you want to clear these logs? [y/N]: " clear_logs
 clear_logs=${clear_logs:-n} # Default to 'n' if empty (Enter pressed)

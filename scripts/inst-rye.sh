@@ -21,7 +21,6 @@ PYTHON_PIN="3.11"
 
 echo "Pinning Python $PYTHON_PIN to project and globally..."
 rye pin --relaxed "${PYTHON_PIN}"
-# Optionally add specific version detail: rye pin @3.11.11
 echo "Fetching Python toolchain (if not already installed)..."
 rye toolchain fetch "${PYTHON_PIN}"
 echo "Confirmed installed toolchains:"

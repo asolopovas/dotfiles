@@ -7,7 +7,6 @@ if [ "${FORCE:-false}" != true ] && cmd_exist docker; then
     exit 0
 fi
 
-# Linux Mint maps to Ubuntu's jammy by default
 if [ "$OS" = "linuxmint" ]; then
     OS=ubuntu
     VERSION_CODENAME="jammy"

@@ -5,14 +5,12 @@ export DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
-# Bootstrap utilities (self-contained for curl install)
 cmd_exist() { command -v "$1" >/dev/null 2>&1; }
 print_color() {
     local -A colors=(['red']='\033[31m' ['green']='\033[0;32m' ['yellow']='\033[0;33m')
     echo -e "${colors[$1]:-}$2\033[0m"
 }
 
-# Cross-platform OS & arch detection (standalone, before globals.sh)
 _detect_os() {
     case "$(uname -s)" in
         Darwin) echo "macos" ;;
@@ -35,7 +33,6 @@ OS="${OS:-$(_detect_os)}"
 ARCH="${ARCH:-$(_detect_arch)}"
 export OS ARCH
 
-# Parse CLI arguments (--force, --type=ssh, etc.)
 for arg in "$@"; do
     case "$arg" in
         --force) FORCE=true ;;
@@ -48,7 +45,6 @@ for arg in "$@"; do
     esac
 done
 
-# Feature flags with defaults
 declare -A features=(
     [BUN]=${BUN:-true}
     [DENO]=${DENO:-true}
@@ -70,19 +66,16 @@ declare -A features=(
     [ZSH]=${ZSH:-false}
 )
 
-# Export features for child scripts
 for feature_name in "${!features[@]}"; do
     export "${feature_name}"="${features[$feature_name]}"
 done
 
-# Setup sudo wrapper
 if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
     SUDO="sudo"
 else
     SUDO=""
 fi
 
-# Ensure unzip is available
 if ! command -v unzip &>/dev/null; then
     case "$OS" in
         ubuntu | debian | linuxmint | pop)
@@ -102,7 +95,6 @@ if ! command -v unzip &>/dev/null; then
     esac
 fi
 
-# Create essential directories
 mkdir -p "$HOME/.tmp" "$HOME/.config" "$HOME/.local/bin"
 
 cd "$HOME" || exit 1
@@ -148,7 +140,6 @@ load_script() {
     [[ -f $script_path ]] && source "$script_path"
 }
 
-# Skip full bootstrap for non-root users with shared dotfiles
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
     print_color green "Shared dotfiles detected at /opt/dotfiles — skipping bootstrap"
     exit 0
@@ -156,7 +147,6 @@ fi
 
 install_essentials
 
-# Plesk root: install or sync shared data, then exit
 if [ "$(id -u)" -eq 0 ] && [ "$HOME" = "/root" ] && [ -d /etc/psa ]; then
     if [ -d /opt/dotfiles ]; then
         print_color green "Plesk server detected — syncing"
@@ -170,7 +160,6 @@ fi
 
 load_script 'composer'
 
-# Serialize and export associative array
 features_string=$(declare -p features)
 export features_string
 
@@ -187,13 +176,11 @@ echo
 source "$DOTFILES_DIR/globals.sh"
 source "$SCRIPTS_DIR/cfg-default-dirs.sh"
 
-# Fix broken symlinks in config and bin directories
 fix_broken_symlinks "$HOME/.config" --recursive
 fix_broken_symlinks "$HOME/.local/bin"
 
 FORCE_FLAG="${features[FORCE]}"
 
-# Install a tool only if not already present (or FORCE is set)
 ensure_tool() {
     local feature_key=$1 cmd_name=$2 script_name=$3
     [[ "${features[$feature_key]}" = true ]] || return 0
@@ -220,7 +207,6 @@ fi
 
 [[ "${features[OHMYFISH]}" = true ]] && load_script 'ohmyfish'
 
-# Dual-boot fix: keep hardware clock in local time to match Windows
 if [[ "$OS" != "macos" ]] && command -v timedatectl &>/dev/null; then
     if ! timedatectl show --property=LocalRTC --value 2>/dev/null | grep -qx yes; then
         print_color green "Setting hardware clock to local time (dual-boot Windows fix)"

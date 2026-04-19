@@ -1,6 +1,4 @@
 #!/bin/bash
-# sourced by: less -R ~/.config/tmux/cheatsheet.sh
-# navigate: j/k scroll, / search, q quit
 cat <<'EOF'
 Tmux Cheatsheet                                              <leader> = Ctrl+a
 

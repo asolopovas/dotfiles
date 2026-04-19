@@ -1,5 +1,4 @@
 # shellcheck shell=bash
-# Bash completion for add-fstab; sourced from completions loader.
 _add_fstab_completion() {
     local cur_word="${COMP_WORDS[COMP_CWORD]}"
     local info level2

@@ -1,11 +1,4 @@
 #!/bin/bash
-# Build latest picom from source and write a performance-tuned config.
-# Targets NVIDIA + X11 + tiling WM (xmonad). Installs to ~/.local/bin (no sudo
-# for install step; sudo only for apt build deps).
-#
-#   FORCE=true ./inst-picom.sh       Rebuild even if already installed
-#   PICOM_TAG=v13 ./inst-picom.sh    Pin to a specific picom tag
-#   KEEP_CONFIG=true ./inst-picom.sh Do not overwrite ~/.config/picom.conf
 
 set -euo pipefail
 

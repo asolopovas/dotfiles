@@ -4,7 +4,8 @@ Personal dotfiles for Linux desktop/server (Ubuntu/Debian primary, Arch/CentOS s
 
 ## Hard Constraints
 
-- **No comments unless explicitly requested.** No commits unless explicitly instructed.
+- **NO COMMENTS in any file.** Do not write descriptive, explanatory, or section-divider comments — ever, in any language (sh, fish, lua, ts, etc.). The only allowed `#`/`//` lines are: shebangs (`#!/bin/bash`), `# shellcheck …` directives, and other functional pragmas the interpreter actually reads. If you think the WHY is genuinely non-obvious (a workaround, hidden constraint), ask first; do not add it on your own.
+- **No commits unless explicitly instructed.**
 - **OS-portable shell only.** Anything in `inst-*.sh`, `globals.sh`, or `init.sh` must work on `ubuntu | debian | linuxmint | arch | centos` (and `macos` for the dev tools). Use `installPackages` / `pkg_install` from `globals.sh`, not raw `apt`.
 - **`init.sh` must stay self-contained** — it runs before `globals.sh` exists (curl-install path). Don't add `source globals.sh` at the top; the inline helpers there are intentional duplicates.
 - **`inst-*.sh` must be idempotent.** Check for the binary or version before downloading. Reinstall only when `FORCE=true`.

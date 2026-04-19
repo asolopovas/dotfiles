@@ -1,6 +1,5 @@
 #!/bin/bash
 # shellcheck disable=SC2034
-# Variables consumed by oh-my-bash after sourcing.
 
 DISABLE_AUTO_UPDATE="true"
 OSH_THEME="theme"

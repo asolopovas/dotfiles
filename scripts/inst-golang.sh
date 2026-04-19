@@ -2,7 +2,6 @@
 set -euo pipefail
 source "$HOME/dotfiles/globals.sh"
 
-# Resolve latest stable Go version (e.g. "go1.25.5") then strip "go" prefix
 VER="$(curl -fsSL 'https://go.dev/dl/?mode=json' |
     grep -m1 '"version"' | cut -d'"' -f4)"
 VER="${VER#go}"

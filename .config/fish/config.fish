@@ -1,10 +1,7 @@
 #!/bin/fish
 
-# Env
 set fish_greeting
 
-# Disable CSI u (kitty keyboard protocol) - causes garbled input in terminals
-# that don't support it (e.g. VS Code, older Alacritty)
 set -g fish_csi_u 0
 set -g fish_prompt_pwd_dir_length 0
 set -gx COLORFGBG "15;0"
@@ -19,11 +16,9 @@ for line in (cat $HOME/dotfiles/.paths)
     add2path $line
 end
 
-# Bun
 set -gx BUN_INSTALL "$HOME/.bun"
 fish_add_path $BUN_INSTALL/bin
 
-# Volta
 set -gx VOLTA_HOME "$HOME/.volta"
 fish_add_path "$VOLTA_HOME/bin"
 
@@ -31,7 +26,6 @@ if type -q bass
     bass source $HOME/dotfiles/env/env-vars.sh
 end
 
-# FZF Settings
 set FZFARGS
 for pattern in (cat $HOME/dotfiles/fzf/fzf-exclude)
     set FZFARGS $FZFARGS -E \"$pattern\"
@@ -61,7 +55,6 @@ if [ -f "$HOME/.rmodel_cuda_setup.sh" ]
     set -x LD_LIBRARY_PATH "$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH"
 end
 
-# opencode
 fish_add_path $HOME/.opencode/bin
 
 function chrome-debug

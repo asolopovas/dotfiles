@@ -2,7 +2,6 @@
 
 set -e
 
-# Functions
 install_packages() {
     local -A install_cmds=(
         ["debian"]="sudo apt install git libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev"
@@ -31,26 +30,21 @@ clone_repo_if_not_exists() {
     }
 }
 
-# Variables
 OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
 XMONAD_SRC="$HOME/dotfiles/.config/xmonad"
 XMONAD_DEST="$HOME/.config/xmonad"
 XMONAD_LOG="$GOPATH/src/github.com/xintron"
 
-# Set up Xmonad config
 [ ! -d "$XMONAD_DEST" ] && mkdir -p "$XMONAD_DEST"
 ln -s "$XMONAD_SRC/xmonad.hs" "$XMONAD_DEST/xmonad.hs"
 cp "$XMONAD_SRC/stack.yaml" "$XMONAD_DEST/stack.yaml"
 
-# Setup xmonad-log if not exists
 [ ! -d $XMONAD_LOG ] && setup_xmonad_log
 
-# Clone repositories if not present
 clone_repo_if_not_exists "https://github.com/xmonad/xmonad" "$XMONAD_DEST/xmonad" "v0.17.2"
 clone_repo_if_not_exists "https://github.com/xmonad/xmonad-contrib" "$XMONAD_DEST/xmonad-contrib" "v0.17.1"
 clone_repo_if_not_exists "https://github.com/troydm/xmonad-dbus.git" "$XMONAD_DEST/xmonad-dbus" ""
 
-# Installing dependencies for different systems
 if [ -f /etc/debian_version ] || [ "$OS" == "pop" ] || [ "$OS" == "linuxmint" ]; then
     install_packages "debian"
 elif [ -f /etc/fedora-release ]; then
@@ -62,14 +56,12 @@ else
     exit 1
 fi
 
-# Install Haskell Stack if not present
 command -v stack &>/dev/null || curl -sSL https://get.haskellstack.org/ | sh
 
 pushd "$XMONAD_DEST"
 
 stack install
 
-# Create xmonad.desktop if not exists
 if [ ! -f /usr/share/xsessions/xmonad.desktop ]; then
     sudo tee /usr/share/xsessions/xmonad.desktop >/dev/null <<EOT
 [Desktop Entry]

@@ -1,29 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# ---------------------------------------------------------------------------
-# Local test runner — runs all bats unit tests without Docker.
-# Fast (~2-5s), tests core script functionality only.
-#
-# Usage:
-#   ./tests/run-tests.sh              Run all local test suites
-#   ./tests/run-tests.sh globals      Run only globals tests
-#   ./tests/run-tests.sh scripts      Run only script tests
-#   ./tests/run-tests.sh -f "pattern" Pass args directly to bats
-# ---------------------------------------------------------------------------
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log() { printf '\033[0;32m%s\033[0m\n' "$*"; }
 err() { printf '\033[0;31m%s\033[0m\n' "$*" >&2; }
 
-# Check bats is installed
 if ! command -v bats &>/dev/null; then
     err "bats not found. Install: sudo apt install bats"
     exit 1
 fi
 
-# Local test suites (order: fast/small first)
 SUITES=(
     "$SCRIPT_DIR/test-globals.bats"
     "$SCRIPT_DIR/test-scripts.bats"
@@ -34,7 +21,6 @@ SUITES=(
     "$SCRIPT_DIR/test-lint.bats"
 )
 
-# Handle arguments
 case "${1:-}" in
     globals)
         SUITES=("$SCRIPT_DIR/test-globals.bats")
@@ -58,7 +44,6 @@ case "${1:-}" in
         SUITES=("$SCRIPT_DIR/test-lint.bats")
         ;;
     -*)
-        # Pass all args to bats with all suites
         exec bats "$@" "${SUITES[@]}"
         ;;
     "")

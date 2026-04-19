@@ -1,14 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# ---------------------------------------------------------------------------
-# VS Code Server operational commands.
-# Manages /opt/vscode-server (shared across all Plesk vhosts via symlink).
-#
-# Initial setup is handled by plesk-init.sh (setup_vscode + vhost symlinks).
-# This script handles ongoing operations: update, extensions, cleanup.
-# ---------------------------------------------------------------------------
-
 SHARED="/opt/vscode-server"
 VHOSTS="/var/www/vhosts"
 GROUP="psacln"

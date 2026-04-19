@@ -1,19 +1,15 @@
 #!/bin/bash
-# Simple test runner for ui-snap-window functionality
 
 echo "=== Snap Window Test Suite ==="
 echo
 
-# Check if bats is available
 if ! command -v bats &>/dev/null; then
     echo "❌ Bats testing framework not found. Install with: sudo apt install bats"
     exit 1
 fi
 
-# Run automated tests
 echo "🧪 Running automated test suite..."
 
-# Find the correct path to the test file
 TEST_FILE=""
 if [ -f "test-ui-snap-window.bats" ]; then
     TEST_FILE="test-ui-snap-window.bats"
@@ -36,7 +32,6 @@ fi
 echo
 echo "🎯 Running manual verification tests..."
 
-# Manual test sequence
 echo "1. Testing basic navigation..."
 ~/.local/bin/ui-snap-window left
 sleep 0.5

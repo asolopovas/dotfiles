@@ -1,6 +1,4 @@
 #!/bin/bash
-# Post-run verification for inst-grub.sh.
-# Run after `sudo ./inst-grub.sh` to confirm the GRUB config is correct.
 
 set -u
 
@@ -39,7 +37,6 @@ echo "== /etc/grub.d scripts =="
 check "10_linux recognizes 'Linux Mint'" grep -q '"Linux Mint"' /etc/grub.d/10_linux
 check "05_debian_theme recognizes 'Linux Mint'" grep -q '"Linux Mint"' /etc/grub.d/05_debian_theme
 
-# Windows detection — only assert Windows-related checks if os-prober finds it
 WIN_DEV=$(os-prober 2>/dev/null | awk -F'[@:]' '/Windows/ {print $1; exit}')
 if [ -n "$WIN_DEV" ]; then
     WIN_UUID=$(blkid -s UUID -o value "$WIN_DEV")
@@ -58,7 +55,6 @@ if [ -n "$WIN_DEV" ]; then
         grep -q "GRUB_OS_PROBER_SKIP_LIST=\"${WIN_UUID}@" /etc/default/grub.d/50_linuxmint.cfg
 
     echo "== /boot/grub/grub.cfg menu order =="
-    # Windows should appear on an earlier line than the first Linux Mint entry.
     WIN_LINE=$(grep -n '^menuentry "Windows 11"' /boot/grub/grub.cfg | head -1 | cut -d: -f1)
     LIN_LINE=$(grep -n "^menuentry 'Linux Mint" /boot/grub/grub.cfg | head -1 | cut -d: -f1)
     if [ -n "$WIN_LINE" ] && [ -n "$LIN_LINE" ] && [ "$WIN_LINE" -lt "$LIN_LINE" ]; then

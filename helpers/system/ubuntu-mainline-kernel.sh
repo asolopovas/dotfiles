@@ -2,98 +2,59 @@
 
 # shellcheck disable=SC1117
 
-# Ubuntu Kernel PPA info
 ppa_host="kernel.ubuntu.com"
 ppa_index="/~kernel-ppa/mainline/"
 ppa_key="17C622B0"
 
-# If quiet=1 then no log messages are printed (except errors)
 quiet=0
 
-# If check_signature=0 then the signature of the CHECKSUMS file will not be checked
 check_signature=1
 
-# If check_checksum=0 then the checksums of the .deb files will not be checked
 check_checksum=1
 
-# If doublecheckversion=1 then also check the version specific ppa page to make
-# sure the kernel build was successful
 doublecheckversion=1
 
-# Connect over http or https to ppa (only https works)
 use_https=1
 
-# Path to sudo command, empty by default
 sudo=""
-#sudo=$(command -v sudo) # Uncomment this line if you dont want to sudo yourself
 
-# Path to wget command
 wget=$(command -v wget)
 
-#####
-## Below are internal variables of which most can be toggled by command options
-## DON'T CHANGE THESE MANUALLY
-#####
-
-# (internal) If cleanup_files=1 then before exiting all downloaded/temporaryfiles
-# are removed
 cleanup_files=1
 
-# (internal) If do_install=0 downloaded deb files will not be installed
 do_install=1
 
-# (internal) If use_lowlatency=1 then the lowlatency kernel will be installed
 use_lowlatency=0
 
-# (internal) If use_lpae=1 then the lpae kernel will be installed
 use_lpae=0
 
-# (internal) If use_snapdragon=1 then the snapdragon kernel will be installed
 use_snapdragon=0
 
-# (internal) If use_rc=1 then release candidate kernel versions are also checked
 use_rc=0
 
-# (internal) If assume_yes=1 assume yes on all prompts
 assume_yes=0
 
-# (internal) How many files we expect to retrieve from the ppa
-# checksum, signature, header-all, header-arch, image(-unsigned), modules
 expected_files_count=6
 
-# (internal) Which action/command the script should run
 run_action="help"
 
-# (internal) The workdir where eg the .deb files are downloaded
 workdir="/tmp/$(basename "$0")/"
 
-# (internal) The stdio where all detail output should be sent
 debug_target="/dev/null"
 
-# (internal) Holds all version numbers of locally installed ppa kernels
 LOCAL_VERSIONS=()
 
-# (internal) Holds all version numbers of available ppa kernels
 REMOTE_VERSIONS=()
 
-# (internal) The architecture of the local system
 arch=$(dpkg --print-architecture)
 
-# (internal) The text to search for to check if the build was successfully
-# NOTE: New succeed text since v5.6.18
 build_succeeded_text="(Build for ${arch} succeeded|Test ${arch}/build succeeded)"
 
-# (internal) The pid of the child process which checks download progress
 monitor_pid=0
 
-# (internal) The size of the file which is being downloaded
 download_size=0
 
 action_data=()
-
-#####
-## Check if we are running on an Ubuntu-like OS
-#####
 
 # shellcheck disable=SC1091,SC2015
 [ -f "/etc/os-release" ] && {
@@ -106,10 +67,6 @@ action_data=()
         exit 2
     }
 }
-
-#####
-## helper functions
-#####
 
 single_action() {
     [ "$run_action" != "help" ] && {
@@ -133,10 +90,6 @@ warn() {
 err() {
     echo "$@" >&2
 }
-
-#####
-## Simple command options parser
-#####
 
 while (("$#")); do
     argarg_required=0
@@ -264,10 +217,6 @@ while (("$#")); do
     shift
 done
 
-#####
-## internal functions
-#####
-
 containsElement() {
     local e
     for e in "${@:2}"; do [[ "$e" == "$1" ]] || [[ "$e" =~ $1- ]] && return 0; done
@@ -346,7 +295,6 @@ load_local_versions() {
     if [ ${#LOCAL_VERSIONS[@]} -eq 0 ]; then
         IFS=$'\n'
         for pckg in $(dpkg -l linux-image-* | cut -d " " -f 3 | sort -V); do
-            # only match kernels from ppa
             if [[ "$pckg" =~ linux-image-[0-9]+\.[0-9]+\.[0-9]+-[0-9]{6} ]]; then
                 version="v"$(echo "$pckg" | cut -d"-" -f 3,4)
 
@@ -380,7 +328,6 @@ parse_remote_versions() {
             if [[ -z "${BASH_REMATCH[2]}" ]]; then
                 line="$line.0"
             fi
-            # temporarily substitute rc suffix join character for correct version sort
             if [[ -n "${BASH_REMATCH[3]}" ]]; then
                 line="$line~${BASH_REMATCH[4]}"
             fi
@@ -405,7 +352,6 @@ load_remote_versions() {
 
         IFS=$'\n'
         while read -r line; do
-            # reinstate original rc suffix join character
             if [[ $line =~ ^([^~]+)~([^~]+)$ ]]; then
                 [[ $use_rc -eq 0 ]] && continue
                 line="${BASH_REMATCH[1]}-${BASH_REMATCH[2]}"
@@ -436,7 +382,6 @@ guard_run_as_root() {
     fi
 }
 
-# execute requested action
 case $run_action in
     help)
         echo "Usage: $0 -c|-l|-r|-u
@@ -486,7 +431,6 @@ Optional:
         installed_version=${installed_version%-*}
         log ": $installed_version"
 
-        # Check if build was successful
         if [ $doublecheckversion -gt 0 ]; then
             ppa_uri=$ppa_index${latest_version%\.0}"/"
             ppa_uri=${ppa_uri/\.0-rc/-rc}
@@ -502,7 +446,6 @@ Optional:
             fi
         fi
 
-        # Check installed minor branch
         latest_minor_text=""
         latest_minor_notify=""
         latest_minor_version=""
@@ -550,7 +493,6 @@ Optional:
         done) | $column
         ;;
     install)
-        # only ensure running if the kernel files should be installed
         [ $do_install -eq 1 ] && guard_run_as_root
 
         check_environment
@@ -803,7 +745,6 @@ Optional:
 
             pckgs=()
             for pckg in $(dpkg -l linux-{image,image-[un]?signed,headers,modules}-"${uninstall_version#v}"* 2>$debug_target | cut -d " " -f 3); do
-                # only match kernels from ppa, they have 6 characters as second version string
                 if [[ "$pckg" =~ linux-headers-[0-9]+\.[0-9]+\.[0-9]+-[0-9]{6} ]]; then
                     pckgs+=("$pckg:$arch")
                     pckgs+=("$pckg:all")

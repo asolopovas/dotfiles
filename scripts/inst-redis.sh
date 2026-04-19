@@ -36,7 +36,6 @@ elif command -v yum &>/dev/null; then
     sudo yum install -y tcl pkgconfig systemd-devel
 fi
 
-# Kernel tunables
 grep -q "vm.overcommit_memory = 1" /etc/sysctl.conf 2>/dev/null ||
     echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf >/dev/null
 grep -q "net.core.somaxconn = 65535" /etc/sysctl.conf 2>/dev/null ||

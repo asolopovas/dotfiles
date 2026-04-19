@@ -30,7 +30,6 @@ copy_config_windows() {
 }
 
 setup_windows() {
-    # Only run under WSL — Windows can't use symlinks, so copy instead
     grep -qi microsoft /proc/version 2>/dev/null || return 0
 
     local win_home
@@ -60,7 +59,6 @@ setup_shared_plesk() {
 
 install_opencode
 
-# Config is synced from dotfiles via sync-ai.sh (Linux symlinks)
 SYNC_TARGETS=opencode "$DOTFILES_DIR/scripts/sync-ai.sh" config
 
 setup_windows

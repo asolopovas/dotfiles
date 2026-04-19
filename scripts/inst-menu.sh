@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Deserialize associative array
 # shellcheck disable=SC2154
-# features_string is exported by the parent init.sh before invoking this menu.
 eval "declare -A features=${features_string#*=}"
 
 CHOICES=$(

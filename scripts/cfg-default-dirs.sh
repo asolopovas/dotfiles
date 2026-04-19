@@ -2,7 +2,6 @@
 
 source $HOME/dotfiles/globals.sh
 
-# Skip for non-root users with shared dotfiles (managed by plesk-init.sh)
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
     print_color green "Shared dotfiles detected — symlinks managed by plesk-init.sh"
     return 0 2>/dev/null || exit 0
@@ -78,7 +77,6 @@ fi
 
 print_color green "Creating Symlinks ..."
 
-# Clean up broken symlinks in managed directories
 for check_dir in "$HOME/.config" "$HOME/.local/bin"; do
     if [ -d "$check_dir" ]; then
         while IFS= read -r -d '' broken; do
@@ -108,7 +106,6 @@ for src in "${CONFDIRS[@]}"; do
         rm -rf "$destPath"
     fi
 
-    # Ensure parent directory exists before creating symlink
     mkdir -p "$(dirname "$destPath")"
     ln -sf "$srcPath" "$destPath"
 done

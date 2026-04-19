@@ -10,7 +10,6 @@ REDIS_CLI="/usr/local/bin/redis-cli"
 SYSTEMD_SERVICE_FILE="/etc/systemd/system/redis.service"
 PORT="6379"
 
-# Check if user exists, add if not
 if ! id "$USER" &>/dev/null; then
     adduser --system --group --no-create-home "$USER"
 fi

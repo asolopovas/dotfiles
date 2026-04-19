@@ -1,20 +1,11 @@
 #!/bin/bash
-# Cinnamon Desktop Configuration Script
-# XMonad-inspired window management for Cinnamon
 set -e
 
-#============================================================================
-# CONSTANTS AND CONFIGURATION
-#============================================================================
-
-# Color constants for output formatting
 readonly G='\033[0;32m' Y='\033[1;33m' R='\033[0;31m' B='\033[0;34m' NC='\033[0m'
 
-# Directory paths
 readonly SCRIPTS_DIR="${HOME}/dotfiles/scripts"
 readonly LOCAL_BIN="${HOME}/.local/bin"
 
-# Dependencies to install
 readonly REQUIRED_PACKAGES=(
     xdotool wmctrl x11-xserver-utils
     rofi thunar pcmanfm alacritty audacious
@@ -23,23 +14,16 @@ readonly REQUIRED_PACKAGES=(
     libnotify-bin curl wget git
 )
 
-# Scripts to link
 readonly SCRIPTS_TO_LINK=(
     "ui-snap-window:ui-snap-window"
     "ui-terminal-toggle:ui-terminal-toggle"
 )
 
-#============================================================================
-# UTILITY FUNCTIONS
-#============================================================================
-
-# Logging functions
 log() { echo -e "${G}[INFO]${NC} $1"; }
 warn() { echo -e "${Y}[WARN]${NC} $1"; }
 err() { echo -e "${R}[ERROR]${NC} $1"; }
 header() { echo -e "${B}=== $1 ===${NC}"; }
 
-# Environment validation
 check_desktop_environment() {
     [[ "$XDG_CURRENT_DESKTOP" != *"Cinnamon"* ]] && [[ "$DESKTOP_SESSION" != *"cinnamon"* ]] && {
         warn "Not running Cinnamon desktop"
@@ -49,7 +33,6 @@ check_desktop_environment() {
     }
 }
 
-# Keybinding management functions
 set_custom_key() {
     local name="$1" cmd="$2" key="$3"
     local base_path="org.cinnamon.desktop.keybindings.custom-keybinding:/org/cinnamon/desktop/keybindings/custom-keybindings/$name/"
@@ -58,7 +41,6 @@ set_custom_key() {
     gsettings set "${base_path}" command "$cmd"
     gsettings set "${base_path}" binding "['$key']"
 
-    # Add to custom list
     local list
     list=$(gsettings get org.cinnamon.desktop.keybindings custom-list)
     if [[ "$list" == "@as []" ]]; then
@@ -73,11 +55,6 @@ disable_key() {
     gsettings set "$1" "$2" "[]" 2>/dev/null || true
 }
 
-#============================================================================
-# CONFIGURATION DATA
-#============================================================================
-
-# Keys to disable in each schema
 readonly WM_KEYS_TO_DISABLE=(
     close toggle-fullscreen toggle-maximized minimize maximize unmaximize
     switch-to-workspace-{left,right,up,down} move-to-workspace-{left,right,up,down}
@@ -86,7 +63,6 @@ readonly WM_KEYS_TO_DISABLE=(
 
 readonly MEDIA_KEYS_TO_DISABLE=(terminal home search screensaver)
 
-# Window management keybindings
 readonly -A WINDOW_MGMT_KEYS=(
     ["close-window"]="wmctrl -c :ACTIVE::<Super>q"
     ["close-all-windows"]="wmctrl -c :ALL::<Super><Shift>q"
@@ -101,7 +77,6 @@ readonly -A WINDOW_MGMT_KEYS=(
     ["dec-master"]="xdotool key --clearmodifiers Super+comma:<Super>comma"
 )
 
-# Snap window keybindings
 readonly -A SNAP_KEYS=(
     ["snap-left"]="${LOCAL_BIN}/ui-snap-window left:<Super>h"
     ["snap-down"]="${LOCAL_BIN}/ui-snap-window down:<Super>j"
@@ -113,7 +88,6 @@ readonly -A SNAP_KEYS=(
     ["expand-right"]="${LOCAL_BIN}/ui-snap-window expand-right:<Super><Shift>l"
 )
 
-# Layout resizing keybindings
 readonly -A LAYOUT_KEYS=(
     ["layout-shrink-h"]="xdotool key --clearmodifiers Super+Shift+y:<Super><Shift>y"
     ["layout-expand-h"]="xdotool key --clearmodifiers Super+Shift+o:<Super><Shift>o"
@@ -121,7 +95,6 @@ readonly -A LAYOUT_KEYS=(
     ["layout-expand-v"]="xdotool key --clearmodifiers Super+Shift+i:<Super><Shift>i"
 )
 
-# Application shortcuts
 readonly -A APP_KEYS=(
     ["ui-terminal-toggle"]="${LOCAL_BIN}/ui-terminal-toggle toggle:<Super>Return"
     ["terminal-new"]="${LOCAL_BIN}/ui-terminal-toggle new:<Super><Shift>Return"
@@ -146,13 +119,11 @@ readonly -A APP_KEYS=(
     ["screenshot-menu"]="flameshot gui:XF86MenuPB"
 )
 
-# System control keybindings
 readonly -A SYSTEM_KEYS=(
     ["restart-wm"]="cinnamon --replace:<Super>F6"
     ["logout-session"]="cinnamon-session-quit --logout:<Super><Shift>e"
 )
 
-# Media keys configuration
 readonly -A MEDIA_KEYS=(
     ["volume-down"]="['XF86AudioLowerVolume']"
     ["volume-up"]="['XF86AudioRaiseVolume']"
@@ -166,41 +137,31 @@ readonly -A MEDIA_KEYS=(
     ["screenshot"]="['Print']"
 )
 
-#============================================================================
-# MAIN CONFIGURATION FUNCTIONS
-#============================================================================
-
 clear_default_shortcuts() {
     header "Clearing default shortcuts"
 
-    # Clear workspace shortcuts (1-8)
     for i in {1..8}; do
         disable_key org.cinnamon.desktop.keybindings.wm switch-to-workspace-$i
         disable_key org.cinnamon.desktop.keybindings.wm move-to-workspace-$i
     done
 
-    # Clear WM shortcuts
     for key in "${WM_KEYS_TO_DISABLE[@]}"; do
         disable_key org.cinnamon.desktop.keybindings.wm "$key"
     done
 
-    # Clear conflicting media keys
     for key in "${MEDIA_KEYS_TO_DISABLE[@]}"; do
         disable_key org.cinnamon.desktop.keybindings.media-keys "$key"
     done
 
-    # Clear other conflicting shortcuts
     disable_key org.gnome.settings-daemon.plugins.media-keys screensaver
     gsettings set org.cinnamon.desktop.keybindings looking-glass-keybinding "[]"
 
-    # Preserve Alt+Tab
     gsettings set org.cinnamon.desktop.keybindings.wm switch-windows "['<Alt>Tab']" 2>/dev/null || true
     gsettings set org.cinnamon.desktop.keybindings.wm switch-windows-backward "['<Shift><Alt>Tab']" 2>/dev/null || true
 }
 
 configure_custom_keys() {
     # shellcheck disable=SC2190
-    # Caller passes flattened "key=value" pairs from an associative array; we rebuild it here.
     local -A keys=("$@")
     for name in "${!keys[@]}"; do
         IFS=':' read -r cmd binding <<<"${keys[$name]}"
@@ -224,13 +185,11 @@ configure_applications() {
 configure_workspaces() {
     header "Configuring workspaces"
 
-    # Workspace shortcuts (1-8)
     for i in {1..8}; do
         gsettings set org.cinnamon.desktop.keybindings.wm "switch-to-workspace-$i" "['<Super>$i']"
         gsettings set org.cinnamon.desktop.keybindings.wm "move-to-workspace-$i" "['<Super><Shift>$i']"
     done
 
-    # Workspace navigation with arrows
     gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-left "['<Super>Left']"
     gsettings set org.cinnamon.desktop.keybindings.wm switch-to-workspace-right "['<Super>Right']"
     gsettings set org.cinnamon.desktop.keybindings.wm move-to-workspace-left "['<Super><Shift>Left']"
@@ -242,10 +201,8 @@ install_dependencies() {
     log "Installing required packages..."
     sudo apt update && sudo apt install -y "${REQUIRED_PACKAGES[@]}"
 
-    # Install additional software that may not be in repos
     log "Installing additional software..."
 
-    # Install Brave browser if not present
     if ! command -v brave-browser &>/dev/null; then
         log "Installing Brave browser..."
         sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
@@ -253,7 +210,6 @@ install_dependencies() {
         sudo apt update && sudo apt install -y brave-browser
     fi
 
-    # Install Rofi if not present
     if ! command -v rofi &>/dev/null; then
         log "Installing Rofi..."
         sudo apt install -y rofi || {
@@ -262,7 +218,6 @@ install_dependencies() {
         }
     fi
 
-    # Install Alacritty if not present
     if ! command -v alacritty &>/dev/null; then
         log "Installing Alacritty..."
         sudo apt install -y alacritty || {
@@ -271,7 +226,6 @@ install_dependencies() {
         }
     fi
 
-    # Install Flameshot if not present
     if ! command -v flameshot &>/dev/null; then
         log "Installing Flameshot..."
         sudo apt install -y flameshot || {
@@ -311,7 +265,6 @@ configure_wm_behavior() {
     gsettings set org.cinnamon.desktop.wm.preferences focus-mode 'click'
     gsettings set org.cinnamon.desktop.wm.preferences auto-raise false
 
-    # Configure media keys
     for key in "${!MEDIA_KEYS[@]}"; do
         gsettings set org.cinnamon.desktop.keybindings.media-keys "$key" "${MEDIA_KEYS[$key]}"
     done

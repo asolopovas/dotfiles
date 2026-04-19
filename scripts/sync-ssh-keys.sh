@@ -1,19 +1,8 @@
 #!/usr/bin/env bash
-# sec-ssh-key-auth-plesk.sh
-#
-# Deploy SSH public key to all Plesk virtual hosting users
 
 set -euo pipefail
 
-# ============================================================================
-# Configuration
-# ============================================================================
-
 SCRIPT_NAME="$(basename "$0")"
-
-# ============================================================================
-# Functions
-# ============================================================================
 
 show_help() {
     cat <<HELP
@@ -48,7 +37,6 @@ HELP
 validate_ssh_key_format() {
     local key_content="$1"
 
-    # Validate SSH key format (supports common key types)
     if ! echo "$key_content" | grep -qE '^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(256|384|521)|ssh-dss) '; then
         echo "❌ Error: Invalid SSH public key format" >&2
         echo "   Supported formats: ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp*, ssh-dss" >&2
@@ -62,7 +50,6 @@ get_and_validate_key() {
     local input="$1"
     local key_content
 
-    # Check if input is a file path
     if [[ -f "$input" ]]; then
         [[ "$VERBOSE" -eq 1 ]] && echo "✓ Detected file path: $input"
 
@@ -71,16 +58,13 @@ get_and_validate_key() {
             exit 1
         fi
 
-        # Read and trim the key from file
         key_content="$(<"$input")"
         key_content="$(echo -n "$key_content" | sed -e 's/^[[:space:]]*//; s/[[:space:]]*$//')"
     else
-        # Treat as raw key string
         [[ "$VERBOSE" -eq 1 ]] && echo "✓ Detected raw SSH key string"
         key_content="$(echo -n "$input" | sed -e 's/^[[:space:]]*//; s/[[:space:]]*$//')"
     fi
 
-    # Validate the key format
     validate_ssh_key_format "$key_content"
 
     echo "$key_content"
@@ -89,7 +73,6 @@ get_and_validate_key() {
 prepare_key() {
     local public_key="$1"
 
-    # Base64-encode into a single line for safe transmission over SSH
     local public_key_b64
     public_key_b64="$(
         echo -n "$public_key" |
@@ -114,8 +97,6 @@ deploy_to_plesk() {
         echo "🔄 Connecting to root to update authorized_keys for Plesk users..."
     fi
 
-    # Execute remote commands on Plesk server
-    # The 'root' alias should be configured in ~/.ssh/config
     ssh root bash -s -- "$force" "$dry_run" "$verbose" "$public_key_b64" <<'EOF'
 force="$1"
 dry_run="$2"
@@ -215,22 +196,15 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 EOF
 }
 
-# ============================================================================
-# Main Script
-# ============================================================================
-
-# Parse command-line arguments
 FORCE=0
 DRY_RUN=0
 VERBOSE=0
 PUBLIC_KEY_INPUT=""
 
-# Show help if no arguments
 if [[ $# -eq 0 ]]; then
     show_help
 fi
 
-# Parse options using manual loop to support both short and long options
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h | --help)
@@ -266,14 +240,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate that a key file or string was provided
 if [[ -z "$PUBLIC_KEY_INPUT" ]]; then
     echo "❌ Error: Public key file or string is required" >&2
     echo "Use -h or --help for usage information" >&2
     exit 1
 fi
 
-# Main execution flow
 [[ "$VERBOSE" -eq 1 ]] && echo "🔑 Validating SSH key input..."
 PUBLIC_KEY="$(get_and_validate_key "$PUBLIC_KEY_INPUT")"
 

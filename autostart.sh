@@ -1,12 +1,8 @@
 #!/bin/bash
-# Set DPI based on hardware (laptop vs desktop)
 ~/dotfiles/scripts/ui-set-dpi-by-hardware.sh
 
-# Generate polybar font configuration based on current environment
 ~/dotfiles/scripts/ui-polybar-fonts.sh
 
-# Cinnamon/LightDM already starts gnome-keyring via PAM/systemd.
-# Only start it manually when the session is explicitly Xmonad.
 session_id="${XDG_CURRENT_DESKTOP:-} ${DESKTOP_SESSION:-} ${GDMSESSION:-}"
 shopt -s nocasematch
 if [[ "$session_id" == *xmonad* ]]; then
@@ -14,7 +10,6 @@ if [[ "$session_id" == *xmonad* ]]; then
 fi
 shopt -u nocasematch
 
-# Start compositor (picom preferred, fallback to fastcompmgr)
 if command -v picom &>/dev/null; then
     nohup picom --config ~/.config/picom.conf >/tmp/picom.log 2>&1 &
 elif command -v fastcompmgr &>/dev/null; then

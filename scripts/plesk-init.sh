@@ -1,35 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# ---------------------------------------------------------------------------
-# Unified Plesk vhost setup.
-# Run as root. Idempotent — first run installs, subsequent runs update/fix.
-#
-# Usage:
-#   plesk-init.sh              Full setup/update (all sections)
-#   plesk-init.sh sync         Quick rsync shared data only (no downloads)
-#   plesk-init.sh <section>    One of: dotfiles omf opencode vscode nvim bun vhosts
-#
-# Shared locations (root-owned, world-readable):
-#   /opt/dotfiles/            Dotfiles (rsync from /root/dotfiles, no .git)
-#   /opt/omf/                 Oh My Fish + bass plugin
-#   /opt/opencode-config/     Opencode config (models, skills, MCP plugins)  [psacln-writable]
-#   /opt/opencode-cache/      Opencode auth plugins, models.json             [psacln-writable]
-#   /opt/opencode-bin/        Opencode LSP servers (intelephense, bash-ls)   [psacln-writable]
-#   /opt/vscode-server/       VS Code Server (binaries, extensions, data)    [psacln-writable]
-#   /opt/nvim/                Neovim binary
-#   /opt/nvim-config/nvim/    Neovim config
-#   /opt/nvim-data/nvim/      Lazy plugins, Mason LSPs, Treesitter parsers
-#   /var/www/bun-cache/       Shared bun install cache
-# ---------------------------------------------------------------------------
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 source "${SCRIPT_DIR}/../globals.sh"
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 require_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -38,15 +12,12 @@ require_root() {
     fi
 }
 
-# Set root:root ownership and world-readable permissions on a directory tree.
 lock_perms() {
     local dir="$1"
     chown -R root:root "$dir"
     chmod -R u+rwX,go+rX,go-w "$dir"
 }
 
-# Set root:psacln ownership with group-writable SGID on a directory tree.
-# Used for shared dirs that vhost users (all in psacln) must write to.
 shared_perms() {
     local dir="$1"
     chown -R root:psacln "$dir"
@@ -54,7 +25,6 @@ shared_perms() {
     find "$dir" -type f -exec chmod 664 {} +
 }
 
-# Create or update a symlink. No-op if already correct.
 ensure_symlink() {
     local src="$1"
     local dest="$2"
@@ -71,7 +41,6 @@ ensure_symlink() {
     ln -sf "$src" "$dest"
 }
 
-# Replace a real directory (or stale symlink) with a symlink.
 replace_with_symlink() {
     local target="$1"
     local link="$2"
@@ -82,7 +51,6 @@ replace_with_symlink() {
     ensure_symlink "$target" "$link"
 }
 
-# Query all Plesk vhost users (domain, login, home).
 query_vhosts() {
     plesk db -N -B -e "
         SELECT d.name, s.login, s.home
@@ -93,7 +61,6 @@ query_vhosts() {
     " 2>/dev/null || true
 }
 
-# Run a headless nvim command with timeout.
 nvim_headless() {
     local desc="$1"
     local lua_code="$2"
@@ -111,10 +78,6 @@ nvim_headless() {
     }
 }
 
-# ---------------------------------------------------------------------------
-# Section: dotfiles  (/opt/dotfiles)
-# ---------------------------------------------------------------------------
-
 setup_dotfiles() {
     print_color bold_green "=== Dotfiles ==="
 
@@ -127,10 +90,6 @@ setup_dotfiles() {
 
     print_color green "  /opt/dotfiles synced ($(du -sh /opt/dotfiles | cut -f1))"
 }
-
-# ---------------------------------------------------------------------------
-# Section: omf  (/opt/omf — Oh My Fish + bass)
-# ---------------------------------------------------------------------------
 
 setup_omf() {
     print_color bold_green "=== Oh My Fish ==="
@@ -157,18 +116,12 @@ setup_omf() {
         "
     fi
 
-    # Strip .git dirs — not needed for read-only shared use
     find /opt/omf -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true
     lock_perms /opt/omf
 
     print_color green "  /opt/omf ready ($(du -sh /opt/omf | cut -f1))"
 }
 
-# ---------------------------------------------------------------------------
-# Section: opencode  (/opt/opencode-{config,cache,bin} + /usr/local/bin/opencode)
-# ---------------------------------------------------------------------------
-
-# Files excluded from shared config (per-user auth/runtime data).
 readonly OPENCODE_EXCLUDES=(
     --exclude='antigravity-accounts.json'
     --exclude='antigravity-accounts.json.*.tmp'
@@ -180,16 +133,12 @@ readonly OPENCODE_EXCLUDES=(
 setup_opencode() {
     print_color bold_green "=== Opencode ==="
 
-    # Install/update skills into the canonical location (~/.agents/skills)
-    # before syncing opencode config, so the shared config gets all skills.
     local sync_ai="${SCRIPT_DIR}/sync-ai.sh"
     if [[ -x "$sync_ai" ]]; then
         print_color green "  Syncing skills via sync-ai.sh..."
         SYNC_TARGETS=opencode "$sync_ai" skills 2>&1 | sed 's/^/    /'
     fi
 
-    # Copy canonical skills into root's opencode config so the rsync below
-    # picks them up into /opt/opencode-config/skills/ for all vhosts.
     local root_oc="$HOME/.config/opencode"
     local agents_skills="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
     if [[ -d "$agents_skills" ]]; then
@@ -199,23 +148,16 @@ setup_opencode() {
 
     if [[ -d "$root_oc" ]]; then
         mkdir -p /opt/opencode-config
-        # Strip any top-level symlinks a vhost user may have dropped in — they
-        # often point into a per-user home that other vhost users can't read.
         find /opt/opencode-config -maxdepth 1 -type l -delete 2>/dev/null || true
-        # -L dereferences symlinks (root's ~/.config/opencode contains symlinks
-        # into /root/dotfiles which vhost users cannot read).
         rsync -aL --delete "${OPENCODE_EXCLUDES[@]}" \
             "$root_oc/" /opt/opencode-config/
         shared_perms /opt/opencode-config
-        # Sticky bit: only file owner (or root) may delete/rename within this
-        # dir, so a vhost user can't clobber root's config files.
         chmod +t /opt/opencode-config
         print_color green "  /opt/opencode-config synced ($(du -sh /opt/opencode-config | cut -f1))"
     else
         print_color yellow "  No opencode config at $root_oc — skipping"
     fi
 
-    # Shared cache (auth plugins, models.json — identical across vhosts)
     local root_cache="$HOME/.cache/opencode"
     if [[ -d "$root_cache" ]]; then
         mkdir -p /opt/opencode-cache
@@ -224,7 +166,6 @@ setup_opencode() {
         print_color green "  /opt/opencode-cache synced ($(du -sh /opt/opencode-cache | cut -f1))"
     fi
 
-    # Shared LSP binaries (intelephense, bash-language-server)
     local root_bin="$HOME/.local/share/opencode/bin"
     if [[ -d "$root_bin" ]]; then
         mkdir -p /opt/opencode-bin
@@ -233,9 +174,6 @@ setup_opencode() {
         print_color green "  /opt/opencode-bin synced ($(du -sh /opt/opencode-bin | cut -f1))"
     fi
 
-    # Native binary copied to /usr/local/bin/opencode-bin (the actual ELF).
-    # /usr/local/bin/opencode is a thin wrapper that intercepts "upgrade" to
-    # keep the shared binary in sync with root's bun-managed copy.
     local oc_src="$HOME/.bun/install/global/node_modules/opencode-linux-x64/bin/opencode"
     if [[ -x "$oc_src" ]]; then
         if [[ ! -x /usr/local/bin/opencode-bin ]] || ! cmp -s "$oc_src" /usr/local/bin/opencode-bin; then
@@ -250,17 +188,12 @@ setup_opencode() {
         fi
     fi
 
-    # Shared wrapper at /usr/local/bin/opencode — used by vhost users directly.
-    # Runs the shared native binary for all commands.
     cat >/usr/local/bin/opencode <<'WRAPPER'
 #!/bin/bash
 exec /usr/local/bin/opencode-bin "$@"
 WRAPPER
     chmod 755 /usr/local/bin/opencode
 
-    # Root wrapper: replaces the bun symlink at ~/.bun/bin/opencode so that
-    # "opencode upgrade" (run as root) auto-syncs the new binary to the shared
-    # /usr/local/bin/opencode-bin that all vhost users run.
     local bun_link="$HOME/.bun/bin/opencode"
     local bun_shim="$HOME/.bun/install/global/node_modules/opencode-ai/bin/opencode"
     if [[ -e "$bun_link" ]]; then
@@ -290,21 +223,15 @@ ROOTWRAPPER
     fi
 }
 
-# ---------------------------------------------------------------------------
-# Section: vscode  (/opt/vscode-server)
-# ---------------------------------------------------------------------------
-
 setup_vscode() {
     print_color bold_green "=== VS Code Server ==="
 
     local root_vs="$HOME/.vscode-server"
     local shared="/opt/vscode-server"
 
-    # If root has a real dir (not yet symlinked), merge it into shared
     if [[ -d "$root_vs" && ! -L "$root_vs" ]]; then
         mkdir -p "$shared"/{cli/servers,extensions}
 
-        # Server versions
         for s in "$root_vs"/cli/servers/Stable-*/; do
             [[ -d "$s" ]] || continue
             local name
@@ -314,7 +241,6 @@ setup_vscode() {
         [[ -f "$root_vs/cli/servers/lru.json" ]] &&
             cp -f "$root_vs/cli/servers/lru.json" "$shared/cli/servers/lru.json"
 
-        # Code binaries
         for b in "$root_vs"/code-*; do
             [[ -f "$b" ]] || continue
             local name
@@ -322,26 +248,21 @@ setup_vscode() {
             [[ -f "$shared/$name" ]] || cp -a "$b" "$shared/$name"
         done
 
-        # Extensions
         if [[ -d "$root_vs/extensions" ]]; then
             rsync -a --ignore-existing "$root_vs/extensions/" "$shared/extensions/"
         fi
 
-        # Data (settings, VSIX cache, logs)
         if [[ -d "$root_vs/data" ]]; then
             rsync -a "$root_vs/data/" "$shared/data/"
         fi
 
-        # CLI config
         rsync -a --ignore-existing "$root_vs/cli/" "$shared/cli/"
 
-        # Replace root dir with symlink
         rm -rf "$root_vs"
         ln -s "$shared" "$root_vs"
         print_color green "  Root .vscode-server merged and symlinked"
     fi
 
-    # Ensure shared dir exists and has correct permissions
     if [[ -d "$shared" ]]; then
         chgrp -R psacln "$shared"
         find "$shared" -type d -exec chmod 2775 {} +
@@ -354,16 +275,11 @@ setup_vscode() {
     fi
 }
 
-# ---------------------------------------------------------------------------
-# Section: nvim  (/opt/nvim, /opt/nvim-config, /opt/nvim-data)
-# ---------------------------------------------------------------------------
-
 setup_nvim() {
     print_color bold_green "=== Neovim ==="
 
     local nvim_bin="/opt/nvim/bin/nvim"
 
-    # --- Binary ---
     if [[ ! -x "$nvim_bin" ]]; then
         print_color green "  Downloading nvim..."
         local tmp
@@ -377,7 +293,6 @@ setup_nvim() {
     fi
     print_color green "  $($nvim_bin --version | head -1)"
 
-    # --- Wrapper (scopes XDG vars to the nvim process only) ---
     cat >/usr/local/bin/nvim <<'WRAPPER'
 #!/bin/bash
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/nvim-data/nvim/lazy ]; then
@@ -396,7 +311,6 @@ WRAPPER
     chmod 755 /usr/local/bin/nvim
     ln -sf /usr/local/bin/nvim /usr/local/bin/vim
 
-    # Redirect any direct binary symlinks through the wrapper
     local link
     for link in /usr/bin/nvim /usr/bin/vim; do
         if [[ -L "$link" ]] && [[ "$(readlink -f "$link")" == "$nvim_bin" ]]; then
@@ -404,19 +318,16 @@ WRAPPER
         fi
     done
 
-    # --- Root config symlink ---
     local nvim_src="$HOME/dotfiles/.config/nvim"
     if [[ -d "$nvim_src" && ! -e "$HOME/.config/nvim" ]]; then
         mkdir -p "$HOME/.config"
         ln -sf "$nvim_src" "$HOME/.config/nvim"
     fi
 
-    # --- Shared config ---
     mkdir -p /opt/nvim-config/nvim
     rsync -a --delete "$nvim_src/" /opt/nvim-config/nvim/
     lock_perms /opt/nvim-config
 
-    # --- Shared data (plugins, LSPs, parsers) ---
     mkdir -p /opt/nvim-data/nvim
 
     nvim_headless "  Syncing plugins..." \
@@ -448,23 +359,16 @@ WRAPPER
         vim.cmd('qa!')
     "
 
-    # --- Lock data + make mason binaries executable ---
     lock_perms /opt/nvim-data
     find /opt/nvim-data/nvim/mason -type f \( -name "*.sh" -o -path "*/bin/*" \) \
         -exec chmod 755 {} + 2>/dev/null || true
 
-    # Clean stale profile.d script
     rm -f /etc/profile.d/nvim.sh
 }
-
-# ---------------------------------------------------------------------------
-# Section: bun  (/usr/local/bin/bun*, /var/www/bun-cache)
-# ---------------------------------------------------------------------------
 
 setup_bun() {
     print_color bold_green "=== Bun ==="
 
-    # Download latest to a temp dir
     local tmp
     tmp=$(mktemp -d)
     trap 'rm -rf "${tmp:-}"' RETURN
@@ -478,7 +382,6 @@ setup_bun() {
     local new_ver
     new_ver=$("$tmp/bin/bun" --version)
 
-    # Check if update is needed
     if [[ -f /usr/local/bin/bun-bin ]]; then
         local old_ver
         old_ver=$(/usr/local/bin/bun-bin --version 2>/dev/null || echo "unknown")
@@ -491,10 +394,8 @@ setup_bun() {
         print_color green "  Installing bun v${new_ver}"
     fi
 
-    # Install binary
     install -m 755 -o root -g root "$tmp/bin/bun" /usr/local/bin/bun-bin
 
-    # --- bun-run helper (called via sudo, runs bun as root for cache writes) ---
     cat >/usr/local/bin/bun-run <<'HELPER'
 #!/bin/bash
 CALLER_USER="$1"
@@ -520,7 +421,6 @@ exit $status
 HELPER
     chmod 755 /usr/local/bin/bun-run
 
-    # --- bun wrapper ---
     cat >/usr/local/bin/bun <<'WRAPPER'
 #!/bin/bash
 export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"
@@ -533,14 +433,12 @@ WRAPPER
     chmod 755 /usr/local/bin/bun
     ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
-    # --- Shared cache ---
     mkdir -p /var/www/bun-cache
     chmod 755 /var/www/bun-cache
     if [[ -n "$(ls -A /var/www/bun-cache 2>/dev/null)" ]]; then
         lock_perms /var/www/bun-cache
     fi
 
-    # --- Sudoers ---
     local sudoers="/etc/sudoers.d/bun-cache"
     printf 'ALL ALL=(root) NOPASSWD: /usr/local/bin/bun-run *\n' >"$sudoers"
     chmod 440 "$sudoers"
@@ -550,18 +448,12 @@ WRAPPER
         return 1
     fi
 
-    # --- Profile env var ---
     printf 'export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"\n' >/etc/profile.d/bun.sh
     chmod 644 /etc/profile.d/bun.sh
 
     print_color green "  bun v$(/usr/local/bin/bun-bin --version) ready"
 }
 
-# ---------------------------------------------------------------------------
-# Section: vhosts — per-user symlinks, cleanup, and node/php binaries
-# ---------------------------------------------------------------------------
-
-# Config files symlinked through ~/dotfiles -> /opt/dotfiles.
 readonly VHOST_SYMLINKS=(
     ".bashrc"
     ".gitconfig"
@@ -573,7 +465,6 @@ readonly VHOST_SYMLINKS=(
     ".config/tmux"
 )
 
-# Fish config items symlinked inside the per-user ~/.config/fish/ directory.
 readonly FISH_SHARED_ITEMS=(
     config.fish
     config.fish.gcloud
@@ -583,7 +474,6 @@ readonly FISH_SHARED_ITEMS=(
     functions
 )
 
-# Per-user directories/files left over from old per-user installs.
 readonly CLEANUP_DIRS=(
     .local/nvim
     .local/share/nvim
@@ -591,8 +481,6 @@ readonly CLEANUP_DIRS=(
     .bun
 )
 
-# Stale opencode per-user dirs replaced by shared symlinks.
-# Removed BEFORE creating symlinks so rm -rf doesn't follow them.
 readonly OPENCODE_CLEANUP_DIRS=(
     .opencode
     .cache/opencode
@@ -605,7 +493,6 @@ setup_vhost_fish() {
     local fish_conf="$home_dir/.config/fish"
     local fish_shared="$home_dir/dotfiles/.config/fish"
 
-    # Must be a real dir (not symlink) so fish_variables is writable
     [[ -L "$fish_conf" ]] && rm -f "$fish_conf"
     mkdir -p "$fish_conf"
 
@@ -614,7 +501,6 @@ setup_vhost_fish() {
         ensure_symlink "$fish_shared/$item" "$fish_conf/$item"
     done
 
-    # fish_variables stores universal vars — must be per-user writable
     if [[ ! -f "$fish_conf/fish_variables" ]]; then
         cp "$fish_shared/fish_variables" "$fish_conf/fish_variables" 2>/dev/null ||
             touch "$fish_conf/fish_variables"
@@ -629,7 +515,6 @@ setup_vhost_omf() {
 
     replace_with_symlink /opt/omf "$home_dir/.local/share/omf"
 
-    # OMF config is per-user writable (theme, channel, bundle)
     if [[ ! -d "$home_dir/.config/omf" ]]; then
         mkdir -p "$home_dir/.config/omf"
         printf 'package bass\n' >"$home_dir/.config/omf/bundle"
@@ -680,27 +565,22 @@ setup_vhosts() {
         print_color green "  $plesk_user ($domain)"
         local dotfiles_dir="$home_dir/dotfiles"
 
-        # Dotfiles: replace per-user clone with symlink to shared
         replace_with_symlink /opt/dotfiles "$dotfiles_dir"
 
-        # Ensure base directories exist
         mkdir -p \
             "$home_dir/.config" \
             "$home_dir/.local/bin" \
             "$home_dir/.local/share"
 
-        # Config symlinks
         local src
         for src in "${VHOST_SYMLINKS[@]}"; do
             ensure_symlink "$dotfiles_dir/$src" "$home_dir/$src"
         done
         ensure_symlink "$dotfiles_dir/helpers" "$home_dir/.local/bin/helpers"
 
-        # Per-tool setup
         setup_vhost_fish "$home_dir" "$plesk_user"
         setup_vhost_omf "$home_dir" "$plesk_user"
 
-        # Cleanup stale per-user installs (must run before creating dirs/symlinks)
         local d
         for d in "${CLEANUP_DIRS[@]}"; do
             [[ -d "$home_dir/$d" ]] && rm -rf "${home_dir:?}/$d"
@@ -709,7 +589,6 @@ setup_vhosts() {
             [[ -d "$home_dir/$d" && ! -L "$home_dir/$d" ]] && rm -rf "${home_dir:?}/$d"
         done
 
-        # Opencode: shared config, cache, and LSP binaries
         if [[ -d /opt/opencode-config ]]; then
             replace_with_symlink /opt/opencode-config "$home_dir/.config/opencode"
             chown -h "$plesk_user:" "$home_dir/.config/opencode" 2>/dev/null || true
@@ -726,30 +605,24 @@ setup_vhosts() {
             chown "$plesk_user:" "$home_dir/.local/share/opencode" 2>/dev/null || true
         fi
 
-        # VS Code Server
         if [[ -d /opt/vscode-server ]]; then
             replace_with_symlink /opt/vscode-server "$home_dir/.vscode-server"
             chown -h "$plesk_user:" "$home_dir/.vscode-server" 2>/dev/null || true
         fi
 
-        # Nvim config: symlink so nvim finds shared config without overriding XDG_CONFIG_HOME
         replace_with_symlink /opt/nvim-config/nvim "$home_dir/.config/nvim"
 
-        # Writable nvim state/cache dirs (created after cleanup so they survive)
         mkdir -p \
             "$home_dir/.local/state/nvim" \
             "$home_dir/.cache/nvim"
 
-        # Plesk node/php binaries
         setup_vhost_plesk_bins "$home_dir"
 
-        # Fix ownership on writable dirs
         chown -R "$plesk_user:" \
             "$home_dir/.local/state" \
             "$home_dir/.cache/nvim" \
             2>/dev/null || true
 
-        # Fix symlink ownership
         chown -h "$plesk_user:" \
             "$dotfiles_dir" \
             "$home_dir/.local/share/omf" \
@@ -770,11 +643,6 @@ setup_vhosts() {
     print_color green "  $ok configured, $skip skipped"
 }
 
-# ---------------------------------------------------------------------------
-# Composite commands
-# ---------------------------------------------------------------------------
-
-# Quick sync: rsync shared data without downloading/installing anything.
 do_sync() {
     print_color bold_green "=== Quick sync ==="
 
@@ -791,7 +659,6 @@ do_sync() {
     print_color bold_green "Sync complete"
 }
 
-# Full setup: install/update everything, then configure all vhosts.
 do_all() {
     setup_dotfiles
     setup_omf
@@ -818,10 +685,6 @@ do_all() {
     printf "  %-24s %s\n" "nvim" "$(/opt/nvim/bin/nvim --version 2>/dev/null | head -1)"
     printf "  %-24s %s\n" "bun" "v$(/usr/local/bin/bun-bin --version 2>/dev/null)"
 }
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 usage() {
     cat <<EOF

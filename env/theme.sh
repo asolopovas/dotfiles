@@ -1,5 +1,4 @@
 # shellcheck shell=bash disable=SC2034,SC2155
-# Sourced by oh-my-bash; sets PROMPT_COMMAND and color vars used at runtime.
 color_cyan="\e[36m"
 color_yellow="\e[93m"
 color_red="\e[91m"
@@ -43,7 +42,6 @@ _omb_theme_PROMPT_COMMAND() {
     fi
     PS1+="$cwd"
 
-    # Check if gitinfo has any content before appending.
     if [[ -n $gitinfo ]]; then
         if [[ $gitinfo =~ "±" ]]; then
             PS1+=" ${color_yellow}${gitinfo}${color_normal}"

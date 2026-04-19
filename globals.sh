@@ -2,7 +2,6 @@
 
 export DOTFILES_DIR="$HOME/dotfiles"
 
-# Cross-platform OS detection
 detect_os() {
     case "$(uname -s)" in
         Darwin) echo "macos" ;;
@@ -23,7 +22,6 @@ detect_os() {
     esac
 }
 
-# Architecture detection (normalised labels)
 detect_arch() {
     local machine
     machine="$(uname -m)"
@@ -192,8 +190,6 @@ source_script() {
     [[ -f "$script_path" ]] && source "$script_path" || echo "Failed to source $script_path"
 }
 
-# Fix broken symlinks in a directory (non-recursive by default)
-# Usage: fix_broken_symlinks /path/to/dir [--recursive]
 fix_broken_symlinks() {
     local dir="${1:-.}"
     local recursive="${2:-}"
@@ -222,8 +218,6 @@ fix_broken_symlinks() {
     return 0
 }
 
-# Resolve latest release tag for a GitHub repo (strips leading 'v' by default).
-# Usage: gh_latest_release owner/repo [--keep-v]
 gh_latest_release() {
     local repo="$1"
     local keep_v="${2:-}"
@@ -241,8 +235,6 @@ gh_latest_release() {
     printf '%s\n' "$tag"
 }
 
-# Ensure a command exists; if missing, prompt to run the given install script.
-# Usage: require_cmd <cmd> <install-script-relative-to-DOTFILES_DIR>
 require_cmd() {
     local cmd="$1"
     local script="$2"
@@ -271,7 +263,6 @@ require_cmd() {
     esac
 }
 
-# Portable package install (apt/brew/dnf/pacman)
 pkg_install() {
     case "$OS" in
         ubuntu | debian | linuxmint | pop)

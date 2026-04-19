@@ -1,45 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# =============================================================================
-# sync-ai.sh — Sync config, skills, MCP servers, and agents across AI CLIs
-#
-# Usage:
-#   sync-ai.sh [sync]           Sync everything (default)
-#   sync-ai.sh config           Sync config files only
-#   sync-ai.sh skills           Sync skills only
-#   sync-ai.sh mcp              Sync MCP servers only
-#   sync-ai.sh agents [sync]    Sync agents
-#   sync-ai.sh agents add <url> Add an agent URL to config
-#   sync-ai.sh agents remove <name>
-#   sync-ai.sh agents list
-#
-# Environment:
-#   SYNC_TARGETS      Comma-separated CLIs (default: auto-detect codex,claude,opencode)
-#   AGENTS_CONFIG     Path to agents.conf
-#   AGENTS_SKILLS_DIR Canonical skill directory (default: ~/.agents/skills)
-#   SKILL_INSTALLER   Path to skill-installer python script
-#   OPENCODE_CONFIG   Path to opencode.json
-#   CODEX_CONFIG      Path to codex config.toml
-# =============================================================================
-
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 
-# Canonical skill location — all CLIs read from here (directly or via symlink)
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 
 SKILL_SOURCES=(
-    # Core dev tools
     "https://github.com/github/awesome-copilot/tree/main/skills/chrome-devtools"
     "https://github.com/microsoft/playwright-cli/tree/main/skills/playwright-cli"
     "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
     "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
 
-    # Language & framework patterns
     "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-security"
     "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-patterns"
     "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-tdd"
@@ -49,11 +20,9 @@ SKILL_SOURCES=(
     "https://github.com/affaan-m/everything-claude-code/tree/main/skills/database-migrations"
     "https://github.com/affaan-m/everything-claude-code/tree/main/skills/verification-loop"
 
-    # Scripting & web
     "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/bash-scripting"
     "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/progressive-web-app"
 
-    # WordPress
     "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress"
     "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-plugin-development"
     "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-theme-development"
@@ -69,8 +38,6 @@ AGENTS_CONF="${AGENTS_CONFIG:-$DOTFILES_DIR/agents.conf}"
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG:-}"
 CODEX_CONFIG_FILE="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
 
-# Config files to symlink from dotfiles to $HOME, grouped by CLI.
-# Each entry is a path relative to both $DOTFILES_DIR (source) and $HOME (dest).
 CLAUDE_CONFIGS=(
     ".claude/settings.json"
 )
@@ -79,10 +46,6 @@ OPENCODE_CONFIGS=(
 )
 
 TARGETS=()
-
-# ---------------------------------------------------------------------------
-# Utilities
-# ---------------------------------------------------------------------------
 
 die() {
     echo "Error: $*" >&2
@@ -152,7 +115,6 @@ resolve_opencode_config_files() {
 }
 
 strip_jsonc_comments() {
-    # Strip // and /* */ comments from JSONC, preserving strings.
     sed -e ':a' -e 's|//[^"]*$||' \
         -e 's|/\*.*\*/||g' "$1" | jq .
 }
@@ -166,7 +128,6 @@ mcp_opencode_sync_file() {
         jq -n --arg schema_key '$schema' '{($schema_key): "https://opencode.ai/config.json", "mcp": {}}' >"$config"
     fi
 
-    # For .jsonc files, strip comments so jq can parse them.
     if [[ "$config" == *.jsonc ]]; then
         if ! jq empty "$config" >/dev/null 2>&1; then
             strip_jsonc_comments "$config" >"$config.tmp" &&
@@ -177,11 +138,9 @@ mcp_opencode_sync_file() {
 
     jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
 
-    # Repair accidental invalid top-level key created by bad shell quoting.
     jq 'if has("") then if has("$schema") then del(.[""]) else .["$schema"] = .[""] | del(.[""]) end else . end' \
         "$config" >"$config.tmp" && mv "$config.tmp" "$config"
 
-    # Remove servers not in MCP_SERVERS
     local name
     for name in $(jq -r '.mcp // {} | keys[]' "$config" 2>/dev/null); do
         [[ -v MCP_SERVERS[$name] ]] && continue
@@ -190,7 +149,6 @@ mcp_opencode_sync_file() {
         echo "Removed $name from $config"
     done
 
-    # Add/update servers
     local cmd entry
     local -a parts
     for name in "${!MCP_SERVERS[@]}"; do
@@ -203,10 +161,6 @@ mcp_opencode_sync_file() {
             >"$config.tmp" && mv "$config.tmp" "$config"
     done
 }
-
-# ---------------------------------------------------------------------------
-# Target resolution
-# ---------------------------------------------------------------------------
 
 resolve_targets() {
     local raw="${SYNC_TARGETS:-}"
@@ -235,10 +189,6 @@ resolve_targets() {
 
     ((${#TARGETS[@]})) || die "no supported CLI detected (codex, claude, opencode)."
 }
-
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
 
 ensure_config_symlink() {
     local src="$1" dst="$2"
@@ -282,10 +232,6 @@ sync_config() {
     done
 }
 
-# ---------------------------------------------------------------------------
-# Skills
-# ---------------------------------------------------------------------------
-
 resolve_skill_installer() {
     if [[ -n "${SKILL_INSTALLER:-}" ]]; then
         [[ -f "$SKILL_INSTALLER" ]] || die "skill-installer not found at $SKILL_INSTALLER"
@@ -294,7 +240,6 @@ resolve_skill_installer() {
     fi
 
     local candidate
-    # Check canonical location first, then CLI-specific paths
     for dir in "$AGENTS_SKILLS_DIR" "$(cli_home codex)/skills" "$(cli_home claude)/skills"; do
         candidate="$dir/.system/skill-installer/scripts/install-skill-from-github.py"
         [[ -f "$candidate" ]] && {
@@ -401,12 +346,10 @@ skill_name_from_url() {
 ensure_skill_symlink() {
     local link_path="$1"
 
-    # Already correct — nothing to do
     if [[ -L "$link_path" && "$(readlink "$link_path" 2>/dev/null)" == "$AGENTS_SKILLS_DIR" ]]; then
         return 0
     fi
 
-    # Remove whatever is there (stale symlink, directory, or file)
     rm -rf "$link_path" 2>/dev/null || true
     mkdir -p "$(dirname "$link_path")"
     ln -sf "$AGENTS_SKILLS_DIR" "$link_path"
@@ -443,10 +386,8 @@ sync_skills() {
         desired["$name"]="$src"
     done
 
-    # Install skills to the canonical location (~/.agents/skills)
     mkdir -p "$AGENTS_SKILLS_DIR"
 
-    # Remove skills not in desired set
     local base
     for installed in "$AGENTS_SKILLS_DIR"/*/; do
         [[ -d "$installed" ]] || continue
@@ -458,7 +399,6 @@ sync_skills() {
         fi
     done
 
-    # Install missing skills
     local dest_dir key
     for key in "${!desired[@]}"; do
         dest_dir="$AGENTS_SKILLS_DIR/$key"
@@ -475,8 +415,6 @@ sync_skills() {
         fi
     done
 
-    # Create symlinks so claude and codex read from the canonical location.
-    # OpenCode reads ~/.agents/skills natively — no symlink needed.
     for target in "${TARGETS[@]}"; do
         case "$target" in
             claude)
@@ -488,10 +426,6 @@ sync_skills() {
         esac
     done
 }
-
-# ---------------------------------------------------------------------------
-# MCP Servers
-# ---------------------------------------------------------------------------
 
 mcp_opencode_sync() {
     require_cmd jq
@@ -510,14 +444,12 @@ mcp_codex_sync() {
 
     local tmp="${config}.tmp"
 
-    # Strip existing [mcp_servers.*] sections
     if [[ -f "$config" ]]; then
         awk '
             /^\[mcp_servers\./ { skip = 1; next }
             /^\[/              { skip = 0 }
             !skip
         ' "$config" >"$tmp"
-        # Trim trailing blank lines
         sed -i -e :a -e '/^[[:space:]]*$/{ $d; N; ba; }' "$tmp"
     else
         : >"$tmp"
@@ -525,7 +457,6 @@ mcp_codex_sync() {
 
     [[ -s "$tmp" ]] && printf '\n\n' >>"$tmp"
 
-    # Write server entries sorted by name
     local name cmd toml_cmd toml_args
     local -a parts
     for name in $(printf '%s\n' "${!MCP_SERVERS[@]}" | sort); do
@@ -547,17 +478,14 @@ mcp_codex_sync() {
 mcp_claude_sync() {
     require_cmd claude
 
-    # Discover currently installed user-scope servers
     local -a installed=()
     local line
     while IFS= read -r line; do
-        # claude mcp list output lines: "<name>: <command> - <status>"
         local name="${line%%:*}"
         name=$(trim "$name")
         [[ -n "$name" ]] && installed+=("$name")
     done < <(claude mcp list 2>/dev/null | grep -E '^[^ ].*:' || true)
 
-    # Remove servers not in MCP_SERVERS
     local name
     for name in "${installed[@]}"; do
         [[ -v MCP_SERVERS[$name] ]] && continue
@@ -566,16 +494,13 @@ mcp_claude_sync() {
             echo "Warning: failed to remove $name from claude" >&2
     done
 
-    # Add/update servers from MCP_SERVERS
     local cmd
     local -a parts
     for name in "${!MCP_SERVERS[@]}"; do
         cmd="${MCP_SERVERS[$name]}"
         read -ra parts <<<"$cmd"
 
-        # Check if already installed
         if claude mcp get "$name" >/dev/null 2>&1; then
-            # Remove and re-add to ensure config matches
             claude mcp remove "$name" -s user >/dev/null 2>&1 || true
         fi
 
@@ -605,10 +530,6 @@ sync_mcp() {
         esac
     done
 }
-
-# ---------------------------------------------------------------------------
-# Agents
-# ---------------------------------------------------------------------------
 
 AGENT_SOURCES=()
 
@@ -719,7 +640,6 @@ sync_agents() {
         dest_dir=$(target_dir "$cli" agents) || continue
         mkdir -p "$dest_dir"
 
-        # Build current keys fresh for each target
         local -A current_keys=()
         local agent
         while IFS= read -r agent; do
@@ -791,10 +711,6 @@ agents_list() {
         echo "  - $line"
     done <"$AGENTS_CONF"
 }
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 usage() {
     cat <<EOF

@@ -2,7 +2,6 @@
 set -euo pipefail
 source "$HOME/dotfiles/globals.sh"
 
-# Resolve latest bash tarball from GNU FTP
 LATEST="$(curl -fsSL https://ftp.gnu.org/gnu/bash/ |
     grep -oE 'bash-[0-9]+\.[0-9]+(\.[0-9]+)?\.tar\.gz' |
     sort -V | tail -1)"
