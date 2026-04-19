@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
 RYE_HOME="${HOME}/.rye"
 

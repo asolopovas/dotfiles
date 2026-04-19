@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
 # Resolve latest bash tarball from GNU FTP
 LATEST="$(curl -fsSL https://ftp.gnu.org/gnu/bash/ \

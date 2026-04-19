@@ -1,8 +1,11 @@
 #!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
-if [ "${FORCE:-false}" != true ] && command -v bun &>/dev/null; then
-    echo "bun $(bun --version) already installed — skipping"
+if [ "${FORCE:-false}" != true ] && cmd_exist bun; then
+    print_color green "bun $(bun --version) already installed — skipping"
     return 0 2>/dev/null || exit 0
 fi
 
+print_color green "Installing bun..."
 curl -fsSL https://bun.com/install | bash

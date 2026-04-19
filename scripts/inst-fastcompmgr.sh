@@ -1,60 +1,31 @@
 #!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
-# Install fastcompmgr - a fast compositor for X
-# https://github.com/tycho-kirchner/fastcompmgr
+SRC="$HOME/src/fastcompmgr"
 
-set -e
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-echo -e "${GREEN}Installing fastcompmgr...${NC}"
-
-# Create ~/src directory if it doesn't exist
-mkdir -p ~/src
-
-# Remove existing installation if present
-if command -v fastcompmgr &> /dev/null; then
-    echo -e "${YELLOW}Removing existing fastcompmgr installation...${NC}"
-    sudo make -C ~/src/fastcompmgr uninstall 2>/dev/null || true
+if [ "${FORCE:-false}" != true ] && cmd_exist fastcompmgr; then
+    print_color green "fastcompmgr already installed — skipping"
+    exit 0
 fi
 
-# Install build dependencies
-echo -e "${YELLOW}Installing build dependencies...${NC}"
-sudo apt update
-sudo apt install -y libx11-dev libxcomposite-dev libxdamage-dev libxfixes-dev libxrender-dev pkg-config make build-essential git
+print_color green "Installing fastcompmgr build deps..."
+sudo apt-get update -qq
+sudo apt-get install -y \
+    libx11-dev libxcomposite-dev libxdamage-dev libxfixes-dev libxrender-dev \
+    pkg-config make build-essential git
 
-# Clone or update repository
-if [ -d ~/src/fastcompmgr ]; then
-    echo -e "${YELLOW}Updating existing repository...${NC}"
-    cd ~/src/fastcompmgr
-    git pull
-    make clean
+mkdir -p "$HOME/src"
+if [ -d "$SRC" ]; then
+    print_color yellow "Updating $SRC"
+    git -C "$SRC" pull --ff-only
+    make -C "$SRC" clean
 else
-    echo -e "${YELLOW}Cloning fastcompmgr repository...${NC}"
-    cd ~/src
-    git clone https://github.com/tycho-kirchner/fastcompmgr.git
-    cd fastcompmgr
+    git clone https://github.com/tycho-kirchner/fastcompmgr.git "$SRC"
 fi
 
-# Build and install
-echo -e "${YELLOW}Building fastcompmgr...${NC}"
-make
+print_color green "Building fastcompmgr..."
+make -C "$SRC" -j"$(nproc)"
+sudo make -C "$SRC" install
 
-echo -e "${YELLOW}Installing fastcompmgr...${NC}"
-sudo make install
-
-# Verify installation
-if command -v fastcompmgr &> /dev/null; then
-    echo -e "${GREEN}fastcompmgr installed successfully!${NC}"
-    echo -e "${GREEN}Version:${NC} $(fastcompmgr --help | head -1)"
-    echo -e "${GREEN}Location:${NC} $(which fastcompmgr)"
-else
-    echo -e "${RED}Installation failed!${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}Done! You can now use fastcompmgr in your compositor setup.${NC}"
+cmd_exist fastcompmgr && print_color green "fastcompmgr installed at $(command -v fastcompmgr)"

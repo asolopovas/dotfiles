@@ -1,25 +1,26 @@
-#!/bin/sh
+#!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
-ARCH="x86_64"
-NAME="google-cloud-cli-linux-${ARCH}.tar.gz"
+if [ "${FORCE:-false}" != true ] && cmd_exist gcloud; then
+    print_color green "gcloud already installed — skipping"
+    exit 0
+fi
+
+case "$ARCH" in
+    x86_64)  GC_ARCH="x86_64" ;;
+    aarch64) GC_ARCH="arm" ;;
+    *)       GC_ARCH="x86_64" ;;
+esac
+
+NAME="google-cloud-cli-linux-${GC_ARCH}.tar.gz"
 URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/$NAME"
 INSTALL_DIR="/var/opt/google"
-INSTALL_FILE="$INSTALL_DIR/google-cloud-sdk/install.sh"
 
-TMP_DIR=$(mktemp -d) || { echo "Error: could not create temp dir"; exit 1; }
-trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
+print_color green "Installing Google Cloud SDK..."
+TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+curl -fL# "$URL" -o "$TMP/$NAME"
 
-[ ! -d "$INSTALL_DIR" ] && sudo mkdir -p "$INSTALL_DIR"
-
-if ! curl -fSL#o "$TMP_DIR/$NAME" "$URL"; then
-    echo "Error: could not download latest gcloud CLI from $URL"
-    exit 1
-fi
-
-sudo tar -zxf "$TMP_DIR/$NAME" -C "$INSTALL_DIR"
-
-if [ -f "$INSTALL_FILE" ]; then
-    sudo "$INSTALL_FILE"
-else
-    echo "Error: install.sh script not found."
-fi
+sudo mkdir -p "$INSTALL_DIR"
+sudo tar -xzf "$TMP/$NAME" -C "$INSTALL_DIR"
+sudo "$INSTALL_DIR/google-cloud-sdk/install.sh"

@@ -1,16 +1,18 @@
 #!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
-DEST_DIR="$HOME/.local/share/ohmybash"
+DEST="$HOME/.local/share/ohmybash"
 
-source $HOME/dotfiles/globals.sh
-
-print_color green "Installing OhMyBash for ${OS^} ..."
-
-if [ "$FORCE" = true ]; then
-    print_color red "FORCE Enabled: Removing ${DEST_DIR} ..."
-    rm -rf "$DEST_DIR"
+if [ "${FORCE:-false}" = true ]; then
+    print_color yellow "FORCE: removing $DEST"
+    rm -rf "$DEST"
 fi
 
-if [ ! -d "$DEST_DIR" ]; then
-    git clone https://github.com/ohmybash/oh-my-bash.git $DEST_DIR
+if [ -d "$DEST" ]; then
+    print_color green "oh-my-bash already installed — skipping"
+    exit 0
 fi
+
+print_color green "Installing oh-my-bash..."
+git clone https://github.com/ohmybash/oh-my-bash.git "$DEST"

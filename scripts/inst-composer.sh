@@ -1,17 +1,19 @@
 #!/bin/bash
+set -euo pipefail
+source "$HOME/dotfiles/globals.sh"
 
-INSTALL_PATH="$HOME/.local/bin/composer"
+DEST="$HOME/.local/bin/composer"
 
-if [ "$FORCE" = true ]; then
-    rm -f "$INSTALL_PATH"
+if [ "${FORCE:-false}" = true ]; then
+    rm -f "$DEST"
 fi
 
-if [ ! -f "$INSTALL_PATH" ]; then
-    echo "Installing Composer..."
-    mkdir -p "$(dirname "$INSTALL_PATH")"
-    curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o "$INSTALL_PATH"
-    chmod +x "$INSTALL_PATH"
-    echo "Composer installed successfully at $INSTALL_PATH."
-else
-    echo "Composer is already installed at $INSTALL_PATH."
+if [ -x "$DEST" ] || cmd_exist composer; then
+    print_color green "composer already installed — skipping"
+    exit 0
 fi
+
+print_color green "Installing Composer..."
+mkdir -p "$(dirname "$DEST")"
+curl -fsSL https://getcomposer.org/download/latest-stable/composer.phar -o "$DEST"
+chmod +x "$DEST"
