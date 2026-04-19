@@ -50,6 +50,8 @@ if [ -n "$WIN_DEV" ]; then
         grep -q 'menuentry "Windows 11"' /etc/grub.d/06_windows
     check "06_windows references correct UUID" \
         grep -q "$WIN_UUID" /etc/grub.d/06_windows
+    check "06_windows menuentry contains 'savedefault' (remembers last boot)" \
+        grep -q '^\s*savedefault' /etc/grub.d/06_windows
     check "40_custom does NOT contain Windows entry" \
         bash -c '! grep -q "menuentry \"Windows 11\"" /etc/grub.d/40_custom'
     check "os-prober skip list set for this UUID" \

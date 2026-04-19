@@ -56,6 +56,7 @@ exec tail -n +3 \$0
 # Windows 11 entry (placed before Linux so it appears first)
 
 menuentry "Windows 11" --class windows --class os \$menuentry_id_option 'osprober-efi-${WIN_UUID}' {
+	savedefault
 	insmod part_gpt
 	insmod fat
 	search --no-floppy --fs-uuid --set=root ${WIN_UUID}
