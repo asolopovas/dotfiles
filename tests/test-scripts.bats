@@ -2,8 +2,8 @@
 
 # ---------------------------------------------------------------------------
 # Unit tests for core scripts — runs locally, no Docker, no network.
-# Tests: ops-update-symlinks.sh, cfg-dev-tools-proxy.sh --remove,
-#        env/include-paths.sh, helpers/ls-path, .profile sourcability.
+# Tests: ops-update-symlinks.sh, env/include-paths.sh, helpers/ls-path,
+#        .profile sourcability.
 # ---------------------------------------------------------------------------
 
 REPO_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
@@ -102,32 +102,6 @@ symlinks_run() {
     [ -L "$custom_xdg/fish" ]
     [ -L "$custom_xdg/nvim" ]
     [ -L "$custom_xdg/tmux" ]
-}
-
-# =====================================================================
-#  cfg-dev-tools-proxy.sh --remove
-# =====================================================================
-
-@test "proxy-remove: cleans wgetrc and curlrc" {
-    mkdir -p "$TMPDIR/proxy-home/.pip" "$TMPDIR/proxy-home/.config/pip"
-    echo "proxy" > "$TMPDIR/proxy-home/.wgetrc"
-    echo "proxy" > "$TMPDIR/proxy-home/.curlrc"
-    echo "proxy" > "$TMPDIR/proxy-home/.pip/pip.conf"
-    echo "proxy" > "$TMPDIR/proxy-home/.config/pip/pip.conf"
-
-    run env HOME="$TMPDIR/proxy-home" PATH="$FAKE_BIN:$PATH" bash "$REPO_DIR/scripts/cfg-dev-tools-proxy.sh" --remove
-    [[ "$status" -eq 0 ]]
-    [ ! -f "$TMPDIR/proxy-home/.wgetrc" ]
-    [ ! -f "$TMPDIR/proxy-home/.curlrc" ]
-    [ ! -f "$TMPDIR/proxy-home/.pip/pip.conf" ]
-    [ ! -f "$TMPDIR/proxy-home/.config/pip/pip.conf" ]
-}
-
-@test "proxy-remove: idempotent (no files to remove)" {
-    local empty_home="$TMPDIR/empty-home"
-    mkdir -p "$empty_home"
-    run env HOME="$empty_home" PATH="$FAKE_BIN:$PATH" bash "$REPO_DIR/scripts/cfg-dev-tools-proxy.sh" --remove
-    [[ "$status" -eq 0 ]]
 }
 
 # =====================================================================

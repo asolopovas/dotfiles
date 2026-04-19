@@ -214,8 +214,6 @@ fi
 
 [[ "${features[OHMYFISH]}" = true ]] && load_script 'ohmyfish'
 
-source "$SCRIPTS_DIR/cfg-libreoffice.sh"
-
 # Dual-boot fix: keep hardware clock in local time to match Windows
 if [[ "$OS" != "macos" ]] && command -v timedatectl &>/dev/null; then
     if ! timedatectl show --property=LocalRTC --value 2>/dev/null | grep -qx yes; then

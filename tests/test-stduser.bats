@@ -264,56 +264,6 @@ D="$H/dotfiles"
     [[ "$output" == *"Refusing"* ]]
 }
 
-# ---- cfg-locale.sh ----
-
-@test "cfg-locale: generates locale" {
-    run bash "$D/scripts/cfg-locale.sh" en_US.UTF-8
-    [ "$status" -eq 0 ]
-    run locale -a
-    [[ "$output" == *"en_US.utf8"* ]]
-}
-
-@test "cfg-locale: idempotent" {
-    run bash "$D/scripts/cfg-locale.sh" en_US.UTF-8
-    [ "$status" -eq 0 ]
-    # Script succeeds on re-run (either "already set" or re-generates)
-    [[ "$output" == *"already set"* ]] || [[ "$output" == *"setup complete"* ]]
-}
-
-@test "cfg-locale: default is en_GB" {
-    run bash "$D/scripts/cfg-locale.sh"
-    [ "$status" -eq 0 ]
-    run locale -a
-    [[ "$output" == *"en_GB.utf8"* ]]
-}
-
-# ---- fix-locale.sh ----
-
-@test "fix-locale: generates en_GB" {
-    run bash "$D/scripts/fix-locale.sh"
-    [ "$status" -eq 0 ]
-    run locale -a
-    [[ "$output" == *"en_GB.utf8"* ]]
-}
-
-# ---- cfg-dev-tools-proxy.sh (--remove only) ----
-
-@test "cfg-dev-tools-proxy --remove: cleans config" {
-    mkdir -p /tmp/proxy-test-home/.pip /tmp/proxy-test-home/.config/pip
-    echo "x" > /tmp/proxy-test-home/.wgetrc
-    echo "x" > /tmp/proxy-test-home/.curlrc
-    echo "x" > /tmp/proxy-test-home/.pip/pip.conf
-    echo "x" > /tmp/proxy-test-home/.config/pip/pip.conf
-
-    run env HOME=/tmp/proxy-test-home bash "$D/scripts/cfg-dev-tools-proxy.sh" --remove
-    [ "$status" -eq 0 ]
-    [ ! -f /tmp/proxy-test-home/.wgetrc ]
-    [ ! -f /tmp/proxy-test-home/.curlrc ]
-    [ ! -f /tmp/proxy-test-home/.pip/pip.conf ]
-    [ ! -f /tmp/proxy-test-home/.config/pip/pip.conf ]
-    rm -rf /tmp/proxy-test-home
-}
-
 # ---- cfg-default-dirs.sh (direct run, idempotent) ----
 
 @test "cfg-default-dirs: idempotent re-run" {

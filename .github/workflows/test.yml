@@ -24,7 +24,6 @@ jobs:
               - 'tests/run-tests.sh'
             scripts:
               - 'scripts/ops-update-symlinks.sh'
-              - 'scripts/cfg-dev-tools-proxy.sh'
               - 'scripts/cfg-default-dirs.sh'
               - 'env/include-paths.sh'
               - 'env/env-vars.sh'
