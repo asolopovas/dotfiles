@@ -47,30 +47,30 @@ HELP
 
 validate_ssh_key_format() {
     local key_content="$1"
-    
+
     # Validate SSH key format (supports common key types)
     if ! echo "$key_content" | grep -qE '^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(256|384|521)|ssh-dss) '; then
         echo "❌ Error: Invalid SSH public key format" >&2
         echo "   Supported formats: ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp*, ssh-dss" >&2
         exit 1
     fi
-    
+
     [[ "$VERBOSE" -eq 1 ]] && echo "✓ Valid SSH public key format detected"
 }
 
 get_and_validate_key() {
     local input="$1"
     local key_content
-    
+
     # Check if input is a file path
     if [[ -f "$input" ]]; then
         [[ "$VERBOSE" -eq 1 ]] && echo "✓ Detected file path: $input"
-        
+
         if [[ ! -r "$input" ]]; then
             echo "❌ Error: Cannot read public key file: $input" >&2
             exit 1
         fi
-        
+
         # Read and trim the key from file
         key_content="$(<"$input")"
         key_content="$(echo -n "$key_content" | sed -e 's/^[[:space:]]*//; s/[[:space:]]*$//')"
@@ -79,16 +79,16 @@ get_and_validate_key() {
         [[ "$VERBOSE" -eq 1 ]] && echo "✓ Detected raw SSH key string"
         key_content="$(echo -n "$input" | sed -e 's/^[[:space:]]*//; s/[[:space:]]*$//')"
     fi
-    
+
     # Validate the key format
     validate_ssh_key_format "$key_content"
-    
+
     echo "$key_content"
 }
 
 prepare_key() {
     local public_key="$1"
-    
+
     # Base64-encode into a single line for safe transmission over SSH
     local public_key_b64
     public_key_b64="$(
@@ -96,9 +96,9 @@ prepare_key() {
             base64 |
             tr -d '\n'
     )"
-    
+
     [[ "$VERBOSE" -eq 1 ]] && echo "✓ Key prepared for transmission"
-    
+
     echo "$public_key_b64"
 }
 
@@ -107,13 +107,13 @@ deploy_to_plesk() {
     local dry_run="$2"
     local verbose="$3"
     local public_key_b64="$4"
-    
+
     if [[ "$dry_run" -eq 1 ]]; then
         echo "🔍 Dry-run mode: Connecting to root to preview changes..."
     else
         echo "🔄 Connecting to root to update authorized_keys for Plesk users..."
     fi
-    
+
     # Execute remote commands on Plesk server
     # The 'root' alias should be configured in ~/.ssh/config
     ssh root bash -s -- "$force" "$dry_run" "$verbose" "$public_key_b64" <<'EOF'

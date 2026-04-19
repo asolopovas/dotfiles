@@ -1,6 +1,6 @@
 function gr
     set repos (gh repo list asolopovas --json nameWithOwner --jq '.[].nameWithOwner' | string split "\n")
-    if not count $repos > 0
+    if not count $repos >0
         echo "No repositories found for user asolopovas."
         return
     end

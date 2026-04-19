@@ -430,7 +430,7 @@ guard_run_as_root () {
   if [ "$(id -u)" -ne 0 ]; then
     echo "The '$run_action' command requires root privileges"
     exit 2
-  fi  
+  fi
 }
 
 # execute requested action

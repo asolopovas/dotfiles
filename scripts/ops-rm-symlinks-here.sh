@@ -1,3 +1,3 @@
 #!/bin/bash
 
-find -maxdepth 1 -type l -exec rm -f {} \;  
+find -maxdepth 1 -type l -exec rm -f {} \;

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 screens="eDP-1-1 HDMI-1-1 DP-1-1"
 pos_x=0

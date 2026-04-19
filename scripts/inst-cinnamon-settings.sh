@@ -18,8 +18,8 @@ readonly LOCAL_BIN="${HOME}/.local/bin"
 # Dependencies to install
 readonly REQUIRED_PACKAGES=(
     xdotool wmctrl x11-xserver-utils
-    rofi thunar pcmanfm alacritty audacious 
-    firefox-esr brave-browser flameshot 
+    rofi thunar pcmanfm alacritty audacious
+    firefox-esr brave-browser flameshot
     pavucontrol gnome-calculator stacer
     libnotify-bin curl wget git
 )
@@ -239,10 +239,10 @@ install_dependencies() {
     header "Installing dependencies"
     log "Installing required packages..."
     sudo apt update && sudo apt install -y "${REQUIRED_PACKAGES[@]}"
-    
+
     # Install additional software that may not be in repos
     log "Installing additional software..."
-    
+
     # Install Brave browser if not present
     if ! command -v brave-browser &> /dev/null; then
         log "Installing Brave browser..."
@@ -250,8 +250,8 @@ install_dependencies() {
         echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
         sudo apt update && sudo apt install -y brave-browser
     fi
-    
-    # Install Rofi if not present  
+
+    # Install Rofi if not present
     if ! command -v rofi &> /dev/null; then
         log "Installing Rofi..."
         sudo apt install -y rofi || {
@@ -259,7 +259,7 @@ install_dependencies() {
             sudo snap install rofi
         }
     fi
-    
+
     # Install Alacritty if not present
     if ! command -v alacritty &> /dev/null; then
         log "Installing Alacritty..."
@@ -268,7 +268,7 @@ install_dependencies() {
             sudo snap install alacritty --classic
         }
     fi
-    
+
     # Install Flameshot if not present
     if ! command -v flameshot &> /dev/null; then
         log "Installing Flameshot..."

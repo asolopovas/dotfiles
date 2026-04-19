@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 while getopts m:f: opt; do
   case $opt in
@@ -21,11 +21,11 @@ load_module() {
   fi
 }
 
-IFS=',' 
+IFS=','
 for module in $modules; do
   load_module $module
 done
-unset IFS  
+unset IFS
 
 if [ -n "$filename" ]; then
   echo "$modules" | tr ',' '\n' | sudo tee /etc/modules-load.d/"$filename" > /dev/null

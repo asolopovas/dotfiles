@@ -1,125 +1,112 @@
-# Repository Guidelines
+# AGENTS Guide for dotfiles
 
-Personal dotfiles repository for Linux desktop/server environments. Covers
-shell config, editors (Neovim), window managers (Xmonad), terminal emulators,
-and infrastructure automation scripts.
+Personal dotfiles for Linux desktop/server (Ubuntu/Debian primary, Arch/CentOS supported, macOS partial). Covers shells, editors (Neovim), WMs (Xmonad), terminals, AI CLIs, and infra automation. Follow unless the user gives explicit overrides.
 
-## Project Structure
+## Hard Constraints
+
+- **No comments unless explicitly requested.** No commits unless explicitly instructed.
+- **OS-portable shell only.** Anything in `inst-*.sh`, `globals.sh`, or `init.sh` must work on `ubuntu | debian | linuxmint | arch | centos` (and `macos` for the dev tools). Use `installPackages` / `pkg_install` from `globals.sh`, not raw `apt`.
+- **`init.sh` must stay self-contained** — it runs before `globals.sh` exists (curl-install path). Don't add `source globals.sh` at the top; the inline helpers there are intentional duplicates.
+- **`inst-*.sh` must be idempotent.** Check for the binary or version before downloading. Reinstall only when `FORCE=true`.
+- **Never commit secrets.** `.gitignore` excludes `.claude/settings.local.json`, `.aider*` — keep that surface clean.
+- **Pre-handoff checklist:** `make test` (always). Add `make test-init` for bootstrap/installer changes; `make test-ui-snap-window` for window-manager changes. If you skip a layer, say so in the handoff.
+- **Don't reformat config files.** TOML, INI, Rasi, Lua, JSON, YAML, fish — follow the file's existing convention. No editor reflow.
+- **Don't add `set -euo pipefail` to legacy scripts.** Match the existing style of the file you're editing. New scripts should use it.
+- **Tests can mutate system state** (windows, mounts, sudo). Note any such effect in the handoff. Never run UI/Docker tests in the background without telling the user — they take focus or several minutes.
+- **Symlink discipline for AI skills.** `~/.claude/skills` and `~/.codex/skills` must remain symlinks to `~/.agents/skills`. If you find a real dir there, investigate before overwriting — see [docs/ai-sync.md](docs/ai-sync.md).
+- **WSL-specific scripts (`wsl-*.sh`)** assume Windows interop (`powershell.exe`, `adb.exe` on PATH). Don't run them on native Linux without the user's say-so.
+
+## Stack
+
+Bash 5 + Fish 3 (primary shells), Bats (tests), Docker (integration tests), Xmonad (WM), Neovim + Lua, Polybar, Alacritty, Picom, Rofi, fzf. AI: Claude Code, OpenCode, Codex synced via `scripts/sync-ai.sh`.
+
+## Commands
+
+Prefer `make` targets (`make help` for the full list). Drop to raw commands for narrower scope.
+
+| Task | Command |
+|---|---|
+| Install everything | `./init.sh` (see [docs/bootstrap.md](docs/bootstrap.md) for flags) |
+| Local fast tests (~2-5s) | `make test` |
+| Single suite | `make test-globals` · `test-scripts` · `test-sync-ai` · `test-inst-opencode` |
+| Filter by name | `./tests/run-tests.sh -f "pattern"` |
+| Docker init tests | `make test-bootstrap` (once, ~5min) → `make test-init` |
+| Docker debug shell | `make test-init-shell` |
+| UI tests (X11) | `make test-ui-snap-window` |
+| Sync AI tooling | `./scripts/sync-ai.sh` |
+| Recompile xmonad | `M-F6` (or `xmonad --recompile && xmonad --restart`) |
+
+## Layout
 
 ```
-init.sh              Bootstrap installer (feature flags: NODE=false ./init.sh)
-autostart.sh         Desktop autostart (compositor, polybar, flameshot, etc.)
-globals.sh           Shared shell library (print_color, cmd_exist, installPackages, OS detection)
-.bashrc / .profile   Shell init, sources globals, env-vars, aliases, completions
-Makefile             Build/test automation
-scripts/             ~90 scripts, prefixed by category (see naming below)
-helpers/             Small CLI wrappers: system/, tools/, web/
-env/                 Environment exports (env-vars.sh, include-paths.sh, theme.sh)
-completions/         Shell completions: bash/, fish/
+init.sh              Bootstrap (self-contained, curl-installable)
+globals.sh           Shared shell library — sourced by .bashrc and most scripts
+autostart.sh         Desktop autostart (compositor, polybar, flameshot)
+.bashrc / .profile   Bash init (load order in docs/shell-env.md)
+Makefile             Test orchestration
+
+scripts/             ~84 scripts, prefixed by category (see naming below)
+helpers/             Small CLI wrappers: system/, tools/, web/, plus standalone files
+env/                 Shell env exports (env-vars, include-paths, theme, xmonad-vars)
+completions/         Shell completions (bash/, fish/)
 conf.d/              System config snippets (Barrier, Synaptics)
-tests/               Bats test suites and runners
-fzf/                 FZF completion, keybindings, exclusions
-.config/             App configs: nvim, fish, tmux, polybar, rofi, alacritty, gtk, etc.
-redis/               Redis config (6379.conf)
+fzf/                 fzf opts, completion, key-bindings, exclusions
+.config/             App configs: nvim, fish, tmux, polybar, rofi, alacritty, gtk, …
+tests/               Bats suites + Docker runners (Dockerfile.base, .init-test)
 prompts/             AI prompt templates
+redis/               Redis 6379 config
+docs/                Deep dives — read before touching the area
 ```
 
-## Build, Test, and Development Commands
+### Script naming
+
+`{category}-{name}.sh` in `scripts/`:
+
+| Prefix | Use |
+|---|---|
+| `inst-` | Installers (single tool/package) |
+| `ops-` | Maintenance (backups, cleanup, restarts) |
+| `cfg-` | Configuration tweaks |
+| `sec-` | Security (askpass, ban-ips, keyring) |
+| `sys-` | System fixes (drivers, kernel, tearing) |
+| `ui-` | Desktop / WM (snap-window, polybar, dpi) |
+| `wsl-` | WSL-specific (browser, fingerprint, hello) |
+
+Standalone executables installed to `~/.local/bin` omit `.sh`.
+
+### Conventions
+
+- Shebang: `#!/bin/bash` (most) or `#!/usr/bin/env bash` (portable). Never `#!/bin/sh`.
+- 4-space indent (tabs only in Makefile). No trailing whitespace.
+- `snake_case` vars/funcs. `UPPER_CASE` exports/constants.
+- Function form: `name() {` (not `function name`). Declare `local` vars.
+- Command checks: `cmd_exist` from `globals.sh` (not inline `command -v` unless one-off).
+- Logging: `print_color` from `globals.sh`, or local `log()`/`error()` helpers.
+
+### OS detection pattern
+
+Already cached in `OS` and `ARCH` env vars (set by `globals.sh`). Switch on them:
 
 ```bash
-make help                  # List all available targets
-make install               # Install git cache
-make test                  # Run all tests (currently test-ui-snap-window)
-make test-ui-snap-window   # Run snap-window bats tests (auto-installs deps)
-make install-test-deps     # Install bats + gum if missing
-make clean-tests           # Remove /tmp test artifacts
-```
-
-### Running a Single Test
-
-Tests use [Bats](https://github.com/bats-core/bats-core):
-
-```bash
-bats tests/test-ui-snap-window.bats              # Run one test file
-bats tests/test-ui-snap-window.bats -f "snap left"  # Filter by name
-```
-
-Tests require a running X11 session (`xdotool`, `wmctrl`, `xrandr`)
-and may modify system state. Some require sudo.
-
-### Bootstrap
-
-```bash
-./init.sh                         # Install everything with defaults
-NODE=false FISH=false ./init.sh   # Skip specific features
-FORCE=true ./init.sh              # Force-reinstall
-```
-
-## Coding Style & Conventions
-
-- **Shebang:** `#!/bin/bash` for most scripts; `#!/usr/bin/env bash` for portable ones. No `#!/bin/sh`.
-- **Error handling:** New scripts use `set -euo pipefail`. When editing, match existing style.
-- **Indentation:** 4 spaces everywhere (tabs only in Makefile). No trailing whitespace.
-- **Variables/functions:** `snake_case`. Exports/constants: `UPPER_CASE`.
-- **Functions:** Use `name() {` form (not `function name`). Declare `local` variables.
-- **Command checks:** `cmd_exist()` from globals.sh, or inline `command -v foo &>/dev/null`.
-- **Logging:** Inline `log()`/`error()` helpers, or `print_color` from `globals.sh`.
-- **Config files:** Follow native format conventions (TOML, INI, Rasi, Lua, JSON, YAML). Do not reformat.
-
-### Script Naming: `{category}-{name}.sh`
-
-`inst-` installers, `ops-` maintenance, `cfg-` configuration, `sec-` security,
-`sys-` system, `ui-` desktop, `wsl-` WSL-specific.
-Standalone executables in `~/.local/bin` omit `.sh`.
-
-### OS Detection
-
-```bash
-export OS=$(awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)
-case $OS in
-ubuntu | debian | linuxmint) ... ;;
-centos)                       ... ;;
-arch)                         ... ;;
+case "$OS" in
+    ubuntu | debian | linuxmint) ... ;;
+    centos)                       ... ;;
+    arch)                         ... ;;
+    macos)                        ... ;;
 esac
 ```
 
-## Testing Guidelines
+## Deep Dives
 
-- Bats tests in `tests/test-{name}.bats` with `setup()`/`teardown()`
-- Use `skip` for missing deps, `run` to capture exit status
-- Tests modify system state (windows, terminals) -- note in PRs
-- Ensure scripts under test are `chmod +x`
+Read the relevant doc before touching the area it covers:
 
-## Commit & Pull Request Guidelines
+- [docs/bootstrap.md](docs/bootstrap.md) — `init.sh` flow, feature flags, idempotency rules for `inst-*.sh`.
+- [docs/testing.md](docs/testing.md) — three test layers (local bats, Docker init, X11 UI), runners, when to run which.
+- [docs/shell-env.md](docs/shell-env.md) — `.bashrc` load order, `globals.sh` helper cheat sheet, `env/` directory map.
+- [docs/ai-sync.md](docs/ai-sync.md) — `sync-ai.sh` deep dive, symlink layout, `agents.conf`.
+- [docs/help.md](docs/help.md) — keyboard shortcuts (xmonad, tmux, nvim, git aliases). Reference for the user-facing F1 cheatsheet.
 
-- Short, lowercase, imperative subjects. Optional prefix: `refactor:`, `feat:`, `fix:`
-- PRs: brief summary, key files, test commands run (or "not run")
-- Note sudo/system changes or OS-specific assumptions
+## Commit & PR
 
-## Security & Configuration
-
-- Install scripts may edit system files and proxy settings -- review before running
-- Never commit secrets; `.gitignore` excludes `.claude/settings.local.json`, `.aider*`
-
-## AI Sync
-
-Skills, MCP servers, and agents synced across OpenCode, Claude Code, and Codex
-via `scripts/sync-ai.sh`.
-
-```bash
-./scripts/sync-ai.sh                              # Sync everything
-./scripts/sync-ai.sh skills                       # Sync skills only
-./scripts/sync-ai.sh mcp                          # Sync MCP servers only
-./scripts/sync-ai.sh agents sync                  # Sync agents
-./scripts/sync-ai.sh agents add https://example.com/a.md
-./scripts/sync-ai.sh agents remove agent-name
-./scripts/sync-ai.sh agents list
-```
-
-- Config: `agents.conf` (one URL per line, `#` comments)
-- Env: `AGENTS_CONFIG`, `AGENTS_SKILLS_DIR`, `SYNC_TARGETS`, `OPENCODE_CONFIG`, `CODEX_CONFIG`
-- Skills: installed once to `~/.agents/skills/` (canonical location)
-  - `~/.claude/skills` → symlink to `~/.agents/skills`
-  - `~/.codex/skills` → symlink to `~/.agents/skills` (if codex present)
-  - OpenCode reads `~/.agents/skills` natively
-- Locations: `~/.agents/`, `~/.config/opencode/`, `~/.claude/`, `~/.codex/`
+- Short, lowercase, imperative subjects. Optional prefix: `refactor:`, `feat:`, `fix:`.
+- PR body: brief summary, key files touched, which test layers ran (or "not run"). Note sudo/system-state changes and OS-specific assumptions.

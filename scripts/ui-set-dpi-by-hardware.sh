@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Set DPI based on hardware detection (ThinkPad vs Desktop)
 
 # Check if running on any ThinkPad
@@ -7,7 +7,7 @@ if [ -f /sys/class/dmi/id/product_version ] && grep -q "ThinkPad" /sys/class/dmi
     DPI=120
     CURSOR=28
 else
-    # Desktop: normal DPI  
+    # Desktop: normal DPI
     DPI=96
     CURSOR=24
 fi
