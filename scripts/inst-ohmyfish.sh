@@ -14,10 +14,7 @@ if [ -d "$DEST" ]; then
     exit 0
 fi
 
-if ! cmd_exist fish; then
-    print_color red "fish is required (scripts/inst-fish.sh)"
-    exit 1
-fi
+require_cmd fish scripts/inst-fish.sh || exit 1
 
 print_color green "Installing oh-my-fish to $DEST..."
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT

@@ -3,10 +3,7 @@ set -euo pipefail
 
 source "$HOME/dotfiles/globals.sh"
 
-if ! command -v npm >/dev/null 2>&1; then
-    print_color red "npm is required. Install Node.js first (scripts/inst-node.sh)."
-    exit 1
-fi
+require_cmd npm scripts/inst-node.sh || exit 1
 
 print_color green "Installing Playwright CLI..."
 npm install -g @playwright/cli@latest

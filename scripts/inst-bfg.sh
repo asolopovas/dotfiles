@@ -13,7 +13,23 @@ fi
 
 if ! cmd_exist java; then
     print_color red "java is required to run bfg (install a JRE)"
-    exit 1
+    read -r -p "Install default-jre via system package manager now? [y/N] " reply
+    case "$reply" in
+        [Yy]|[Yy][Ee][Ss])
+            case "$OS" in
+                ubuntu|debian|linuxmint|pop) SUDO=sudo pkg_install default-jre ;;
+                fedora|centos)               SUDO=sudo pkg_install java-latest-openjdk-headless ;;
+                arch)                        SUDO=sudo pkg_install jre-openjdk-headless ;;
+                macos)                       pkg_install openjdk ;;
+                *) print_color red "Unsupported OS: $OS"; exit 1 ;;
+            esac
+            hash -r
+            cmd_exist java || { print_color red "java still not found"; exit 1; }
+            ;;
+        *)
+            exit 1
+            ;;
+    esac
 fi
 
 VERSION="$(curl -fsSL "$META" | grep -m1 '<release>' | sed -E 's@.*<release>(.*)</release>.*@\1@')"

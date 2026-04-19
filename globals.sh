@@ -241,6 +241,36 @@ gh_latest_release() {
     printf '%s\n' "$tag"
 }
 
+# Ensure a command exists; if missing, prompt to run the given install script.
+# Usage: require_cmd <cmd> <install-script-relative-to-DOTFILES_DIR>
+require_cmd() {
+    local cmd="$1"
+    local script="$2"
+    if cmd_exist "$cmd"; then
+        return 0
+    fi
+    print_color red "$cmd is required ($script)"
+    local reply
+    read -r -p "Run $script now? [y/N] " reply
+    case "$reply" in
+        [Yy]|[Yy][Ee][Ss])
+            bash "$DOTFILES_DIR/$script" || return 1
+            hash -r
+            if ! cmd_exist "$cmd"; then
+                export PATH="/usr/local/go/bin:$HOME/go/bin:$HOME/.local/bin:$HOME/.nvm/versions/node/current/bin:$PATH"
+            fi
+            if ! cmd_exist "$cmd"; then
+                print_color red "$cmd still not found after install"
+                return 1
+            fi
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 # Portable package install (apt/brew/dnf/pacman)
 pkg_install() {
     case "$OS" in
