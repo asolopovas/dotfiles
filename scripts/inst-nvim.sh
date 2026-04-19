@@ -135,21 +135,23 @@ is_managed_nvim() {
 
     # Match known managed paths (including the unrenamed tarball directory)
     case "$nvim_bin" in
-        "$HOME/.local/nvim/bin/nvim"|\
-        "$HOME/.local/nvim"*/bin/nvim|\
-        /opt/nvim/bin/nvim|\
-        /opt/nvim-*/bin/nvim)
-            return 0 ;;
+        "$HOME/.local/nvim/bin/nvim" | \
+            "$HOME/.local/nvim"*/bin/nvim | \
+            /opt/nvim/bin/nvim | \
+            /opt/nvim-*/bin/nvim)
+            return 0
+            ;;
     esac
 
     if command -v readlink >/dev/null 2>&1; then
         resolved="$(readlink -f "$nvim_bin" 2>/dev/null || true)"
         case "$resolved" in
-            "$HOME/.local/nvim/bin/nvim"|\
-            "$HOME/.local/nvim"*/bin/nvim|\
-            /opt/nvim/bin/nvim|\
-            /opt/nvim-*/bin/nvim)
-                return 0 ;;
+            "$HOME/.local/nvim/bin/nvim" | \
+                "$HOME/.local/nvim"*/bin/nvim | \
+                /opt/nvim/bin/nvim | \
+                /opt/nvim-*/bin/nvim)
+                return 0
+                ;;
         esac
     fi
 
@@ -181,7 +183,10 @@ install_user() {
     local bin="$dir/bin"
 
     mkdir -p "$bin"
-    download_and_extract "$dir" || { echo "Failed to download nvim"; return 1; }
+    download_and_extract "$dir" || {
+        echo "Failed to download nvim"
+        return 1
+    }
     reset_install_dir "$dir/nvim"
     mv "$dir/nvim-linux-x86_64" "$dir/nvim"
     link_binaries "$dir/nvim/bin/nvim" "$bin/nvim" "$bin/vim"
@@ -193,7 +198,10 @@ install_user() {
 
 install_root() {
     reset_install_dir /opt/nvim
-    download_and_extract /opt || { echo "Failed to download nvim"; return 1; }
+    download_and_extract /opt || {
+        echo "Failed to download nvim"
+        return 1
+    }
     mv /opt/nvim-linux-x86_64 /opt/nvim
     link_binaries "/opt/nvim/bin/nvim" "/usr/bin/nvim" "/usr/bin/vim"
     ensure_nvim_config

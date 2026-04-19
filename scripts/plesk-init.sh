@@ -252,7 +252,7 @@ setup_opencode() {
 
     # Shared wrapper at /usr/local/bin/opencode — used by vhost users directly.
     # Runs the shared native binary for all commands.
-    cat > /usr/local/bin/opencode << 'WRAPPER'
+    cat >/usr/local/bin/opencode <<'WRAPPER'
 #!/bin/bash
 exec /usr/local/bin/opencode-bin "$@"
 WRAPPER
@@ -265,7 +265,7 @@ WRAPPER
     local bun_shim="$HOME/.bun/install/global/node_modules/opencode-ai/bin/opencode"
     if [[ -e "$bun_link" ]]; then
         rm -f "$bun_link"
-        cat > "$bun_link" << ROOTWRAPPER
+        cat >"$bun_link" <<ROOTWRAPPER
 #!/bin/bash
 OC_BIN="/usr/local/bin/opencode-bin"
 OC_BUN_SHIM="$bun_shim"
@@ -307,16 +307,18 @@ setup_vscode() {
         # Server versions
         for s in "$root_vs"/cli/servers/Stable-*/; do
             [[ -d "$s" ]] || continue
-            local name; name=$(basename "$s")
+            local name
+            name=$(basename "$s")
             [[ -d "$shared/cli/servers/$name" ]] || cp -a "$s" "$shared/cli/servers/$name"
         done
-        [[ -f "$root_vs/cli/servers/lru.json" ]] && \
+        [[ -f "$root_vs/cli/servers/lru.json" ]] &&
             cp -f "$root_vs/cli/servers/lru.json" "$shared/cli/servers/lru.json"
 
         # Code binaries
         for b in "$root_vs"/code-*; do
             [[ -f "$b" ]] || continue
-            local name; name=$(basename "$b")
+            local name
+            name=$(basename "$b")
             [[ -f "$shared/$name" ]] || cp -a "$b" "$shared/$name"
         done
 
@@ -376,7 +378,7 @@ setup_nvim() {
     print_color green "  $($nvim_bin --version | head -1)"
 
     # --- Wrapper (scopes XDG vars to the nvim process only) ---
-    cat > /usr/local/bin/nvim << 'WRAPPER'
+    cat >/usr/local/bin/nvim <<'WRAPPER'
 #!/bin/bash
 if [ "$(id -u)" -ne 0 ] && [ -d /opt/nvim-data/nvim/lazy ]; then
     # Ensure writable dirs exist for plugin state/cache
@@ -493,7 +495,7 @@ setup_bun() {
     install -m 755 -o root -g root "$tmp/bin/bun" /usr/local/bin/bun-bin
 
     # --- bun-run helper (called via sudo, runs bun as root for cache writes) ---
-    cat > /usr/local/bin/bun-run << 'HELPER'
+    cat >/usr/local/bin/bun-run <<'HELPER'
 #!/bin/bash
 CALLER_USER="$1"
 CALLER_GROUP="$2"
@@ -519,7 +521,7 @@ HELPER
     chmod 755 /usr/local/bin/bun-run
 
     # --- bun wrapper ---
-    cat > /usr/local/bin/bun << 'WRAPPER'
+    cat >/usr/local/bin/bun <<'WRAPPER'
 #!/bin/bash
 export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"
 if [[ "$(id -un)" == "root" ]]; then
@@ -540,7 +542,7 @@ WRAPPER
 
     # --- Sudoers ---
     local sudoers="/etc/sudoers.d/bun-cache"
-    printf 'ALL ALL=(root) NOPASSWD: /usr/local/bin/bun-run *\n' > "$sudoers"
+    printf 'ALL ALL=(root) NOPASSWD: /usr/local/bin/bun-run *\n' >"$sudoers"
     chmod 440 "$sudoers"
     if ! visudo -cf "$sudoers" >/dev/null 2>&1; then
         print_color red "  Sudoers syntax check failed"
@@ -549,7 +551,7 @@ WRAPPER
     fi
 
     # --- Profile env var ---
-    printf 'export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"\n' > /etc/profile.d/bun.sh
+    printf 'export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"\n' >/etc/profile.d/bun.sh
     chmod 644 /etc/profile.d/bun.sh
 
     print_color green "  bun v$(/usr/local/bin/bun-bin --version) ready"
@@ -614,8 +616,8 @@ setup_vhost_fish() {
 
     # fish_variables stores universal vars — must be per-user writable
     if [[ ! -f "$fish_conf/fish_variables" ]]; then
-        cp "$fish_shared/fish_variables" "$fish_conf/fish_variables" 2>/dev/null \
-            || touch "$fish_conf/fish_variables"
+        cp "$fish_shared/fish_variables" "$fish_conf/fish_variables" 2>/dev/null ||
+            touch "$fish_conf/fish_variables"
     fi
 
     chown -R "$plesk_user:" "$fish_conf"
@@ -630,9 +632,9 @@ setup_vhost_omf() {
     # OMF config is per-user writable (theme, channel, bundle)
     if [[ ! -d "$home_dir/.config/omf" ]]; then
         mkdir -p "$home_dir/.config/omf"
-        printf 'package bass\n' > "$home_dir/.config/omf/bundle"
-        printf 'default\n'      > "$home_dir/.config/omf/theme"
-        printf 'default\n'      > "$home_dir/.config/omf/channel"
+        printf 'package bass\n' >"$home_dir/.config/omf/bundle"
+        printf 'default\n' >"$home_dir/.config/omf/theme"
+        printf 'default\n' >"$home_dir/.config/omf/channel"
         chown -R "$plesk_user:" "$home_dir/.config/omf"
     fi
 }
@@ -696,7 +698,7 @@ setup_vhosts() {
 
         # Per-tool setup
         setup_vhost_fish "$home_dir" "$plesk_user"
-        setup_vhost_omf  "$home_dir" "$plesk_user"
+        setup_vhost_omf "$home_dir" "$plesk_user"
 
         # Cleanup stale per-user installs (must run before creating dirs/symlinks)
         local d
@@ -763,7 +765,7 @@ setup_vhosts() {
             2>/dev/null || true
 
         ok=$((ok + 1))
-    done <<< "$plesk_users"
+    done <<<"$plesk_users"
 
     print_color green "  $ok configured, $skip skipped"
 }
@@ -801,20 +803,20 @@ do_all() {
 
     echo ""
     print_color bold_green "=== Setup complete ==="
-    printf "  %-24s %s\n" "/opt/dotfiles"        "$(du -sh /opt/dotfiles 2>/dev/null | cut -f1)"
-    printf "  %-24s %s\n" "/opt/omf"             "$(du -sh /opt/omf 2>/dev/null | cut -f1)"
-    printf "  %-24s %s\n" "/opt/nvim-data"       "$(du -sh /opt/nvim-data 2>/dev/null | cut -f1)"
-    printf "  %-24s %s\n" "/var/www/bun-cache"   "$(du -sh /var/www/bun-cache 2>/dev/null | cut -f1)"
-    [[ -d /opt/opencode-config ]] && \
+    printf "  %-24s %s\n" "/opt/dotfiles" "$(du -sh /opt/dotfiles 2>/dev/null | cut -f1)"
+    printf "  %-24s %s\n" "/opt/omf" "$(du -sh /opt/omf 2>/dev/null | cut -f1)"
+    printf "  %-24s %s\n" "/opt/nvim-data" "$(du -sh /opt/nvim-data 2>/dev/null | cut -f1)"
+    printf "  %-24s %s\n" "/var/www/bun-cache" "$(du -sh /var/www/bun-cache 2>/dev/null | cut -f1)"
+    [[ -d /opt/opencode-config ]] &&
         printf "  %-24s %s\n" "/opt/opencode-config" "$(du -sh /opt/opencode-config 2>/dev/null | cut -f1)"
-    [[ -d /opt/opencode-cache ]] && \
-        printf "  %-24s %s\n" "/opt/opencode-cache"  "$(du -sh /opt/opencode-cache 2>/dev/null | cut -f1)"
-    [[ -d /opt/opencode-bin ]] && \
-        printf "  %-24s %s\n" "/opt/opencode-bin"    "$(du -sh /opt/opencode-bin 2>/dev/null | cut -f1)"
-    [[ -d /opt/vscode-server ]] && \
-        printf "  %-24s %s\n" "/opt/vscode-server"   "$(du -sh /opt/vscode-server 2>/dev/null | cut -f1)"
+    [[ -d /opt/opencode-cache ]] &&
+        printf "  %-24s %s\n" "/opt/opencode-cache" "$(du -sh /opt/opencode-cache 2>/dev/null | cut -f1)"
+    [[ -d /opt/opencode-bin ]] &&
+        printf "  %-24s %s\n" "/opt/opencode-bin" "$(du -sh /opt/opencode-bin 2>/dev/null | cut -f1)"
+    [[ -d /opt/vscode-server ]] &&
+        printf "  %-24s %s\n" "/opt/vscode-server" "$(du -sh /opt/vscode-server 2>/dev/null | cut -f1)"
     printf "  %-24s %s\n" "nvim" "$(/opt/nvim/bin/nvim --version 2>/dev/null | head -1)"
-    printf "  %-24s %s\n" "bun"  "v$(/usr/local/bin/bun-bin --version 2>/dev/null)"
+    printf "  %-24s %s\n" "bun" "v$(/usr/local/bin/bun-bin --version 2>/dev/null)"
 }
 
 # ---------------------------------------------------------------------------
@@ -841,15 +843,18 @@ EOF
 require_root
 
 case "${1:-all}" in
-    all)      do_all ;;
-    sync)     do_sync ;;
+    all) do_all ;;
+    sync) do_sync ;;
     dotfiles) setup_dotfiles ;;
-    omf)      setup_omf ;;
+    omf) setup_omf ;;
     opencode) setup_opencode ;;
-    vscode)   setup_vscode ;;
-    nvim)     setup_nvim ;;
-    bun)      setup_bun ;;
-    vhosts)   setup_vhosts ;;
-    -h|--help|help) usage ;;
-    *) usage; exit 1 ;;
+    vscode) setup_vscode ;;
+    nvim) setup_nvim ;;
+    bun) setup_bun ;;
+    vhosts) setup_vhosts ;;
+    -h | --help | help) usage ;;
+    *)
+        usage
+        exit 1
+        ;;
 esac

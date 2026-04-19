@@ -33,8 +33,8 @@ packages=(
 installPackages "${packages[@]}"
 
 case $OS in
-ubuntu | debian | pop | linuxmint)
-    sudo apt update
-    sudo ln -sf /usr/bin/fdfind /usr/bin/fd
-    ;;
+    ubuntu | debian | pop | linuxmint)
+        sudo apt update
+        sudo ln -sf /usr/bin/fdfind /usr/bin/fd
+        ;;
 esac

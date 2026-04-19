@@ -1,4 +1,5 @@
-# Initialize color settings at the start of the session.
+# shellcheck shell=bash disable=SC2034,SC2155
+# Sourced by oh-my-bash; sets PROMPT_COMMAND and color vars used at runtime.
 color_cyan="\e[36m"
 color_yellow="\e[93m"
 color_red="\e[91m"

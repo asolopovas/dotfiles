@@ -25,8 +25,8 @@ if [ ! -f "$CREDS_FILE" ]; then
         exit 1
     fi
 
-    IFS=: read -r user pass <<< "$creds"
-    printf "username=%s\npassword=%s\n" "$user" "$pass" > "$CREDS_FILE"
+    IFS=: read -r user pass <<<"$creds"
+    printf "username=%s\npassword=%s\n" "$user" "$pass" >"$CREDS_FILE"
     chmod 600 "$CREDS_FILE"
     echo "Credentials stored in $CREDS_FILE"
 fi
@@ -55,7 +55,7 @@ for share in $SHARES; do
         echo "$share: already in fstab"
         EXISTING=$((EXISTING + 1))
     else
-        echo "$fstab_entry" >> /etc/fstab
+        echo "$fstab_entry" >>/etc/fstab
         echo "$share: added to fstab"
         ADDED=$((ADDED + 1))
     fi

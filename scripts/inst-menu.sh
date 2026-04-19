@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Deserialize associative array
+# shellcheck disable=SC2154
+# features_string is exported by the parent init.sh before invoking this menu.
 eval "declare -A features=${features_string#*=}"
 
 CHOICES=$(
@@ -28,62 +30,62 @@ if [ -z "$CHOICES" ]; then
 else
     for CHOICE in $CHOICES; do
         case "$CHOICE" in
-        "SYSTEM")
-            SYSTEM=true
-            features[SYSTEM]=true
-            ;;
-        "DOTFILES")
-            DOTFILES=true
-            features[DOTFILES]=true
-            ;;
-        "CARGO")
-            CARGO=true
-            features[CARGO]=true
-            ;;
-        "FISH")
-            FISH=true
-            features[FISH]=true
-            ;;
-        "FDFIND")
-            FDFIND=true
-            features[FDFIND]=true
-            ;;
-        "FZF")
-            FZF=true
-            features[FZF]=true
-            ;;
-        "NODE")
-            NODE=true
-            features[NODE]=true
-            ;;
-        "NVIM")
-            NVIM=true
-            features[NVIM]=true
-            ;;
-        "ZSH")
-            ZSH=true
-            features[ZSH]=true
-            ;;
-        "OHMYFISH")
-            OHMYFISH=true
-            features[OHMYFISH]=true
-            ;;
-        "OHMYBASH")
-            OHMYBASH=true
-            features[OHMYBASH]=true
-            ;;
-        "OHMYZSH")
-            OHMYZSH=true
-            features[OHMYZSH]=true
-            ;;
-        "FORCE")
-            FORCE=true
-            features[FORCE]=true
-            ;;
-        "CHANGE_SHELL")
-            CHANGE_SHELL=true
-            features[CHANGE_SHELL]=true
-            ;;
+            "SYSTEM")
+                SYSTEM=true
+                features[SYSTEM]=true
+                ;;
+            "DOTFILES")
+                DOTFILES=true
+                features[DOTFILES]=true
+                ;;
+            "CARGO")
+                CARGO=true
+                features[CARGO]=true
+                ;;
+            "FISH")
+                FISH=true
+                features[FISH]=true
+                ;;
+            "FDFIND")
+                FDFIND=true
+                features[FDFIND]=true
+                ;;
+            "FZF")
+                FZF=true
+                features[FZF]=true
+                ;;
+            "NODE")
+                NODE=true
+                features[NODE]=true
+                ;;
+            "NVIM")
+                NVIM=true
+                features[NVIM]=true
+                ;;
+            "ZSH")
+                ZSH=true
+                features[ZSH]=true
+                ;;
+            "OHMYFISH")
+                OHMYFISH=true
+                features[OHMYFISH]=true
+                ;;
+            "OHMYBASH")
+                OHMYBASH=true
+                features[OHMYBASH]=true
+                ;;
+            "OHMYZSH")
+                OHMYZSH=true
+                features[OHMYZSH]=true
+                ;;
+            "FORCE")
+                FORCE=true
+                features[FORCE]=true
+                ;;
+            "CHANGE_SHELL")
+                CHANGE_SHELL=true
+                features[CHANGE_SHELL]=true
+                ;;
         esac
     done
 fi

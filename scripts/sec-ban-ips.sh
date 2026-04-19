@@ -11,17 +11,17 @@ JAIL="plesk-permanent-ban"
 # ------------------------------------------------------------
 
 if [ $# -lt 2 ]; then
-  echo "Usage:"
-  echo "  $0 <log_file> <pattern> [excluded_ip1 ...]"
-  echo "  OR"
-  echo "  $0 \"<pattern>\" --dir <directory> [excluded_ip1 ...]"
-  exit 1
+    echo "Usage:"
+    echo "  $0 <log_file> <pattern> [excluded_ip1 ...]"
+    echo "  OR"
+    echo "  $0 \"<pattern>\" --dir <directory> [excluded_ip1 ...]"
+    exit 1
 fi
 
 # ------------------------------------------------------------
 # Parse arguments
 # ------------------------------------------------------------
-MODE="file"      # Default mode is single-file
+MODE="file" # Default mode is single-file
 SEARCH_DIR=""
 LOG_FILE=""
 PATTERN=""
@@ -76,8 +76,8 @@ fi
 # Extract *all* IPv4 addresses from the matched lines
 #   (Even if they're not the first token or in [client ...] format)
 # ------------------------------------------------------------
-RAW_IPS=$(echo "$MATCHED_LINES" \
-    | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
+RAW_IPS=$(echo "$MATCHED_LINES" |
+    grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
 
 if [ -z "$RAW_IPS" ]; then
     echo "No IP addresses found in matching lines!"
@@ -121,7 +121,7 @@ if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
     while read -r IP; do
         echo "Banning IP: $IP using jail $JAIL"
         sudo fail2ban-client set "$JAIL" banip "$IP"
-    done <<< "$UNIQ_IPS"
+    done <<<"$UNIQ_IPS"
     echo "✅ Banning completed."
 else
     echo "❌ Operation canceled."

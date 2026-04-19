@@ -41,11 +41,11 @@ eval "${LOG_COMMANDS[$selected]}" | less -R
 # Prompt to clear logs with safe default (no)
 echo
 read -rp "Do you want to clear these logs? [y/N]: " clear_logs
-clear_logs=${clear_logs:-n}  # Default to 'n' if empty (Enter pressed)
+clear_logs=${clear_logs:-n} # Default to 'n' if empty (Enter pressed)
 
 if [[ $clear_logs =~ ^[Yy]$ ]]; then
     read -rp "Are you sure you want to clear logs for '$selected'? [y/N]: " confirm
-    confirm=${confirm:-n}  # Default to 'n' if empty
+    confirm=${confirm:-n} # Default to 'n' if empty
     if [[ $confirm =~ ^[Yy]$ ]]; then
         eval "${CLEAR_COMMANDS[$selected]}"
         echo "✅ Logs cleared for: $selected"

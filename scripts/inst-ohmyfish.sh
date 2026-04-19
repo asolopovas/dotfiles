@@ -17,7 +17,8 @@ fi
 require_cmd fish scripts/inst-fish.sh || exit 1
 
 print_color green "Installing oh-my-fish to $DEST..."
-TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
 curl -fsSL https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install -o "$TMP/install"
 fish "$TMP/install" --noninteractive --path="$DEST" --config="$HOME/.config/omf"
 fish -c "omf install bass"

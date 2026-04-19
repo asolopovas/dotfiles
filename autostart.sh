@@ -15,17 +15,17 @@ fi
 shopt -u nocasematch
 
 # Start compositor (picom preferred, fallback to fastcompmgr)
-if command -v picom &> /dev/null; then
-    nohup picom --config ~/.config/picom.conf > /tmp/picom.log 2>&1 &
-elif command -v fastcompmgr &> /dev/null; then
-    nohup fastcompmgr -r 7 -l -7 -t -7 -i 1.0 -c -C > /dev/null 2>&1 &
+if command -v picom &>/dev/null; then
+    nohup picom --config ~/.config/picom.conf >/tmp/picom.log 2>&1 &
+elif command -v fastcompmgr &>/dev/null; then
+    nohup fastcompmgr -r 7 -l -7 -t -7 -i 1.0 -c -C >/dev/null 2>&1 &
 fi
-.config/polybar/launch.sh > /tmp/polybar.log 2>&1 &
-nohup cryptomator > /tmp/cryptomator.log 2>&1 &
+.config/polybar/launch.sh >/tmp/polybar.log 2>&1 &
+nohup cryptomator >/tmp/cryptomator.log 2>&1 &
 ulauncher --no-window-shadow --hide-window &
 flameshot &
 nm-applet &
-blueman-applet > /tmp/blueman.log 2>&1 &
+blueman-applet >/tmp/blueman.log 2>&1 &
 set-wallpaper &
 dunst &
 telegram-desktop -startintray -- %u &

@@ -11,7 +11,6 @@ set -e
 readonly G='\033[0;32m' Y='\033[1;33m' R='\033[0;31m' B='\033[0;34m' NC='\033[0m'
 
 # Directory paths
-readonly USER_HOME="$(eval echo ~$USER)"
 readonly SCRIPTS_DIR="${HOME}/dotfiles/scripts"
 readonly LOCAL_BIN="${HOME}/.local/bin"
 
@@ -60,7 +59,8 @@ set_custom_key() {
     gsettings set "${base_path}" binding "['$key']"
 
     # Add to custom list
-    local list=$(gsettings get org.cinnamon.desktop.keybindings custom-list)
+    local list
+    list=$(gsettings get org.cinnamon.desktop.keybindings custom-list)
     if [[ "$list" == "@as []" ]]; then
         list="['$name']"
     else
@@ -199,9 +199,11 @@ clear_default_shortcuts() {
 }
 
 configure_custom_keys() {
+    # shellcheck disable=SC2190
+    # Caller passes flattened "key=value" pairs from an associative array; we rebuild it here.
     local -A keys=("$@")
     for name in "${!keys[@]}"; do
-        IFS=':' read -r cmd binding <<< "${keys[$name]}"
+        IFS=':' read -r cmd binding <<<"${keys[$name]}"
         set_custom_key "$name" "$cmd" "$binding"
     done
 }
@@ -244,7 +246,7 @@ install_dependencies() {
     log "Installing additional software..."
 
     # Install Brave browser if not present
-    if ! command -v brave-browser &> /dev/null; then
+    if ! command -v brave-browser &>/dev/null; then
         log "Installing Brave browser..."
         sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
         echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
@@ -252,7 +254,7 @@ install_dependencies() {
     fi
 
     # Install Rofi if not present
-    if ! command -v rofi &> /dev/null; then
+    if ! command -v rofi &>/dev/null; then
         log "Installing Rofi..."
         sudo apt install -y rofi || {
             warn "Rofi not available in repos, installing from snap..."
@@ -261,7 +263,7 @@ install_dependencies() {
     fi
 
     # Install Alacritty if not present
-    if ! command -v alacritty &> /dev/null; then
+    if ! command -v alacritty &>/dev/null; then
         log "Installing Alacritty..."
         sudo apt install -y alacritty || {
             warn "Alacritty not available in repos, installing from snap..."
@@ -270,7 +272,7 @@ install_dependencies() {
     fi
 
     # Install Flameshot if not present
-    if ! command -v flameshot &> /dev/null; then
+    if ! command -v flameshot &>/dev/null; then
         log "Installing Flameshot..."
         sudo apt install -y flameshot || {
             warn "Flameshot not available in repos, installing from snap..."
@@ -284,7 +286,7 @@ install_scripts() {
     mkdir -p "$LOCAL_BIN"
 
     for script_pair in "${SCRIPTS_TO_LINK[@]}"; do
-        IFS=':' read -r source target <<< "$script_pair"
+        IFS=':' read -r source target <<<"$script_pair"
         local source_path="${SCRIPTS_DIR}/${source}"
         local target_path="${LOCAL_BIN}/${target}"
 
@@ -333,7 +335,7 @@ main() {
 
 show_help() {
     header "Configuration complete!"
-    cat << EOF
+    cat <<EOF
 Key bindings configured (XMonad-compatible):
 
 WINDOW MANAGEMENT:

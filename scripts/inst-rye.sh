@@ -2,17 +2,15 @@
 set -euo pipefail
 source "$HOME/dotfiles/globals.sh"
 
-RYE_HOME="${HOME}/.rye"
-
-if command -v rye &> /dev/null; then
-  echo "Rye is already installed. Version: $(rye --version)"
-  echo "To update, run: rye self update"
+if command -v rye &>/dev/null; then
+    echo "Rye is already installed. Version: $(rye --version)"
+    echo "To update, run: rye self update"
 else
-  echo "Installing Rye..."
-  export RYE_INSTALL_OPTION="--yes"
-  export RYE_TOOLCHAIN_VERSION="3.11"
-  curl -sSf https://rye.astral.sh/get | bash
-  echo "→ Remember to source ‘\$HOME/.rye/env’ in your shell to enable shims"
+    echo "Installing Rye..."
+    export RYE_INSTALL_OPTION="--yes"
+    export RYE_TOOLCHAIN_VERSION="3.11"
+    curl -sSf https://rye.astral.sh/get | bash
+    echo "→ Remember to source ‘\$HOME/.rye/env’ in your shell to enable shims"
 fi
 
 echo "Configuring Rye global behavior..."

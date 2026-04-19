@@ -19,15 +19,16 @@ _detect_os() {
         Linux)
             if [ -f /etc/os-release ]; then
                 awk -F= '/^ID=/ {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release
-            else echo "linux"; fi ;;
+            else echo "linux"; fi
+            ;;
         *) echo "unknown" ;;
     esac
 }
 _detect_arch() {
     case "$(uname -m)" in
-        x86_64|amd64)  echo "x86_64" ;;
-        aarch64|arm64) echo "aarch64" ;;
-        *)             echo "$(uname -m)" ;;
+        x86_64 | amd64) echo "x86_64" ;;
+        aarch64 | arm64) echo "aarch64" ;;
+        *) echo "$(uname -m)" ;;
     esac
 }
 OS="${OS:-$(_detect_os)}"
@@ -37,13 +38,13 @@ export OS ARCH
 # Parse CLI arguments (--force, --type=ssh, etc.)
 for arg in "$@"; do
     case "$arg" in
-        --force)    FORCE=true ;;
-        --type=*)   TYPE="${arg#--type=}" ;;
-        --no-fish)  FISH=false ;;
-        --no-node)  NODE=false ;;
-        --no-bun)   BUN=false ;;
-        --no-deno)  DENO=false ;;
-        --no-nvim)  NVIM=false ;;
+        --force) FORCE=true ;;
+        --type=*) TYPE="${arg#--type=}" ;;
+        --no-fish) FISH=false ;;
+        --no-node) NODE=false ;;
+        --no-bun) BUN=false ;;
+        --no-deno) DENO=false ;;
+        --no-nvim) NVIM=false ;;
     esac
 done
 
@@ -84,14 +85,18 @@ fi
 # Ensure unzip is available
 if ! command -v unzip &>/dev/null; then
     case "$OS" in
-        ubuntu|debian|linuxmint|pop)
-            $SUDO apt update && $SUDO apt install -y unzip ;;
+        ubuntu | debian | linuxmint | pop)
+            $SUDO apt update && $SUDO apt install -y unzip
+            ;;
         fedora)
-            $SUDO dnf install -y unzip ;;
+            $SUDO dnf install -y unzip
+            ;;
         centos)
-            $SUDO yum install -y unzip ;;
+            $SUDO yum install -y unzip
+            ;;
         arch)
-            $SUDO pacman -S --noconfirm unzip ;;
+            $SUDO pacman -S --noconfirm unzip
+            ;;
         macos)
             ;; # unzip ships with macOS
     esac
@@ -172,9 +177,10 @@ export features_string
 [[ "$UNATTENDED" = false ]] && source "$SCRIPTS_DIR/inst-menu.sh"
 
 printf "%-15s %s\n" "FEATURE" "STATUS"
-printf '%.0s-' {1..25}; echo
+printf '%.0s-' {1..25}
+echo
 for feature in "${!features[@]}"; do
-    printf "%-15s %s\n" "$feature" "$( [[ "${features[$feature]}" = true ]] && echo ENABLED || echo DISABLED )"
+    printf "%-15s %s\n" "$feature" "$([[ "${features[$feature]}" = true ]] && echo ENABLED || echo DISABLED)"
 done
 echo
 
@@ -198,13 +204,13 @@ ensure_tool() {
     load_script "$script_name"
 }
 
-ensure_tool BUN    bun   bun
-ensure_tool CARGO  cargo cargo
-ensure_tool DENO   deno  deno
-ensure_tool FISH   fish  fish
-ensure_tool FDFIND fd    fd
-ensure_tool FZF    fzf   fzf
-ensure_tool NODE   node  node
+ensure_tool BUN bun bun
+ensure_tool CARGO cargo cargo
+ensure_tool DENO deno deno
+ensure_tool FISH fish fish
+ensure_tool FDFIND fd fd
+ensure_tool FZF fzf fzf
+ensure_tool NODE node node
 
 if [[ "${features[NVIM]}" = true ]]; then
     load_script 'nvim'
@@ -230,5 +236,3 @@ if [[ "${features[CHANGE_SHELL]}" = true ]]; then
         print_color red "Fish not installed. Please install fish and run this script again."
     fi
 fi
-
-

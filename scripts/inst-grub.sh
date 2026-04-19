@@ -10,19 +10,19 @@ fi
 # --- /etc/default/grub ---
 # Remember last booted OS, show menu for 5s, flat menu (no submenu)
 sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=saved/' /etc/default/grub
-grep -q '^GRUB_SAVEDEFAULT=' /etc/default/grub \
-    && sed -i 's/^GRUB_SAVEDEFAULT=.*/GRUB_SAVEDEFAULT=true/' /etc/default/grub \
-    || sed -i '/^GRUB_DEFAULT=/a GRUB_SAVEDEFAULT=true' /etc/default/grub
+grep -q '^GRUB_SAVEDEFAULT=' /etc/default/grub &&
+    sed -i 's/^GRUB_SAVEDEFAULT=.*/GRUB_SAVEDEFAULT=true/' /etc/default/grub ||
+    sed -i '/^GRUB_DEFAULT=/a GRUB_SAVEDEFAULT=true' /etc/default/grub
 
 sed -i 's/^GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=menu/' /etc/default/grub
 sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=5/' /etc/default/grub
 
-grep -q '^GRUB_DISABLE_SUBMENU=' /etc/default/grub \
-    && sed -i 's/^GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub \
-    || sed -i '/^GRUB_TIMEOUT=/a GRUB_DISABLE_SUBMENU=y' /etc/default/grub
+grep -q '^GRUB_DISABLE_SUBMENU=' /etc/default/grub &&
+    sed -i 's/^GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub ||
+    sed -i '/^GRUB_TIMEOUT=/a GRUB_DISABLE_SUBMENU=y' /etc/default/grub
 
 # --- Display "Linux Mint" in menu entries ---
-cat > /etc/default/grub.d/60_linuxmint_name.cfg << 'EOF'
+cat >/etc/default/grub.d/60_linuxmint_name.cfg <<'EOF'
 # Override the menu entry name to "Linux Mint" while keeping
 # the EFI boot path as "ubuntu" (set in 50_linuxmint.cfg)
 GRUB_DISTRIBUTOR="Linux Mint"
@@ -50,7 +50,7 @@ fi
 if [ -n "$WIN_UUID" ]; then
     # Place Windows entry as 06_* so it's emitted before 10_linux,
     # making Windows 11 the first item in the GRUB menu.
-    cat > /etc/grub.d/06_windows << EOF
+    cat >/etc/grub.d/06_windows <<EOF
 #!/bin/sh
 exec tail -n +3 \$0
 # Windows 11 entry (placed before Linux so it appears first)
@@ -66,7 +66,7 @@ EOF
     chmod +x /etc/grub.d/06_windows
 
     # Reset 40_custom to its default stub (in case a previous run wrote Windows there)
-    cat > /etc/grub.d/40_custom << 'EOF'
+    cat >/etc/grub.d/40_custom <<'EOF'
 #!/bin/sh
 exec tail -n +3 $0
 # This file provides an easy way to add custom menu entries.  Simply type the
@@ -78,7 +78,7 @@ EOF
     # Skip auto-detected Windows entry to avoid duplicate
     if ! grep -q 'GRUB_OS_PROBER_SKIP_LIST' /etc/default/grub.d/50_linuxmint.cfg 2>/dev/null; then
         echo "GRUB_OS_PROBER_SKIP_LIST=\"${WIN_UUID}@/efi/Microsoft/Boot/bootmgfw.efi\"" \
-            >> /etc/default/grub.d/50_linuxmint.cfg
+            >>/etc/default/grub.d/50_linuxmint.cfg
     else
         sed -i "s|^GRUB_OS_PROBER_SKIP_LIST=.*|GRUB_OS_PROBER_SKIP_LIST=\"${WIN_UUID}@/efi/Microsoft/Boot/bootmgfw.efi\"|" \
             /etc/default/grub.d/50_linuxmint.cfg

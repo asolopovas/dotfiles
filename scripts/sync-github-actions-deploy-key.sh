@@ -27,10 +27,10 @@ HOSTS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -h|--help)
+        -h | --help)
             show_help
             ;;
-        -r|--regenerate)
+        -r | --regenerate)
             REGENERATE=1
             shift
             ;;
@@ -67,7 +67,7 @@ for host in "${HOSTS[@]}"; do
         continue
     fi
 
-    if ssh "$host" bash -s -- "$KEY_B64" <<'EOF'
+    if ssh "$host" bash -s -- "$KEY_B64" <<'EOF'; then
 set -euo pipefail
 key_b64="$1"
 key="$(printf '%s' "$key_b64" | base64 -d)"
@@ -82,7 +82,6 @@ if grep -qxF "$key" "$auth_file"; then
 fi
 printf '%s\n' "$key" >> "$auth_file"
 EOF
-    then
         echo "[$host] key added"
     else
         rc=$?

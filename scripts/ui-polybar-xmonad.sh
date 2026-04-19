@@ -38,7 +38,7 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
 
     # Remove duplicates and sort screens
     if [[ ${#screens[@]} -gt 0 ]]; then
-        sorted_screens=($(printf '%s\n' "${screens[@]}" | sort -nu))
+        mapfile -t sorted_screens < <(printf '%s\n' "${screens[@]}" | sort -nu)
     else
         # Fallback: assume screens 0 and 1 if none detected
         sorted_screens=(0 1)

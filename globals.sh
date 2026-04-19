@@ -28,10 +28,10 @@ detect_arch() {
     local machine
     machine="$(uname -m)"
     case "$machine" in
-        x86_64|amd64)  echo "x86_64" ;;
-        aarch64|arm64) echo "aarch64" ;;
-        armv7l)        echo "armv7l" ;;
-        *)             echo "$machine" ;;
+        x86_64 | amd64) echo "x86_64" ;;
+        aarch64 | arm64) echo "aarch64" ;;
+        armv7l) echo "armv7l" ;;
+        *) echo "$machine" ;;
     esac
 }
 
@@ -110,56 +110,56 @@ installPackages() {
         print_color blue "  - $pkg"
     done
     case $OS in
-    ubuntu | debian | linuxmint)
-        sudo apt install -y "$@"
-        ;;
-    centos)
-        sudo yum install -y "$@"
-        ;;
-    arch)
-        sudo pacman -S --noconfirm "$@"
-        ;;
+        ubuntu | debian | linuxmint)
+            sudo apt install -y "$@"
+            ;;
+        centos)
+            sudo yum install -y "$@"
+            ;;
+        arch)
+            sudo pacman -S --noconfirm "$@"
+            ;;
     esac
 }
 
 print_color() {
     local NC='\033[0m'
     local -A colors=(
-        [black]='\033[0;30m'    [red]='\033[0;31m'      [green]='\033[0;32m'
-        [yellow]='\033[0;33m'   [blue]='\033[0;34m'     [magenta]='\033[0;35m'
-        [cyan]='\033[0;36m'     [white]='\033[0;37m'
-        [bold_black]='\033[1;30m'   [bold_red]='\033[1;31m'     [bold_green]='\033[1;32m'
-        [bold_yellow]='\033[1;33m'  [bold_blue]='\033[1;34m'    [bold_magenta]='\033[1;35m'
-        [bold_cyan]='\033[1;36m'    [bold_white]='\033[1;37m'
-        [underline_black]='\033[4;30m'  [underline_red]='\033[4;31m'    [underline_green]='\033[4;32m'
-        [underline_yellow]='\033[4;33m' [underline_blue]='\033[4;34m'   [underline_magenta]='\033[4;35m'
-        [underline_cyan]='\033[4;36m'   [underline_white]='\033[4;37m'
-        [background_black]='\033[40m'   [background_red]='\033[41m'     [background_green]='\033[42m'
-        [background_yellow]='\033[43m'  [background_blue]='\033[44m'    [background_magenta]='\033[45m'
-        [background_cyan]='\033[46m'    [background_white]='\033[47m'
+        [black]='\033[0;30m' [red]='\033[0;31m' [green]='\033[0;32m'
+        [yellow]='\033[0;33m' [blue]='\033[0;34m' [magenta]='\033[0;35m'
+        [cyan]='\033[0;36m' [white]='\033[0;37m'
+        [bold_black]='\033[1;30m' [bold_red]='\033[1;31m' [bold_green]='\033[1;32m'
+        [bold_yellow]='\033[1;33m' [bold_blue]='\033[1;34m' [bold_magenta]='\033[1;35m'
+        [bold_cyan]='\033[1;36m' [bold_white]='\033[1;37m'
+        [underline_black]='\033[4;30m' [underline_red]='\033[4;31m' [underline_green]='\033[4;32m'
+        [underline_yellow]='\033[4;33m' [underline_blue]='\033[4;34m' [underline_magenta]='\033[4;35m'
+        [underline_cyan]='\033[4;36m' [underline_white]='\033[4;37m'
+        [background_black]='\033[40m' [background_red]='\033[41m' [background_green]='\033[42m'
+        [background_yellow]='\033[43m' [background_blue]='\033[44m' [background_magenta]='\033[45m'
+        [background_cyan]='\033[46m' [background_white]='\033[47m'
     )
     printf '%b%s%b\n' "${colors[$1]:-$NC}" "$2" "$NC"
 }
 
 hold_packages() {
     case $OS in
-    ubuntu | debian | linuxmint)
-        sudo apt-mark hold "$@" >/dev/null
-        ;;
-    *)
-        echo "Warning: $OS does not support holding packages directly."
-        ;;
+        ubuntu | debian | linuxmint)
+            sudo apt-mark hold "$@" >/dev/null
+            ;;
+        *)
+            echo "Warning: $OS does not support holding packages directly."
+            ;;
     esac
 }
 
 unhold_packages() {
     case $OS in
-    ubuntu | debian | linuxmint)
-        sudo apt-mark unhold "$@" >/dev/null
-        ;;
-    *)
-        echo "Warning: $OS does not support unholding packages directly."
-        ;;
+        ubuntu | debian | linuxmint)
+            sudo apt-mark unhold "$@" >/dev/null
+            ;;
+        *)
+            echo "Warning: $OS does not support unholding packages directly."
+            ;;
     esac
 }
 
@@ -169,19 +169,19 @@ removePackage() {
         exit 1
     fi
     case $OS in
-    ubuntu | debian | linuxmint)
-        sudo apt remove --purge --allow-change-held-packages -y "$@"
-        ;;
-    centos)
-        sudo yum remove -y "$@"
-        ;;
-    arch)
-        sudo pacman -Rns --noconfirm "$@"
-        ;;
-    *)
-        echo "Unsupported OS: $OS"
-        exit 1
-        ;;
+        ubuntu | debian | linuxmint)
+            sudo apt remove --purge --allow-change-held-packages -y "$@"
+            ;;
+        centos)
+            sudo yum remove -y "$@"
+            ;;
+        arch)
+            sudo pacman -Rns --noconfirm "$@"
+            ;;
+        *)
+            echo "Unsupported OS: $OS"
+            exit 1
+            ;;
     esac
 }
 
@@ -229,8 +229,8 @@ gh_latest_release() {
     local keep_v="${2:-}"
     local tag
 
-    tag=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null \
-        | grep -m1 '"tag_name"' | cut -d'"' -f4)
+    tag=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null |
+        grep -m1 '"tag_name"' | cut -d'"' -f4)
 
     if [ -z "$tag" ]; then
         echo "Failed to fetch latest release for $repo" >&2
@@ -253,7 +253,7 @@ require_cmd() {
     local reply
     read -r -p "Run $script now? [y/N] " reply
     case "$reply" in
-        [Yy]|[Yy][Ee][Ss])
+        [Yy] | [Yy][Ee][Ss])
             bash "$DOTFILES_DIR/$script" || return 1
             hash -r
             if ! cmd_exist "$cmd"; then
@@ -274,18 +274,24 @@ require_cmd() {
 # Portable package install (apt/brew/dnf/pacman)
 pkg_install() {
     case "$OS" in
-        ubuntu|debian|linuxmint|pop)
-            ${SUDO:-} apt install -y "$@" ;;
+        ubuntu | debian | linuxmint | pop)
+            ${SUDO:-} apt install -y "$@"
+            ;;
         fedora)
-            ${SUDO:-} dnf install -y "$@" ;;
+            ${SUDO:-} dnf install -y "$@"
+            ;;
         centos)
-            ${SUDO:-} yum install -y "$@" ;;
+            ${SUDO:-} yum install -y "$@"
+            ;;
         arch)
-            ${SUDO:-} pacman -S --noconfirm "$@" ;;
+            ${SUDO:-} pacman -S --noconfirm "$@"
+            ;;
         macos)
-            brew install "$@" ;;
+            brew install "$@"
+            ;;
         *)
             echo "Unsupported OS for package install: $OS"
-            return 1 ;;
+            return 1
+            ;;
     esac
 }

@@ -8,11 +8,17 @@ SVC_HOME="/var/lib/redis"
 LOG_DIR="/var/log/redis"
 CONF="/etc/redis/redis.conf"
 
-[[ $EUID -eq 0 ]] && { echo "Don't run as root"; exit 1; }
-sudo -n true 2>/dev/null || { echo "Need sudo access"; exit 1; }
+[[ $EUID -eq 0 ]] && {
+    echo "Don't run as root"
+    exit 1
+}
+sudo -n true 2>/dev/null || {
+    echo "Need sudo access"
+    exit 1
+}
 
-if command -v redis-server &>/dev/null \
-    && [[ "$(redis-server --version | grep -oE 'v=[0-9.]+' | cut -d= -f2)" == "$VER" ]]; then
+if command -v redis-server &>/dev/null &&
+    [[ "$(redis-server --version | grep -oE 'v=[0-9.]+' | cut -d= -f2)" == "$VER" ]]; then
     echo "Redis $VER already installed"
     exit 0
 fi
@@ -31,13 +37,13 @@ elif command -v yum &>/dev/null; then
 fi
 
 # Kernel tunables
-grep -q "vm.overcommit_memory = 1" /etc/sysctl.conf 2>/dev/null \
-    || echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf >/dev/null
-grep -q "net.core.somaxconn = 65535" /etc/sysctl.conf 2>/dev/null \
-    || echo "net.core.somaxconn = 65535" | sudo tee -a /etc/sysctl.conf >/dev/null
+grep -q "vm.overcommit_memory = 1" /etc/sysctl.conf 2>/dev/null ||
+    echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf >/dev/null
+grep -q "net.core.somaxconn = 65535" /etc/sysctl.conf 2>/dev/null ||
+    echo "net.core.somaxconn = 65535" | sudo tee -a /etc/sysctl.conf >/dev/null
 sudo sysctl vm.overcommit_memory=1 net.core.somaxconn=65535 2>/dev/null || true
-[[ -f /sys/kernel/mm/transparent_hugepage/enabled ]] \
-    && echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null 2>&1 || true
+[[ -f /sys/kernel/mm/transparent_hugepage/enabled ]] &&
+    echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled >/dev/null 2>&1 || true
 
 id "$SVC_USER" &>/dev/null || sudo useradd --system --home "$SVC_HOME" --shell /bin/false "$SVC_USER"
 sudo mkdir -p "$SVC_HOME" "$LOG_DIR" "$(dirname "$CONF")" /var/run/redis

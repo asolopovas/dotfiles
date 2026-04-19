@@ -3,14 +3,14 @@ set -euo pipefail
 source "$HOME/dotfiles/globals.sh"
 
 # Resolve latest stable Go version (e.g. "go1.25.5") then strip "go" prefix
-VER="$(curl -fsSL 'https://go.dev/dl/?mode=json' \
-    | grep -m1 '"version"' | cut -d'"' -f4)"
+VER="$(curl -fsSL 'https://go.dev/dl/?mode=json' |
+    grep -m1 '"version"' | cut -d'"' -f4)"
 VER="${VER#go}"
 
 case "$ARCH" in
-    x86_64)  GO_ARCH="amd64" ;;
+    x86_64) GO_ARCH="amd64" ;;
     aarch64) GO_ARCH="arm64" ;;
-    *)       GO_ARCH="amd64" ;;
+    *) GO_ARCH="amd64" ;;
 esac
 PLATFORM="linux-${GO_ARCH}"
 LOC="/usr/local"

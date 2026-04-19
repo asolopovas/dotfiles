@@ -15,8 +15,8 @@ set -uo pipefail
 
 MODE="${1:-test}"
 
-log()  { printf '\n\033[1;36m========  %s  ========\033[0m\n' "$*"; }
-ok()   { printf '\033[0;32m  PASS: %s\033[0m\n' "$*"; }
+log() { printf '\n\033[1;36m========  %s  ========\033[0m\n' "$*"; }
+ok() { printf '\033[0;32m  PASS: %s\033[0m\n' "$*"; }
 fail() { printf '\033[0;31m  FAIL: %s\033[0m\n' "$*" >&2; }
 
 # ---- Bare repo simulating GitHub ----
@@ -25,7 +25,7 @@ setup_local_repo() {
     git clone --bare /mnt/dotfiles /srv/dotfiles.git 2>/dev/null
     local head
     head=$(git -C /srv/dotfiles.git branch | head -1 | sed 's/^[* ]*//')
-    [ "$head" != "main" ] && [ -n "$head" ] && \
+    [ "$head" != "main" ] && [ -n "$head" ] &&
         git -C /srv/dotfiles.git branch main "$head" 2>/dev/null || true
     git -C /srv/dotfiles.git symbolic-ref HEAD refs/heads/main 2>/dev/null || true
 }
@@ -33,13 +33,16 @@ setup_local_repo() {
 # ---- Simulate: bash -c "$(curl -fsSL .../init.sh)" ----
 run_bootstrap() {
     local user="$1" home="$2"
-    shift 2; local extra_env=("$@")
+    shift 2
+    local extra_env=("$@")
 
     rm -rf "$home/dotfiles"
 
-    local init_tmp; init_tmp=$(mktemp)
+    local init_tmp
+    init_tmp=$(mktemp)
     cp /mnt/dotfiles/init.sh "$init_tmp"
-    chmod 644 "$init_tmp"; chown "$user:" "$init_tmp"
+    chmod 644 "$init_tmp"
+    chown "$user:" "$init_tmp"
 
     echo "  Bootstrapping as $user (HOME=$home)..."
     local env_args=(HOME="$home" DOTFILES_URL="file:///srv/dotfiles.git" CHANGE_SHELL=false)
@@ -74,10 +77,10 @@ do_bootstrap() {
     # 2. Plesk root bootstrap
     log "BOOTSTRAP: plesk root"
     rm -rf /root/dotfiles /opt/dotfiles /opt/omf /opt/nvim /opt/nvim-config \
-           /opt/nvim-data /opt/opencode-config /opt/opencode-cache /opt/opencode-bin \
-           /opt/vscode-server /var/www/bun-cache \
-           /usr/local/bin/bun* /usr/local/bin/nvim /usr/local/bin/vim \
-           /etc/sudoers.d/bun-cache /etc/profile.d/bun.sh /etc/profile.d/nvim.sh
+        /opt/nvim-data /opt/opencode-config /opt/opencode-cache /opt/opencode-bin \
+        /opt/vscode-server /var/www/bun-cache \
+        /usr/local/bin/bun* /usr/local/bin/nvim /usr/local/bin/vim \
+        /etc/sudoers.d/bun-cache /etc/profile.d/bun.sh /etc/profile.d/nvim.sh
     run_bootstrap root /root
 
     # Marker so test mode knows bootstrap succeeded
@@ -92,16 +95,19 @@ do_bootstrap() {
 # ===========================================================================
 #  MODE: test — sync latest test files, run bats suites
 # ===========================================================================
-PASS=0; FAIL=0
+PASS=0
+FAIL=0
 
 run_suite() {
     local name="$1" bats_file="$2" rc=0
     log "$name"
     bats "$bats_file" --tap || rc=$?
     if [ "$rc" -eq 0 ]; then
-        ok "$name"; PASS=$((PASS + 1))
+        ok "$name"
+        PASS=$((PASS + 1))
     else
-        fail "$name"; FAIL=$((FAIL + 1))
+        fail "$name"
+        FAIL=$((FAIL + 1))
     fi
 }
 
@@ -111,7 +117,7 @@ sync_tests() {
         [ -d "$d" ] || continue
         cp -a /mnt/dotfiles/tests "$d/tests"
     done
-    [ -d /home/stduser/dotfiles/tests ] && \
+    [ -d /home/stduser/dotfiles/tests ] &&
         chown -R stduser: /home/stduser/dotfiles/tests
 }
 
@@ -152,7 +158,7 @@ do_test() {
 # ---- Main ----
 case "$MODE" in
     bootstrap) do_bootstrap ;;
-    test)      do_test ;;
+    test) do_test ;;
     shell)
         setup_local_repo
         [ -d /root/dotfiles ] || cp -a /mnt/dotfiles /root/dotfiles
@@ -161,6 +167,10 @@ case "$MODE" in
             chown -R stduser: /home/stduser/dotfiles
         }
         echo "  Bootstrap: DOTFILES_URL=file:///srv/dotfiles.git CHANGE_SHELL=false bash init.sh"
-        exec bash ;;
-    *) echo "Usage: bootstrap | test | shell"; exit 1 ;;
+        exec bash
+        ;;
+    *)
+        echo "Usage: bootstrap | test | shell"
+        exit 1
+        ;;
 esac

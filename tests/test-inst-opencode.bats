@@ -30,6 +30,23 @@ cmd_exist() { command -v "$1" &>/dev/null; }
 print_color() { shift; echo "$*"; }
 G
 
+    # Minimal sync-ai.sh stub: symlinks .config/opencode/* into $HOME/.config/opencode
+    mkdir -p "$FAKE_HOME/dotfiles/scripts"
+    cat > "$FAKE_HOME/dotfiles/scripts/sync-ai.sh" <<'S'
+#!/bin/bash
+set -e
+src="$HOME/dotfiles/.config/opencode"
+dst="$HOME/.config/opencode"
+mkdir -p "$dst"
+for f in "$src"/*; do
+    name=$(basename "$f")
+    target="$dst/$name"
+    [ -e "$target" ] || [ -L "$target" ] && rm -rf "$target"
+    ln -s "$f" "$target"
+done
+S
+    chmod +x "$FAKE_HOME/dotfiles/scripts/sync-ai.sh"
+
     export PATH="$FAKE_BIN:$PATH"
     export HOME="$FAKE_HOME"
     export DOTFILES_DIR="$FAKE_HOME/dotfiles"

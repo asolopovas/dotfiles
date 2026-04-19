@@ -5,7 +5,7 @@ echo "=== Snap Window Test Suite ==="
 echo
 
 # Check if bats is available
-if ! command -v bats &> /dev/null; then
+if ! command -v bats &>/dev/null; then
     echo "❌ Bats testing framework not found. Install with: sudo apt install bats"
     exit 1
 fi
@@ -49,7 +49,7 @@ echo "✅ Basic navigation complete"
 
 echo
 echo "2. Testing expand functionality..."
-~/.local/bin/ui-snap-window left  # Position to left half
+~/.local/bin/ui-snap-window left # Position to left half
 sleep 0.5
 echo "   From left half: expand-right -> full width"
 ~/.local/bin/ui-snap-window expand-right
@@ -61,19 +61,19 @@ echo "   From full width: expand-right -> right half"
 
 echo
 echo "3. Testing cross-monitor navigation..."
-~/.local/bin/ui-snap-window right  # Should move to next screen
+~/.local/bin/ui-snap-window right # Should move to next screen
 sleep 0.5
-~/.local/bin/ui-snap-window right  # Should continue on next screen
+~/.local/bin/ui-snap-window right # Should continue on next screen
 sleep 0.5
-~/.local/bin/ui-snap-window right  # Should wrap back to first screen
+~/.local/bin/ui-snap-window right # Should wrap back to first screen
 ~/.local/bin/test-window-position | grep "Screen 0" && echo "   ✅ Wrapped to first screen"
 
 echo
 echo "4. Testing quarter window preservation..."
-~/.local/bin/ui-snap-window up     # Make quarter window
+~/.local/bin/ui-snap-window up # Make quarter window
 sleep 0.5
 echo "   Created quarter window"
-~/.local/bin/ui-snap-window right  # Navigate while preserving size
+~/.local/bin/ui-snap-window right # Navigate while preserving size
 sleep 0.5
 ~/.local/bin/test-window-position | grep "Quarter" && echo "   ✅ Quarter size preserved during navigation"
 

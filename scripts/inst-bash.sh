@@ -3,10 +3,13 @@ set -euo pipefail
 source "$HOME/dotfiles/globals.sh"
 
 # Resolve latest bash tarball from GNU FTP
-LATEST="$(curl -fsSL https://ftp.gnu.org/gnu/bash/ \
-    | grep -oE 'bash-[0-9]+\.[0-9]+(\.[0-9]+)?\.tar\.gz' \
-    | sort -V | tail -1)"
-[ -n "$LATEST" ] || { echo "Failed to resolve latest bash version" >&2; exit 1; }
+LATEST="$(curl -fsSL https://ftp.gnu.org/gnu/bash/ |
+    grep -oE 'bash-[0-9]+\.[0-9]+(\.[0-9]+)?\.tar\.gz' |
+    sort -V | tail -1)"
+[ -n "$LATEST" ] || {
+    echo "Failed to resolve latest bash version" >&2
+    exit 1
+}
 
 VER="${LATEST#bash-}"
 VER="${VER%.tar.gz}"

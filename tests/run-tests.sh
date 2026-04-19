@@ -14,8 +14,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-log()  { printf '\033[0;32m%s\033[0m\n' "$*"; }
-err()  { printf '\033[0;31m%s\033[0m\n' "$*" >&2; }
+log() { printf '\033[0;32m%s\033[0m\n' "$*"; }
+err() { printf '\033[0;31m%s\033[0m\n' "$*" >&2; }
 
 # Check bats is installed
 if ! command -v bats &>/dev/null; then

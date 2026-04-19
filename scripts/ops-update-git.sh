@@ -24,7 +24,7 @@ process_directory() {
 
     if [ "$GIT_ACTION" == "checkout_latest_tag" ]; then
         git fetch --tags
-        latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "")
+        latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)" 2>/dev/null || echo "")
 
         if [ -z "$latest_tag" ]; then
             echo "No tags found"
@@ -52,8 +52,6 @@ process_directory() {
         echo "Failed to update $dir"
     fi
 }
-
-
 
 if [ -z "$1" ]; then
     echo "No option specified. Usage: ./ops-update-git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
@@ -86,7 +84,7 @@ case $ACTION in
 esac
 
 for item in "$@"; do
-    IFS=':' read -r user dir <<< "$item"
+    IFS=':' read -r user dir <<<"$item"
     if [ -z "$user" ] || [ -z "$dir" ]; then
         echo "Invalid format. Usage: ./ops-update-git.sh --main <user:dir1> <user:dir2> ... | --latest <user:dir1> <user:dir2> ... | --tag <tag> <user:dir1> <user:dir2> ..."
         exit 1

@@ -14,9 +14,12 @@ VHOSTS="/var/www/vhosts"
 GROUP="psacln"
 KEEP=2
 
-log()   { printf '\033[32m[vscode-server]\033[0m %s\n' "$*"; }
-warn()  { printf '\033[33m[vscode-server]\033[0m %s\n' "$*" >&2; }
-error() { printf '\033[31m[vscode-server]\033[0m %s\n' "$*" >&2; exit 1; }
+log() { printf '\033[32m[vscode-server]\033[0m %s\n' "$*"; }
+warn() { printf '\033[33m[vscode-server]\033[0m %s\n' "$*" >&2; }
+error() {
+    printf '\033[31m[vscode-server]\033[0m %s\n' "$*" >&2
+    exit 1
+}
 need_root() { [[ $EUID -eq 0 ]] || error "Must run as root"; }
 
 fix_perms() {
@@ -46,21 +49,25 @@ cmd_update() {
     [[ -d "$SHARED" ]] || error "Run 'setup' first"
     log "Checking latest version..."
 
-    local commit; commit=$(curl -fsSL \
+    local commit
+    commit=$(curl -fsSL \
         "https://update.code.visualstudio.com/api/latest/server-linux-x64/stable" \
-        2>/dev/null | python3 -c "import sys,json;print(json.load(sys.stdin)['version'])") \
-        || error "Failed to fetch latest commit"
+        2>/dev/null | python3 -c "import sys,json;print(json.load(sys.stdin)['version'])") ||
+        error "Failed to fetch latest commit"
 
     if [[ -d "$SHARED/cli/servers/Stable-$commit" ]]; then
         log "Server already up to date"
     else
         log "Downloading $commit..."
-        local tmp; tmp=$(mktemp -d); trap "rm -rf '$tmp'" EXIT
+        local tmp
+        tmp=$(mktemp -d)
+        trap 'rm -rf "$tmp"' EXIT
 
         curl -fsSL "https://update.code.visualstudio.com/commit:$commit/server-linux-x64/stable" \
             -o "$tmp/server.tar.gz" || error "Download failed"
         mkdir -p "$tmp/x" && tar -xzf "$tmp/server.tar.gz" -C "$tmp/x"
-        local ex; ex=$(ls -1d "$tmp/x"/*/ | head -1)
+        local ex
+        ex=$(ls -1d "$tmp/x"/*/ | head -1)
         mkdir -p "$SHARED/cli/servers/Stable-$commit"
         mv "$ex" "$SHARED/cli/servers/Stable-$commit/server"
 
@@ -71,7 +78,8 @@ cmd_update() {
         fi
 
         fix_perms
-        trap - EXIT; rm -rf "$tmp"
+        trap - EXIT
+        rm -rf "$tmp"
     fi
 
     cmd_update_ext
@@ -79,7 +87,8 @@ cmd_update() {
 }
 
 latest_code_server() {
-    local srv; srv=$(ls -1dt "$SHARED"/cli/servers/Stable-*/server 2>/dev/null | head -1)
+    local srv
+    srv=$(ls -1dt "$SHARED"/cli/servers/Stable-*/server 2>/dev/null | head -1)
     [[ -n "$srv" ]] || error "No server found"
     echo "$srv/bin/code-server"
 }
@@ -87,7 +96,8 @@ latest_code_server() {
 cmd_install_ext() {
     need_root
     [[ -d "$SHARED" ]] || error "Run 'setup' first"
-    local id="${1:-}"; [[ -n "$id" ]] || error "Usage: $0 install-ext <extension-id>"
+    local id="${1:-}"
+    [[ -n "$id" ]] || error "Usage: $0 install-ext <extension-id>"
     "$(latest_code_server)" --extensions-dir "$SHARED/extensions" \
         --install-extension "$id" --force 2>&1 || warn "Install may have failed"
     rebuild_ext_json && fix_perms
@@ -107,9 +117,10 @@ cmd_update_ext() {
 cmd_status() {
     if [[ -d "$SHARED" ]]; then
         log "Shared: $SHARED ($(du -sh "$SHARED" | awk '{print $1}'))"
-        log "Servers:"; ls -1t "$SHARED/cli/servers/" 2>/dev/null | sed 's/^/  /'
+        log "Servers:"
+        ls -1t "$SHARED/cli/servers/" 2>/dev/null | sed 's/^/  /'
         log "Extensions ($(ls -1d "$SHARED"/extensions/*/ 2>/dev/null | wc -l)):"
-        ls -1 "$SHARED/extensions/" 2>/dev/null | grep -v extensions.json | sed 's/^/  /'
+        find "$SHARED/extensions/" -mindepth 1 -maxdepth 1 ! -name extensions.json -printf '  %f\n' 2>/dev/null
     else
         warn "Not set up yet"
     fi
@@ -117,9 +128,11 @@ cmd_status() {
     log "Vhosts (all symlinked to $SHARED):"
     printf "  %-35s %-10s\n" "DOMAIN" "STATUS"
     for d in "$VHOSTS"/*/; do
-        local dom; dom=$(basename "$d")
+        local dom
+        dom=$(basename "$d")
         [[ "$dom" =~ ^(system|chroot|default)$ ]] && continue
-        local owner; owner=$(stat -c '%U' "$d" 2>/dev/null) || continue
+        local owner
+        owner=$(stat -c '%U' "$d" 2>/dev/null) || continue
         [[ "$owner" == "root" ]] && continue
         local vs="$d.vscode-server" st="missing"
         if [[ -L "$vs" && "$(readlink "$vs")" == "$SHARED" ]]; then
@@ -134,24 +147,38 @@ cmd_status() {
 cmd_cleanup() {
     need_root
     [[ -d "$SHARED/cli/servers" ]] || error "Run 'setup' first"
-    local -a srvs; mapfile -t srvs < <(ls -1dt "$SHARED"/cli/servers/Stable-* 2>/dev/null)
+    local -a srvs
+    mapfile -t srvs < <(ls -1dt "$SHARED"/cli/servers/Stable-* 2>/dev/null)
     local n=${#srvs[@]} rm=0
-    (( n <= KEEP )) && { log "Only $n version(s), nothing to remove"; return 0; }
+    ((n <= KEEP)) && {
+        log "Only $n version(s), nothing to remove"
+        return 0
+    }
 
-    for (( i=KEEP; i<n; i++ )); do
-        local c h; c=$(basename "${srvs[$i]}"); h="${c#Stable-}"
+    for ((i = KEEP; i < n; i++)); do
+        local c h
+        c=$(basename "${srvs[$i]}")
+        h="${c#Stable-}"
         log "  Removing: $c"
         rm -rf "${srvs[$i]}" "$SHARED/code-$h"
         find "$VHOSTS" -maxdepth 2 -name ".vscode-server" -type d 2>/dev/null | while IFS= read -r d; do
-            rm -f "$d/code-$h" 2>/dev/null; rm -rf "$d/cli/servers/$c" 2>/dev/null
-        done; rm=$((rm + 1))
+            rm -f "$d/code-$h" 2>/dev/null
+            rm -rf "$d/cli/servers/$c" 2>/dev/null
+        done
+        rm=$((rm + 1))
     done
     for b in "$SHARED"/code-*; do
         [[ -f "$b" ]] || continue
-        local h; h=$(basename "$b"); h="${h#code-}"
-        [[ -d "$SHARED/cli/servers/Stable-$h" ]] || { rm -f "$b"; rm=$((rm + 1)); }
+        local h
+        h=$(basename "$b")
+        h="${h#code-}"
+        [[ -d "$SHARED/cli/servers/Stable-$h" ]] || {
+            rm -f "$b"
+            rm=$((rm + 1))
+        }
     done
-    fix_perms; log "Removed $rm component(s) ($(du -sh "$SHARED" | awk '{print $1}'))"
+    fix_perms
+    log "Removed $rm component(s) ($(du -sh "$SHARED" | awk '{print $1}'))"
 }
 
 cmd_cleanup_ext() {
@@ -181,17 +208,19 @@ if os.path.exists(jf):
     with open(jf,'w') as f: json.dump(exts,f)
 print(f'Removed {rm} old version(s)')
 " 2>&1
-    fix_perms; log "Extensions now: $(ls -1d "$SHARED"/extensions/*/ 2>/dev/null | wc -l)"
+    fix_perms
+    log "Extensions now: $(ls -1d "$SHARED"/extensions/*/ 2>/dev/null | wc -l)"
 }
 
 case "${1:-}" in
-    update)      cmd_update ;;
+    update) cmd_update ;;
     install-ext) cmd_install_ext "${2:-}" ;;
-    update-ext)  cmd_update_ext ;;
-    status)      cmd_status ;;
-    cleanup)     cmd_cleanup ;;
+    update-ext) cmd_update_ext ;;
+    status) cmd_status ;;
+    cleanup) cmd_cleanup ;;
     cleanup-ext) cmd_cleanup_ext ;;
-    *)  cat <<'EOF'
+    *)
+        cat <<'EOF'
 Usage: ops-vscode-server.sh <command> [args]
 
   update             Download latest server + update extensions
@@ -203,5 +232,6 @@ Usage: ops-vscode-server.sh <command> [args]
 
 Initial setup and vhost symlinks are handled by plesk-init.sh.
 EOF
-        exit 1 ;;
+        exit 1
+        ;;
 esac

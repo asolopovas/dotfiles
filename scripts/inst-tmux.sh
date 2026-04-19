@@ -17,11 +17,11 @@ fi
 print_color green "Installing tmux $VER from source..."
 
 case $OS in
-    ubuntu|debian|linuxmint)
+    ubuntu | debian | linuxmint)
         sudo apt-get update -qq
         sudo apt-get install -y build-essential libevent-dev libncurses-dev bison pkg-config
         ;;
-    centos|fedora)
+    centos | fedora)
         sudo dnf groupinstall -y "Development Tools"
         sudo dnf install -y libevent-devel ncurses-devel bison pkgconf-pkg-config
         ;;

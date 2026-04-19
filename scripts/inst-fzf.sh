@@ -14,13 +14,13 @@ fi
 
 case "$(uname -s)" in
     Darwin) PLATFORM="darwin" ;;
-    *)      PLATFORM="linux" ;;
+    *) PLATFORM="linux" ;;
 esac
 
 case "$ARCH" in
-    x86_64)  FZF_ARCH="amd64" ;;
+    x86_64) FZF_ARCH="amd64" ;;
     aarch64) FZF_ARCH="arm64" ;;
-    *)       FZF_ARCH="amd64" ;;
+    *) FZF_ARCH="amd64" ;;
 esac
 
 VER="$(gh_latest_release junegunn/fzf)"

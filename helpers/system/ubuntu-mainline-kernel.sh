@@ -101,7 +101,7 @@ action_data=()
     [[ "$ID" == "ubuntu" ]] || [[ "$ID_LIKE" =~ "ubuntu" ]]
 } || {
     OS=$(lsb_release -si 2>&-)
-    [[ "$OS" == "Ubuntu" ]] || [[ "$OS" == "LinuxMint" ]]  || [[ "$OS" == "neon" ]] || {
+    [[ "$OS" == "Ubuntu" ]] || [[ "$OS" == "LinuxMint" ]] || [[ "$OS" == "neon" ]] || {
         echo "Abort, this script is only intended for Ubuntu-like distros"
         exit 2
     }
@@ -111,26 +111,26 @@ action_data=()
 ## helper functions
 #####
 
-single_action () {
+single_action() {
     [ "$run_action" != "help" ] && {
         err "Abort, only one argument can be supplied. See -h"
         exit 2
     }
 }
 
-log () {
+log() {
     [ $quiet -eq 0 ] && echo "$@"
 }
 
-logn () {
+logn() {
     [ $quiet -eq 0 ] && echo -n "$@"
 }
 
-warn () {
+warn() {
     [ $quiet -eq 0 ] && echo "$@" >&2
 }
 
-err () {
+err() {
     echo "$@" >&2
 }
 
@@ -138,35 +138,35 @@ err () {
 ## Simple command options parser
 #####
 
-while (( "$#" )); do
+while (("$#")); do
     argarg_required=0
 
     case $1 in
-        -c|--check)
+        -c | --check)
             single_action
             run_action="check"
             ;;
-        -l|--local-list)
+        -l | --local-list)
             single_action
             run_action="local-list"
             argarg_required=1
             ;;
-        -r|--remote-list)
+        -r | --remote-list)
             single_action
             run_action="remote-list"
             argarg_required=1
             ;;
-        -i|--install)
+        -i | --install)
             single_action
             run_action="install"
             argarg_required=1
             ;;
-        -u|--uninstall)
+        -u | --uninstall)
             single_action
             run_action="uninstall"
             argarg_required=1
             ;;
-        -p|--path)
+        -p | --path)
             if [ -z "$2" ] || [ "${2##-}" != "$2" ]; then
                 err "Option $1 requires an argument."
                 exit 2
@@ -175,7 +175,7 @@ while (( "$#" )); do
                 shift
 
                 if [ ! -d "$workdir" ]; then
-                    mkdir -p "$workdir";
+                    mkdir -p "$workdir"
                 fi
 
                 if [ ! -d "$workdir" ] || [ ! -w "$workdir" ]; then
@@ -186,7 +186,7 @@ while (( "$#" )); do
                 cleanup_files=0
             fi
             ;;
-        -ll|--lowlatency|--low-latency)
+        -ll | --lowlatency | --low-latency)
             [[ "$arch" != "amd64" ]] && [[ "$arch" != "i386" ]] && {
                 err "Low-latency kernels are only available for amd64 or i386 architectures"
                 exit 3
@@ -194,7 +194,7 @@ while (( "$#" )); do
 
             use_lowlatency=1
             ;;
-        -lpae|--lpae)
+        -lpae | --lpae)
             [[ "$arch" != "armhf" ]] && {
                 err "Large Physical Address Extension (LPAE) kernels are only available for the armhf architecture"
                 exit 3
@@ -213,30 +213,30 @@ while (( "$#" )); do
         --rc)
             use_rc=1
             ;;
-        -s|--signed)
+        -s | --signed)
             log "The option '--signed' is not yet implemented"
             ;;
         --yes)
             assume_yes=1
             ;;
-        -q|--quiet)
+        -q | --quiet)
             [ "$debug_target" == "/dev/null" ] && { quiet=1; }
             ;;
-        -do|--download-only)
+        -do | --download-only)
             do_install=0
             cleanup_files=0
             ;;
-        -ns|--no-signature)
+        -ns | --no-signature)
             check_signature=0
             ;;
-        -nc|--no-checksum)
+        -nc | --no-checksum)
             check_checksum=0
             ;;
-        -d|--debug)
+        -d | --debug)
             debug_target="/dev/stderr"
             quiet=0
             ;;
-        -h|--help)
+        -h | --help)
             run_action="help"
             ;;
         *)
@@ -268,13 +268,13 @@ done
 ## internal functions
 #####
 
-containsElement () {
-  local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] || [[ "$e" =~ $1- ]] && return 0; done
-  return 1
+containsElement() {
+    local e
+    for e in "${@:2}"; do [[ "$e" == "$1" ]] || [[ "$e" =~ $1- ]] && return 0; done
+    return 1
 }
 
-download () {
+download() {
     host=$1
     uri=$2
 
@@ -287,7 +287,7 @@ download () {
     fi
 }
 
-monitor_progress () {
+monitor_progress() {
     local msg=$1
     local file=$2
 
@@ -301,8 +301,8 @@ monitor_progress () {
                 printf ' %d%% %s' 0 "$c"
                 printf '\b%.0s' {1..5}
             } || {
-                filesize=$(( $(du -b "$file" | cut -f1) + 0))
-                progress="$((200*filesize/download_size % 2 + 100*filesize/download_size))"
+                filesize=$(($(du -b "$file" | cut -f1) + 0))
+                progress="$((200 * filesize / download_size % 2 + 100 * filesize / download_size))"
 
                 printf ' %s%% %s' "$progress" "$c"
                 length=$((4 + ${#progress}))
@@ -314,19 +314,22 @@ monitor_progress () {
     monitor_pid=$!
 }
 
-end_monitor_progress () {
-    { kill $monitor_pid && wait $monitor_pid; printf '100%%   \n'; } 2>/dev/null
+end_monitor_progress() {
+    {
+        kill $monitor_pid && wait $monitor_pid
+        printf '100%%   \n'
+    } 2>/dev/null
 }
 
-remove_http_headers () {
+remove_http_headers() {
     file="$1"
     nr=0
-    while(true); do
+    while (true); do
         nr=$((nr + 1))
         line=$(head -n$nr "$file" | tail -n 1)
 
         if [ -z "$(echo "$line" | tr -cd '\r\n')" ]; then
-            tail -n +$nr "$file" > "${file}.tmp"
+            tail -n +$nr "$file" >"${file}.tmp"
             mv "${file}.tmp" "${file}"
             break
         fi
@@ -361,7 +364,7 @@ latest_local_version() {
         local sorted
         mapfile -t sorted < <(echo "${LOCAL_VERSIONS[*]}" | tr ' ' '\n' | sort -t"." -k1V,3)
 
-        lv="${sorted[${#sorted[@]}-1]}"
+        lv="${sorted[${#sorted[@]} - 1]}"
         echo "${lv/-[0-9][0-9][0-9][0-9][0-9][0-9]rc/-rc}"
     else
         echo "none"
@@ -386,18 +389,18 @@ parse_remote_versions() {
     done <<<"$remote_html_cache"
 }
 
-load_remote_versions () {
+load_remote_versions() {
     local line
 
     [[ -n "$2" ]] && {
-      REMOTE_VERSIONS=()
+        REMOTE_VERSIONS=()
     }
 
     if [ ${#REMOTE_VERSIONS[@]} -eq 0 ]; then
         if [ -z "$remote_html_cache" ]; then
-          [ -z "$1" ] && logn "Downloading index from $ppa_host"
-          remote_html_cache=$(download $ppa_host $ppa_index)
-          [ -z "$1" ] && log
+            [ -z "$1" ] && logn "Downloading index from $ppa_host"
+            remote_html_cache=$(download $ppa_host $ppa_index)
+            [ -z "$1" ] && log
         fi
 
         IFS=$'\n'
@@ -414,23 +417,23 @@ load_remote_versions () {
     fi
 }
 
-latest_remote_version () {
+latest_remote_version() {
     load_remote_versions 1 "$1"
-    echo "${REMOTE_VERSIONS[${#REMOTE_VERSIONS[@]}-1]}"
+    echo "${REMOTE_VERSIONS[${#REMOTE_VERSIONS[@]} - 1]}"
 }
 
-check_environment () {
+check_environment() {
     if [ $use_https -eq 1 ] && [ -z "$wget" ]; then
         err "Abort, wget not found. Please apt install wget"
         exit 3
     fi
 }
 
-guard_run_as_root () {
-  if [ "$(id -u)" -ne 0 ]; then
-    echo "The '$run_action' command requires root privileges"
-    exit 2
-  fi
+guard_run_as_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "The '$run_action' command requires root privileges"
+        exit 2
+    fi
 }
 
 # execute requested action
@@ -490,7 +493,7 @@ Optional:
 
             index=$(download $ppa_host "$ppa_uri")
             if [[ ! $index =~ $build_succeeded_text ]]; then
-                 log "A newer kernel version ($latest_version) was found but the build was not successful"
+                log "A newer kernel version ($latest_version) was found but the build was not successful"
 
                 [ -n "$DISPLAY" ] && [ -x "$(command -v notify-send)" ] && notify-send --icon=info -t 12000 \
                     "Kernel $latest_version available" \
@@ -507,8 +510,8 @@ Optional:
             latest_minor_version=$(latest_remote_version "${installed_version%.*}")
 
             if [ "$installed_version" != "$latest_minor_version" ]; then
-              latest_minor_text=", latest in current branch is ${latest_minor_version}"
-              latest_minor_notify="Version ${latest_minor_version} is available in the current ${installed_version%.*} branch\n\n"
+                latest_minor_text=", latest in current branch is ${latest_minor_version}"
+                latest_minor_notify="Version ${latest_minor_version} is available in the current ${installed_version%.*} branch\n\n"
             fi
         fi
 
@@ -564,7 +567,7 @@ Optional:
                 logn "Latest version is: $version"
             fi
 
-            if [ $do_install -gt 0 ] && [ $assume_yes -eq 0 ];then
+            if [ $do_install -gt 0 ] && [ $assume_yes -eq 0 ]; then
                 logn ", continue? (y/N) "
                 [ $quiet -eq 0 ] && read -rsn1 continue
                 log
@@ -620,8 +623,8 @@ Optional:
         index=$(download $ppa_host "$ppa_uri")
 
         if [[ ! $index =~ $build_succeeded_text ]]; then
-          err "Abort, the ${arch} build has not succeeded"
-          exit 1
+            err "Abort, the ${arch} build has not succeeded"
+            exit 1
         fi
 
         index=${index%%*<table}
@@ -633,12 +636,12 @@ Optional:
         section_end="^[[:space:]]*<br>[[:space:]]*$"
         for line in $index; do
             if [[ $line =~ $build_succeeded_text ]]; then
-              found_arch=1
-              continue
+                found_arch=1
+                continue
             elif [ $found_arch -eq 0 ]; then
-              continue
+                continue
             elif [[ $line =~ $section_end ]]; then
-              break
+                break
             fi
 
             [[ "$line" =~ linux-(image(-(un)?signed)?|headers|modules)-[0-9]+\.[0-9]+\.[0-9]+-[0-9]{6}.*?_(${arch}|all).deb ]] || continue
@@ -654,7 +657,7 @@ Optional:
             line=${line%%\">*}
 
             if [ $uses_subfolders -eq 0 ] && [[ $line =~ ${arch}/linux ]]; then
-              uses_subfolders=1
+                uses_subfolders=1
             fi
 
             FILES+=("$line")
@@ -663,9 +666,9 @@ Optional:
 
         if [ $check_signature -eq 1 ]; then
             if [ $uses_subfolders -eq 0 ]; then
-              FILES+=("CHECKSUMS" "CHECKSUMS.gpg")
+                FILES+=("CHECKSUMS" "CHECKSUMS.gpg")
             else
-              FILES+=("${arch}/CHECKSUMS" "${arch}/CHECKSUMS.gpg")
+                FILES+=("${arch}/CHECKSUMS" "${arch}/CHECKSUMS.gpg")
             fi
         fi
 
@@ -686,7 +689,7 @@ Optional:
         for file in "${FILES[@]}"; do
             workfile=${file##*/}
             monitor_progress "Downloading $file" "$workdir$workfile"
-            download $ppa_host "$ppa_uri$file" > "$workdir$workfile"
+            download $ppa_host "$ppa_uri$file" >"$workdir$workfile"
 
             remove_http_headers "$workdir$workfile"
             end_monitor_progress
@@ -720,7 +723,7 @@ Optional:
         fi
 
         if [ $check_checksum -eq 1 ]; then
-            shasums=( "sha256sum" "sha1sum" )
+            shasums=("sha256sum" "sha1sum")
 
             for shasum in "${shasums[@]}"; do
                 xshasum=$(command -v "$shasum")

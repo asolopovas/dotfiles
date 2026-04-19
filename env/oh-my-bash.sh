@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2034
+# Variables consumed by oh-my-bash after sourcing.
 
 DISABLE_AUTO_UPDATE="true"
 OSH_THEME="theme"
@@ -29,7 +31,7 @@ if [ ! -d "$theme_dir" ] || [ ! -f "$theme_file" ]; then
 fi
 
 if [ ! -f "$ohmybash_dir/oh-my-bash.sh" ]; then
-    rm -rf $ohmybash_dir;
+    rm -rf $ohmybash_dir
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
     rm -rf "$HOME/.bashrc*"
     ln -sf "$HOME/dotfiles/.bashrc" "$HOME/.bashrc"

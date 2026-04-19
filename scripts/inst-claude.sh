@@ -8,7 +8,7 @@ TARGET="$HOME/.claude"
 if [ "${1:-}" = "--force" ]; then
     print_color yellow "FORCE: clearing claude state dirs"
     for dir in ide statsig shell-snapshots todos projects; do
-        rm -rf "$TARGET/$dir"
+        rm -rf "${TARGET:?}/$dir"
         mkdir -p "$TARGET/$dir"
     done
 fi

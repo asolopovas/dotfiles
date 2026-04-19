@@ -233,18 +233,18 @@ fi
 # Parse options using manual loop to support both short and long options
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -h|--help)
+        -h | --help)
             show_help
             ;;
-        -f|--force)
+        -f | --force)
             FORCE=1
             shift
             ;;
-        -n|--dry-run)
+        -n | --dry-run)
             DRY_RUN=1
             shift
             ;;
-        -v|--verbose)
+        -v | --verbose)
             VERBOSE=1
             shift
             ;;

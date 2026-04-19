@@ -14,7 +14,7 @@ install_font() {
         local file="/tmp/${font}.${ext}"
         if curl -fL --progress-bar "$url" -o "$file"; then
             case $ext in
-                zip)    unzip -oq "$file" -d "$dest" ;;
+                zip) unzip -oq "$file" -d "$dest" ;;
                 tar.xz) tar -xf "$file" -C "$dest" ;;
             esac
             rm -f "$file"

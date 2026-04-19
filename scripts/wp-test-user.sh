@@ -21,15 +21,18 @@ EOF
 }
 
 main() {
-    command -v wp >/dev/null 2>&1 || { echo "wp-cli not found" >&2; exit 1; }
+    command -v wp >/dev/null 2>&1 || {
+        echo "wp-cli not found" >&2
+        exit 1
+    }
 
     case "${1:-}" in
         --delete)
-            wp user delete "$USER" --reassign=1 --yes 2>/dev/null \
-                && echo "Deleted user '$USER'" \
-                || echo "User '$USER' does not exist"
+            wp user delete "$USER" --reassign=1 --yes 2>/dev/null &&
+                echo "Deleted user '$USER'" ||
+                echo "User '$USER' does not exist"
             ;;
-        -h|--help)
+        -h | --help)
             usage
             ;;
         "")
@@ -41,7 +44,8 @@ main() {
             fi
             ;;
         *)
-            usage >&2; exit 1
+            usage >&2
+            exit 1
             ;;
     esac
 }

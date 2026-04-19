@@ -13,7 +13,7 @@ if [ "$OS" = "macos" ]; then
 fi
 
 case "$ARCH" in
-    x86_64)  ARCH_LABEL="x86_64-unknown-linux-gnu" ;;
+    x86_64) ARCH_LABEL="x86_64-unknown-linux-gnu" ;;
     aarch64) ARCH_LABEL="aarch64-unknown-linux-gnu" ;;
     *)
         echo "Unsupported architecture for fd: $ARCH" >&2

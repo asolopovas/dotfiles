@@ -13,7 +13,7 @@ OUTPUT_FILE="$POLYBAR_CONFIG_DIR/fonts.ini"
 
 if [ -f "$TEMPLATE_FILE" ]; then
     # Generate fonts.ini from template with environment variables
-    envsubst < "$TEMPLATE_FILE" > "$OUTPUT_FILE"
+    envsubst <"$TEMPLATE_FILE" >"$OUTPUT_FILE"
     echo "Generated polybar fonts config with size: $POLYBAR_FONT_SIZE"
 else
     echo "Template file not found: $TEMPLATE_FILE"

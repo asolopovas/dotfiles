@@ -10,7 +10,10 @@ STAMP=$(date +%Y%m%d%H%M%S)
 
 log() { printf "\033[1;32m[+]\033[0m %s\n" "$1"; }
 err() { printf "\033[1;31m[!]\033[0m %s\n" "$1" >&2; }
-die() { err "$1"; exit 1; }
+die() {
+    err "$1"
+    exit 1
+}
 
 check_root() { [[ $EUID -eq 0 ]] || die "Must run as root"; }
 
@@ -19,7 +22,7 @@ backup() {
     for f in "$NGINX_CONF" "$MARIA_CONF" "$MARIA_PERF" "$SYSCTL_CONF"; do
         [[ -f "$f" ]] && cp "$f" "$BACKUP_DIR/$STAMP/$(basename "$f")"
     done
-    sysctl -n vm.swappiness > "$BACKUP_DIR/$STAMP/swappiness.orig"
+    sysctl -n vm.swappiness >"$BACKUP_DIR/$STAMP/swappiness.orig"
     log "Backup saved to $BACKUP_DIR/$STAMP"
 }
 
@@ -79,7 +82,7 @@ ${marker} end\\
 
 apply_sysctl() {
     log "Kernel: vm.swappiness -> 10"
-    printf "vm.swappiness = 10\n" > "$SYSCTL_CONF"
+    printf "vm.swappiness = 10\n" >"$SYSCTL_CONF"
     sysctl -w vm.swappiness=10 >/dev/null
     log "Kernel: applied"
 }
@@ -109,12 +112,14 @@ do_revert() {
     log "Reverting from $dir"
 
     for f in "$NGINX_CONF" "$MARIA_CONF" "$MARIA_PERF"; do
-        local base; base=$(basename "$f")
+        local base
+        base=$(basename "$f")
         [[ -f "$dir/$base" ]] && cp "$dir/$base" "$f" && log "Restored $f"
     done
 
     if [[ -f "$dir/swappiness.orig" ]]; then
-        local orig; orig=$(cat "$dir/swappiness.orig")
+        local orig
+        orig=$(cat "$dir/swappiness.orig")
         sysctl -w vm.swappiness="$orig" >/dev/null
         rm -f "$SYSCTL_CONF"
         log "Kernel: vm.swappiness -> $orig"
@@ -133,7 +138,8 @@ show_status() {
     printf "%-35s %s\n" "nginx tcp_nopush" "$(grep -cP '^\s*tcp_nopush\s+on;' "$NGINX_CONF" >/dev/null 2>&1 && echo on || echo off)"
     printf "%-35s %s\n" "vm.swappiness" "$(sysctl -n vm.swappiness)"
 
-    local pass; pass=$(cat /etc/psa/.psa.shadow 2>/dev/null) || true
+    local pass
+    pass=$(cat /etc/psa/.psa.shadow 2>/dev/null) || true
     if [[ -n "$pass" ]]; then
         mysql -uadmin -p"$pass" -N -e "
             SELECT 'innodb_buffer_pool_size', CONCAT(@@innodb_buffer_pool_size / 1048576, ' MB');
@@ -168,9 +174,12 @@ EOF
 }
 
 case "${1:-}" in
-    apply)   do_apply ;;
-    revert)  do_revert "${2:-}" ;;
-    status)  show_status ;;
+    apply) do_apply ;;
+    revert) do_revert "${2:-}" ;;
+    status) show_status ;;
     backups) list_backups ;;
-    *)       usage; exit 1 ;;
+    *)
+        usage
+        exit 1
+        ;;
 esac

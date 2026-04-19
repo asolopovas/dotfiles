@@ -7,19 +7,19 @@ XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
 
 # Avoid writing inside the repo if user set a risky value
 if [ "$XDG_CONFIG_HOME" = "$DOTFILES_DIR/.config" ]; then
-  echo "Refusing to use XDG_CONFIG_HOME=$XDG_CONFIG_HOME (points into repo)" >&2
-  exit 1
+    echo "Refusing to use XDG_CONFIG_HOME=$XDG_CONFIG_HOME (points into repo)" >&2
+    exit 1
 fi
 
 mkdir -p "$XDG_CONFIG_HOME"
 
 # src|dst mappings; only replace existing destination symlinks
 while IFS='|' read -r src dst; do
-  [ -n "$src" ] || continue
-  dstdir=$(dirname "$dst")
-  [ -d "$dstdir" ] || mkdir -p "$dstdir"
-  [ -L "$dst" ] && rm -f "$dst" || true
-  ln -s "$src" "$dst"
+    [ -n "$src" ] || continue
+    dstdir=$(dirname "$dst")
+    [ -d "$dstdir" ] || mkdir -p "$dstdir"
+    [ -L "$dst" ] && rm -f "$dst" || true
+    ln -s "$src" "$dst"
 done <<EOF
 $DOTFILES_DIR/.config/claude/settings.json|$HOME/.claude/settings.json
 $DOTFILES_DIR/.config/claude/commands|$HOME/.claude/commands

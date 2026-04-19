@@ -88,6 +88,9 @@ test-ui-snap-window: install-test-deps
 SHELL_FILES := $(shell find . -name '*.sh' \
 	-not -path './node_modules/*' \
 	-not -path './.git/*' \
+	-not -path './.config/tmux/plugins/*' \
+	-not -path './.config/fish/functions/__sdkman-noexport-init.sh' \
+	-not -path './scripts/attic/*' \
 	-not -path './tests/run-init-tests.sh' 2>/dev/null)
 
 FISH_FILES := $(shell find .config/fish -name '*.fish' 2>/dev/null)

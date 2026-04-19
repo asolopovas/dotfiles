@@ -25,18 +25,18 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "== /etc/default/grub =="
-check "GRUB_DEFAULT=saved"          grep -q '^GRUB_DEFAULT=saved'          /etc/default/grub
-check "GRUB_SAVEDEFAULT=true"       grep -q '^GRUB_SAVEDEFAULT=true'       /etc/default/grub
-check "GRUB_TIMEOUT_STYLE=menu"     grep -q '^GRUB_TIMEOUT_STYLE=menu'     /etc/default/grub
-check "GRUB_TIMEOUT=5"              grep -q '^GRUB_TIMEOUT=5'              /etc/default/grub
-check "GRUB_DISABLE_SUBMENU=y"      grep -q '^GRUB_DISABLE_SUBMENU=y'      /etc/default/grub
+check "GRUB_DEFAULT=saved" grep -q '^GRUB_DEFAULT=saved' /etc/default/grub
+check "GRUB_SAVEDEFAULT=true" grep -q '^GRUB_SAVEDEFAULT=true' /etc/default/grub
+check "GRUB_TIMEOUT_STYLE=menu" grep -q '^GRUB_TIMEOUT_STYLE=menu' /etc/default/grub
+check "GRUB_TIMEOUT=5" grep -q '^GRUB_TIMEOUT=5' /etc/default/grub
+check "GRUB_DISABLE_SUBMENU=y" grep -q '^GRUB_DISABLE_SUBMENU=y' /etc/default/grub
 
 echo "== /etc/default/grub.d =="
 check "60_linuxmint_name.cfg sets GRUB_DISTRIBUTOR=\"Linux Mint\"" \
     grep -q 'GRUB_DISTRIBUTOR="Linux Mint"' /etc/default/grub.d/60_linuxmint_name.cfg
 
 echo "== /etc/grub.d scripts =="
-check "10_linux recognizes 'Linux Mint'"     grep -q '"Linux Mint"' /etc/grub.d/10_linux
+check "10_linux recognizes 'Linux Mint'" grep -q '"Linux Mint"' /etc/grub.d/10_linux
 check "05_debian_theme recognizes 'Linux Mint'" grep -q '"Linux Mint"' /etc/grub.d/05_debian_theme
 
 # Windows detection — only assert Windows-related checks if os-prober finds it
@@ -44,8 +44,8 @@ WIN_DEV=$(os-prober 2>/dev/null | awk -F'[@:]' '/Windows/ {print $1; exit}')
 if [ -n "$WIN_DEV" ]; then
     WIN_UUID=$(blkid -s UUID -o value "$WIN_DEV")
     echo "== Windows entry (detected $WIN_DEV, UUID=$WIN_UUID) =="
-    check "06_windows exists"         test -f /etc/grub.d/06_windows
-    check "06_windows is executable"  test -x /etc/grub.d/06_windows
+    check "06_windows exists" test -f /etc/grub.d/06_windows
+    check "06_windows is executable" test -x /etc/grub.d/06_windows
     check "06_windows contains 'Windows 11' menuentry" \
         grep -q 'menuentry "Windows 11"' /etc/grub.d/06_windows
     check "06_windows references correct UUID" \
