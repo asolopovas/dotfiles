@@ -136,7 +136,7 @@
       "name": "thunderbird",
       "command": "thunderbird",
       "matchBy": "className",
-      "match": "thunderbird",
+      "match": "thunderbird-esr",
       "float": "large"
     },
     {
