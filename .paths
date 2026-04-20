@@ -18,6 +18,7 @@ go/bin
 .cabal/bin
 .ghcup/bin
 dotfiles/scripts
+dotfiles/scripts/attic
 /usr/local/go/bin
 /var/opt/google/google-cloud-sdk/bin
 /opt/cpanel/ea-nodejs20/bin
