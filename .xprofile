@@ -21,3 +21,4 @@ for env_var in "${env_vars[@]}"; do
 done
 
 [ ! -d "$XMONAD_DATA_HOME" ] && mkdir -p "$XMONAD_DATA_HOME"
+[ -x /usr/bin/numlockx ] && /usr/bin/numlockx on
