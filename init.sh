@@ -134,7 +134,7 @@ install_essentials() {
 
 load_script() {
     local script_name=$1
-    local script_path="$SCRIPTS_DIR/inst-$script_name.sh"
+    local script_path="$SCRIPTS_DIR/inst/inst-$script_name.sh"
     print_color green "Sourcing $script_path"
     # shellcheck disable=SC1090
     [[ -f $script_path ]] && source "$script_path"
@@ -163,7 +163,7 @@ load_script 'composer'
 features_string=$(declare -p features)
 export features_string
 
-[[ "$UNATTENDED" = false ]] && source "$SCRIPTS_DIR/inst-menu.sh"
+[[ "$UNATTENDED" = false ]] && source "$SCRIPTS_DIR/inst/inst-menu.sh"
 
 printf "%-15s %s\n" "FEATURE" "STATUS"
 printf '%.0s-' {1..25}

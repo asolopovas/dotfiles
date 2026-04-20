@@ -23,7 +23,7 @@ jobs:
               - 'tests/test-globals.bats'
               - 'tests/run-tests.sh'
             scripts:
-              - 'scripts/ops-update-symlinks.sh'
+              - 'scripts/ops/ops-update-symlinks.sh'
               - 'scripts/cfg-default-dirs.sh'
               - 'env/include-paths.sh'
               - 'env/env-vars.sh'

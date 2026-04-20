@@ -52,7 +52,7 @@ Sanity checks for shell, fish, and shebang/whitespace hygiene. Tools auto-skip w
 | `fish_indent --check` | Advisory in `make lint-fish`. Bats only enforces a small "owned" subset (most of `functions/` is vendored: fisher, fzf, nvm, sdkman, prompt) |
 | Custom bats | Forbids `#!/bin/sh`, forbids trailing whitespace |
 
-Install: `make install-lint-tools` (runs `scripts/inst-lint-tools.sh`, OS-portable).
+Install: `make install-lint-tools` (runs `scripts/inst/inst-lint-tools.sh`, OS-portable).
 
 ### Pre-handoff checklist
 

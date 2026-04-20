@@ -122,7 +122,7 @@ test-lint: install-test-deps
 	@./tests/run-tests.sh lint
 
 install-lint-tools:
-	@./scripts/inst-lint-tools.sh
+	@./scripts/inst/inst-lint-tools.sh
 
 # Maintenance targets
 clean-tests:

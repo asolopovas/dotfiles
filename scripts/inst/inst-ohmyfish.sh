@@ -14,7 +14,7 @@ if [ -d "$DEST" ]; then
     exit 0
 fi
 
-require_cmd fish scripts/inst-fish.sh || exit 1
+require_cmd fish scripts/inst/inst-fish.sh || exit 1
 
 print_color green "Installing oh-my-fish to $DEST..."
 TMP=$(mktemp -d)

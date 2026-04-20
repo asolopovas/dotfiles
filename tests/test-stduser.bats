@@ -235,7 +235,7 @@ D="$H/dotfiles"
         rm -rf $H/.config/fish $H/.config/nvim $H/.config/tmux $H/.claude
         rm -f $H/.config/.aliasrc $H/.config/.func
     "
-    run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" bash "$D/scripts/ops-update-symlinks.sh"
+    run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" bash "$D/scripts/ops/ops-update-symlinks.sh"
     [ "$status" -eq 0 ]
     [ -L "$H/.config/fish" ]
     [ -L "$H/.config/nvim" ]
@@ -251,15 +251,15 @@ D="$H/dotfiles"
 }
 
 @test "ops-update-symlinks: idempotent" {
-    run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" bash "$D/scripts/ops-update-symlinks.sh"
+    run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" bash "$D/scripts/ops/ops-update-symlinks.sh"
     [ "$status" -eq 0 ]
-    run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" bash "$D/scripts/ops-update-symlinks.sh"
+    run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" bash "$D/scripts/ops/ops-update-symlinks.sh"
     [ "$status" -eq 0 ]
 }
 
 @test "ops-update-symlinks: rejects XDG inside repo" {
     run sudo -u stduser env HOME="$H" DOTFILES_DIR="$D" XDG_CONFIG_HOME="$D/.config" \
-        bash "$D/scripts/ops-update-symlinks.sh"
+        bash "$D/scripts/ops/ops-update-symlinks.sh"
     [ "$status" -eq 1 ]
     [[ "$output" == *"Refusing"* ]]
 }

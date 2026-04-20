@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 
 REPO_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
-SCRIPT="$REPO_DIR/scripts/inst-picom.sh"
+SCRIPT="$REPO_DIR/scripts/inst/inst-picom.sh"
 
 setup() {
     export FAKE_HOME="$(mktemp -d)"

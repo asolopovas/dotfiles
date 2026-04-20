@@ -213,7 +213,7 @@ make_fake_cmd() {
 
 @test "inst-bun.sh: skips when bun exists" {
     local bin; bin=$(make_fake_cmd bun "1.1.0")
-    run env PATH="$bin:$PATH" FORCE=false bash "$REPO_DIR/scripts/inst-bun.sh"
+    run env PATH="$bin:$PATH" FORCE=false bash "$REPO_DIR/scripts/inst/inst-bun.sh"
     [[ "$output" == *"already installed"* ]]
 }
 
@@ -221,47 +221,47 @@ make_fake_cmd() {
     local bin; bin=$(make_fake_cmd bun "1.1.0")
     printf '#!/bin/sh\nexit 0\n' > "$bin/curl"
     chmod +x "$bin/curl"
-    run env PATH="$bin:$PATH" FORCE=true bash "$REPO_DIR/scripts/inst-bun.sh"
+    run env PATH="$bin:$PATH" FORCE=true bash "$REPO_DIR/scripts/inst/inst-bun.sh"
     [[ "$output" != *"already installed"* ]]
 }
 
 @test "inst-deno.sh: skips when deno exists" {
     local bin; bin=$(make_fake_cmd deno "deno 1.40.0")
-    run env PATH="$bin:$PATH" FORCE=false bash "$REPO_DIR/scripts/inst-deno.sh"
+    run env PATH="$bin:$PATH" FORCE=false bash "$REPO_DIR/scripts/inst/inst-deno.sh"
     [[ "$output" == *"already installed"* ]]
 }
 
 @test "inst-fd.sh: skips when fd exists" {
     local bin; bin=$(make_fake_cmd fd "fd 10.3.0")
     run env HOME="$FAKE_HOME" PATH="$bin:$PATH" FORCE=false \
-        bash "$REPO_DIR/scripts/inst-fd.sh"
+        bash "$REPO_DIR/scripts/inst/inst-fd.sh"
     [[ "$output" == *"already installed"* ]]
 }
 
 @test "inst-fish.sh: skips when fish exists" {
     local bin; bin=$(make_fake_cmd fish "fish 3.7.0")
     run env HOME="$FAKE_HOME" PATH="$bin:$PATH" FORCE=false \
-        bash "$REPO_DIR/scripts/inst-fish.sh"
+        bash "$REPO_DIR/scripts/inst/inst-fish.sh"
     [[ "$output" == *"already installed"* ]]
 }
 
 @test "inst-fzf.sh: skips when fzf binary exists at ~/.local/bin" {
     mkdir -p "$FAKE_HOME/.local/bin"
     touch "$FAKE_HOME/.local/bin/fzf"
-    run env HOME="$FAKE_HOME" FORCE=false bash "$REPO_DIR/scripts/inst-fzf.sh"
+    run env HOME="$FAKE_HOME" FORCE=false bash "$REPO_DIR/scripts/inst/inst-fzf.sh"
     [[ "$output" != *"INSTALLING FZF"* ]]
 }
 
 @test "inst-fzf.sh: skips when fzf on PATH" {
     local bin; bin=$(make_fake_cmd fzf "0.42.0")
     run env HOME="$FAKE_HOME" PATH="$bin:$PATH" FORCE=false \
-        bash "$REPO_DIR/scripts/inst-fzf.sh"
+        bash "$REPO_DIR/scripts/inst/inst-fzf.sh"
     [[ "$output" != *"INSTALLING FZF"* ]]
 }
 
 @test "inst-cargo.sh: skips when cargo exists" {
     local bin; bin=$(make_fake_cmd cargo "cargo 1.80.0")
-    run env PATH="$bin:$PATH" FORCE=false bash "$REPO_DIR/scripts/inst-cargo.sh"
+    run env PATH="$bin:$PATH" FORCE=false bash "$REPO_DIR/scripts/inst/inst-cargo.sh"
     [[ "$output" == *"already installed"* ]]
 }
 
@@ -318,7 +318,7 @@ setup_fake_dotfiles() {
     mkdir -p "$FAKE_HOME/.config" "$FAKE_HOME/dotfiles/.config/nvim"
     run bash -c "
         HOME='$FAKE_HOME' DOTFILES_DIR='$FAKE_HOME/dotfiles'
-        eval \"\$(sed -n '/^ensure_nvim_config()/,/^}/p' '$REPO_DIR/scripts/inst-nvim.sh')\"
+        eval \"\$(sed -n '/^ensure_nvim_config()/,/^}/p' '$REPO_DIR/scripts/inst/inst-nvim.sh')\"
         ensure_nvim_config
         readlink '$FAKE_HOME/.config/nvim'
     "
@@ -330,7 +330,7 @@ setup_fake_dotfiles() {
     ln -s "$FAKE_HOME/dotfiles/.config/nvim" "$FAKE_HOME/.config/nvim"
     run bash -c "
         HOME='$FAKE_HOME' DOTFILES_DIR='$FAKE_HOME/dotfiles'
-        eval \"\$(sed -n '/^ensure_nvim_config()/,/^}/p' '$REPO_DIR/scripts/inst-nvim.sh')\"
+        eval \"\$(sed -n '/^ensure_nvim_config()/,/^}/p' '$REPO_DIR/scripts/inst/inst-nvim.sh')\"
         ensure_nvim_config; echo ok
     "
     [[ "$output" == *"ok"* ]]

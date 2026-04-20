@@ -18,6 +18,10 @@ go/bin
 .cabal/bin
 .ghcup/bin
 dotfiles/scripts
+dotfiles/scripts/inst
+dotfiles/scripts/ops
+dotfiles/scripts/sys
+dotfiles/scripts/wsl
 dotfiles/scripts/attic
 /usr/local/go/bin
 /var/opt/google/google-cloud-sdk/bin

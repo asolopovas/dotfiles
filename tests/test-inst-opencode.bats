@@ -57,7 +57,7 @@ teardown() {
 }
 
 opencode_run() {
-    bash "$REPO_DIR/scripts/inst-opencode.sh"
+    bash "$REPO_DIR/scripts/inst/inst-opencode.sh"
 }
 
 assert_opencode_symlink() {
@@ -137,6 +137,6 @@ assert_opencode_symlink() {
         [[ -x "$dir/opencode" ]] || filtered="${filtered:+$filtered:}$dir"
     done
 
-    run env PATH="$FAKE_BIN:$filtered" bash "$REPO_DIR/scripts/inst-opencode.sh"
+    run env PATH="$FAKE_BIN:$filtered" bash "$REPO_DIR/scripts/inst/inst-opencode.sh"
     [[ "$output" == *"Installing OpenCode"* ]]
 }

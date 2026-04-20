@@ -3,7 +3,7 @@ set -euo pipefail
 
 source "$HOME/dotfiles/globals.sh"
 
-require_cmd npm scripts/inst-node.sh || exit 1
+require_cmd npm scripts/inst/inst-node.sh || exit 1
 
 print_color green "Installing Playwright CLI..."
 npm install -g @playwright/cli@latest

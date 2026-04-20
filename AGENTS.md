@@ -61,7 +61,7 @@ docs/                Deep dives — read before touching the area
 
 ### Script naming
 
-`{category}-{name}.sh` in `scripts/`:
+`{category}-{name}.sh` in `scripts/{category}/` (where category subfolder exists: `inst/`, `ops/`, `sys/`, `wsl/`):
 
 | Prefix | Use |
 |---|---|

@@ -43,7 +43,7 @@ symlinks_run() {
     # CI runners may export XDG_CONFIG_HOME pointing elsewhere.
     env -u XDG_CONFIG_HOME \
         HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh" "$@"
+        bash "$REPO_DIR/scripts/ops/ops-update-symlinks.sh" "$@"
 }
 
 @test "symlinks: creates all expected symlinks" {
@@ -86,7 +86,7 @@ symlinks_run() {
 @test "symlinks: rejects XDG_CONFIG_HOME inside repo" {
     run env XDG_CONFIG_HOME="$FAKE_HOME/dotfiles/.config" \
         HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
+        bash "$REPO_DIR/scripts/ops/ops-update-symlinks.sh"
     [[ "$status" -eq 1 ]]
     [[ "$output" == *"Refusing"* ]]
 }
@@ -97,7 +97,7 @@ symlinks_run() {
 
     env -u XDG_CONFIG_HOME \
         HOME="$FAKE_HOME" DOTFILES_DIR="$FAKE_HOME/dotfiles" XDG_CONFIG_HOME="$custom_xdg" \
-        bash "$REPO_DIR/scripts/ops-update-symlinks.sh"
+        bash "$REPO_DIR/scripts/ops/ops-update-symlinks.sh"
 
     [ -L "$custom_xdg/fish" ]
     [ -L "$custom_xdg/nvim" ]

@@ -10,7 +10,7 @@
 # Does NOT execute installs (would touch the system / require sudo / network).
 
 REPO_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
-SCRIPTS_DIR="$REPO_DIR/scripts"
+SCRIPTS_DIR="$REPO_DIR/scripts/inst"
 
 # Scripts intentionally exempt from the standard pattern (config dumps,
 # heavy interactive setup, or third-party-shaped installers).
