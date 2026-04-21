@@ -650,9 +650,13 @@ setup_vhosts() {
 
         replace_with_symlink /opt/nvim-config/nvim "$home_dir/.config/nvim"
 
-        # Claude
+        # Claude — copy settings (not symlink) so vhost user can write to it
         mkdir -p "$home_dir/.claude"
-        ensure_symlink "$dotfiles_dir/.claude/settings.json" "$home_dir/.claude/settings.json"
+        if [[ ! -f "$home_dir/.claude/settings.json" ]] || [[ -L "$home_dir/.claude/settings.json" ]]; then
+            rm -f "$home_dir/.claude/settings.json" 2>/dev/null || true
+            cp "$dotfiles_dir/.claude/settings.json" "$home_dir/.claude/settings.json"
+            chown "$plesk_user:" "$home_dir/.claude/settings.json"
+        fi
         rm -f "$home_dir/.claude/commands" 2>/dev/null || true
         if [[ -d /opt/agents-skills ]]; then
             replace_with_symlink /opt/agents-skills "$home_dir/.claude/skills"
@@ -680,7 +684,6 @@ setup_vhosts() {
             "$home_dir/.config/.aliasrc" \
             "$home_dir/.config/tmux" \
             "$home_dir/.config/nvim" \
-            "$home_dir/.claude/settings.json" \
             "$home_dir/.claude/skills" \
             "$home_dir/.local/bin/helpers" \
             2>/dev/null || true
