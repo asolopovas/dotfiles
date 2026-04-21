@@ -1,6 +1,9 @@
 {
-  "includeCoAuthoredBy": false,
+  "effortLevel": "medium",
   "includeGitInstructions": false,
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "medium"
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
 }
