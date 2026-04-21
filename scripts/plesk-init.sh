@@ -81,14 +81,30 @@ nvim_headless() {
 setup_dotfiles() {
     print_color bold_green "=== Dotfiles ==="
 
-    mkdir -p /opt/dotfiles
-    rsync -a --delete \
-        --exclude='.git' \
-        --exclude='tests/' \
-        /root/dotfiles/ /opt/dotfiles/
+    # /opt/dotfiles IS the canonical git repo; /root/dotfiles is a symlink to it.
+    if [[ -d /root/dotfiles && ! -L /root/dotfiles ]]; then
+        # Migration: move the real repo to /opt and replace with symlink
+        rm -rf /opt/dotfiles
+        mv /root/dotfiles /opt/dotfiles
+        ln -sf /opt/dotfiles /root/dotfiles
+        print_color green "  Migrated /root/dotfiles -> /opt/dotfiles"
+    elif [[ ! -d /opt/dotfiles ]]; then
+        git clone "$DOTFILES_URL" /opt/dotfiles
+        ln -sf /opt/dotfiles /root/dotfiles
+    else
+        git -C /opt/dotfiles pull --ff-only 2>/dev/null || true
+    fi
+
+    # Wire root's dotfiles the same way as vhosts
+    local src
+    for src in "${VHOST_SYMLINKS[@]}"; do
+        ensure_symlink "/root/dotfiles/$src" "/root/$src"
+    done
+    ensure_symlink "/root/dotfiles/helpers" "/root/.local/bin/helpers"
+
     lock_perms /opt/dotfiles
 
-    print_color green "  /opt/dotfiles synced ($(du -sh /opt/dotfiles | cut -f1))"
+    print_color green "  /opt/dotfiles ready ($(du -sh /opt/dotfiles | cut -f1))"
 }
 
 setup_omf() {
@@ -647,9 +663,10 @@ do_sync() {
     print_color bold_green "=== Quick sync ==="
 
     setup_dotfiles
+    setup_vhosts
 
     if [[ -d /opt/nvim-config/nvim ]]; then
-        rsync -a --delete "$HOME/dotfiles/.config/nvim/" /opt/nvim-config/nvim/
+        rsync -a --delete /opt/dotfiles/.config/nvim/ /opt/nvim-config/nvim/
         lock_perms /opt/nvim-config
         print_color green "  /opt/nvim-config synced"
     fi
@@ -693,7 +710,7 @@ Usage: $(basename "$0") [command]
 Commands:
   all       Full setup/update (default)
   sync      Quick rsync of shared data (no downloads)
-  dotfiles  Sync /root/dotfiles -> /opt/dotfiles
+  dotfiles  Ensure /opt/dotfiles is canonical, wire root symlinks
   omf       Install/update shared Oh My Fish + bass
   opencode  Sync opencode config + binary
   vscode    Sync VS Code Server (merge root -> shared)
