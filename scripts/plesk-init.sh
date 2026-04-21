@@ -239,6 +239,28 @@ ROOTWRAPPER
     fi
 }
 
+setup_claude() {
+    print_color bold_green "=== Claude Code ==="
+
+    local sync_ai="${SCRIPT_DIR}/sync-ai.sh"
+    if [[ -x "$sync_ai" ]]; then
+        print_color green "  Syncing skills via sync-ai.sh..."
+        SYNC_TARGETS=claude "$sync_ai" skills 2>&1 | sed 's/^/    /'
+    fi
+
+    local root_skills="$HOME/.agents/skills"
+    if [[ -d "$root_skills" ]]; then
+        mkdir -p /opt/agents-skills
+        rsync -a --delete "$root_skills/" /opt/agents-skills/
+        lock_perms /opt/agents-skills
+        print_color green "  /opt/agents-skills synced ($(du -sh /opt/agents-skills | cut -f1))"
+    fi
+
+    ensure_symlink /opt/agents-skills "$HOME/.claude/skills"
+
+    print_color green "  Claude config at /opt/dotfiles/.claude/"
+}
+
 setup_vscode() {
     print_color bold_green "=== VS Code Server ==="
 
@@ -628,6 +650,13 @@ setup_vhosts() {
 
         replace_with_symlink /opt/nvim-config/nvim "$home_dir/.config/nvim"
 
+        # Claude
+        mkdir -p "$home_dir/.claude"
+        ensure_symlink "$dotfiles_dir/.claude/settings.json" "$home_dir/.claude/settings.json"
+        if [[ -d /opt/agents-skills ]]; then
+            replace_with_symlink /opt/agents-skills "$home_dir/.claude/skills"
+        fi
+
         mkdir -p \
             "$home_dir/.local/state/nvim" \
             "$home_dir/.cache/nvim"
@@ -650,6 +679,8 @@ setup_vhosts() {
             "$home_dir/.config/.aliasrc" \
             "$home_dir/.config/tmux" \
             "$home_dir/.config/nvim" \
+            "$home_dir/.claude/settings.json" \
+            "$home_dir/.claude/skills" \
             "$home_dir/.local/bin/helpers" \
             2>/dev/null || true
 
@@ -672,6 +703,7 @@ do_sync() {
     fi
 
     setup_opencode
+    setup_claude
     setup_vscode
     print_color bold_green "Sync complete"
 }
@@ -680,6 +712,7 @@ do_all() {
     setup_dotfiles
     setup_omf
     setup_opencode
+    setup_claude
     setup_vscode
     setup_nvim
     setup_bun
@@ -714,6 +747,7 @@ Commands:
   omf       Install/update shared Oh My Fish + bass
   opencode  Sync opencode config + binary
   vscode    Sync VS Code Server (merge root -> shared)
+  claude    Sync Claude Code config + shared skills
   nvim      Install/update nvim, plugins, LSPs, parsers
   bun       Install/update bun with shared cache
   vhosts    Configure all vhost user symlinks + cleanup
@@ -728,6 +762,7 @@ case "${1:-all}" in
     dotfiles) setup_dotfiles ;;
     omf) setup_omf ;;
     opencode) setup_opencode ;;
+    claude) setup_claude ;;
     vscode) setup_vscode ;;
     nvim) setup_nvim ;;
     bun) setup_bun ;;

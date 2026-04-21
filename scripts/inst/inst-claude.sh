@@ -20,5 +20,5 @@ else
     curl -fsSL https://claude.ai/install.sh | bash
 fi
 
-SYNC_TARGETS=claude "$DOTFILES_DIR/scripts/sync-ai.sh" config
-print_color green "Claude Code installation complete. Run sync-ai.sh for skills/MCP."
+SYNC_TARGETS=claude "$DOTFILES_DIR/scripts/sync-ai.sh"
+print_color green "Claude Code installation complete."
