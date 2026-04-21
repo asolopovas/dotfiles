@@ -653,6 +653,7 @@ setup_vhosts() {
         # Claude
         mkdir -p "$home_dir/.claude"
         ensure_symlink "$dotfiles_dir/.claude/settings.json" "$home_dir/.claude/settings.json"
+        rm -f "$home_dir/.claude/commands" 2>/dev/null || true
         if [[ -d /opt/agents-skills ]]; then
             replace_with_symlink /opt/agents-skills "$home_dir/.claude/skills"
         fi
