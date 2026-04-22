@@ -258,6 +258,30 @@ setup_claude() {
 
     ensure_symlink /opt/agents-skills "$HOME/.claude/skills"
 
+    # Share the claude binary — same pattern as opencode
+    local claude_ver_dir="$HOME/.local/share/claude/versions"
+    local claude_src
+    claude_src=$(find "$claude_ver_dir" -maxdepth 1 -type f -executable 2>/dev/null | sort -V | tail -1)
+
+    if [[ -n "$claude_src" && -x "$claude_src" ]]; then
+        if [[ ! -x /usr/local/bin/claude-bin ]] || ! cmp -s "$claude_src" /usr/local/bin/claude-bin; then
+            if cp "$claude_src" /usr/local/bin/claude-bin 2>/dev/null; then
+                chmod 755 /usr/local/bin/claude-bin
+                print_color green "  /usr/local/bin/claude-bin installed (v$("$claude_src" --version 2>/dev/null | head -1))"
+            else
+                print_color yellow "  /usr/local/bin/claude-bin busy (in use) — skipped"
+            fi
+        else
+            print_color green "  /usr/local/bin/claude-bin up to date"
+        fi
+    fi
+
+    cat >/usr/local/bin/claude <<'WRAPPER'
+#!/bin/bash
+exec /usr/local/bin/claude-bin "$@"
+WRAPPER
+    chmod 755 /usr/local/bin/claude
+
     print_color green "  Claude config at /opt/dotfiles/.claude/"
 }
 
@@ -519,6 +543,11 @@ readonly CLEANUP_DIRS=(
     .bun
 )
 
+readonly CLAUDE_CLEANUP_DIRS=(
+    .local/share/claude
+    .local/state/claude
+)
+
 readonly OPENCODE_CLEANUP_DIRS=(
     .opencode
     .cache/opencode
@@ -626,6 +655,11 @@ setup_vhosts() {
         for d in "${OPENCODE_CLEANUP_DIRS[@]}"; do
             [[ -d "$home_dir/$d" && ! -L "$home_dir/$d" ]] && rm -rf "${home_dir:?}/$d"
         done
+        for d in "${CLAUDE_CLEANUP_DIRS[@]}"; do
+            [[ -d "$home_dir/$d" && ! -L "$home_dir/$d" ]] && rm -rf "${home_dir:?}/$d"
+        done
+        # Remove per-vhost claude binary (shared via /usr/local/bin/claude)
+        rm -f "$home_dir/.local/bin/claude" 2>/dev/null || true
 
         if [[ -d /opt/opencode-config ]]; then
             replace_with_symlink /opt/opencode-config "$home_dir/.config/opencode"
