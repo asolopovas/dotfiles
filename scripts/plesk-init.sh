@@ -5,11 +5,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 source "${SCRIPT_DIR}/../globals.sh"
 
+FORCE=false
+
 require_root() {
     if [[ $EUID -ne 0 ]]; then
         print_color red "Must run as root"
         exit 1
     fi
+}
+
+# Prompt user when --force is set; returns 0 (yes) or 1 (no).
+# Without --force, always returns 1 (skip).
+confirm_reinstall() {
+    local label="$1"
+    if [[ "$FORCE" != true ]]; then
+        return 1
+    fi
+    local reply
+    read -r -p "  Reinstall ${label}? [y/N] " reply
+    case "$reply" in
+        [Yy] | [Yy][Ee][Ss]) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 lock_perms() {
@@ -111,8 +128,14 @@ setup_omf() {
     print_color bold_green "=== Oh My Fish ==="
 
     if [[ -f /opt/omf/init.fish && -d /opt/omf/pkg/bass ]]; then
-        print_color green "  OMF already installed"
-    else
+        if confirm_reinstall "Oh My Fish"; then
+            rm -rf /opt/omf
+        else
+            print_color green "  OMF already installed"
+        fi
+    fi
+
+    if [[ ! -f /opt/omf/init.fish || ! -d /opt/omf/pkg/bass ]]; then
         print_color green "  Installing OMF + bass..."
         rm -rf /opt/omf
 
@@ -342,7 +365,9 @@ setup_nvim() {
 
     local nvim_bin="/opt/nvim/bin/nvim"
 
-    if [[ ! -x "$nvim_bin" ]]; then
+    if [[ -x "$nvim_bin" ]] && ! confirm_reinstall "nvim ($($nvim_bin --version | head -1))"; then
+        : # already installed, skip
+    else
         print_color green "  Downloading nvim..."
         local tmp
         tmp=$(mktemp -d)
@@ -392,34 +417,69 @@ WRAPPER
 
     mkdir -p /opt/nvim-data/nvim
 
-    nvim_headless "  Syncing plugins..." \
-        "local ok,lazy = pcall(require,'lazy'); if ok then lazy.sync({wait=true}) end; vim.cmd('qa!')"
+    local need_plugins=true need_mason=true need_treesitter=true
 
-    nvim_headless "  Installing/updating Mason LSP servers..." "
-        local reg = require('mason-registry')
-        reg.refresh(function()
-            local pkgs = {'lua-language-server','intelephense','json-lsp'}
-            local done, total = 0, #pkgs
-            local function tick()
-                done = done + 1
-                if done >= total then vim.schedule(function() vim.cmd('qa!') end) end
-            end
-            for _, name in ipairs(pkgs) do
-                local ok, pkg = pcall(reg.get_package, name)
-                if ok and not pkg:is_installed() then
-                    pkg:install():on('closed', tick)
-                else
-                    tick()
+    # Skip if already populated (lazy dir has plugin dirs)
+    if [[ -d /opt/nvim-data/nvim/lazy ]] && \
+       [[ $(find /opt/nvim-data/nvim/lazy -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l) -gt 5 ]]; then
+        need_plugins=false
+    fi
+
+    # Skip if mason packages already installed
+    if [[ -d /opt/nvim-data/nvim/mason/packages/lua-language-server ]] && \
+       [[ -d /opt/nvim-data/nvim/mason/packages/intelephense ]] && \
+       [[ -d /opt/nvim-data/nvim/mason/packages/json-lsp ]]; then
+        need_mason=false
+    fi
+
+    # Skip if treesitter parsers already compiled
+    local ts_dir="/opt/nvim-data/nvim/lazy/nvim-treesitter/parser"
+    if [[ -d "$ts_dir" ]] && \
+       [[ -f "$ts_dir/lua.so" ]] && [[ -f "$ts_dir/php.so" ]] && \
+       [[ -f "$ts_dir/bash.so" ]] && [[ -f "$ts_dir/fish.so" ]]; then
+        need_treesitter=false
+    fi
+
+    if [[ "$need_plugins" == true ]] || confirm_reinstall "nvim plugins"; then
+        nvim_headless "  Syncing plugins..." \
+            "local ok,lazy = pcall(require,'lazy'); if ok then lazy.sync({wait=true}) end; vim.cmd('qa!')"
+    else
+        print_color green "  Plugins already installed — skipping"
+    fi
+
+    if [[ "$need_mason" == true ]] || confirm_reinstall "Mason LSP servers"; then
+        nvim_headless "  Installing/updating Mason LSP servers..." "
+            local reg = require('mason-registry')
+            reg.refresh(function()
+                local pkgs = {'lua-language-server','intelephense','json-lsp'}
+                local done, total = 0, #pkgs
+                local function tick()
+                    done = done + 1
+                    if done >= total then vim.schedule(function() vim.cmd('qa!') end) end
                 end
-            end
-        end)
-    "
+                for _, name in ipairs(pkgs) do
+                    local ok, pkg = pcall(reg.get_package, name)
+                    if ok and not pkg:is_installed() then
+                        pkg:install():on('closed', tick)
+                    else
+                        tick()
+                    end
+                end
+            end)
+        "
+    else
+        print_color green "  Mason LSP servers already installed — skipping"
+    fi
 
-    nvim_headless "  Installing/updating Treesitter parsers..." "
-        local langs = {'vimdoc','javascript','typescript','lua','jsdoc','bash','php','fish'}
-        for _, l in ipairs(langs) do vim.cmd('TSInstallSync! ' .. l) end
-        vim.cmd('qa!')
-    "
+    if [[ "$need_treesitter" == true ]] || confirm_reinstall "Treesitter parsers"; then
+        nvim_headless "  Installing/updating Treesitter parsers..." "
+            local langs = {'vimdoc','javascript','typescript','lua','jsdoc','bash','php','fish'}
+            for _, l in ipairs(langs) do vim.cmd('TSInstallSync! ' .. l) end
+            vim.cmd('qa!')
+        "
+    else
+        print_color green "  Treesitter parsers already installed — skipping"
+    fi
 
     lock_perms /opt/nvim-data
     find /opt/nvim-data/nvim/mason -type f \( -name "*.sh" -o -path "*/bin/*" \) \
@@ -441,13 +501,17 @@ setup_fzf() {
     if [[ -x /usr/local/bin/fzf ]]; then
         local current
         current=$(/usr/local/bin/fzf --version 2>/dev/null | awk '{print $1}')
-        if [[ "$current" == "${ver#v}" ]]; then
-            print_color green "  fzf ${ver} (up to date)"
-            return
+        if [[ "$current" == "$ver" ]]; then
+            if confirm_reinstall "fzf ${ver}"; then
+                : # fall through to install
+            else
+                print_color green "  fzf ${ver} (up to date)"
+                return
+            fi
         fi
-        print_color green "  fzf v${current} -> ${ver}"
+        print_color green "  fzf v${current} -> v${ver}"
     else
-        print_color green "  Installing fzf ${ver}"
+        print_color green "  Installing fzf v${ver}"
     fi
 
     local fzf_arch
@@ -461,9 +525,9 @@ setup_fzf() {
     tmp=$(mktemp -d)
     trap 'rm -rf "${tmp:-}"' RETURN
 
-    local tarball="fzf-${ver#v}-linux_${fzf_arch}.tar.gz"
+    local tarball="fzf-${ver}-linux_${fzf_arch}.tar.gz"
     curl -fsSL -o "$tmp/$tarball" \
-        "https://github.com/junegunn/fzf/releases/download/${ver}/${tarball}"
+        "https://github.com/junegunn/fzf/releases/download/v${ver}/${tarball}"
     tar -xzf "$tmp/$tarball" -C "$tmp"
     install -m 755 -o root -g root "$tmp/fzf" /usr/local/bin/fzf
 
@@ -490,7 +554,12 @@ setup_bun() {
         local old_ver
         old_ver=$(/usr/local/bin/bun-bin --version 2>/dev/null || echo "unknown")
         if [[ "$old_ver" == "$new_ver" ]]; then
-            print_color green "  bun v${new_ver} (up to date)"
+            if confirm_reinstall "bun v${new_ver}"; then
+                : # fall through to install
+            else
+                print_color green "  bun v${new_ver} (up to date)"
+                return
+            fi
         else
             print_color green "  bun v${old_ver} -> v${new_ver}"
         fi
@@ -855,7 +924,10 @@ do_all() {
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [command]
+Usage: $(basename "$0") [command] [--force]
+
+Options:
+  -f, --force   Prompt to reinstall already-installed components
 
 Commands:
   all       Full setup/update (default)
@@ -875,7 +947,27 @@ EOF
 
 require_root
 
-case "${1:-all}" in
+# Parse flags
+cmd=""
+for arg in "$@"; do
+    case "$arg" in
+        -f | --force) FORCE=true ;;
+        -h | --help | help)
+            usage
+            exit 0
+            ;;
+        *)
+            if [[ -z "$cmd" ]]; then
+                cmd="$arg"
+            else
+                usage
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+case "${cmd:-all}" in
     all) do_all ;;
     sync) do_sync ;;
     dotfiles) setup_dotfiles ;;
@@ -888,7 +980,6 @@ case "${1:-all}" in
     bun) setup_bun ;;
     vhosts) setup_vhosts ;;
     memlimit) setup_memory_limits ;;
-    -h | --help | help) usage ;;
     *)
         usage
         exit 1
