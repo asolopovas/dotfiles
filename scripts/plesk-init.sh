@@ -428,6 +428,48 @@ WRAPPER
     rm -f /etc/profile.d/nvim.sh
 }
 
+setup_fzf() {
+    print_color bold_green "=== fzf ==="
+
+    local ver
+    ver=$(gh_latest_release junegunn/fzf)
+    if [[ -z "$ver" ]]; then
+        print_color red "  Failed to fetch latest fzf version"
+        return 1
+    fi
+
+    if [[ -x /usr/local/bin/fzf ]]; then
+        local current
+        current=$(/usr/local/bin/fzf --version 2>/dev/null | awk '{print $1}')
+        if [[ "$current" == "${ver#v}" ]]; then
+            print_color green "  fzf ${ver} (up to date)"
+            return
+        fi
+        print_color green "  fzf v${current} -> ${ver}"
+    else
+        print_color green "  Installing fzf ${ver}"
+    fi
+
+    local fzf_arch
+    case "$ARCH" in
+        x86_64)  fzf_arch="amd64" ;;
+        aarch64) fzf_arch="arm64" ;;
+        *)       fzf_arch="amd64" ;;
+    esac
+
+    local tmp
+    tmp=$(mktemp -d)
+    trap 'rm -rf "${tmp:-}"' RETURN
+
+    local tarball="fzf-${ver#v}-linux_${fzf_arch}.tar.gz"
+    curl -fsSL -o "$tmp/$tarball" \
+        "https://github.com/junegunn/fzf/releases/download/${ver}/${tarball}"
+    tar -xzf "$tmp/$tarball" -C "$tmp"
+    install -m 755 -o root -g root "$tmp/fzf" /usr/local/bin/fzf
+
+    print_color green "  fzf v$(/usr/local/bin/fzf --version | awk '{print $1}') ready"
+}
+
 setup_bun() {
     print_color bold_green "=== Bun ==="
 
@@ -789,6 +831,7 @@ do_all() {
     setup_claude
     setup_vscode
     setup_nvim
+    setup_fzf
     setup_bun
     setup_vhosts
 
@@ -823,6 +866,7 @@ Commands:
   vscode    Sync VS Code Server (merge root -> shared)
   claude    Sync Claude Code config + shared skills
   nvim      Install/update nvim, plugins, LSPs, parsers
+  fzf       Install/update fzf
   bun       Install/update bun with shared cache
   vhosts    Configure all vhost user symlinks + cleanup
   memlimit  Set per-user systemd memory limits
@@ -840,6 +884,7 @@ case "${1:-all}" in
     claude) setup_claude ;;
     vscode) setup_vscode ;;
     nvim) setup_nvim ;;
+    fzf) setup_fzf ;;
     bun) setup_bun ;;
     vhosts) setup_vhosts ;;
     memlimit) setup_memory_limits ;;
