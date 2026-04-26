@@ -728,9 +728,44 @@ setup_vhosts() {
     print_color green "  $ok configured, $skip skipped"
 }
 
+setup_memory_limits() {
+    print_color bold_green "=== Memory limits ==="
+
+    local conf_dir="/etc/systemd/system/user-.slice.d"
+    local conf="$conf_dir/50-memory.conf"
+
+    # Calculate limit: 25% of total RAM, minimum 1G
+    local total_kb
+    total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+    local limit_mb=$(( total_kb / 1024 / 4 ))
+    (( limit_mb < 1024 )) && limit_mb=1024
+    local limit="${limit_mb}M"
+
+    if [[ -f "$conf" ]]; then
+        local current
+        current=$(awk -F= '/^MemoryMax=/ {print $2}' "$conf" 2>/dev/null)
+        if [[ "$current" == "$limit" ]]; then
+            print_color green "  user-.slice MemoryMax=${limit} (unchanged)"
+            return
+        fi
+    fi
+
+    mkdir -p "$conf_dir"
+    cat >"$conf" <<EOF
+[Slice]
+# Limit each user session to prevent OOM-killing the server
+MemoryMax=${limit}
+MemorySwapMax=${limit}
+EOF
+
+    systemctl daemon-reload
+    print_color green "  user-.slice MemoryMax=${limit} MemorySwapMax=${limit}"
+}
+
 do_sync() {
     print_color bold_green "=== Quick sync ==="
 
+    setup_memory_limits
     setup_dotfiles
     setup_vhosts
 
@@ -747,6 +782,7 @@ do_sync() {
 }
 
 do_all() {
+    setup_memory_limits
     setup_dotfiles
     setup_omf
     setup_opencode
@@ -789,6 +825,7 @@ Commands:
   nvim      Install/update nvim, plugins, LSPs, parsers
   bun       Install/update bun with shared cache
   vhosts    Configure all vhost user symlinks + cleanup
+  memlimit  Set per-user systemd memory limits
 EOF
 }
 
@@ -805,6 +842,7 @@ case "${1:-all}" in
     nvim) setup_nvim ;;
     bun) setup_bun ;;
     vhosts) setup_vhosts ;;
+    memlimit) setup_memory_limits ;;
     -h | --help | help) usage ;;
     *)
         usage
