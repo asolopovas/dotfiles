@@ -27,26 +27,36 @@ WITH
     SELECT CASE WHEN s.key LIKE '%.code-workspace' THEN 'workspace' ELSE 'folder' END AS kind,
            s.key AS uri
     FROM json_each(json_extract(readfile('$storage'),'\$.profileAssociations.workspaces')) s)
-SELECT kind, uri FROM recent WHERE kind IS NOT NULL
-UNION SELECT kind, uri FROM store;
+SELECT kind, uri, 'recent' AS src FROM recent WHERE kind IS NOT NULL
+UNION SELECT kind, uri, 'store'  AS src FROM store;
 " | awk -F'\t' -v OFS='\t' '
     {
-        kind=$1; uri=$2
+        kind=$1; uri=$2; src=$3
         if (match(uri, /^vscode-vfs:\/\/github(%2[Bb]|\+)[0-9a-fA-F]+/))
             uri = "vscode-vfs://github" substr(uri, RSTART+RLENGTH)
-        if (seen[kind"\t"uri]++) next
-        if      (uri ~ /^file:/)                  { p=0; tag="" }
-        else if (uri ~ /^vscode-remote:\/\/ssh-/) { p=1; tag="ssh" }
-        else if (uri ~ /^vscode-remote:/)         { p=1; tag="remote" }
-        else if (uri ~ /^vscode-vfs:\/\/github/)  { p=2; tag="github" }
-        else if (uri ~ /^vscode-vfs:/)            { p=2; tag="vfs" }
-        else                                      { p=3; tag="" }
-        if (tag=="github") { n=uri; sub(/^vscode-vfs:\/\/github\//,"",n) }
-        else { n=uri; sub(/\/$/,"",n); sub(/.*\//,"",n) }
-        if (kind=="workspace") { sub(/\.code-workspace$/,"",n); tag=tag?tag" ws":"ws" }
-        if (tag) n = n " [" tag "]"
-        if (shown[n]++) n = n " " shown[n]
-        print p, n, kind, uri
+        key=kind"\t"uri
+        if (src=="recent") R[key]=1
+        if (seen[key]++) next
+        K[++N]=kind; U[N]=uri
+        if (kind=="workspace") W[uri]=1
+    }
+    END {
+        for (i=1; i<=N; i++) {
+            kind=K[i]; uri=U[i]
+            if (kind=="folder" && !R[kind"\t"uri]) { skip=0; for (w in W) if (index(w, uri "/")==1) { skip=1; break } if (skip) continue }
+            if      (uri ~ /^file:/)                  { p=0; tag="" }
+            else if (uri ~ /^vscode-remote:\/\/ssh-/) { p=1; tag="ssh" }
+            else if (uri ~ /^vscode-remote:/)         { p=1; tag="remote" }
+            else if (uri ~ /^vscode-vfs:\/\/github/)  { p=2; tag="github" }
+            else if (uri ~ /^vscode-vfs:/)            { p=2; tag="vfs" }
+            else                                      { p=3; tag="" }
+            if (tag=="github") { n=uri; sub(/^vscode-vfs:\/\/github\//,"",n) }
+            else { n=uri; sub(/\/$/,"",n); sub(/.*\//,"",n) }
+            if (kind=="workspace") { sub(/\.code-workspace$/,"",n); tag=tag?tag" ws":"ws" }
+            if (tag) n = n " [" tag "]"
+            if (shown[n]++) n = n " " shown[n]
+            print p, n, kind, uri
+        }
     }' | sort -s | fzf --delimiter=$'\t' --with-nth=2 --no-multi) || exit 1
 
 IFS=$'\t' read -r _ _ kind uri <<<"$pick"
