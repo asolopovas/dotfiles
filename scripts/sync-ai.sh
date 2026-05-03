@@ -489,6 +489,7 @@ mcp_claude_sync() {
     local name
     for name in "${installed[@]}"; do
         [[ -v MCP_SERVERS[$name] ]] && continue
+        claude mcp get "$name" >/dev/null 2>&1 || continue
         claude mcp remove "$name" -s user 2>/dev/null &&
             echo "Removed $name from claude" ||
             echo "Warning: failed to remove $name from claude" >&2
