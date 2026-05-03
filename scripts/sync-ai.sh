@@ -343,6 +343,25 @@ skill_name_from_url() {
     printf '%s' "${path##*/}"
 }
 
+normalize_skill_frontmatter() {
+    local skill_md="$1" key="$2"
+    [[ -f "$skill_md" ]] || return 0
+
+    local current
+    current=$(awk '/^---[[:space:]]*$/{c++; next} c==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$skill_md")
+    [[ "$current" == "$key" ]] && return 0
+
+    local tmp
+    tmp=$(mktemp)
+    awk -v key="$key" '
+        BEGIN { c = 0; replaced = 0 }
+        /^---[[:space:]]*$/ { c++; print; next }
+        c == 1 && !replaced && /^name:/ { print "name: " key; replaced = 1; next }
+        { print }
+    ' "$skill_md" >"$tmp" && mv "$tmp" "$skill_md"
+    echo "-> normalized name in $skill_md -> $key"
+}
+
 ensure_skill_symlink() {
     local link_path="$1"
 
@@ -413,6 +432,15 @@ sync_skills() {
             python3 "$installer" --url "${desired[$key]}" --dest "$AGENTS_SKILLS_DIR"
             [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
         fi
+        normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
+    done
+
+    for installed in "$AGENTS_SKILLS_DIR"/*/; do
+        [[ -d "$installed" ]] || continue
+        base="$(basename "$installed")"
+        [[ "$base" == .* ]] && continue
+        [[ -f "$installed/SKILL.md" ]] || continue
+        normalize_skill_frontmatter "$installed/SKILL.md" "$base"
     done
 
     for target in "${TARGETS[@]}"; do
