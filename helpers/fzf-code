@@ -23,7 +23,7 @@ normalize_uri() {
 }
 
 mapfile -t raw < <(
-    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key='history.recentlyOpenedPathsList'" |
+    sqlite3 "$db" "SELECT value FROM ItemTable WHERE key IN ('recently.opened','history.recentlyOpenedPathsList') LIMIT 1" |
         jq -r '.entries[] |
             (.label // "") as $l |
             if   .folderUri   then "folder\u001f\($l)\u001f\(.folderUri)"

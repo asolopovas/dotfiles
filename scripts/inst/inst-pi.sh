@@ -11,6 +11,8 @@ PI_PACKAGES=(
     "npm:pi-web-access"             # Web search, URL fetch, GitHub clone, PDF/YouTube/video analysis
     "npm:@plannotator/pi-extension" # Plannotator: interactive plan review with visual annotation
     "npm:@a5c-ai/babysitter-pi"     # Babysitter package (supervises agent runs)
+    "npm:@a5c-ai/babysitter-pi"     # Babysitter package (supervises agent runs)
+    "npm:pi-lens"                   # LSP
 )
 
 MCP_CONFIG="$HOME/.config/mcp/mcp.json"
