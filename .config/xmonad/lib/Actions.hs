@@ -52,8 +52,8 @@ actionFromString scratchpads raw =
         "decrement-master"      -> sendMessage (IncMasterN (-1))
         "sink"                  -> withFocused (windows . W.sink)
         "toggle-float"          -> toggleFloat
-        "float-size-up"         -> cycleFloatSize 1
-        "float-size-down"       -> cycleFloatSize (-1)
+        "float-size-up"         -> cycleFloatSize scratchpads 1
+        "float-size-down"       -> cycleFloatSize scratchpads (-1)
         "cycle-screen-prev"     -> cycleScreens Prev
         "cycle-screen-next"     -> cycleScreens Next
         "shift-screen-prev"     -> shiftAndFollowScreen Prev

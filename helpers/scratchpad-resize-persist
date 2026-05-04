@@ -4,20 +4,32 @@ set -euo pipefail
 cls="${1:-}"
 size="${2:-}"
 config="$HOME/.config/xmonad/config.json"
+cache_dir="$HOME/.cache/xmonad"
+cache_file="$cache_dir/scratchpad-sizes"
 
 [[ -z "$cls" || -z "$size" ]] && exit 0
-[[ -f "$config" ]] || exit 0
 
 case "$size" in
     small | medium | large | center) ;;
     *) exit 0 ;;
 esac
 
+mkdir -p "$cache_dir"
+touch "$cache_file"
+live_tmp=$(mktemp)
+trap 'rm -f "$live_tmp" "${tmp:-}"' EXIT
+awk -v name="$cls" '$1 != name' "$cache_file" > "$live_tmp"
+printf '%s %s\n' "$cls" "$size" >> "$live_tmp"
+cat "$live_tmp" > "$cache_file"
+
+[[ -f "$config" ]] || exit 0
+
 tmp=$(mktemp)
-trap 'rm -f "$tmp"' EXIT
 
 if jq --arg c "$cls" --arg s "$size" '
-    if (.scratchpads // []) | map(.match // "") | index($c) then
+    if (.scratchpads // []) | map(.name // "") | index($c) then
+        .scratchpads |= map(if (.name // "") == $c then .float = $s else . end)
+    elif (.scratchpads // []) | map(.match // "") | index($c) then
         .scratchpads |= map(if (.match // "") == $c then .float = $s else . end)
     elif (.windowRules // []) | map(.className // "") | index($c) then
         .windowRules |= map(if (.className // "") == $c then .float = $s else . end)

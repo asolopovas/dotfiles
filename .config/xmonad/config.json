@@ -96,7 +96,7 @@
       "command": "alacritty -t scratchpad",
       "matchBy": "title",
       "match": "scratchpad",
-      "float": "medium"
+      "float": "large"
     },
     {
       "name": "stacer",

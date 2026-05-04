@@ -3,8 +3,9 @@ module Floats (toggleFloat, cycleFloatSize) where
 import XMonad
 import qualified XMonad.StackSet as W
 import qualified Data.Map as M
-import Data.List (minimumBy)
+import Data.List (minimumBy, find)
 import Data.Ord (comparing)
+import XMonad.Util.NamedScratchpad (NamedScratchpad(..))
 
 centerRect :: W.RationalRect
 centerRect = W.RationalRect 0.25 0.25 0.5 0.5
@@ -26,8 +27,8 @@ floatSizes = [("small", 0.5), ("medium", 0.7), ("large", 0.9)]
 centeredRect :: Double -> W.RationalRect
 centeredRect d = W.RationalRect (toRational ((1 - d) / 2)) (toRational ((1 - d) / 2)) (toRational d) (toRational d)
 
-cycleFloatSize :: Int -> X ()
-cycleFloatSize dir = withFocused $ \w -> do
+cycleFloatSize :: [NamedScratchpad] -> Int -> X ()
+cycleFloatSize sps dir = withFocused $ \w -> do
     floats <- gets (W.floating . windowset)
     let sizes  = map snd floatSizes
         names  = map fst floatSizes
@@ -39,10 +40,19 @@ cycleFloatSize dir = withFocused $ \w -> do
         nextIdx = max 0 (min (length sizes - 1) (curIdx + dir))
         newSize = sizes  !! nextIdx
         newName = names  !! nextIdx
-    cls <- runQuery className w
+    matched <- matchingScratchpad sps w
     windows (W.float w (centeredRect newSize))
-    spawn ("scratchpad-resize-persist " ++ shellQuote cls ++ " " ++ newName)
+    case matched of
+        Just spName -> spawn ("scratchpad-resize-persist " ++ shellQuote spName ++ " " ++ newName)
+        Nothing     -> do
+            cls <- runQuery className w
+            spawn ("scratchpad-resize-persist " ++ shellQuote cls ++ " " ++ newName)
   where
     shellQuote s = '\'' : concatMap esc s ++ "'"
     esc '\'' = "'\\''"
     esc c    = [c]
+
+matchingScratchpad :: [NamedScratchpad] -> Window -> X (Maybe String)
+matchingScratchpad sps w = do
+    pairs <- mapM (\sp -> do { b <- runQuery (query sp) w; return (b, sp) }) sps
+    return (fmap (name . snd) (find (\(b, _) -> b) pairs))
