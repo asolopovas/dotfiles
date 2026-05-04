@@ -41,6 +41,8 @@
     "M-,": "decrement-master",
     "M-<Delete>": "sink",
     "M-t": "toggle-float",
+    "M1-S-=": "float-size-up",
+    "M1-S--": "float-size-down",
     "M-<Return>": "spawn:alacritty",
     "M-0": "spawn:sysact",
     "M-p": "spawn:fzf-menu fzf-thunar",

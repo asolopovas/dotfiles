@@ -13,7 +13,7 @@ import XMonad.Layout.MultiToggle.Instances (StdTransformers(MIRROR))
 import qualified XMonad.Layout.ToggleLayouts as T (ToggleLayout(Toggle))
 import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 
-import Floats (toggleFloat)
+import Floats (toggleFloat, cycleFloatSize)
 import Layouts (resetLayout)
 import Screens (Direction(..), cycleScreens, shiftAndFollowScreen)
 import BrowserToggle (toggleActiveBrowser, autoRevealBrowserHook)
@@ -52,6 +52,8 @@ actionFromString scratchpads raw =
         "decrement-master"      -> sendMessage (IncMasterN (-1))
         "sink"                  -> withFocused (windows . W.sink)
         "toggle-float"          -> toggleFloat
+        "float-size-up"         -> cycleFloatSize 1
+        "float-size-down"       -> cycleFloatSize (-1)
         "cycle-screen-prev"     -> cycleScreens Prev
         "cycle-screen-next"     -> cycleScreens Next
         "shift-screen-prev"     -> shiftAndFollowScreen Prev
