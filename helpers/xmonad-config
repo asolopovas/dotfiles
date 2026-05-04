@@ -273,7 +273,7 @@ rule_rows() {
     local n; n=$(rule_count)
     for ((i=0; i<n; i++)); do
         printf "%s|%s\n" "$i" "$(rule_label "$i")"
-    done | column -t -s'|'
+    done | LC_ALL=C sort -t'|' -k2,2 -f -V | column -t -s'|'
 }
 
 pick_rule_idx() {
@@ -418,7 +418,7 @@ key_rows() {
     jq -r '.keys // {} | to_entries[] | "\(.key)|\(.value)"' "$CONFIG" \
     | while IFS='|' read -r k v; do
         printf "%s|%s\n" "$k" "$(describe_action "$v")"
-    done | column -t -s'|'
+    done | LC_ALL=C sort -t'|' -k1,1 -f -V | column -t -s'|'
 }
 
 pick_key() {
@@ -483,8 +483,8 @@ key_menu() {
 
 # ── general settings ─────────────────────────────────────────────────────────
 SETTING_KEYS=(
-    terminal browser filebrowser modMask borderWidth
-    normalBorderColor focusedBorderColor focusFollowsMouse clickJustFocuses
+    borderWidth browser clickJustFocuses filebrowser focusFollowsMouse
+    focusedBorderColor modMask normalBorderColor terminal
 )
 
 setting_row() {
@@ -526,9 +526,10 @@ settings_menu() {
     while :; do
         HDR; H1 "General settings"
         local rows=()
-        for k in "${SETTING_KEYS[@]}"; do
+        local k
+        while IFS= read -r k; do
             rows+=("$(setting_row "$k")")
-        done
+        done < <(printf '%s\n' "${SETTING_KEYS[@]}" | LC_ALL=C sort -f -V)
         rows+=("← back")
         local c
         c=$(gum choose --header=" " "${rows[@]}") || return
@@ -545,8 +546,8 @@ while :; do
     HDR
     vcenter 8
     choice=$(ccenter_choose \
-        "General settings" "Keybindings" "Window rules" \
-        "Reload xmonad (restart)" "Open raw config.json" "Quit") || continue
+        "General settings" "Keybindings" "Open raw config.json" \
+        "Quit" "Reload xmonad (restart)" "Window rules") || continue
     case "$choice" in
         Keybindings)              key_menu ;;
         "Window rules")           rule_menu ;;
