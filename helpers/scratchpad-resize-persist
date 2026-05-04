@@ -27,13 +27,19 @@ cat "$live_tmp" > "$cache_file"
 tmp=$(mktemp)
 
 if jq --arg c "$cls" --arg s "$size" '
-    if (.scratchpads // []) | map(.name // "") | index($c) then
-        .scratchpads |= map(if (.name // "") == $c then .float = $s else . end)
-    elif (.scratchpads // []) | map(.match // "") | index($c) then
-        .scratchpads |= map(if (.match // "") == $c then .float = $s else . end)
-    elif (.windowRules // []) | map(.className // "") | index($c) then
-        .windowRules |= map(if (.className // "") == $c then .float = $s else . end)
-    else . end
+    ([ (.scratchpads // [])[] | select((.name // "") == $c and (.matchBy // "") == "className") | .match ] | first) as $sn_cn
+    | (if (.scratchpads // []) | map(.match // "") | index($c) then $c else null end) as $sm_cn
+    | (if (.scratchpads // []) | map(.name // "") | index($c) then $sn_cn
+       elif $sm_cn != null then $sm_cn
+       else $c end) as $cn
+    | (if (.scratchpads // []) | map(.name // "") | index($c) then
+           .scratchpads |= map(if (.name // "") == $c then .float = $s else . end)
+       elif (.scratchpads // []) | map(.match // "") | index($c) then
+           .scratchpads |= map(if (.match // "") == $c then .float = $s else . end)
+       else . end)
+    | (if $cn != null and ((.windowRules // []) | map(.className // "") | index($cn)) then
+           .windowRules |= map(if (.className // "") == $cn then .float = $s else . end)
+       else . end)
 ' "$config" > "$tmp"; then
     if ! cmp -s "$tmp" "$config"; then
         cat "$tmp" > "$config"
