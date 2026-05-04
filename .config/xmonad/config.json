@@ -58,8 +58,6 @@
     "M-x": "scratchpad:filebrowser",
     "M-S-<Return>": "scratchpad:terminal",
     "<F1>": "scratchpad:help",
-    "<F6>": "scratchpad:thunderbird",
-    "<F8>": "scratchpad:stacer",
     "<F7>": "spawn:aimp-delete-track",
     "<XF86Launch6>": "scratchpad:pavucontrol",
     "<XF86Calculator>": "scratchpad:calc",
@@ -73,7 +71,8 @@
     "<XF86AudioPrev>": "spawn:playerctl previous",
     "<XF86AudioNext>": "spawn:playerctl next",
     "<Print>": "spawn:flameshot gui",
-    "<XF86MenuPB>": "spawn:flameshot gui"
+    "<XF86MenuPB>": "spawn:flameshot gui",
+    "M-<F8>": "scratchpad:thunderbird"
   },
   "scratchpads": [
     {
@@ -83,7 +82,7 @@
       "match": "FirefoxScratchpad",
       "float": "tile"
     },
-{
+    {
       "name": "filebrowser",
       "command": "thunar",
       "matchBy": "className",
