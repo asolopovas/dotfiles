@@ -1,0 +1,1 @@
+set -gx DOCKER_API_VERSION 1.44
