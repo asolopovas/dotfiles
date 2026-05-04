@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+
+from Xlib import X, XK, display
+
+CONFIG = os.path.expanduser("~/.config/xmonad/config.json")
+
+mod_main = "mod4"
+try:
+    with open(CONFIG) as f:
+        mod_main = json.load(f).get("modMask", "mod4")
+except Exception:
+    pass
+
+MOD_TOKEN = {
+    "mod1": "M1",
+    "mod2": "M2",
+    "mod3": "M3",
+    "mod4": "M4",
+    "mod5": "M5",
+}
+main_token = MOD_TOKEN.get(mod_main, "M4")
+
+XK.load_keysym_group("xf86")
+
+KEYSYM_NAMES = {}
+for attr, val in vars(XK).items():
+    if not attr.startswith("XK_"):
+        continue
+    name = attr[3:]
+    if val in KEYSYM_NAMES and len(KEYSYM_NAMES[val]) <= len(name):
+        continue
+    KEYSYM_NAMES[val] = name
+
+_MOD_NAMES = (
+    "Shift_L", "Shift_R", "Control_L", "Control_R",
+    "Alt_L", "Alt_R", "Super_L", "Super_R",
+    "Meta_L", "Meta_R", "Hyper_L", "Hyper_R",
+    "ISO_Level3_Shift", "Mode_switch",
+    "Caps_Lock", "Num_Lock", "Scroll_Lock",
+)
+MODIFIER_KEYSYMS = {getattr(XK, f"XK_{n}") for n in _MOD_NAMES if hasattr(XK, f"XK_{n}")}
+
+SPECIAL = {
+    "Return": "<Return>",
+    "BackSpace": "<Backspace>",
+    "Tab": "<Tab>",
+    "Escape": "<Esc>",
+    "space": "<Space>",
+    "Delete": "<Delete>",
+    "Insert": "<Insert>",
+    "Home": "<Home>",
+    "End": "<End>",
+    "Page_Up": "<Page_Up>",
+    "Page_Down": "<Page_Down>",
+    "Up": "<Up>", "Down": "<Down>", "Left": "<Left>", "Right": "<Right>",
+    "Print": "<Print>",
+    "Pause": "<Pause>",
+    "Menu": "<Menu>",
+}
+for n in range(1, 25):
+    SPECIAL[f"F{n}"] = f"<F{n}>"
+SPECIAL["Prior"] = "<Page_Up>"
+SPECIAL["Next"] = "<Page_Down>"
+
+
+def normalize_name(n):
+    if n.startswith("XF86_"):
+        return "XF86" + n[5:]
+    return n
+
+
+def format_key(ks):
+    if 0x20 <= ks <= 0x7e:
+        ch = chr(ks)
+        return ch.lower() if ch.isalpha() else ch
+    name = KEYSYM_NAMES.get(ks)
+    if not name:
+        return None
+    name = normalize_name(name)
+    if name in SPECIAL:
+        return SPECIAL[name]
+    return f"<{name}>"
+
+
+def main():
+    dpy = display.Display()
+    root = dpy.screen().root
+    res = root.grab_keyboard(True, X.GrabModeAsync, X.GrabModeAsync, X.CurrentTime)
+    if res != X.GrabSuccess:
+        print("could not grab keyboard", file=sys.stderr)
+        return 2
+    try:
+        while True:
+            evt = dpy.next_event()
+            if evt.type != X.KeyPress:
+                continue
+            ks = dpy.keycode_to_keysym(evt.detail, 0)
+            if ks == 0 or ks in MODIFIER_KEYSYMS:
+                continue
+            if ks == XK.XK_Escape and evt.state == 0:
+                return 130
+            state = evt.state
+            mods = []
+            if state & X.ControlMask:
+                mods.append("C")
+            if state & X.Mod1Mask:
+                mods.append("M" if mod_main == "mod1" else "M1")
+            if state & X.Mod3Mask:
+                mods.append("M" if mod_main == "mod3" else "M3")
+            if state & X.Mod4Mask:
+                mods.append("M" if mod_main == "mod4" else "M4")
+            if state & X.Mod5Mask:
+                mods.append("M" if mod_main == "mod5" else "M5")
+            if state & X.ShiftMask:
+                mods.append("S")
+            order = {"M": 0, "M1": 1, "M2": 2, "M3": 3, "M4": 4, "M5": 5, "C": 6, "S": 7}
+            mods.sort(key=lambda m: order.get(m, 99))
+            key = format_key(ks)
+            if not key:
+                continue
+            chord = "-".join(mods + [key]) if mods else key
+            print(chord)
+            return 0
+    finally:
+        dpy.ungrab_keyboard(X.CurrentTime)
+        dpy.flush()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

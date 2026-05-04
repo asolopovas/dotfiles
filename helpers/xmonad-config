@@ -427,11 +427,49 @@ pick_key() {
     awk '{print $1}' <<<"$row"
 }
 
+key_capture_chord() {
+    command -v xmonad-key-capture >/dev/null || { ERR "xmonad-key-capture not found"; return 1; }
+    gum style --foreground 212 --bold --align center --width "$(TCOLS)" \
+        "Press your key combination…" >&2
+    DIM "(modifiers + a non-modifier key; press Esc alone to cancel)"
+    local chord
+    chord=$(xmonad-key-capture 2>/dev/null) || return 1
+    [[ -z "$chord" ]] && return 1
+    printf '%s' "$chord"
+}
+
+key_prompt_chord() {
+    local default="${1:-}"
+    local method
+    method=$(gum choose --header="How to enter the key chord?" \
+        "Press the key combination" "Type manually") || return 1
+    local chord
+    case "$method" in
+        "Press"*)
+            chord=$(key_capture_chord) || return 1
+            [[ -z "$chord" ]] && return 1
+            local existing
+            existing=$(jq -r --arg k "$chord" '.keys[$k] // ""' "$CONFIG")
+            if [[ -n "$existing" ]]; then
+                DIM "captured: $chord — currently bound to $(describe_action "$existing")"
+                gum confirm "Use $chord and overwrite?" || return 1
+            else
+                DIM "captured: $chord"
+                gum confirm "Use $chord ?" || return 1
+            fi
+            printf '%s' "$chord"
+            ;;
+        "Type"*)
+            DIM "EZConfig syntax: M-/C-/S-/M1-, e.g. M-S-x, <F7>, <XF86AudioPlay>"
+            gum input --header="Key chord" --value="$default"
+            ;;
+    esac
+}
+
 key_add() {
     HDR; H1 "Add keybinding"
-    DIM "EZConfig syntax: M-/C-/S-/M1-, e.g. M-S-x, <F7>, <XF86AudioPlay>"
     local key action
-    key=$(gum input --header="Key chord") || return
+    key=$(key_prompt_chord) || return
     [[ -z "$key" ]] && return
     action=$(pick_action "") || return
     [[ -z "$action" ]] && return
