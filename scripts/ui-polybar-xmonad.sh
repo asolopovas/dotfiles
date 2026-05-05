@@ -94,13 +94,13 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
 			display+="Screen $screen_num: "
 		fi
 
-		for desktop in {1..9}; do
+		for desktop in {1..5}; do
 			if [[ "${screen_active_desktop[$screen]}" == "$desktop" ]]; then
 				display+="%{F#ffe500}$desktop%{F-}"
 			else
 				display+="$desktop"
 			fi
-			if [[ $desktop -lt 9 ]]; then
+			if [[ $desktop -lt 5 ]]; then
 				display+=" "
 			fi
 		done
