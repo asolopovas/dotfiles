@@ -4,31 +4,11 @@ set -euo pipefail
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 
 AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
+SKILLS_REPO_URL="${SKILLS_REPO_URL:-https://github.com/asolopovas/skills.git}"
+SKILLS_REPO_DIR="${SKILLS_REPO_DIR:-$HOME/.agents/skills-src}"
+LOCAL_SKILLS_DIR="${LOCAL_SKILLS_DIR:-$SKILLS_REPO_DIR}"
 
-SKILL_SOURCES=(
-    "https://github.com/github/awesome-copilot/tree/main/skills/chrome-devtools"
-    "https://github.com/microsoft/playwright-cli/tree/main/skills/playwright-cli"
-    "https://github.com/lackeyjb/playwright-skill/tree/main/skills/playwright-skill"
-    "https://github.com/davila7/claude-code-templates/tree/main/cli-tool/components/skills/development/error-resolver"
-
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-security"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-patterns"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/laravel-tdd"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/golang-testing"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/golang-patterns"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/docker-patterns"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/database-migrations"
-    "https://github.com/affaan-m/everything-claude-code/tree/main/skills/verification-loop"
-
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/bash-scripting"
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/progressive-web-app"
-
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress"
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-plugin-development"
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-theme-development"
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-woocommerce-development"
-    "https://github.com/sickn33/antigravity-awesome-skills/tree/main/skills/wordpress-penetration-testing"
-)
+SKILL_SOURCES=()
 
 declare -A MCP_SERVERS=(
     [context7]="npx @upstash/context7-mcp"
@@ -375,10 +355,42 @@ ensure_skill_symlink() {
     echo "-> symlink: $link_path -> $AGENTS_SKILLS_DIR"
 }
 
+ensure_skills_repo() {
+    [[ -n "$SKILLS_REPO_URL" ]] || return 0
+    have_cmd git || {
+        echo "Warning: git not available; skipping skills repo sync." >&2
+        return 0
+    }
+
+    if [[ -d "$SKILLS_REPO_DIR/.git" ]]; then
+        git -C "$SKILLS_REPO_DIR" pull --ff-only --quiet 2>/dev/null \
+            && echo "-> pulled $SKILLS_REPO_DIR" \
+            || echo "Warning: pull failed for $SKILLS_REPO_DIR" >&2
+    else
+        mkdir -p "$(dirname "$SKILLS_REPO_DIR")"
+        git clone --quiet "$SKILLS_REPO_URL" "$SKILLS_REPO_DIR" \
+            && echo "-> cloned $SKILLS_REPO_URL -> $SKILLS_REPO_DIR" \
+            || die "failed to clone $SKILLS_REPO_URL"
+    fi
+}
+
+load_skill_sources() {
+    local manifest="$SKILLS_REPO_DIR/sources.txt"
+    [[ -f "$manifest" ]] || return 0
+    local line
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line=$(trim "$line")
+        [[ -z "$line" || "$line" == \#* ]] && continue
+        SKILL_SOURCES+=("$line")
+    done <"$manifest"
+}
+
 sync_skills() {
     local strict="${1:-false}"
     echo "--- Skills ---"
     require_cmd python3
+    ensure_skills_repo
+    load_skill_sources
 
     local installer
     local use_builtin="false"
@@ -402,8 +414,22 @@ sync_skills() {
         [[ "$src" == *github.com/* ]] || die "skill source must be a GitHub URL: $src"
         name="$(skill_name_from_url "$src")"
         [[ -n "$name" ]] || die "unable to resolve skill name from '$src'."
-        desired["$name"]="$src"
+        desired["$name"]="github:$src"
     done
+
+    if [[ -d "$LOCAL_SKILLS_DIR" ]]; then
+        local local_skill
+        for local_skill in "$LOCAL_SKILLS_DIR"/*/; do
+            [[ -d "$local_skill" ]] || continue
+            name="$(basename "$local_skill")"
+            [[ "$name" == .* ]] && continue
+            [[ -f "$local_skill/SKILL.md" ]] || {
+                echo "Warning: $local_skill missing SKILL.md; skipping." >&2
+                continue
+            }
+            desired["$name"]="local:${local_skill%/}"
+        done
+    fi
 
     mkdir -p "$AGENTS_SKILLS_DIR"
 
@@ -418,18 +444,35 @@ sync_skills() {
         fi
     done
 
-    local dest_dir key
+    local dest_dir key entry kind value
     for key in "${!desired[@]}"; do
         dest_dir="$AGENTS_SKILLS_DIR/$key"
-        if [[ -d "$dest_dir" && -f "$dest_dir/SKILL.md" ]]; then
-            echo "-> $key already installed in $AGENTS_SKILLS_DIR"
+        entry="${desired[$key]}"
+        kind="${entry%%:*}"
+        value="${entry#*:}"
+
+        if [[ "$kind" == "local" ]]; then
+            if [[ -L "$dest_dir" && "$(readlink "$dest_dir" 2>/dev/null)" == "$value" ]]; then
+                echo "-> $key already linked from $value"
+            else
+                rm -rf "$dest_dir"
+                ln -sf "$value" "$dest_dir"
+                echo "-> symlink: $dest_dir -> $value"
+            fi
+            normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
             continue
         fi
-        [[ -e "$dest_dir" ]] && rm -rf "$dest_dir"
+
+        if [[ -d "$dest_dir" && ! -L "$dest_dir" && -f "$dest_dir/SKILL.md" ]]; then
+            echo "-> $key already installed in $AGENTS_SKILLS_DIR"
+            normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
+            continue
+        fi
+        [[ -e "$dest_dir" || -L "$dest_dir" ]] && rm -rf "$dest_dir"
         if [[ "$use_builtin" == "true" ]]; then
-            install_skill_from_github_builtin "${desired[$key]}" "$AGENTS_SKILLS_DIR" "$key"
+            install_skill_from_github_builtin "$value" "$AGENTS_SKILLS_DIR" "$key"
         else
-            python3 "$installer" --url "${desired[$key]}" --dest "$AGENTS_SKILLS_DIR"
+            python3 "$installer" --url "$value" --dest "$AGENTS_SKILLS_DIR"
             [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
         fi
         normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
