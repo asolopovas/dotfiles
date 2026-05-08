@@ -69,3 +69,4 @@ export LD_LIBRARY_PATH="$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvi
 [ -f "$HOME/.bash_completions/rmodel.sh" ] && source "$HOME/.bash_completions/rmodel.sh"
 
 export PATH="$HOME/.pixi/bin:$HOME/.local/bin:$PATH"
+. "$HOME/.cargo/env"
