@@ -20,6 +20,7 @@ nohup cryptomator >/tmp/cryptomator.log 2>&1 &
 ulauncher --no-window-shadow --hide-window &
 flameshot &
 nm-applet &
+lxqt-policykit-agent &
 blueman-applet >/tmp/blueman.log 2>&1 &
 set-wallpaper &
 dunst &
