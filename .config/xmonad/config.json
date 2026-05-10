@@ -161,7 +161,8 @@
       "command": "flatpak run com.rtosta.zapzap",
       "matchBy": "className",
       "match": "ZapZap",
-      "float": "large"
+      "float": "large",
+      "excludeTitle": "Download"
     },
     {
       "name": "xmonad-config",
@@ -382,6 +383,11 @@
     {
       "className": "Rustdesk",
       "float": "float"
+    },
+    {
+      "className": "ZapZap",
+      "title": "Download",
+      "float": "center"
     }
   ]
 }

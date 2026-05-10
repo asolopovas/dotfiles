@@ -19,10 +19,13 @@ toNS :: Scratchpad -> NamedScratchpad
 toNS sp = NS (spName sp) (spCommand sp) (matcher sp) (dynamicFloater (spName sp) (spFloat sp))
 
 matcher :: Scratchpad -> Query Bool
-matcher sp = case spMatchBy sp of
-    "title"   -> title   =? spMatch sp
-    "appName" -> appName =? spMatch sp
-    _         -> className =? spMatch sp
+matcher sp = baseMatch <&&> notExcluded
+  where
+    baseMatch = case spMatchBy sp of
+        "title"   -> title   =? spMatch sp
+        "appName" -> appName =? spMatch sp
+        _         -> className =? spMatch sp
+    notExcluded = maybe (pure True) (\t -> fmap (/= t) title) (spExcludeTitle sp)
 
 dynamicFloater :: String -> FloatMode -> ManageHook
 dynamicFloater name fallback = do

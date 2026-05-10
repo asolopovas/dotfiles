@@ -47,11 +47,12 @@ instance FromJSON WindowRule where
             <*> o .:? "workspace"
 
 data Scratchpad = Scratchpad
-    { spName    :: String
-    , spCommand :: String
-    , spMatchBy :: String
-    , spMatch   :: String
-    , spFloat   :: FloatMode
+    { spName         :: String
+    , spCommand      :: String
+    , spMatchBy      :: String
+    , spMatch        :: String
+    , spFloat        :: FloatMode
+    , spExcludeTitle :: Maybe String
     }
     deriving (Show)
 
@@ -63,6 +64,7 @@ instance FromJSON Scratchpad where
             <*> o .:? "matchBy" .!= "className"
             <*> o .:  "match"
             <*> o .:? "float"   .!= FloatLarge
+            <*> o .:? "excludeTitle"
 
 data UserConfig = UserConfig
     { ucTerminal          :: String
