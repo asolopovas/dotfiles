@@ -1,6 +1,7 @@
 module Layouts (myLayout, resetLayout) where
 
 import XMonad
+import qualified XMonad.StackSet as W
 import XMonad.Config.Desktop (desktopLayoutModifiers)
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Reflect
@@ -12,7 +13,21 @@ import XMonad.Layout.LimitWindows (limitWindows)
 import XMonad.Layout.Renamed (renamed, Rename(Replace))
 import XMonad.Layout.MultiToggle (mkToggle, single)
 import XMonad.Layout.MultiToggle.Instances (StdTransformers(MIRROR))
+import XMonad.Layout.IfMax (ifMax)
 import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts)
+
+data CenterMid a = CenterMid Rational Rational deriving (Show, Read)
+
+instance LayoutClass CenterMid Window where
+    pureLayout (CenterMid wr hr) (Rectangle sx sy sw sh) stack =
+        let ws = W.integrate stack
+            w  = floor (fromIntegral sw * wr :: Rational)
+            h  = floor (fromIntegral sh * hr :: Rational)
+            x  = sx + fromIntegral ((fromIntegral sw - w) `div` 2)
+            y  = sy + fromIntegral ((fromIntegral sh - h) `div` 2)
+            r  = Rectangle x y (fromIntegral w) (fromIntegral h)
+        in zip ws (repeat r)
+    description _ = "CenterMid"
 
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
@@ -22,6 +37,7 @@ tiled  = renamed [Replace "tiled"]
        $ smartBorders
        $ limitWindows 12
        $ mySpacing 5
+       $ ifMax 1 (CenterMid (7/10) (4/5))
        $ ResizableTall 1 (3/100) (1/2) []
 
 tiledR = renamed [Replace "tiledR"]
@@ -30,6 +46,7 @@ tiledR = renamed [Replace "tiledR"]
        $ limitWindows 12
        $ mySpacing 5
        $ reflectHoriz
+       $ ifMax 1 (CenterMid (7/10) (4/5))
        $ ResizableTall 1 (3/100) (1/2) []
 
 full   = renamed [Replace "full"]
