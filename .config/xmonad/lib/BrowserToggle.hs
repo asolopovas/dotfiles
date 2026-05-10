@@ -73,16 +73,19 @@ ownedByCurrent tag ws origins = filter own
 toggleActiveBrowser :: X ()
 toggleActiveBrowser = do
     ws <- gets windowset
+    Stash origins <- XS.get
     allBrowsers <- filterM (runQuery isBrowser) (W.allWindows ws)
     let tag = W.currentTag ws
         onCurrent = filter ((== Just tag) . flip W.findTag ws) allBrowsers
-        stashedAny = filter (isStashed ws) allBrowsers
+        ownedStashed = filter (isStashed ws) (ownedByCurrent tag ws origins allBrowsers)
+        anyStashed = filter (isStashed ws) allBrowsers
         elsewhere = filter (\w -> let t = W.findTag w ws in t /= Just tag && t /= Just scratchpadWorkspaceTag) allBrowsers
-    case (onCurrent, stashedAny, elsewhere) of
-        (v : _, _, _)    -> stash v
-        (_, s : _, _)    -> unstash s
-        (_, _, e : _)    -> windows (W.focusWindow e . W.shiftWin tag e)
-        _                -> pure ()
+    case (onCurrent, ownedStashed, anyStashed, elsewhere) of
+        (vs@(_ : _), _, _, _) -> mapM_ stash vs
+        (_, ss@(_ : _), _, _) -> mapM_ unstash ss
+        (_, _, s : _, _)      -> unstash s
+        (_, _, _, e : _)      -> windows (W.focusWindow e . W.shiftWin tag e)
+        _                     -> spawn "brave-browser --new-window"
 
 autoRevealBrowserHook :: X ()
 autoRevealBrowserHook = do
