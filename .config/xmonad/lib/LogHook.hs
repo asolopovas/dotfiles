@@ -1,42 +1,49 @@
-module LogHook (myLogHook) where
+module LogHook (logPP) where
 
-import XMonad
-import XMonad.Hooks.DynamicLog
+import Control.Exception (SomeException, try)
 import qualified DBus as D
 import qualified DBus.Client as D
-import qualified Codec.Binary.UTF8.String as UTF8
+import qualified Data.ByteString.Char8 as BS8
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
+import System.IO (hPutStrLn, stderr)
+import XMonad
+import XMonad.Hooks.DynamicLog
 
 red, blue, blue2 :: String
 red   = "#fb4934"
 blue  = "#83a598"
 blue2 = "#2266d0"
 
-myLogHook :: D.Client -> PP
-myLogHook dbus = def
-    {
-      ppOutput  = dbusOutput dbus,
-      ppCurrent = wrap ("%{F" ++ blue2 ++ "} ") " %{F-}",
-      ppVisible = wrap ("%{F" ++ blue  ++ "} ") " %{F-}",
-      ppUrgent  = wrap ("%{F" ++ red   ++ "} ") " %{F-}",
-      ppHidden  = wrap " " " ",
-      ppWsSep   = "",
-      ppSep     = " | ",
-      ppTitle   = myAddSpaces 25
-    }
+logPP :: D.Client -> PP
+logPP dbus =
+    def
+        { ppOutput  = dbusOutput dbus
+        , ppCurrent = wrap ("%{F" ++ blue2 ++ "} ") " %{F-}"
+        , ppVisible = wrap ("%{F" ++ blue  ++ "} ") " %{F-}"
+        , ppUrgent  = wrap ("%{F" ++ red   ++ "} ") " %{F-}"
+        , ppHidden  = wrap " " " "
+        , ppWsSep   = ""
+        , ppSep     = " | "
+        , ppTitle   = padRight 25
+        }
 
--- Emit a DBus signal on log updates
 dbusOutput :: D.Client -> String -> IO ()
 dbusOutput dbus str = do
-    let signal = (D.signal objectPath interfaceName memberName) {
-            D.signalBody = [D.toVariant $ UTF8.encodeString str]
-        }
-    D.emit dbus signal
+    let payload = BS8.unpack (TE.encodeUtf8 (T.pack str))
+        sig =
+            (D.signal objectPath interfaceName memberName)
+                {D.signalBody = [D.toVariant payload]}
+    res <- try (D.emit dbus sig) :: IO (Either SomeException ())
+    case res of
+        Right _ -> pure ()
+        Left e  -> hPutStrLn stderr ("[xmonad] dbus emit failed: " ++ show e)
   where
-    objectPath    = D.objectPath_ "/org/xmonad/Log"
+    objectPath    = D.objectPath_    "/org/xmonad/Log"
     interfaceName = D.interfaceName_ "org.xmonad.Log"
-    memberName    = D.memberName_ "Update"
+    memberName    = D.memberName_    "Update"
 
-myAddSpaces :: Int -> String -> String
-myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
+padRight :: Int -> String -> String
+padRight n s = sstr ++ replicate (n - length sstr) ' '
   where
-    sstr = shorten len str
+    sstr = shorten n s

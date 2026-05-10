@@ -1,15 +1,10 @@
-module Events (myHandleEventHook) where
+module Events (handleEventHook) where
 
-import XMonad
-import XMonad.Hooks.WindowSwallowing
-import Data.Monoid (All(..))
+import Data.Monoid (All (..))
+import XMonad hiding (handleEventHook)
+import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
--- Wrap swallowEventHook to suppress Enum.toEnum{Word8} and
--- getWindowAttributes errors from dead windows
-winSwallowHook :: Event -> X All
-winSwallowHook ev =
-    swallowEventHook (className =? "Alacritty") (return True) ev
-        `catchX` return (All True)
-
-myHandleEventHook :: Event -> X All
-myHandleEventHook = winSwallowHook
+handleEventHook :: Event -> X All
+handleEventHook ev =
+    swallowEventHook (className =? "Alacritty") (pure True) ev
+        `catchX` pure (All True)

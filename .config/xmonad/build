@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Custom xmonad build script: adds --package aeson to the default stack ghc
-# invocation so the config can parse JSON. $1 is the output binary path
-# that xmonad expects. We cd to the XDG config dir (not the dotfiles source)
-# because stack.yaml's `packages:` list is resolved relative to that dir.
 set -euo pipefail
 
 XMONAD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/xmonad"

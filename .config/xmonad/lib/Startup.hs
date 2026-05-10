@@ -1,11 +1,7 @@
-module Startup (myStartupHook) where
+module Startup (startupHook) where
 
-import XMonad
-import XMonad.Util.SpawnOnce
+import XMonad hiding (startupHook)
+import XMonad.Util.SpawnOnce (spawnOnce)
 
-import Screens (fixWorkspaceAssignment)
-
-myStartupHook :: X ()
-myStartupHook = do
-    fixWorkspaceAssignment
-    spawnOnce "dotfiles/autostart.sh &"
+startupHook :: X ()
+startupHook = spawnOnce "dotfiles/autostart.sh &"
