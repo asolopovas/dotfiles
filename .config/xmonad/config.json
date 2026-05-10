@@ -70,7 +70,8 @@
     "<XF86AudioNext>": "spawn:playerctl next",
     "<Print>": "spawn:flameshot gui",
     "<XF86MenuPB>": "spawn:flameshot gui",
-    "M-<F8>": "scratchpad:thunderbird"
+    "M-<F8>": "scratchpad:thunderbird",
+    "M-w": "scratchpad:zapzap"
   },
   "scratchpads": [
     {
@@ -154,6 +155,13 @@
         "w": 0.5,
         "h": 0.8
       }
+    },
+    {
+      "name": "zapzap",
+      "command": "flatpak run com.rtosta.zapzap",
+      "matchBy": "className",
+      "match": "ZapZap",
+      "float": "large"
     },
     {
       "name": "xmonad-config",
