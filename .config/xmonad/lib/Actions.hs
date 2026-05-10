@@ -4,6 +4,7 @@ import System.Exit (exitSuccess)
 import XMonad
 import qualified XMonad.StackSet as W
 
+import Data.Char (toLower)
 import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.Promote (promote)
 import XMonad.Actions.WithAll (killAll)
@@ -30,8 +31,8 @@ actionFromString scratchpads raw = case break (== ':') raw of
     (n, _)                          -> namedAction n
   where
     namedAction n = case n of
-        "kill"              -> kill1
-        "kill-all"          -> killAll
+        "kill"              -> safeKill
+        "kill-all"          -> safeKillAll
         "focus-master"      -> windows W.focusMaster >> autoRevealBrowserHook
         "focus-down"        -> windows W.focusDown   >> autoRevealBrowserHook
         "focus-up"          -> windows W.focusUp     >> autoRevealBrowserHook
@@ -63,3 +64,22 @@ actionFromString scratchpads raw = case break (== ':') raw of
         "edit-config"       -> spawn "alacritty -e $(command -v ${EDITOR:-nvim} || echo vi) $HOME/.config/xmonad/config.json"
         "window-rules-menu" -> spawn "fzf-menu xmonad-window-rules"
         other               -> spawn ("notify-send 'xmonad: unknown action' " ++ shellQuote other)
+
+    isProtected w = do
+        cls <- runQuery className w
+        return (map toLower cls `elem` protectedClasses)
+
+    protectedClasses = ["rustdesk"]
+
+    safeKill = withFocused $ \w -> do
+        prot <- isProtected w
+        if prot
+            then spawn "notify-send 'xmonad' 'kill blocked: protected window (RustDesk)'"
+            else kill1
+
+    safeKillAll = do
+        ws <- gets (W.integrate' . W.stack . W.workspace . W.current . windowset)
+        prot <- mapM isProtected ws
+        if or prot
+            then spawn "notify-send 'xmonad' 'kill-all blocked: protected window (RustDesk) on workspace'"
+            else killAll
