@@ -108,12 +108,18 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
 	display=""
 	for i in "${!sorted_screens[@]}"; do
 		screen="${sorted_screens[i]}"
-
 		screen_num="$(label_for "$screen")"
-		if [[ "$screen" == "$current_focused_screen" ]]; then
-			display+="%{F#87ceeb}Screen $screen_num:%{F-} "
-		else
-			display+="Screen $screen_num: "
+
+		if [[ -n "$SCREEN_LABEL" && "$screen_num" != "$SCREEN_LABEL" ]]; then
+			continue
+		fi
+
+		if [[ -z "$SCREEN_LABEL" ]]; then
+			if [[ "$screen" == "$current_focused_screen" ]]; then
+				display+="%{F#87ceeb}Screen $screen_num:%{F-} "
+			else
+				display+="Screen $screen_num: "
+			fi
 		fi
 
 		for desktop in {1..5}; do
@@ -132,7 +138,7 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
 			fi
 		done
 
-		if [[ $i -lt $((${#sorted_screens[@]} - 1)) ]]; then
+		if [[ -z "$SCREEN_LABEL" && $i -lt $((${#sorted_screens[@]} - 1)) ]]; then
 			display+=" | "
 		fi
 	done
