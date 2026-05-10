@@ -5,7 +5,7 @@ module BrowserToggle
 
 import Control.Monad (filterM, when)
 import Data.Char (toLower)
-import Data.List (isInfixOf)
+import Data.List (isInfixOf, partition)
 import qualified Data.Map.Strict as M
 import XMonad
 import XMonad.Actions.DynamicWorkspaces (addHiddenWorkspace)
@@ -28,17 +28,20 @@ isBrowser = do
 isStashed :: WindowSet -> Window -> Bool
 isStashed ws w = W.findTag w ws == Just scratchpadWorkspaceTag
 
-findStashed :: WindowSet -> [Window] -> Maybe Window
-findStashed ws bs = case filter (isStashed ws) bs of
-    (w : _) -> Just w
-    []      -> Nothing
-
 ensureStashWorkspace :: X ()
 ensureStashWorkspace = do
     ws <- gets windowset
     let tags = map W.tag (W.workspaces ws)
     when (scratchpadWorkspaceTag `notElem` tags) $
         addHiddenWorkspace scratchpadWorkspaceTag
+
+-- The workspace a browser "belongs to": its current workspace if visible,
+-- or its recorded origin if stashed. Orphan stashed browsers (no origin
+-- recorded — e.g. after xmonad restart) return Nothing.
+browserWorkspace :: WindowSet -> M.Map Window WorkspaceId -> Window -> Maybe WorkspaceId
+browserWorkspace ws origins w
+    | isStashed ws w = M.lookup w origins
+    | otherwise      = W.findTag w ws
 
 stash :: Window -> X ()
 stash w = do
@@ -52,33 +55,45 @@ stash w = do
 
 unstash :: Window -> X ()
 unstash w = do
-    Stash origins <- XS.get
     ws <- gets windowset
-    let target = M.findWithDefault (W.currentTag ws) w origins
+    let target = W.currentTag ws
     windows (W.focusWindow w . W.shiftWin target w)
     XS.modify $ \s -> s {sOrigins = M.delete w (sOrigins s)}
+
+-- A browser is "owned" by the current workspace if its workspace tag
+-- matches, OR it is an orphan stashed browser (no origin) — so users can
+-- reclaim orphans after an xmonad restart.
+ownedByCurrent :: WorkspaceId -> WindowSet -> M.Map Window WorkspaceId -> [Window] -> [Window]
+ownedByCurrent tag ws origins = filter own
+  where
+    own w = case browserWorkspace ws origins w of
+        Just t  -> t == tag
+        Nothing -> isStashed ws w
 
 toggleActiveBrowser :: X ()
 toggleActiveBrowser = do
     ws <- gets windowset
-    browsers <- filterM (runQuery isBrowser) (W.allWindows ws)
-    let mStashed = findStashed ws browsers
-        focused = W.peek ws
-    focusedIsBrowser <- maybe (pure False) (runQuery isBrowser) focused
-    case (mStashed, focused, focusedIsBrowser) of
-        (Just s, _, _)          -> unstash s
-        (Nothing, Just f, True) -> stash f
-        _
-            | null browsers -> spawn "$BROWSER"
-            | otherwise     -> pure ()
+    allBrowsers <- filterM (runQuery isBrowser) (W.allWindows ws)
+    let tag = W.currentTag ws
+        onCurrent = filter ((== Just tag) . flip W.findTag ws) allBrowsers
+        stashedAny = filter (isStashed ws) allBrowsers
+        elsewhere = filter (\w -> let t = W.findTag w ws in t /= Just tag && t /= Just scratchpadWorkspaceTag) allBrowsers
+    case (onCurrent, stashedAny, elsewhere) of
+        (v : _, _, _)    -> stash v
+        (_, s : _, _)    -> unstash s
+        (_, _, e : _)    -> windows (W.focusWindow e . W.shiftWin tag e)
+        _                -> pure ()
 
 autoRevealBrowserHook :: X ()
 autoRevealBrowserHook = do
     ws <- gets windowset
-    browsers <- filterM (runQuery isBrowser) (W.allWindows ws)
-    let mStashed = findStashed ws browsers
+    Stash origins <- XS.get
+    allBrowsers <- filterM (runQuery isBrowser) (W.allWindows ws)
+    let tag = W.currentTag ws
+        ownedStashed =
+            filter (isStashed ws) (ownedByCurrent tag ws origins allBrowsers)
         focused = W.peek ws
     focusedIsBrowser <- maybe (pure False) (runQuery isBrowser) focused
-    case (mStashed, focused, focusedIsBrowser) of
-        (Just s, Just f, True) | f /= s -> unstash s
-        _                               -> pure ()
+    case (ownedStashed, focused, focusedIsBrowser) of
+        (s : _, Just f, True) | f /= s -> unstash s
+        _                              -> pure ()
