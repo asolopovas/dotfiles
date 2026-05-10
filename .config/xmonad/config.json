@@ -388,6 +388,10 @@
       "className": "ZapZap",
       "title": "Download",
       "float": "center"
+    },
+    {
+      "className": "Zenity",
+      "float": "center"
     }
   ]
 }
