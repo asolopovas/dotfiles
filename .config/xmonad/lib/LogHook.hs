@@ -10,19 +10,22 @@ import System.IO (hPutStrLn, stderr)
 import XMonad
 import XMonad.Hooks.DynamicLog
 
-red, blue, blue2 :: String
-red   = "#fb4934"
-blue  = "#83a598"
-blue2 = "#2266d0"
+red, blue, blue2, yellow, dim :: String
+red    = "#fb4934"
+blue   = "#83a598"
+blue2  = "#2266d0"
+yellow = "#fabd2f"
+dim    = "#665c54"
 
 logPP :: D.Client -> PP
 logPP dbus =
     def
-        { ppOutput  = dbusOutput dbus
-        , ppCurrent = wrap ("%{F" ++ blue2 ++ "} ") " %{F-}"
-        , ppVisible = wrap ("%{F" ++ blue  ++ "} ") " %{F-}"
-        , ppUrgent  = wrap ("%{F" ++ red   ++ "} ") " %{F-}"
-        , ppHidden  = wrap " " " "
+        { ppOutput           = dbusOutput dbus
+        , ppCurrent          = wrap ("%{F" ++ blue2  ++ "} ") " %{F-}"
+        , ppVisible          = wrap ("%{F" ++ blue   ++ "} ") " %{F-}"
+        , ppUrgent           = wrap ("%{F" ++ red    ++ "} ") " %{F-}"
+        , ppHidden           = wrap ("%{F" ++ yellow ++ "} ") " %{F-}"
+        , ppHiddenNoWindows  = wrap ("%{F" ++ dim    ++ "} ") " %{F-}"
         , ppWsSep   = ""
         , ppSep     = " | "
         , ppTitle   = padRight 25

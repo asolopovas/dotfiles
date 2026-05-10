@@ -2,6 +2,7 @@
 
 declare -A screen_active_desktop
 declare -A screen_label
+declare -A desktop_state
 
 build_screen_label_map() {
 	screen_label=()
@@ -47,16 +48,37 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
 
 	temp_line="$line"
 	current_focused_screen=""
+	screen_active_desktop=()
+	desktop_state=()
 
 	if [[ $line =~ %\{F#2266d0\}\ ([0-9]+)_([0-9]+)\ %\{F-\} ]]; then
 		current_focused_screen="${BASH_REMATCH[1]}"
 	fi
 
-	while [[ $temp_line =~ ([^%]*)%\{F#[0-9a-fA-F]+\}\ ([0-9]+)_([0-9]+)\ %\{F-\}(.*) ]] || [[ $temp_line =~ ([^%]*)%\{F#2266d0\}\ ([0-9]+)_([0-9]+)\ %\{F-\}(.*) ]]; do
-		screen_id="${BASH_REMATCH[2]}"
-		desktop_id="${BASH_REMATCH[3]}"
-		screen_active_desktop[$screen_id]=$desktop_id
-		temp_line="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
+	while [[ $temp_line =~ ([^%]*)%\{F(#[0-9a-fA-F]+)\}\ ([0-9]+)_([0-9]+)\ %\{F-\}(.*) ]]; do
+		color="${BASH_REMATCH[2]}"
+		screen_id="${BASH_REMATCH[3]}"
+		desktop_id="${BASH_REMATCH[4]}"
+		case "$color" in
+			"#2266d0")
+				screen_active_desktop[$screen_id]=$desktop_id
+				desktop_state[${screen_id}_${desktop_id}]=current
+				;;
+			"#83a598")
+				screen_active_desktop[$screen_id]=$desktop_id
+				desktop_state[${screen_id}_${desktop_id}]=visible
+				;;
+			"#fb4934")
+				desktop_state[${screen_id}_${desktop_id}]=urgent
+				;;
+			"#fabd2f")
+				desktop_state[${screen_id}_${desktop_id}]=occupied
+				;;
+			*)
+				:
+				;;
+		esac
+		temp_line="${BASH_REMATCH[1]}${BASH_REMATCH[5]}"
 	done
 
 	screens=()
@@ -95,10 +117,15 @@ $HOME/go/bin/xmonad-log | while IFS= read -r line; do
 		fi
 
 		for desktop in {1..5}; do
+			state="${desktop_state[${screen}_${desktop}]}"
 			if [[ "${screen_active_desktop[$screen]}" == "$desktop" ]]; then
 				display+="%{F#ffe500}$desktop%{F-}"
+			elif [[ "$state" == "urgent" ]]; then
+				display+="%{F#fb4934}$desktop%{F-}"
+			elif [[ "$state" == "occupied" ]]; then
+				display+="%{F#ffffff}$desktop%{F-}"
 			else
-				display+="$desktop"
+				display+="%{F#555555}$desktop%{F-}"
 			fi
 			if [[ $desktop -lt 5 ]]; then
 				display+=" "
