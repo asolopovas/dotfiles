@@ -31,7 +31,12 @@ xsetroot -cursor_name left_ptr &
 
 if command -v ibus-daemon &>/dev/null; then
     pkill -f 'ibus-daemon' 2>/dev/null
-    ibus-daemon --xim --daemonize --replace
+    ibus-daemon --xim --daemonize --replace --panel disable
+fi
+
+if command -v gxkb &>/dev/null; then
+    pkill -x gxkb 2>/dev/null
+    (sleep 3; gxkb) &
 fi
 
 if command -v setxkbmap &>/dev/null; then
