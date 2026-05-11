@@ -392,6 +392,10 @@
     {
       "className": "Zenity",
       "float": "center"
+    },
+    {
+      "className": "Qemu-system-x86_64",
+      "float": "float"
     }
   ]
 }
