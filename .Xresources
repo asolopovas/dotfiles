@@ -61,3 +61,20 @@ UXTerm*renderFont:      true
 Xcursor.size:   				13
 Xcursor.theme:					Bibata-Moden-Classic
 Xcursor.theme_core:     true
+
+Xmessage*international:                 true
+Xmessage*faceName:                      FiraMono Nerd Font
+Xmessage*faceSize:                      12
+Xmessage*background:                    #14191f
+Xmessage*foreground:                    #f1f6fb
+Xmessage*borderColor:                   #14191f
+Xmessage*Form.background:               #14191f
+Xmessage*Command.background:            #2643B1
+Xmessage*Command.foreground:            #f1f6fb
+Xmessage*Command.borderColor:           #585858
+Xmessage.form.message.background:       #14191f
+Xmessage.form.message.foreground:       #f1f6fb
+Xmessage.form.message.scrollVertical:   Always
+Xmessage.form.message.scrollHorizontal: WhenNeeded
+Xmessage*Scrollbar.background:          #14191f
+Xmessage*Scrollbar.foreground:          #585858

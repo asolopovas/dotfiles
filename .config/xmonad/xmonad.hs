@@ -12,6 +12,7 @@ import Config (UserConfig (..), loadConfigOrDefault)
 import qualified Events
 import qualified Keys
 import qualified Layouts
+import LayoutAgnostic (withLayoutAgnosticKeys)
 import qualified LogHook
 import qualified ManageRules
 import qualified Mouse
@@ -31,11 +32,10 @@ main = do
 
     let scratchpads = Scratchpads.buildScratchpads (ucScratchpads cfg)
 
-    xmonad
-        $ ewmhFullscreen
-        $ ewmh
-        $ docks
-        $ def
+    let baseConfig = ewmhFullscreen
+            $ ewmh
+            $ docks
+            $ def
             { terminal           = ucTerminal cfg
             , focusFollowsMouse  = ucFocusFollowsMouse cfg
             , clickJustFocuses   = ucClickJustFocuses cfg
@@ -52,4 +52,7 @@ main = do
             , startupHook        = Startup.startupHook
             , logHook            = dynamicLogWithPP (LogHook.logPP dbus)
             }
-        `additionalKeysP` Keys.buildKeys scratchpads (ucKeys cfg)
+
+    xmonad
+        $ withLayoutAgnosticKeys
+        $ baseConfig `additionalKeysP` Keys.buildKeys scratchpads (ucKeys cfg)

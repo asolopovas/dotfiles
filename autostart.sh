@@ -28,3 +28,16 @@ telegram-desktop -startintray -- %u &
 insync start
 xset r rate 300 50 &
 xsetroot -cursor_name left_ptr &
+
+if command -v ibus-daemon &>/dev/null; then
+    pkill -f 'ibus-daemon' 2>/dev/null
+    ibus-daemon --xim --daemonize --replace
+fi
+
+if command -v setxkbmap &>/dev/null; then
+    layouts=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null \
+        | grep -oE "'xkb', '[^']+'" | sed -E "s/.*'([^']+)'$/\1/" | paste -sd, -)
+    options=$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null \
+        | grep -oE "'[^']+'" | tr -d "'" | paste -sd, -)
+    (sleep 2; setxkbmap -layout "${layouts:-gb}" -option '' ${options:+-option "$options"}) &
+fi
