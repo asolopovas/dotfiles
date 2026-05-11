@@ -1,34 +1,119 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-cmds="\
-leave
-suspend
-reboot
-halt
-shutdown
-"
+set -uo pipefail
+trap '' INT QUIT
 
-choice="$(echo "$cmds" | cut -d' ' -f 1 | dmenu)"
+for cmd in gum; do
+    command -v "$cmd" >/dev/null || { echo "$cmd is required"; sleep 2; exit 1; }
+done
 
-case $choice in
-leave)
-    $cryptomatorPID = $(pgrep Cryptomator)
-    if pgrep -x "Cryptomator" >/dev/null; then
-        kill -TERM $cryptomatorPID
+sleep 0.2
+
+TCOLS()  { stty size 2>/dev/null | awk '{print $2}' || tput cols  2>/dev/null || echo 24; }
+TLINES() { stty size 2>/dev/null | awk '{print $1}' || tput lines 2>/dev/null || echo 10; }
+
+vcenter() {
+    local content_h="$1"
+    local pad=$(( ( $(TLINES) - content_h ) / 2 ))
+    (( pad < 0 )) && pad=0
+    local i
+    for ((i=0; i<pad; i++)); do printf '\n' >&2; done
+}
+
+ccenter_choose() {
+    clear >&2
+    local cols; cols=$(TCOLS)
+    local maxw=0 o
+    for o in "$@"; do (( ${#o} > maxw )) && maxw=${#o}; done
+    local block=$(( maxw + 2 ))
+    local pad=$(( ( cols - block ) / 2 ))
+    (( pad < 0 )) && pad=0
+    local indent; indent=$(printf '%*s' "$pad" '')
+    vcenter "$#"
+    gum choose \
+        --no-show-help \
+        --header="" \
+        --cursor="${indent}▶ " \
+        --cursor.foreground=212 --cursor.bold \
+        --selected.foreground=212 --selected.bold \
+        "$@"
+}
+
+unmount_safestore() {
+    local pid
+    pid=$(pgrep -x Cryptomator || true)
+    if [[ -n "$pid" ]]; then
+        kill -TERM $pid 2>/dev/null || true
+        sleep 1
     fi
-    fusermount -uz /home/$USER/safestore
-    kill -TERM $(pidof -s xmonad-x86_64-linux)
-    ;;
-suspend)
-      systemctl suspend
-    ;;
-halt)
-      systemctl halt
-    ;;
-reboot)
-    systemctl reboot
-    ;;
-shutdown)
-    systemctl poweroff
-    ;;
-esac
+    if mountpoint -q "$HOME/safestore" 2>/dev/null; then
+        fusermount -uz "$HOME/safestore" 2>/dev/null || true
+    fi
+}
+
+logout_xmonad() {
+    local xpid
+    xpid=$(pidof -s xmonad-x86_64-linux || true)
+    [[ -n "$xpid" ]] && kill -TERM $xpid
+}
+
+confirm() {
+    clear >&2
+    vcenter 1
+    gum confirm --show-help=false --prompt.align=center --prompt.width="$(TCOLS)" "$1" && return 0 || return 1
+}
+
+while :; do
+    choice=$(ccenter_choose \
+        "Lock" \
+        "Logout" \
+        "Suspend" \
+        "Reboot" \
+        "Shutdown" \
+        "Halt") || exit 0
+    case "$choice" in
+        Lock)
+            if command -v slock >/dev/null;       then slock & exit 0
+            elif command -v xsecurelock >/dev/null; then xsecurelock & exit 0
+            elif command -v i3lock >/dev/null;    then i3lock & exit 0
+            elif command -v xscreensaver-command >/dev/null; then
+                xscreensaver-command -lock & exit 0
+            else
+                gum style --foreground 196 "no screen locker found" >&2
+                sleep 1.5
+            fi
+            ;;
+        Logout)
+            confirm "Logout of xmonad?" || continue
+            unmount_safestore
+            logout_xmonad
+            exit 0
+            ;;
+        Suspend)
+            confirm "Suspend the system?" || continue
+            systemctl suspend
+            exit 0
+            ;;
+        Reboot)
+            confirm "Reboot now?" || continue
+            unmount_safestore
+            systemctl reboot
+            exit 0
+            ;;
+        Shutdown)
+            confirm "Shut down now?" || continue
+            unmount_safestore
+            systemctl poweroff
+            exit 0
+            ;;
+        Halt)
+            confirm "Halt the system?" || continue
+            unmount_safestore
+            systemctl halt
+            exit 0
+            ;;
+        "")
+            exit 0
+            ;;
+    esac
+done
