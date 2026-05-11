@@ -86,7 +86,7 @@
       "command": "thunar",
       "matchBy": "className",
       "match": "Thunar",
-      "float": "large"
+      "float": "medium"
     },
     {
       "name": "terminal",
@@ -384,13 +384,13 @@
     {
       "className": "Thunar",
       "titleSuffix": "- Thunar",
-      "float": "center"
+      "float": "medium"
     },
     {
       "className": "Thunar",
       "appName": "thunar",
       "title": "Attention",
-      "float": "center"
+      "float": "medium"
     },
     {
       "className": "Rustdesk",
@@ -411,12 +411,26 @@
     }
   ],
   "swallowExclusions": [
-    {"className": "Polybar"},
-    {"appName": "polybar"},
-    {"className": "Qemu-system-x86_64"},
-    {"className": "Zenity"},
-    {"appName": "zenity"},
-    {"className": "Wtranscriber"},
-    {"appName": "wtranscriber"}
+    {
+      "className": "Polybar"
+    },
+    {
+      "appName": "polybar"
+    },
+    {
+      "className": "Qemu-system-x86_64"
+    },
+    {
+      "className": "Zenity"
+    },
+    {
+      "appName": "zenity"
+    },
+    {
+      "className": "Wtranscriber"
+    },
+    {
+      "appName": "wtranscriber"
+    }
   ]
 }
