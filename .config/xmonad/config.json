@@ -395,7 +395,12 @@
     },
     {
       "className": "Qemu-system-x86_64",
-      "float": "float"
+      "float": "tile"
     }
+  ],
+  "swallowExclusions": [
+    {"className": "Polybar"},
+    {"appName": "polybar"},
+    {"className": "Qemu-system-x86_64"}
   ]
 }

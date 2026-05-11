@@ -4,6 +4,8 @@ import Data.Monoid (All (..))
 import XMonad hiding (handleEventHook)
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
+import Config (WindowRule, matchesRule, reloadSwallowExclusions)
+
 handleEventHook :: Event -> X All
 handleEventHook ev =
     swallowEventHook terminalWindow swallowableWindow ev
@@ -14,6 +16,18 @@ terminalWindow = className =? "Alacritty"
 
 swallowableWindow :: Query Bool
 swallowableWindow = do
-    cls <- className
+    cls  <- className
     name <- appName
-    pure (cls /= "Polybar" && cls /= "polybar" && name /= "polybar")
+    let hardcoded = cls /= "Polybar" && cls /= "polybar" && name /= "polybar"
+    if not hardcoded
+        then pure False
+        else do
+            rules <- liftX (io reloadSwallowExclusions)
+            excluded <- anyRuleMatches rules
+            pure (not excluded)
+
+anyRuleMatches :: [WindowRule] -> Query Bool
+anyRuleMatches []     = pure False
+anyRuleMatches (r:rs) = do
+    m <- matchesRule r
+    if m then pure True else anyRuleMatches rs

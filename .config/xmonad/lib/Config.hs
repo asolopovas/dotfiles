@@ -8,15 +8,19 @@ module Config
     , loadConfigOrDefault
     , configPath
     , reloadWindowRules
+    , reloadSwallowExclusions
+    , matchesRule
     ) where
 
 import Control.Exception (SomeException, try)
 import Data.Aeson (FromJSON (..), eitherDecode, withObject, (.!=), (.:), (.:?))
 import qualified Data.ByteString.Lazy as BL
+import Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import qualified Data.Map.Strict as M
 import System.Directory (doesFileExist, getHomeDirectory)
 import System.FilePath ((</>))
 import System.IO (hPutStrLn, stderr)
+import XMonad (Query, className, appName, title, stringProperty, (=?), (<&&>))
 
 import FloatMode (FloatMode (..))
 
@@ -80,6 +84,7 @@ data UserConfig = UserConfig
     , ucKeys              :: M.Map String String
     , ucWindowRules       :: [WindowRule]
     , ucScratchpads       :: [Scratchpad]
+    , ucSwallowExclusions :: [WindowRule]
     }
     deriving (Show)
 
@@ -99,6 +104,7 @@ instance FromJSON UserConfig where
             <*> o .:? "keys"               .!= M.empty
             <*> o .:? "windowRules"        .!= []
             <*> o .:? "scratchpads"        .!= []
+            <*> o .:? "swallowExclusions"  .!= []
 
 defaultConfig :: UserConfig
 defaultConfig =
@@ -116,6 +122,7 @@ defaultConfig =
         , ucKeys              = M.empty
         , ucWindowRules       = []
         , ucScratchpads       = []
+        , ucSwallowExclusions = []
         }
 
 configPath :: IO FilePath
@@ -146,3 +153,20 @@ loadConfigOrDefault = do
 
 reloadWindowRules :: IO [WindowRule]
 reloadWindowRules = ucWindowRules <$> loadConfigOrDefault
+
+reloadSwallowExclusions :: IO [WindowRule]
+reloadSwallowExclusions = ucSwallowExclusions <$> loadConfigOrDefault
+
+matchesRule :: WindowRule -> Query Bool
+matchesRule r =
+    foldr
+        (<&&>)
+        (pure True)
+        [ maybe (pure True) (className =?) (wrClassName r)
+        , maybe (pure True) (appName   =?) (wrAppName   r)
+        , maybe (pure True) (title     =?) (wrTitle     r)
+        , maybe (pure True) (\s -> isSuffixOf s <$> title) (wrTitleSuffix   r)
+        , maybe (pure True) (\s -> isPrefixOf s <$> title) (wrTitlePrefix   r)
+        , maybe (pure True) (\s -> isInfixOf  s <$> title) (wrTitleContains r)
+        , maybe (pure True) (stringProperty "WM_WINDOW_ROLE" =?) (wrRole r)
+        ]

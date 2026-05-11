@@ -1,11 +1,10 @@
 module ManageRules (buildManageHook) where
 
-import Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import XMonad
 import XMonad.Hooks.ManageHelpers (doCenterFloat, doRectFloat)
 import XMonad.Util.NamedScratchpad (NamedScratchpad, namedScratchpadManageHook)
 
-import Config (WindowRule (..), reloadWindowRules)
+import Config (WindowRule (..), matchesRule, reloadWindowRules)
 import FloatMode (FloatMode (..))
 import Util (centeredRect, rect)
 import WindowLog (logNewWindow)
@@ -22,21 +21,7 @@ runtimeRules = do
     composeAll (map ruleHook rules)
 
 ruleHook :: WindowRule -> ManageHook
-ruleHook r = matches r --> action r
-
-matches :: WindowRule -> Query Bool
-matches r =
-    foldr
-        (<&&>)
-        (pure True)
-        [ maybe (pure True) (className =?) (wrClassName r)
-        , maybe (pure True) (appName   =?) (wrAppName   r)
-        , maybe (pure True) (title     =?) (wrTitle     r)
-        , maybe (pure True) (\s -> isSuffixOf s <$> title) (wrTitleSuffix   r)
-        , maybe (pure True) (\s -> isPrefixOf s <$> title) (wrTitlePrefix   r)
-        , maybe (pure True) (\s -> isInfixOf  s <$> title) (wrTitleContains r)
-        , maybe (pure True) (stringProperty "WM_WINDOW_ROLE" =?) (wrRole r)
-        ]
+ruleHook r = matchesRule r --> action r
 
 action :: WindowRule -> ManageHook
 action r = floatPart <+> shiftPart
