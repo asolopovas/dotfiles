@@ -40,13 +40,6 @@ if [ -d "$HOME/go" ]
     set -x GOBIN $HOME/go/bin
 end
 
-if [ -f "$HOME/.local/share/pnpm" ]
-    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
-    if not string match -q -- $PNPM_HOME $PATH
-        set -gx PATH "$PNPM_HOME" $PATH
-    end
-end
-
 if [ -f "$HOME/.local/google-cloud-sdk/path.fish.inc" ]
     . "$HOME/.local/google-cloud-sdk/path.fish.inc"
 end
@@ -61,9 +54,3 @@ function chrome-debug
     bash $HOME/dotfiles/scripts/chrome-debug.sh $argv
 end
 
-# pnpm
-set -gx PNPM_HOME "/home/andrius/.local/share/pnpm"
-if not string match -q -- $PNPM_HOME $PATH
-  set -gx PATH "$PNPM_HOME" $PATH
-end
-# pnpm end
