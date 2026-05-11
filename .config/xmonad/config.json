@@ -413,6 +413,10 @@
   "swallowExclusions": [
     {"className": "Polybar"},
     {"appName": "polybar"},
-    {"className": "Qemu-system-x86_64"}
+    {"className": "Qemu-system-x86_64"},
+    {"className": "Zenity"},
+    {"appName": "zenity"},
+    {"className": "Wtranscriber"},
+    {"appName": "wtranscriber"}
   ]
 }
