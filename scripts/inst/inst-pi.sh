@@ -5,34 +5,53 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 source "$DOTFILES_DIR/globals.sh"
 
 PI_PACKAGES=(
-    "npm:pi-claude-oauth-adapter"   # Anthropic OAuth / Claude Code compatibility adapter
-    "npm:pi-subagents"              # Delegate tasks to subagents (chains, parallel, TUI)
-    "npm:pi-mcp-adapter"            # MCP (Model Context Protocol) adapter
-    "npm:pi-web-access"             # Web search, URL fetch, GitHub clone, PDF/YouTube/video analysis
-    "npm:@plannotator/pi-extension" # Plannotator: interactive plan review with visual annotation
-    "npm:@a5c-ai/babysitter-pi"     # Babysitter package (supervises agent runs)
-    "npm:@a5c-ai/babysitter-pi"     # Babysitter package (supervises agent runs)
-    "npm:pi-lens"                   # LSP
+    "npm:pi-claude-oauth-adapter"
+    "npm:pi-subagents"
+    "npm:pi-mcp-adapter"
+    "npm:pi-web-access"
+    "npm:@plannotator/pi-extension"
+    "npm:@a5c-ai/babysitter-pi"
+    "npm:pi-lens"
+    "npm:@feniix/pi-specdocs"
+)
+
+PI_NPM_PACKAGES=(
+    "@earendil-works/pi-coding-agent@latest"
+    "@earendil-works/pi-agent-core@latest"
+    "@earendil-works/pi-ai@latest"
+    "@earendil-works/pi-tui@latest"
 )
 
 MCP_CONFIG="$HOME/.config/mcp/mcp.json"
+OLD_BUN_PI_PACKAGE="@mariozechner/pi-coding-agent"
 
 install_pi() {
-    if cmd_exist pi && [ "${FORCE:-false}" != true ]; then
-        print_color yellow "pi already installed: $(pi --version 2>/dev/null || echo unknown)"
-        return 0
-    fi
-
-    if ! cmd_exist bun; then
-        print_color red "bun is required (run scripts/inst/inst-bun.sh)"
+    if ! cmd_exist npm; then
+        print_color red "npm is required (install Node.js/Volta first)"
         exit 1
     fi
-    print_color green "Installing pi via bun..."
-    bun install -g @mariozechner/pi-coding-agent
+
+    if cmd_exist bun; then
+        bun remove -g "$OLD_BUN_PI_PACKAGE" >/dev/null 2>&1 || true
+    fi
+
+    print_color green "Installing/updating pi via npm..."
+    npm install -g "${PI_NPM_PACKAGES[@]}"
+    hash -r
+
+    if ! cmd_exist pi; then
+        print_color red "pi install completed but pi is not on PATH"
+        exit 1
+    fi
+
+    pi --help >/dev/null 2>&1
+    print_color green "pi ready"
 }
 
 installed_packages() {
-    pi list 2>/dev/null | awk '/^[[:space:]]+npm:/ {print $1}'
+    local output
+    output=$(pi list 2>/dev/null || true)
+    awk '/^[[:space:]]+npm:/ {print $1}' <<<"$output"
 }
 
 install_packages() {
@@ -45,9 +64,12 @@ install_packages() {
             print_color yellow "  $pkg already installed"
             continue
         fi
-        print_color green "  installing $pkg"
+        print_color green "  installing/updating $pkg"
         pi install "$pkg"
     done
+
+    print_color green "Updating pi extensions..."
+    pi update
 }
 
 ensure_context7() {
