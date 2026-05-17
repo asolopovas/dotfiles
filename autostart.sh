@@ -44,5 +44,8 @@ if command -v setxkbmap &>/dev/null; then
         | grep -oE "'xkb', '[^']+'" | sed -E "s/.*'([^']+)'$/\1/" | paste -sd, -)
     options=$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null \
         | grep -oE "'[^']+'" | tr -d "'" | paste -sd, -)
+    if [[ " $session_id " == *xmonad* ]]; then
+        layouts=gb,ru
+    fi
     (sleep 2; setxkbmap -layout "${layouts:-gb}" -option '' ${options:+-option "$options"}) &
 fi

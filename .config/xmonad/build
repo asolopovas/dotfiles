@@ -9,6 +9,7 @@ exec stack ghc \
     --package aeson \
     --package bytestring \
     --package containers \
+    --package dbus \
     --package directory \
     --package filepath \
     --package text \

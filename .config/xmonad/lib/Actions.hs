@@ -5,7 +5,6 @@ import XMonad
 import qualified XMonad.StackSet as W
 
 import Data.Char (toLower)
-import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.Promote (promote)
 import XMonad.Actions.WithAll (killAll)
 import XMonad.Layout.MultiToggle.Instances (StdTransformers (MIRROR))
@@ -75,7 +74,7 @@ actionFromString scratchpads raw = case break (== ':') raw of
         prot <- isProtected w
         if prot
             then spawn "notify-send 'xmonad' 'kill blocked: protected window (RustDesk)'"
-            else kill1
+            else kill
 
     safeKillAll = do
         ws <- gets (W.integrate' . W.stack . W.workspace . W.current . windowset)
