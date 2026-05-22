@@ -29,12 +29,15 @@ Project-specific guidance stays in the project, for example `AGENTS.md`, project
 
 Linux config files are symlinked to the dotfiles copy. Existing regular files are backed up before the symlink is created.
 
-Windows config files are copied from WSL because Windows tools should read real Windows files. This includes the OpenCode `gw` command from `.config/opencode/opencode.jsonc`.
+Windows config files are copied from WSL because Windows tools should read real Windows files. This includes the OpenCode `gw` command from `.config/opencode/opencode.jsonc` and Pi's `/gw` prompt template. Pi npm package manifests are synced, then `npm install` is run where an existing Pi npm install is present.
 
 | Source | Linux target | Windows target |
 |---|---|---|
 | `.claude/settings.json` | `~/.claude/settings.json` | `%USERPROFILE%/.claude/settings.json` |
 | `.config/opencode/opencode.jsonc` | `~/.config/opencode/opencode.jsonc` | `%USERPROFILE%/.config/opencode/opencode.jsonc` |
+| `.pi/agent/settings.json` | `~/.pi/agent/settings.json` | `%USERPROFILE%/.pi/agent/settings.json` |
+| `.pi/agent/npm/package.json` | `~/.pi/agent/npm/package.json` | `%USERPROFILE%/.pi/agent/npm/package.json` |
+| `.pi/agent/prompts/` | `~/.pi/agent/prompts/` | `%USERPROFILE%/.pi/agent/prompts/` |
 
 ### Environment
 

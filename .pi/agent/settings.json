@@ -1,0 +1,20 @@
+{
+  "packages": [
+    "npm:pi-subagents",
+    "npm:pi-mcp-adapter",
+    {
+      "source": "npm:pi-web-access",
+      "skills": []
+    },
+    {
+      "source": "npm:pi-lens",
+      "skills": [
+        "+skills/lsp-navigation"
+      ]
+    }
+  ],
+  "lastChangelogVersion": "0.75.4",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
+  "defaultThinkingLevel": "medium"
+}

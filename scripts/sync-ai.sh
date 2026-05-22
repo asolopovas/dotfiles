@@ -9,6 +9,12 @@ WINDOWS_AGENTS_DIR="${WINDOWS_AGENTS_DIR:-}"
 CONFIG_LINKS=(
 	".claude/settings.json"
 	".config/opencode/opencode.jsonc"
+	".pi/agent/settings.json"
+	".pi/agent/npm/package.json"
+)
+
+CONFIG_DIRS=(
+	".pi/agent/prompts"
 )
 
 SKILL_LINKS=(
@@ -113,6 +119,44 @@ sync_config_file() {
 	echo "-> copy: $src -> $dst"
 }
 
+sync_directory() {
+	local src="$1" dst="$2" parent
+
+	[[ -d "$src" ]] || die "source does not exist: $src"
+	parent="$(dirname "$dst")"
+
+	if have_cmd rsync; then
+		mkdir -p "$dst"
+		rsync -a --delete "$src/" "$dst/"
+	else
+		rm -rf "$dst"
+		mkdir -p "$parent"
+		cp -a "$src" "$dst"
+	fi
+	echo "-> synced directory: $src -> $dst"
+}
+
+sync_linux_npm_packages() {
+	local prefix="$HOME/.pi/agent/npm"
+
+	[[ -d "$prefix/node_modules" ]] || return 0
+	have_cmd npm || return 0
+	npm install --prefix "$prefix"
+}
+
+sync_windows_npm_packages() {
+	is_wsl || return 0
+	have_cmd powershell.exe || return 0
+	have_cmd wslpath || return 0
+
+	local home_dir prefix win_prefix
+	home_dir=$(windows_home_dir) || return 0
+	prefix="$home_dir/.pi/agent/npm"
+	[[ -d "$prefix/node_modules" ]] || return 0
+	win_prefix=$(wslpath -w "$prefix")
+	powershell.exe -NoProfile -Command "Set-Location -LiteralPath \$env:TEMP; & npm.cmd install --prefix '$win_prefix'" | tr -d '\r'
+}
+
 sync_linux_agents() {
 	replace_with_symlink "$DOTFILES_AGENTS_DIR" "$AGENTS_DIR"
 
@@ -128,6 +172,12 @@ sync_linux_configs() {
 		src="$DOTFILES_DIR/$relpath"
 		[[ -e "$src" ]] || continue
 		replace_config_with_symlink "$src" "$HOME/$relpath"
+	done
+
+	for relpath in "${CONFIG_DIRS[@]}"; do
+		src="$DOTFILES_DIR/$relpath"
+		[[ -d "$src" ]] || continue
+		replace_with_symlink "$src" "$HOME/$relpath"
 	done
 }
 
@@ -178,15 +228,7 @@ sync_windows_agents() {
 	parent="$(dirname "$dst")"
 	[[ -d "$parent" ]] || return 0
 
-	if have_cmd rsync; then
-		mkdir -p "$dst"
-		rsync -a --delete "$DOTFILES_AGENTS_DIR/" "$dst/"
-	else
-		rm -rf "$dst"
-		mkdir -p "$parent"
-		cp -a "$DOTFILES_AGENTS_DIR" "$dst"
-	fi
-	echo "-> synced Windows agents: $dst"
+	sync_directory "$DOTFILES_AGENTS_DIR" "$dst"
 }
 
 sync_windows_configs() {
@@ -201,14 +243,22 @@ sync_windows_configs() {
 		[[ -e "$src" ]] || continue
 		sync_config_file "$src" "$home_dir/$relpath"
 	done
+
+	for relpath in "${CONFIG_DIRS[@]}"; do
+		src="$DOTFILES_DIR/$relpath"
+		[[ -d "$src" ]] || continue
+		sync_directory "$src" "$home_dir/$relpath"
+	done
 }
 
 sync_all() {
 	[[ -d "$DOTFILES_AGENTS_DIR" ]] || die "missing dotfiles agents directory: $DOTFILES_AGENTS_DIR"
 	sync_linux_agents
 	sync_linux_configs
+	sync_linux_npm_packages
 	sync_windows_agents
 	sync_windows_configs
+	sync_windows_npm_packages
 	echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
 }
 
@@ -220,7 +270,7 @@ Commands:
   sync              Sync agents and config links (default)
   config            Sync config links only
   agents            Sync ~/.agents and CLI skill links only
-  windows           Sync .agents and configs to Windows from WSL only
+  windows           Sync .agents, Pi prompts, configs, and Pi npm packages to Windows from WSL only
 
 Options:
   -h, --help        Show this help
@@ -241,6 +291,7 @@ main() {
 	windows)
 		sync_windows_agents
 		sync_windows_configs
+		sync_windows_npm_packages
 		;;
 	*) die "unknown command: $1" ;;
 	esac

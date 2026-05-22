@@ -11,9 +11,12 @@ setup() {
     export AGENTS_DIR="$FAKE_HOME/.agents"
     export WINDOWS_AGENTS_DIR="$TMPDIR/windows/.agents"
 
-    mkdir -p "$DOTFILES_AGENTS_DIR/skills/skills/example" "$DOTFILES_DIR/.claude" "$DOTFILES_DIR/.config/opencode"
+    mkdir -p "$DOTFILES_AGENTS_DIR/skills/skills/example" "$DOTFILES_DIR/.claude" "$DOTFILES_DIR/.config/opencode" "$DOTFILES_DIR/.pi/agent/npm" "$DOTFILES_DIR/.pi/agent/prompts"
     printf '{}\n' > "$DOTFILES_DIR/.claude/settings.json"
     printf '{}\n' > "$DOTFILES_DIR/.config/opencode/opencode.jsonc"
+    printf '{"packages":["npm:pi-subagents"]}\n' > "$DOTFILES_DIR/.pi/agent/settings.json"
+    printf '{"dependencies":{"pi-subagents":"^0.25.0"}}\n' > "$DOTFILES_DIR/.pi/agent/npm/package.json"
+    printf -- '---\ndescription: Commit and push\n---\nCommit and push.\n' > "$DOTFILES_DIR/.pi/agent/prompts/gw.md"
     printf -- '---\nname: example\ndescription: Test\n---\n' > "$DOTFILES_AGENTS_DIR/skills/skills/example/SKILL.md"
 
     source <(sed 's/^main "\$@"$//' "$REPO_DIR/scripts/sync-ai.sh")
@@ -45,8 +48,14 @@ sync_ai_run() {
     sync_linux_configs
     [ -L "$FAKE_HOME/.claude/settings.json" ]
     [ -L "$FAKE_HOME/.config/opencode/opencode.jsonc" ]
+    [ -L "$FAKE_HOME/.pi/agent/settings.json" ]
+    [ -L "$FAKE_HOME/.pi/agent/npm/package.json" ]
+    [ -L "$FAKE_HOME/.pi/agent/prompts" ]
     [[ "$(readlink "$FAKE_HOME/.claude/settings.json")" == "$DOTFILES_DIR/.claude/settings.json" ]]
     [[ "$(readlink "$FAKE_HOME/.config/opencode/opencode.jsonc")" == "$DOTFILES_DIR/.config/opencode/opencode.jsonc" ]]
+    [[ "$(readlink "$FAKE_HOME/.pi/agent/settings.json")" == "$DOTFILES_DIR/.pi/agent/settings.json" ]]
+    [[ "$(readlink "$FAKE_HOME/.pi/agent/npm/package.json")" == "$DOTFILES_DIR/.pi/agent/npm/package.json" ]]
+    [[ "$(readlink "$FAKE_HOME/.pi/agent/prompts")" == "$DOTFILES_DIR/.pi/agent/prompts" ]]
 }
 
 @test "config sync replaces identical regular files" {
@@ -105,7 +114,12 @@ sync_ai_run() {
     printf '{"command":{"gw":{"template":"commit and push"}}}\n' > "$DOTFILES_DIR/.config/opencode/opencode.jsonc"
     sync_windows_configs
     [ -f "$TMPDIR/windows/.config/opencode/opencode.jsonc" ]
+    [ -f "$TMPDIR/windows/.pi/agent/settings.json" ]
+    [ -f "$TMPDIR/windows/.pi/agent/npm/package.json" ]
+    [ -f "$TMPDIR/windows/.pi/agent/prompts/gw.md" ]
     [[ "$(cat "$TMPDIR/windows/.config/opencode/opencode.jsonc")" == *'"gw"'* ]]
+    [[ "$(cat "$TMPDIR/windows/.pi/agent/settings.json")" == *'"npm:pi-subagents"'* ]]
+    [[ "$(cat "$TMPDIR/windows/.pi/agent/npm/package.json")" == *'"pi-subagents"'* ]]
 }
 
 @test "windows config sync backs up differing regular files" {
@@ -150,6 +164,8 @@ sync_ai_run() {
     [ -L "$FAKE_HOME/.claude/skills" ]
     [ -L "$FAKE_HOME/.codex/skills" ]
     [ -L "$FAKE_HOME/.claude/settings.json" ]
+    [ -L "$FAKE_HOME/.pi/agent/settings.json" ]
+    [ -L "$FAKE_HOME/.pi/agent/prompts" ]
 }
 
 @test "help prints usage" {
