@@ -144,6 +144,14 @@ sync_linux_npm_packages() {
 	npm install --prefix "$prefix"
 }
 
+sync_linux_pi_packages() {
+	local prefix="$HOME/.pi/agent"
+
+	[[ -d "$prefix/npm/node_modules" || -d "$prefix/git" ]] || return 0
+	have_cmd pi || return 0
+	pi update --extensions
+}
+
 sync_windows_npm_packages() {
 	is_wsl || return 0
 	have_cmd powershell.exe || return 0
@@ -155,6 +163,19 @@ sync_windows_npm_packages() {
 	[[ -d "$prefix/node_modules" ]] || return 0
 	win_prefix=$(wslpath -w "$prefix")
 	powershell.exe -NoProfile -Command "Set-Location -LiteralPath \$env:TEMP; & npm.cmd install --prefix '$win_prefix'" | tr -d '\r'
+}
+
+sync_windows_pi_packages() {
+	is_wsl || return 0
+	have_cmd powershell.exe || return 0
+	have_cmd wslpath || return 0
+
+	local home_dir prefix win_home
+	home_dir=$(windows_home_dir) || return 0
+	prefix="$home_dir/.pi/agent"
+	[[ -d "$prefix/npm/node_modules" || -d "$prefix/git" ]] || return 0
+	win_home=$(wslpath -w "$home_dir")
+	powershell.exe -NoProfile -Command "Set-Location -LiteralPath '$win_home'; if (Get-Command pi.cmd -ErrorAction SilentlyContinue) { & pi.cmd update --extensions } elseif (Get-Command pi -ErrorAction SilentlyContinue) { & pi update --extensions }" | tr -d '\r'
 }
 
 sync_linux_agents() {
@@ -256,9 +277,11 @@ sync_all() {
 	sync_linux_agents
 	sync_linux_configs
 	sync_linux_npm_packages
+	sync_linux_pi_packages
 	sync_windows_agents
 	sync_windows_configs
 	sync_windows_npm_packages
+	sync_windows_pi_packages
 	echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
 }
 
@@ -292,6 +315,7 @@ main() {
 		sync_windows_agents
 		sync_windows_configs
 		sync_windows_npm_packages
+		sync_windows_pi_packages
 		;;
 	*) die "unknown command: $1" ;;
 	esac

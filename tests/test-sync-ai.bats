@@ -157,6 +157,17 @@ sync_ai_run() {
     [ ! -e "$WINDOWS_AGENTS_DIR" ]
 }
 
+@test "linux pi package sync updates installed packages" {
+    mkdir -p "$FAKE_HOME/bin" "$FAKE_HOME/.pi/agent/npm/node_modules"
+    cat > "$FAKE_HOME/bin/pi" <<'S'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$HOME/pi.args"
+S
+    chmod +x "$FAKE_HOME/bin/pi"
+    PATH="$FAKE_HOME/bin:$PATH" sync_linux_pi_packages
+    [[ "$(cat "$FAKE_HOME/pi.args")" == "update --extensions" ]]
+}
+
 @test "full sync creates agents and config links" {
     run sync_ai_run sync
     [[ "$status" -eq 0 ]]
