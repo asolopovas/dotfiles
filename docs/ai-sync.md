@@ -1,48 +1,50 @@
 ## AI Sync (`scripts/sync-ai.sh`)
 
-Keeps Claude Code, OpenCode, and Codex aligned: shared skills, MCP servers, and agent definitions.
+Keeps the global AI tool setup aligned across Linux, WSL, and Windows.
 
 ### Commands
 
 ```bash
-./scripts/sync-ai.sh                    # Sync everything (default)
-./scripts/sync-ai.sh config             # Config files only
-./scripts/sync-ai.sh skills             # Skills only
-./scripts/sync-ai.sh mcp                # MCP servers only
-./scripts/sync-ai.sh agents [sync]      # Agents
-./scripts/sync-ai.sh agents add <url>   # Add agent URL → agents.conf
-./scripts/sync-ai.sh agents remove <name>
-./scripts/sync-ai.sh agents list
+./scripts/sync-ai.sh          # Sync everything (default)
+./scripts/sync-ai.sh sync     # Sync everything
+./scripts/sync-ai.sh config   # Linux config links only
+./scripts/sync-ai.sh agents   # Linux ~/.agents and CLI skill links only
+./scripts/sync-ai.sh windows  # Windows .agents and config copies from WSL only
 ```
 
-### Layout (canonical → symlink)
+### Layout
 
-Skills install **once** to `~/.agents/skills/`, then each CLI reads from there:
+Generic skills live globally under `~/.agents/skills`.
 
 | CLI | Path | How it reads |
 |---|---|---|
 | Claude Code | `~/.claude/skills` | symlink → `~/.agents/skills` |
-| Codex | `~/.codex/skills` | symlink → `~/.agents/skills` (only if codex installed) |
+| Codex | `~/.codex/skills` | symlink → `~/.agents/skills` |
 | OpenCode | `~/.agents/skills` | reads natively |
+| Windows tools | `%USERPROFILE%/.agents/skills` | copied from WSL |
 
-This is intentional — never duplicate skill files per CLI. If a skill directory is a real dir instead of a symlink, sync will refuse to overwrite — investigate first.
+Project-specific guidance stays in the project, for example `AGENTS.md`, project config files, or project-local agent definitions. Do not put project-only skills in the global `.agents/skills` tree.
 
-### Configuration
+### Config sync
 
-| Var / file | Purpose |
+Linux config files are symlinked to the dotfiles copy. Existing regular files are backed up before the symlink is created.
+
+Windows config files are copied from WSL because Windows tools should read real Windows files. This includes the OpenCode `gw` command from `.config/opencode/opencode.jsonc`.
+
+| Source | Linux target | Windows target |
+|---|---|---|
+| `.claude/settings.json` | `~/.claude/settings.json` | `%USERPROFILE%/.claude/settings.json` |
+| `.config/opencode/opencode.jsonc` | `~/.config/opencode/opencode.jsonc` | `%USERPROFILE%/.config/opencode/opencode.jsonc` |
+
+### Environment
+
+| Var | Purpose |
 |---|---|
-| `agents.conf` (repo root) | Agent URLs, one per line, `#` for comments |
-| `AGENTS_CONFIG` | Override path to `agents.conf` |
-| `AGENTS_SKILLS_DIR` | Default `~/.agents/skills` |
-| `SKILL_INSTALLER` | Path to skill-installer python script |
-| `SYNC_TARGETS` | Comma-separated CLIs (default auto-detect: `codex,claude,opencode`) |
-| `OPENCODE_CONFIG` | Path to `opencode.json` |
-| `CODEX_CONFIG` | Path to codex `config.toml` |
-
-### Skill sources
-
-Defined inline in `SKILL_SOURCES` array at top of `sync-ai.sh`. URLs use the GitHub `tree/<branch>/path` form — the installer extracts that subdirectory.
+| `DOTFILES_DIR` | Dotfiles checkout, default `$HOME/dotfiles` |
+| `DOTFILES_AGENTS_DIR` | Global generic agents source, default `$DOTFILES_DIR/.agents` |
+| `AGENTS_DIR` | Linux global agents path, default `$HOME/.agents` |
+| `WINDOWS_AGENTS_DIR` | Windows global agents override, default detected Windows profile + `/.agents` |
 
 ### Tests
 
-`tests/test-sync-ai.bats` — covers config parsing, agent add/remove/list, and sync target auto-detection. Run via `make test-sync-ai`.
+`tests/test-sync-ai.bats` covers Linux links, Windows copies, backup behavior, and WSL detection. Run via `make test-sync-ai`.

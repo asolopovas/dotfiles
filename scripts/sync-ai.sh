@@ -32,6 +32,18 @@ ensure_parent() {
 	mkdir -p "$(dirname "$1")"
 }
 
+backup_path() {
+	local path="$1" backup
+	backup="$path.backup.$(date +%Y%m%d%H%M%S)"
+
+	while [[ -e "$backup" || -L "$backup" ]]; do
+		backup="$path.backup.$(date +%Y%m%d%H%M%S).$$"
+	done
+
+	mv "$path" "$backup"
+	echo "-> backup: $path -> $backup"
+}
+
 replace_with_symlink() {
 	local src="$1" dst="$2"
 
@@ -53,6 +65,54 @@ replace_with_symlink() {
 	echo "-> symlink: $dst -> $src"
 }
 
+replace_config_with_symlink() {
+	local src="$1" dst="$2"
+
+	[[ -e "$src" ]] || die "source does not exist: $src"
+
+	if [[ -L "$dst" ]]; then
+		[[ "$(readlink "$dst")" == "$src" ]] && return 0
+		rm -f "$dst"
+	elif [[ -e "$dst" ]]; then
+		if [[ -d "$dst" && -z "$(find "$dst" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
+			rmdir "$dst"
+		elif [[ -f "$dst" ]]; then
+			if cmp -s "$src" "$dst"; then
+				rm -f "$dst"
+			else
+				backup_path "$dst"
+			fi
+		else
+			die "$dst exists and cannot be replaced safely"
+		fi
+	fi
+
+	ensure_parent "$dst"
+	ln -s "$src" "$dst"
+	echo "-> symlink: $dst -> $src"
+}
+
+sync_config_file() {
+	local src="$1" dst="$2"
+
+	[[ -e "$src" ]] || die "source does not exist: $src"
+
+	if [[ -L "$dst" || -e "$dst" ]]; then
+		if [[ -f "$dst" || -L "$dst" ]]; then
+			cmp -s "$src" "$dst" && return 0
+			backup_path "$dst"
+		elif [[ -d "$dst" && -z "$(find "$dst" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
+			rmdir "$dst"
+		else
+			die "$dst exists and cannot be replaced safely"
+		fi
+	fi
+
+	ensure_parent "$dst"
+	cp "$src" "$dst"
+	echo "-> copy: $src -> $dst"
+}
+
 sync_linux_agents() {
 	replace_with_symlink "$DOTFILES_AGENTS_DIR" "$AGENTS_DIR"
 
@@ -67,7 +127,7 @@ sync_linux_configs() {
 	for relpath in "${CONFIG_LINKS[@]}"; do
 		src="$DOTFILES_DIR/$relpath"
 		[[ -e "$src" ]] || continue
-		replace_with_symlink "$src" "$HOME/$relpath"
+		replace_config_with_symlink "$src" "$HOME/$relpath"
 	done
 }
 
@@ -129,11 +189,26 @@ sync_windows_agents() {
 	echo "-> synced Windows agents: $dst"
 }
 
+sync_windows_configs() {
+	is_wsl || return 0
+
+	local home_dir relpath src
+	home_dir=$(windows_home_dir) || return 0
+	[[ -d "$home_dir" ]] || return 0
+
+	for relpath in "${CONFIG_LINKS[@]}"; do
+		src="$DOTFILES_DIR/$relpath"
+		[[ -e "$src" ]] || continue
+		sync_config_file "$src" "$home_dir/$relpath"
+	done
+}
+
 sync_all() {
 	[[ -d "$DOTFILES_AGENTS_DIR" ]] || die "missing dotfiles agents directory: $DOTFILES_AGENTS_DIR"
 	sync_linux_agents
 	sync_linux_configs
 	sync_windows_agents
+	sync_windows_configs
 	echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
 }
 
@@ -145,7 +220,7 @@ Commands:
   sync              Sync agents and config links (default)
   config            Sync config links only
   agents            Sync ~/.agents and CLI skill links only
-  windows           Sync .agents to Windows from WSL only
+  windows           Sync .agents and configs to Windows from WSL only
 
 Options:
   -h, --help        Show this help
@@ -163,7 +238,10 @@ main() {
 	sync) sync_all ;;
 	config) sync_linux_configs ;;
 	agents) sync_linux_agents ;;
-	windows) sync_windows_agents ;;
+	windows)
+		sync_windows_agents
+		sync_windows_configs
+		;;
 	*) die "unknown command: $1" ;;
 	esac
 }
