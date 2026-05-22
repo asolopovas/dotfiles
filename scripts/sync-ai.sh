@@ -2,852 +2,170 @@
 set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+DOTFILES_AGENTS_DIR="${DOTFILES_AGENTS_DIR:-$DOTFILES_DIR/.agents}"
+AGENTS_DIR="${AGENTS_DIR:-$HOME/.agents}"
+WINDOWS_AGENTS_DIR="${WINDOWS_AGENTS_DIR:-}"
 
-AGENTS_SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
-SKILLS_REPO_URL="${SKILLS_REPO_URL:-https://github.com/asolopovas/skills.git}"
-SKILLS_REPO_DIR="${SKILLS_REPO_DIR:-$HOME/.agents/skills-src}"
-LOCAL_SKILLS_DIR="${LOCAL_SKILLS_DIR:-$SKILLS_REPO_DIR}"
-
-SKILL_SOURCES=()
-
-declare -A MCP_SERVERS=(
-    [context7]="npx @upstash/context7-mcp"
+CONFIG_LINKS=(
+	".claude/settings.json"
+	".config/opencode/opencode.jsonc"
 )
 
-AGENTS_CONF="${AGENTS_CONFIG:-$DOTFILES_DIR/agents.conf}"
-OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG:-}"
-CODEX_CONFIG_FILE="${CODEX_CONFIG:-$HOME/.codex/config.toml}"
-
-CLAUDE_CONFIGS=(
-    ".claude/settings.json"
+SKILL_LINKS=(
+	".claude/skills"
+	".codex/skills"
 )
-OPENCODE_CONFIGS=(
-    ".config/opencode/opencode.jsonc"
-)
-
-TARGETS=()
 
 die() {
-    echo "Error: $*" >&2
-    exit 1
+	echo "Error: $*" >&2
+	exit 1
 }
 
-have_cmd() { command -v "$1" &>/dev/null; }
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-require_cmd() { have_cmd "$1" || die "$1 not found in PATH."; }
-
-trim() {
-    local v="$1"
-    v="${v#"${v%%[![:space:]]*}"}"
-    v="${v%"${v##*[![:space:]]}"}"
-    printf '%s' "$v"
+is_wsl() {
+	[[ -n "${WSL_DISTRO_NAME:-}" ]] && return 0
+	[[ -r /proc/version ]] && grep -qi microsoft /proc/version
 }
 
-normalize_key() {
-    local name="${1,,}"
-    name="${name//[^a-z0-9]/-}"
-    printf '%s' "$name"
+ensure_parent() {
+	mkdir -p "$(dirname "$1")"
 }
 
-cli_home() {
-    case "$1" in
-        codex) printf '%s' "${CODEX_HOME:-$HOME/.codex}" ;;
-        claude) printf '%s' "${CLAUDE_HOME:-$HOME/.claude}" ;;
-        opencode) printf '%s' "${OPENCODE_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode}" ;;
-        *) return 1 ;;
-    esac
+replace_with_symlink() {
+	local src="$1" dst="$2"
+
+	[[ -e "$src" ]] || die "source does not exist: $src"
+
+	if [[ -L "$dst" ]]; then
+		[[ "$(readlink "$dst")" == "$src" ]] && return 0
+		rm -f "$dst"
+	elif [[ -e "$dst" ]]; then
+		if [[ -d "$dst" && -z "$(find "$dst" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
+			rmdir "$dst"
+		else
+			die "$dst exists and is not an empty directory or symlink"
+		fi
+	fi
+
+	ensure_parent "$dst"
+	ln -s "$src" "$dst"
+	echo "-> symlink: $dst -> $src"
 }
 
-target_dir() {
-    local home
-    home=$(cli_home "$1") || return 1
-    case "$2" in
-        skills) printf '%s' "$home/skills" ;;
-        agents)
-            case "$1" in
-                opencode) printf '%s' "$home/agent" ;;
-                *) printf '%s' "$home/agents" ;;
-            esac
-            ;;
-        *) return 1 ;;
-    esac
+sync_linux_agents() {
+	replace_with_symlink "$DOTFILES_AGENTS_DIR" "$AGENTS_DIR"
+
+	local relpath
+	for relpath in "${SKILL_LINKS[@]}"; do
+		replace_with_symlink "$AGENTS_DIR/skills" "$HOME/$relpath"
+	done
 }
 
-resolve_opencode_config_files() {
-    if [[ -n "$OPENCODE_CONFIG_FILE" ]]; then
-        printf '%s\n' "$OPENCODE_CONFIG_FILE"
-        return 0
-    fi
-
-    local home
-    home="$(cli_home opencode)"
-
-    local primary="$home/opencode.json"
-    local jsonc="$home/opencode.jsonc"
-
-    if [[ -f "$primary" || -f "$jsonc" ]]; then
-        [[ -f "$primary" ]] && printf '%s\n' "$primary"
-        [[ -f "$jsonc" ]] && printf '%s\n' "$jsonc"
-        return 0
-    fi
-
-    printf '%s\n' "$primary"
+sync_linux_configs() {
+	local relpath src
+	for relpath in "${CONFIG_LINKS[@]}"; do
+		src="$DOTFILES_DIR/$relpath"
+		[[ -e "$src" ]] || continue
+		replace_with_symlink "$src" "$HOME/$relpath"
+	done
 }
 
-strip_jsonc_comments() {
-    sed -e ':a' -e 's|//[^"]*$||' \
-        -e 's|/\*.*\*/||g' "$1" | jq .
+windows_home_dir() {
+	if [[ -n "${WINDOWS_AGENTS_DIR:-}" ]]; then
+		dirname "$WINDOWS_AGENTS_DIR"
+		return 0
+	fi
+
+	if have_cmd powershell.exe && have_cmd wslpath; then
+		local win_home
+		win_home=$(powershell.exe -NoProfile -Command '[Environment]::GetFolderPath("UserProfile")' 2>/dev/null | tr -d '\r' | tail -n 1)
+		[[ -n "$win_home" ]] && wslpath -u "$win_home" && return 0
+	fi
+
+	if [[ -d /mnt/c/Users ]]; then
+		local dir name
+		for dir in /mnt/c/Users/*; do
+			[[ -d "$dir" ]] || continue
+			name="$(basename "$dir")"
+			case "${name,,}" in
+			default | defaultuser0 | public | all\ users | desktop.ini) continue ;;
+			esac
+			printf '%s\n' "$dir"
+			return 0
+		done
+	fi
+
+	return 1
 }
 
-mcp_opencode_sync_file() {
-    local config="$1"
+windows_agents_dir() {
+	if [[ -n "${WINDOWS_AGENTS_DIR:-}" ]]; then
+		printf '%s\n' "$WINDOWS_AGENTS_DIR"
+		return 0
+	fi
 
-    mkdir -p "$(dirname "$config")"
-
-    if [[ ! -f "$config" ]]; then
-        jq -n --arg schema_key '$schema' '{($schema_key): "https://opencode.ai/config.json", "mcp": {}}' >"$config"
-    fi
-
-    if [[ "$config" == *.jsonc ]]; then
-        if ! jq empty "$config" >/dev/null 2>&1; then
-            strip_jsonc_comments "$config" >"$config.tmp" &&
-                mv "$config.tmp" "$config" ||
-                die "failed to strip comments from JSONC: $config"
-        fi
-    fi
-
-    jq empty "$config" >/dev/null 2>&1 || die "invalid JSON in OpenCode config: $config"
-
-    jq 'if has("") then if has("$schema") then del(.[""]) else .["$schema"] = .[""] | del(.[""]) end else . end' \
-        "$config" >"$config.tmp" && mv "$config.tmp" "$config"
-
-    local name
-    for name in $(jq -r '.mcp // {} | keys[]' "$config" 2>/dev/null); do
-        [[ -v MCP_SERVERS[$name] ]] && continue
-        jq --arg n "$name" 'del(.mcp[$n])' "$config" >"$config.tmp" &&
-            mv "$config.tmp" "$config"
-        echo "Removed $name from $config"
-    done
-
-    local cmd entry
-    local -a parts
-    for name in "${!MCP_SERVERS[@]}"; do
-        cmd="${MCP_SERVERS[$name]}"
-        read -ra parts <<<"$cmd"
-        entry=$(jq -n --arg name "$name" \
-            --argjson cmd "$(printf '%s\n' "${parts[@]}" | jq -R . | jq -s .)" \
-            '{($name): {type: "local", command: $cmd, enabled: true}}')
-        jq --argjson entry "$entry" '.mcp //= {} | .mcp *= $entry' "$config" \
-            >"$config.tmp" && mv "$config.tmp" "$config"
-    done
+	local home_dir
+	home_dir=$(windows_home_dir) || return 1
+	printf '%s\n' "$home_dir/.agents"
 }
 
-resolve_targets() {
-    local raw="${SYNC_TARGETS:-}"
-    local -a candidates=()
+sync_windows_agents() {
+	is_wsl || return 0
 
-    if [[ -n "$raw" ]]; then
-        IFS=', ' read -ra candidates <<<"$raw"
-    else
-        candidates=(codex claude opencode)
-    fi
+	local dst parent
+	dst=$(windows_agents_dir) || return 0
+	parent="$(dirname "$dst")"
+	[[ -d "$parent" ]] || return 0
 
-    local home
-    for t in "${candidates[@]}"; do
-        t=$(trim "${t,,}")
-        [[ -n "$t" ]] || continue
-        home=$(cli_home "$t" 2>/dev/null) || {
-            echo "Warning: unknown target '$t'; skipping." >&2
-            continue
-        }
-        if [[ -d "$home" ]] || have_cmd "$t"; then
-            TARGETS+=("$t")
-        else
-            echo "Warning: $t not detected; skipping." >&2
-        fi
-    done
-
-    ((${#TARGETS[@]})) || die "no supported CLI detected (codex, claude, opencode)."
+	if have_cmd rsync; then
+		mkdir -p "$dst"
+		rsync -a --delete "$DOTFILES_AGENTS_DIR/" "$dst/"
+	else
+		rm -rf "$dst"
+		mkdir -p "$parent"
+		cp -a "$DOTFILES_AGENTS_DIR" "$dst"
+	fi
+	echo "-> synced Windows agents: $dst"
 }
 
-ensure_config_symlink() {
-    local src="$1" dst="$2"
-
-    if [[ -L "$dst" ]]; then
-        [[ "$(readlink "$dst" 2>/dev/null)" == "$src" ]] && return 0
-        rm -f "$dst"
-    elif [[ -e "$dst" ]]; then
-        rm -rf "$dst"
-    fi
-
-    mkdir -p "$(dirname "$dst")"
-    ln -sf "$src" "$dst"
-    echo "-> symlink: $dst -> $src"
-}
-
-sync_config_for_cli() {
-    local cli="$1"
-    shift
-    local -a configs=("$@")
-
-    for relpath in "${configs[@]}"; do
-        local src="$DOTFILES_DIR/$relpath"
-        local dst="$HOME/$relpath"
-        [[ -e "$src" ]] || {
-            echo "Warning: $src not found; skipping." >&2
-            continue
-        }
-        ensure_config_symlink "$src" "$dst"
-    done
-}
-
-sync_config() {
-    echo "--- Config ---"
-
-    for target in "${TARGETS[@]}"; do
-        case "$target" in
-            claude) sync_config_for_cli claude "${CLAUDE_CONFIGS[@]}" ;;
-            opencode) sync_config_for_cli opencode "${OPENCODE_CONFIGS[@]}" ;;
-        esac
-    done
-}
-
-resolve_skill_installer() {
-    if [[ -n "${SKILL_INSTALLER:-}" ]]; then
-        [[ -f "$SKILL_INSTALLER" ]] || die "skill-installer not found at $SKILL_INSTALLER"
-        printf '%s' "$SKILL_INSTALLER"
-        return 0
-    fi
-
-    local candidate
-    for dir in "$AGENTS_SKILLS_DIR" "$(cli_home codex)/skills" "$(cli_home claude)/skills"; do
-        candidate="$dir/.system/skill-installer/scripts/install-skill-from-github.py"
-        [[ -f "$candidate" ]] && {
-            printf '%s' "$candidate"
-            return 0
-        }
-    done
-
-    return 1
-}
-
-parse_github_skill_source() {
-    local src="$1"
-    local path
-    path="${src#https://github.com/}"
-
-    local owner repo kind rest ref subpath
-    owner="${path%%/*}"
-    rest="${path#*/}"
-    repo="${rest%%/*}"
-    rest="${rest#*/}"
-    kind="${rest%%/*}"
-    rest="${rest#*/}"
-    ref="${rest%%/*}"
-    subpath="${rest#*/}"
-
-    [[ -n "$owner" && -n "$repo" && -n "$kind" && -n "$ref" && -n "$subpath" ]] || return 1
-    [[ "$kind" == "tree" || "$kind" == "blob" ]] || return 1
-
-    printf '%s|%s|%s|%s\n' "$owner" "$repo" "$ref" "$subpath"
-}
-
-install_skill_from_github_builtin() {
-    local src="$1" dest_root="$2" key="$3"
-
-    have_cmd git || die "git not found in PATH (required for built-in skill installer)."
-
-    local parsed owner repo ref subpath
-    parsed="$(parse_github_skill_source "$src")" || die "unsupported skill URL format: $src"
-    IFS='|' read -r owner repo ref subpath <<<"$parsed"
-
-    local tmp_dir tmp_repo src_dir dest_dir
-    tmp_dir=$(mktemp -d)
-    tmp_repo="$tmp_dir/repo"
-    dest_dir="$dest_root/$key"
-
-    rm -rf "$dest_dir"
-
-    if ! git clone --depth 1 --filter=blob:none --sparse --branch "$ref" \
-        "https://github.com/$owner/$repo.git" "$tmp_repo" >/dev/null 2>&1; then
-        rm -rf "$tmp_dir"
-        die "failed to clone $owner/$repo (ref: $ref)"
-    fi
-
-    if ! git -C "$tmp_repo" sparse-checkout set "$subpath" >/dev/null 2>&1; then
-        rm -rf "$tmp_dir"
-        die "failed to checkout '$subpath' from $owner/$repo"
-    fi
-
-    src_dir="$tmp_repo/$subpath"
-    [[ -d "$src_dir" ]] || {
-        rm -rf "$tmp_dir"
-        die "skill path not found in repo: $subpath"
-    }
-
-    cp -R "$src_dir" "$dest_dir"
-    if [[ ! -f "$dest_dir/SKILL.md" && -f "$dest_dir/skill.md" ]]; then
-        mv "$dest_dir/skill.md" "$dest_dir/SKILL.md"
-    fi
-
-    [[ -f "$dest_dir/SKILL.md" ]] || {
-        rm -rf "$tmp_dir"
-        die "skill install missing SKILL.md at $dest_dir"
-    }
-
-    rm -rf "$tmp_dir"
-}
-
-normalize_skill_source() {
-    local src="${1%%[#?]*}"
-    if [[ -n "${SKILLS_REF:-}" ]]; then
-        src="${src/\/tree\/main\//\/tree\/$SKILLS_REF/}"
-        src="${src/\/blob\/main\//\/blob\/$SKILLS_REF/}"
-    fi
-    src="${src%/SKILL.md}"
-    src="${src%/skill.md}"
-    printf '%s' "$src"
-}
-
-skill_name_from_url() {
-    local path="${1#*github.com/}"
-    path="${path#*/}" # strip owner
-    path="${path#*/}" # strip repo
-    if [[ "$path" == tree/* || "$path" == blob/* ]]; then
-        path="${path#*/}" # strip tree|blob
-        path="${path#*/}" # strip branch
-    fi
-    path="${path%/}"
-    path="${path%/SKILL.md}"
-    path="${path%/skill.md}"
-    printf '%s' "${path##*/}"
-}
-
-normalize_skill_frontmatter() {
-    local skill_md="$1" key="$2"
-    [[ -f "$skill_md" ]] || return 0
-
-    local current
-    current=$(awk '/^---[[:space:]]*$/{c++; next} c==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$skill_md")
-    [[ "$current" == "$key" ]] && return 0
-
-    local tmp
-    tmp=$(mktemp)
-    awk -v key="$key" '
-        BEGIN { c = 0; replaced = 0 }
-        /^---[[:space:]]*$/ { c++; print; next }
-        c == 1 && !replaced && /^name:/ { print "name: " key; replaced = 1; next }
-        { print }
-    ' "$skill_md" >"$tmp" && mv "$tmp" "$skill_md"
-    echo "-> normalized name in $skill_md -> $key"
-}
-
-ensure_skill_symlink() {
-    local link_path="$1"
-
-    if [[ -L "$link_path" && "$(readlink "$link_path" 2>/dev/null)" == "$AGENTS_SKILLS_DIR" ]]; then
-        return 0
-    fi
-
-    rm -rf "$link_path" 2>/dev/null || true
-    mkdir -p "$(dirname "$link_path")"
-    ln -sf "$AGENTS_SKILLS_DIR" "$link_path"
-    echo "-> symlink: $link_path -> $AGENTS_SKILLS_DIR"
-}
-
-ensure_skills_repo() {
-    [[ -n "$SKILLS_REPO_URL" ]] || return 0
-    have_cmd git || {
-        echo "Warning: git not available; skipping skills repo sync." >&2
-        return 0
-    }
-
-    if [[ -d "$SKILLS_REPO_DIR/.git" ]]; then
-        git -C "$SKILLS_REPO_DIR" pull --ff-only --quiet 2>/dev/null \
-            && echo "-> pulled $SKILLS_REPO_DIR" \
-            || echo "Warning: pull failed for $SKILLS_REPO_DIR" >&2
-    else
-        mkdir -p "$(dirname "$SKILLS_REPO_DIR")"
-        git clone --quiet "$SKILLS_REPO_URL" "$SKILLS_REPO_DIR" \
-            && echo "-> cloned $SKILLS_REPO_URL -> $SKILLS_REPO_DIR" \
-            || die "failed to clone $SKILLS_REPO_URL"
-    fi
-}
-
-load_skill_sources() {
-    local manifest="$SKILLS_REPO_DIR/sources.txt"
-    [[ -f "$manifest" ]] || return 0
-    local line
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        line=$(trim "$line")
-        [[ -z "$line" || "$line" == \#* ]] && continue
-        SKILL_SOURCES+=("$line")
-    done <"$manifest"
-}
-
-sync_skills() {
-    local strict="${1:-false}"
-    echo "--- Skills ---"
-    require_cmd python3
-    ensure_skills_repo
-    load_skill_sources
-
-    local installer
-    local use_builtin="false"
-    if ! installer="$(resolve_skill_installer)"; then
-        if have_cmd git; then
-            use_builtin="true"
-            echo "-> skill-installer not found; using built-in GitHub installer"
-        else
-            if [[ "$strict" == "true" ]]; then
-                die "skill-installer not found and git is unavailable (install git or set SKILL_INSTALLER)."
-            fi
-            echo "Warning: skill-installer not found and git unavailable; skipping skills sync." >&2
-            return 0
-        fi
-    fi
-
-    declare -A desired=()
-    local src name
-    for src in "${SKILL_SOURCES[@]}"; do
-        src="$(normalize_skill_source "$src")"
-        [[ "$src" == *github.com/* ]] || die "skill source must be a GitHub URL: $src"
-        name="$(skill_name_from_url "$src")"
-        [[ -n "$name" ]] || die "unable to resolve skill name from '$src'."
-        desired["$name"]="github:$src"
-    done
-
-    if [[ -d "$LOCAL_SKILLS_DIR" ]]; then
-        local local_skill
-        for local_skill in "$LOCAL_SKILLS_DIR"/*/; do
-            [[ -d "$local_skill" ]] || continue
-            name="$(basename "$local_skill")"
-            [[ "$name" == .* ]] && continue
-            [[ -f "$local_skill/SKILL.md" ]] || {
-                echo "Warning: $local_skill missing SKILL.md; skipping." >&2
-                continue
-            }
-            desired["$name"]="local:${local_skill%/}"
-        done
-    fi
-
-    mkdir -p "$AGENTS_SKILLS_DIR"
-
-    local base
-    for installed in "$AGENTS_SKILLS_DIR"/*/; do
-        [[ -d "$installed" ]] || continue
-        base="$(basename "$installed")"
-        [[ "$base" == .* || ! -f "$installed/SKILL.md" ]] && continue
-        if [[ -z "${desired[$base]:-}" ]]; then
-            rm -rf "$installed"
-            echo "Removed $base ($AGENTS_SKILLS_DIR)"
-        fi
-    done
-
-    local dest_dir key entry kind value
-    for key in "${!desired[@]}"; do
-        dest_dir="$AGENTS_SKILLS_DIR/$key"
-        entry="${desired[$key]}"
-        kind="${entry%%:*}"
-        value="${entry#*:}"
-
-        if [[ "$kind" == "local" ]]; then
-            if [[ -L "$dest_dir" && "$(readlink "$dest_dir" 2>/dev/null)" == "$value" ]]; then
-                echo "-> $key already linked from $value"
-            else
-                rm -rf "$dest_dir"
-                ln -sf "$value" "$dest_dir"
-                echo "-> symlink: $dest_dir -> $value"
-            fi
-            normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
-            continue
-        fi
-
-        if [[ -d "$dest_dir" && ! -L "$dest_dir" && -f "$dest_dir/SKILL.md" ]]; then
-            echo "-> $key already installed in $AGENTS_SKILLS_DIR"
-            normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
-            continue
-        fi
-        [[ -e "$dest_dir" || -L "$dest_dir" ]] && rm -rf "$dest_dir"
-        if [[ "$use_builtin" == "true" ]]; then
-            install_skill_from_github_builtin "$value" "$AGENTS_SKILLS_DIR" "$key"
-        else
-            python3 "$installer" --url "$value" --dest "$AGENTS_SKILLS_DIR"
-            [[ -f "$dest_dir/SKILL.md" ]] || die "skill install missing SKILL.md at $dest_dir"
-        fi
-        normalize_skill_frontmatter "$dest_dir/SKILL.md" "$key"
-    done
-
-    for installed in "$AGENTS_SKILLS_DIR"/*/; do
-        [[ -d "$installed" ]] || continue
-        base="$(basename "$installed")"
-        [[ "$base" == .* ]] && continue
-        [[ -f "$installed/SKILL.md" ]] || continue
-        normalize_skill_frontmatter "$installed/SKILL.md" "$base"
-    done
-
-    for target in "${TARGETS[@]}"; do
-        case "$target" in
-            claude)
-                ensure_skill_symlink "$(cli_home claude)/skills"
-                ;;
-            codex)
-                ensure_skill_symlink "$(cli_home codex)/skills"
-                ;;
-        esac
-    done
-}
-
-mcp_opencode_sync() {
-    require_cmd jq
-
-    local config
-    while IFS= read -r config; do
-        [[ -n "$config" ]] || continue
-        mcp_opencode_sync_file "$config"
-    done < <(resolve_opencode_config_files)
-
-}
-
-mcp_codex_sync() {
-    local config="$CODEX_CONFIG_FILE"
-    mkdir -p "$(dirname "$config")"
-
-    local tmp="${config}.tmp"
-
-    if [[ -f "$config" ]]; then
-        awk '
-            /^\[mcp_servers\./ { skip = 1; next }
-            /^\[/              { skip = 0 }
-            !skip
-        ' "$config" >"$tmp"
-        sed -i -e :a -e '/^[[:space:]]*$/{ $d; N; ba; }' "$tmp"
-    else
-        : >"$tmp"
-    fi
-
-    [[ -s "$tmp" ]] && printf '\n\n' >>"$tmp"
-
-    local name cmd toml_cmd toml_args
-    local -a parts
-    for name in $(printf '%s\n' "${!MCP_SERVERS[@]}" | sort); do
-        cmd="${MCP_SERVERS[$name]}"
-        read -ra parts <<<"$cmd"
-        toml_cmd=$(printf '%s' "${parts[0]}" | jq -R .)
-        if ((${#parts[@]} > 1)); then
-            toml_args=$(printf '%s\n' "${parts[@]:1}" | jq -R . | jq -s -c .)
-        else
-            toml_args="[]"
-        fi
-        printf '[mcp_servers.%s]\ncommand = %s\nargs = %s\n\n' \
-            "$name" "$toml_cmd" "$toml_args" >>"$tmp"
-    done
-
-    mv "$tmp" "$config"
-}
-
-mcp_claude_sync() {
-    require_cmd claude
-
-    local -a installed=()
-    local line
-    while IFS= read -r line; do
-        local name="${line%%:*}"
-        name=$(trim "$name")
-        [[ -n "$name" ]] && installed+=("$name")
-    done < <(claude mcp list 2>/dev/null | grep -E '^[^ ].*:' || true)
-
-    local name
-    for name in "${installed[@]}"; do
-        [[ -v MCP_SERVERS[$name] ]] && continue
-        claude mcp get "$name" >/dev/null 2>&1 || continue
-        claude mcp remove "$name" -s user 2>/dev/null &&
-            echo "Removed $name from claude" ||
-            echo "Warning: failed to remove $name from claude" >&2
-    done
-
-    local cmd
-    local -a parts
-    for name in "${!MCP_SERVERS[@]}"; do
-        cmd="${MCP_SERVERS[$name]}"
-        read -ra parts <<<"$cmd"
-
-        if claude mcp get "$name" >/dev/null 2>&1; then
-            claude mcp remove "$name" -s user >/dev/null 2>&1 || true
-        fi
-
-        claude mcp add -s user -t stdio "$name" -- "${parts[@]}" >/dev/null 2>&1 &&
-            echo "-> $name added to claude" ||
-            echo "Warning: failed to add $name to claude" >&2
-    done
-}
-
-sync_mcp() {
-    echo "--- MCP Servers ---"
-
-    for target in "${TARGETS[@]}"; do
-        case "$target" in
-            opencode)
-                mcp_opencode_sync
-                echo "Synced MCP servers to opencode"
-                ;;
-            codex)
-                mcp_codex_sync
-                echo "Synced MCP servers to codex"
-                ;;
-            claude)
-                mcp_claude_sync
-                echo "Synced MCP servers to claude"
-                ;;
-        esac
-    done
-}
-
-AGENT_SOURCES=()
-
-load_agent_sources() {
-    [[ -f "$AGENTS_CONF" ]] || return 0
-    local line
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        line=$(trim "$line")
-        [[ -z "$line" || "$line" == \#* ]] && continue
-        AGENT_SOURCES+=("$line")
-    done <"$AGENTS_CONF"
-}
-
-apply_agent_overrides() {
-    local file="$1" cli="$2"
-    [[ "$cli" == "opencode" && -f "$file" ]] || return 0
-    sed -i '/^model:/d' "$file" 2>/dev/null || true
-}
-
-resolve_agent_name() {
-    local file="$1" name=""
-    if [[ -f "$file" ]]; then
-        name=$(sed -n '/^---$/,/^---$/s/^name: *//p' "$file" 2>/dev/null | head -1)
-    fi
-    [[ -z "$name" ]] && name=$(basename "$file" .md)
-    normalize_key "$name"
-}
-
-download_agent() {
-    local url="$1" dest_dir="$2"
-    local tmp_file
-    tmp_file=$(mktemp)
-
-    if ! curl -fsSLo "$tmp_file" "$url" 2>/dev/null; then
-        rm -f "$tmp_file"
-        echo "Failed to download: $url" >&2
-        return 1
-    fi
-
-    local filename
-    filename=$(basename "$url")
-    [[ "$filename" == *.md ]] || filename="${filename}.md"
-    mv "$tmp_file" "$dest_dir/$filename"
-    printf '%s' "$filename"
-}
-
-list_agents_in_dir() {
-    local dest_dir="$1"
-    [[ -d "$dest_dir" ]] || return 0
-    local file name
-    for file in "$dest_dir"/*.md; do
-        [[ -f "$file" ]] || continue
-        name=$(resolve_agent_name "$file")
-        [[ -n "$name" ]] && echo "$name"
-    done
-}
-
-sync_codex_agents_md() {
-    local codex_home
-    codex_home=$(cli_home codex)
-    local agents_dir="$codex_home/agents"
-    local agents_md="$codex_home/AGENTS.md"
-    [[ -d "$agents_dir" ]] || return 0
-
-    local file name
-    {
-        echo ""
-        echo "## Custom Agents"
-        echo ""
-        for file in "$agents_dir"/*.md; do
-            [[ -f "$file" ]] || continue
-            name=$(resolve_agent_name "$file")
-            [[ -n "$name" ]] || continue
-            printf '### %s\n\n' "$name"
-            cat "$file"
-            printf '\n---\n\n'
-        done
-    } >>"$agents_md"
-}
-
-sync_agents() {
-    echo "--- Agents ---"
-    load_agent_sources
-
-    if ((${#AGENT_SOURCES[@]} == 0)); then
-        echo "No agent sources configured. Add URLs to $AGENTS_CONF or pass as arguments."
-        return 0
-    fi
-
-    declare -A desired=()
-    local src filename key
-    for src in "${AGENT_SOURCES[@]}"; do
-        src=$(trim "$src")
-        [[ -n "$src" ]] || continue
-        filename=$(basename "$src")
-        key=$(normalize_key "${filename%.md}")
-        [[ -n "$key" ]] || {
-            echo "Warning: unable to resolve agent name from '$src'; skipping."
-            continue
-        }
-        desired["$key"]="$src"
-    done
-
-    ((${#desired[@]})) || die "no valid agent sources found."
-
-    local dest_dir
-    for cli in "${TARGETS[@]}"; do
-        dest_dir=$(target_dir "$cli" agents) || continue
-        mkdir -p "$dest_dir"
-
-        local -A current_keys=()
-        local agent
-        while IFS= read -r agent; do
-            [[ -n "$agent" ]] && current_keys["$agent"]=1
-        done < <(list_agents_in_dir "$dest_dir")
-
-        for key in "${!desired[@]}"; do
-            if [[ -z "${current_keys[$key]:-}" ]]; then
-                echo "Installing $key for $cli..."
-                if filename=$(download_agent "${desired[$key]}" "$dest_dir"); then
-                    apply_agent_overrides "$dest_dir/$filename" "$cli"
-                    echo "-> Installed $key ($cli)"
-                else
-                    echo "Warning: failed to install $key for $cli" >&2
-                fi
-            else
-                echo "-> $key already installed ($cli)"
-                apply_agent_overrides "$dest_dir/${key}.md" "$cli"
-            fi
-        done
-
-        [[ "$cli" == "codex" ]] && sync_codex_agents_md
-    done
-}
-
-agents_add() {
-    local url="${1:-}"
-    [[ -n "$url" ]] || die "URL required"
-
-    if [[ ! -f "$AGENTS_CONF" ]]; then
-        mkdir -p "$(dirname "$AGENTS_CONF")"
-        printf '# Agent configuration — one URL per line\n\n' >"$AGENTS_CONF"
-    fi
-
-    grep -qF "$url" "$AGENTS_CONF" 2>/dev/null && {
-        echo "Agent already in $AGENTS_CONF"
-        return 0
-    }
-    echo "$url" >>"$AGENTS_CONF"
-    echo "Added: $url — run 'sync-ai.sh agents sync' to install."
-}
-
-agents_remove() {
-    local name="${1:-}"
-    [[ -n "$name" ]] || die "Agent name required"
-    [[ -f "$AGENTS_CONF" ]] || die "Config not found: $AGENTS_CONF"
-
-    if ! grep -qF "$name" "$AGENTS_CONF" 2>/dev/null; then
-        die "Agent not found: $name"
-    fi
-
-    local tmp
-    tmp=$(mktemp)
-    grep -vF "$name" "$AGENTS_CONF" >"$tmp" || true
-    mv "$tmp" "$AGENTS_CONF"
-    echo "Removed: $name — run 'sync-ai.sh agents sync' to update CLIs."
-}
-
-agents_list() {
-    if [[ ! -f "$AGENTS_CONF" ]]; then
-        echo "No agents configured."
-        return 0
-    fi
-    echo "Configured agents:"
-    local line
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        line=$(trim "$line")
-        [[ -z "$line" || "$line" == \#* ]] && continue
-        echo "  - $line"
-    done <"$AGENTS_CONF"
+sync_all() {
+	[[ -d "$DOTFILES_AGENTS_DIR" ]] || die "missing dotfiles agents directory: $DOTFILES_AGENTS_DIR"
+	sync_linux_agents
+	sync_linux_configs
+	sync_windows_agents
+	echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
 }
 
 usage() {
-    cat <<EOF
+	cat <<EOF
 Usage: $(basename "$0") [command]
 
 Commands:
-  sync              Sync everything: config, skills, MCP servers, agents (default)
-  config            Sync config files only
-  skills            Sync skills only
-  mcp               Sync MCP servers only
-  agents [sub]      Manage agents (sync|add|remove|list)
+  sync              Sync agents and config links (default)
+  config            Sync config links only
+  agents            Sync ~/.agents and CLI skill links only
+  windows           Sync .agents to Windows from WSL only
 
 Options:
   -h, --help        Show this help
 
 Environment:
-  SYNC_TARGETS      Comma-separated CLIs (default: codex,claude,opencode)
-  AGENTS_CONFIG     Path to agents.conf (default: \$DOTFILES_DIR/agents.conf)
-  AGENTS_SKILLS_DIR Canonical skill directory (default: ~/.agents/skills)
-  OPENCODE_CONFIG   Path to opencode.json
-  CODEX_CONFIG      Path to codex config.toml
+  DOTFILES_DIR      Dotfiles checkout (default: \$HOME/dotfiles)
+  AGENTS_DIR        Linux agents path (default: \$HOME/.agents)
+  WINDOWS_AGENTS_DIR Windows agents path override (default: detected Windows user profile + /.agents)
 EOF
-    exit 0
 }
 
 main() {
-    case "${1:-sync}" in
-        -h | --help) usage ;;
-        config | skills | mcp | sync)
-            resolve_targets
-            case "${1:-sync}" in
-                sync)
-                    sync_config
-                    sync_skills
-                    sync_mcp
-                    sync_agents
-                    echo ""
-                    echo "Done. Restart Codex, Claude, and OpenCode to pick up changes."
-                    ;;
-                config) sync_config ;;
-                skills) sync_skills true ;;
-                mcp) sync_mcp ;;
-            esac
-            ;;
-        agents)
-            shift
-            case "${1:-sync}" in
-                sync)
-                    resolve_targets
-                    sync_agents
-                    ;;
-                add)
-                    shift
-                    agents_add "$@"
-                    ;;
-                remove | rm)
-                    shift
-                    agents_remove "$@"
-                    ;;
-                list | ls) agents_list ;;
-                *) die "unknown agents command: $1" ;;
-            esac
-            ;;
-        *) die "unknown command: $1" ;;
-    esac
+	case "${1:-sync}" in
+	-h | --help) usage ;;
+	sync) sync_all ;;
+	config) sync_linux_configs ;;
+	agents) sync_linux_agents ;;
+	windows) sync_windows_agents ;;
+	*) die "unknown command: $1" ;;
+	esac
 }
 
 main "$@"
