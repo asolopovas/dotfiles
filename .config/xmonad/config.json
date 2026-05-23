@@ -167,13 +167,13 @@
     },
     {
       "name": "sysact",
-      "command": "alacritty --class=sysact,sysact -o window.dimensions.columns=20 -o window.dimensions.lines=10 -o window.padding.x=8 -o window.padding.y=6 -t sysact -e sysact",
+      "command": "alacritty --class=sysact,sysact -o window.dimensions.columns=40 -o window.dimensions.lines=10 -o window.padding.x=8 -o window.padding.y=6 -t sysact -e sysact",
       "matchBy": "className",
       "match": "sysact",
       "float": {
-        "x": 0.455,
+        "x": 0.41,
         "y": 0.4,
-        "w": 0.09,
+        "w": 0.18,
         "h": 0.2
       }
     },
