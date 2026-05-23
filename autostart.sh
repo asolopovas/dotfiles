@@ -6,14 +6,14 @@
 session_id="${XDG_CURRENT_DESKTOP:-} ${DESKTOP_SESSION:-} ${GDMSESSION:-}"
 shopt -s nocasematch
 if [[ "$session_id" == *xmonad* ]]; then
-    gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
+	gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
 fi
 shopt -u nocasematch
 
 if command -v picom &>/dev/null; then
-    nohup picom --config ~/.config/picom.conf >/tmp/picom.log 2>&1 &
+	nohup picom --config ~/.config/picom.conf >/tmp/picom.log 2>&1 &
 elif command -v fastcompmgr &>/dev/null; then
-    nohup fastcompmgr -r 7 -l -7 -t -7 -i 1.0 -c -C >/dev/null 2>&1 &
+	nohup fastcompmgr -r 7 -l -7 -t -7 -i 1.0 -c -C >/dev/null 2>&1 &
 fi
 .config/polybar/launch.sh >/tmp/polybar.log 2>&1 &
 nohup cryptomator >/tmp/cryptomator.log 2>&1 &
@@ -30,22 +30,45 @@ xset r rate 300 50 &
 xsetroot -cursor_name left_ptr &
 
 if command -v ibus-daemon &>/dev/null; then
-    pkill -f 'ibus-daemon' 2>/dev/null
-    ibus-daemon --xim --daemonize --replace --panel disable
+	pkill -f 'ibus-daemon' 2>/dev/null
+	ibus-daemon --xim --daemonize --replace --panel disable
+fi
+
+layouts=
+options=
+if command -v setxkbmap &>/dev/null; then
+	layouts=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null |
+		grep -oE "'xkb', '[^']+'" | sed -E "s/.*'([^']+)'$/\1/" | paste -sd, -)
+	options=$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null |
+		grep -oE "'[^']+'" | tr -d "'" | paste -sd, -)
+	if [[ " $session_id " == *xmonad* ]]; then
+		layouts=gb,ru
+		options=grp:win_space_toggle,terminate:ctrl_alt_bksp,grp_led:scroll
+	fi
+	(
+		sleep 2
+		setxkbmap -layout "${layouts:-gb}" -option '' ${options:+-option "$options"}
+	) &
 fi
 
 if command -v gxkb &>/dev/null; then
-    pkill -x gxkb 2>/dev/null
-    (sleep 3; gxkb) &
-fi
-
-if command -v setxkbmap &>/dev/null; then
-    layouts=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null \
-        | grep -oE "'xkb', '[^']+'" | sed -E "s/.*'([^']+)'$/\1/" | paste -sd, -)
-    options=$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null \
-        | grep -oE "'[^']+'" | tr -d "'" | paste -sd, -)
-    if [[ " $session_id " == *xmonad* ]]; then
-        layouts=gb,ru
-    fi
-    (sleep 2; setxkbmap -layout "${layouts:-gb}" -option '' ${options:+-option "$options"}) &
+	if [[ " $session_id " == *xmonad* ]]; then
+		mkdir -p "$HOME/.config/gxkb"
+		cat >"$HOME/.config/gxkb/gxkb.cfg" <<EOF
+[xkb config]
+group_policy=2
+default_group=0
+never_modify_config=false
+model=pc105
+layouts=${layouts:-gb,ru}
+variants=,
+toggle_option=${options:-grp:win_space_toggle,terminate:ctrl_alt_bksp,grp_led:scroll}
+compose_key_position=
+EOF
+	fi
+	pkill -x gxkb 2>/dev/null
+	(
+		sleep 3
+		gxkb
+	) &
 fi
