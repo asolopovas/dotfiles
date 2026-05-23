@@ -1,7 +1,12 @@
+import Control.Monad (when)
+import Data.Maybe (fromMaybe)
+import Data.Monoid (All (..))
 import XMonad
 import XMonad.Hooks.DynamicLog (dynamicLogWithPP)
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen)
 import XMonad.Hooks.ManageDocks (docks)
+import XMonad.Util.WindowProperties (getProp32)
+import XMonad.Util.XUtils (fi)
 import XMonad.Layout.IndependentScreens (countScreens, withScreens)
 import XMonad.Util.EZConfig (additionalKeysP)
 
@@ -18,6 +23,28 @@ import qualified ManageRules
 import qualified Mouse
 import qualified Scratchpads
 import qualified Startup
+
+fullscreenBorderEventHook :: Dimension -> Event -> X All
+fullscreenBorderEventHook bw (ClientMessageEvent _ _ _ _ win typ (action:dats)) = do
+    managed <- isClient win
+    wmstate <- getAtom "_NET_WM_STATE"
+    fullsc <- getAtom "_NET_WM_STATE_FULLSCREEN"
+    wstate <- fromMaybe [] <$> getProp32 wmstate win
+    let isFull = fi fullsc `elem` wstate
+        remove = 0
+        add = 1
+        toggle = 2
+        enters = action == add || (action == toggle && not isFull)
+        leaves = action == remove || (action == toggle && isFull)
+    when (managed && typ == wmstate && fi fullsc `elem` dats) $ do
+        when enters $ setFullscreenBorder 0 win
+        when leaves $ setFullscreenBorder bw win
+    pure (All True)
+fullscreenBorderEventHook _ _ = pure (All True)
+
+setFullscreenBorder :: Dimension -> Window -> X ()
+setFullscreenBorder bw w =
+    withDisplay $ \d -> io $ setWindowBorderWidth d w bw
 
 main :: IO ()
 main = do
@@ -48,7 +75,7 @@ main = do
             , mouseBindings      = Mouse.mouseBindings
             , layoutHook         = Layouts.layoutHook
             , manageHook         = ManageRules.buildManageHook scratchpads
-            , handleEventHook    = Events.handleEventHook
+            , handleEventHook    = Events.handleEventHook <> fullscreenBorderEventHook (fromIntegral (ucBorderWidth cfg))
             , startupHook        = Startup.startupHook
             , logHook            = dynamicLogWithPP (LogHook.logPP dbus)
             }
