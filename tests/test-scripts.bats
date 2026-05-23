@@ -221,3 +221,28 @@ symlinks_run() {
     [[ "${lines[0]}" == "/only/one" ]]
     [[ "${lines[1]}" == "$bash_dir" ]]
 }
+
+@test "fzf-code: skips missing local paths from VS Code storage" {
+    command -v sqlite3 >/dev/null || skip "sqlite3 unavailable"
+
+    local code_home="$TMPDIR/code-home"
+    local storage_dir="$code_home/.config/Code/User/globalStorage"
+    local existing="$TMPDIR/existing-project"
+    local missing="$TMPDIR/missing-project"
+    local capture="$TMPDIR/fzf-input"
+    mkdir -p "$storage_dir" "$existing"
+
+    sqlite3 "$storage_dir/state.vscdb" "CREATE TABLE ItemTable (key TEXT PRIMARY KEY, value TEXT);"
+    cat > "$storage_dir/storage.json" <<EOF
+{"profileAssociations":{"workspaces":{"file://$existing":{},"file://$missing":{},"vscode-remote://ssh-remote+host/home/user/remote-project":{}}}}
+EOF
+    printf '#!/usr/bin/env bash\ncat > "$FZF_CAPTURE"\nexit 1\n' > "$FAKE_BIN/fzf"
+    chmod +x "$FAKE_BIN/fzf"
+
+    run env HOME="$code_home" PATH="$FAKE_BIN:$PATH" FZF_CAPTURE="$capture" bash "$REPO_DIR/helpers/fzf-code"
+    [[ "$status" -eq 1 ]]
+    [[ -f "$capture" ]]
+    [[ "$(<"$capture")" == *"existing-project"* ]]
+    [[ "$(<"$capture")" == *"remote-project"* ]]
+    [[ "$(<"$capture")" != *"missing-project"* ]]
+}

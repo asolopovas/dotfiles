@@ -8,6 +8,23 @@ storage=$dir/storage.json
 
 urldecode() { printf '%b' "${1//%/\\x}"; }
 
+uri_to_path() {
+    local path=${1#file://}
+    path=${path#localhost}
+    urldecode "$path"
+}
+
+filter_existing_paths() {
+    local kind uri src path
+    while IFS=$'\t' read -r kind uri src; do
+        if [[ $uri == file://* ]]; then
+            path=$(uri_to_path "$uri")
+            [[ -e $path ]] || continue
+        fi
+        printf '%s\t%s\t%s\n' "$kind" "$uri" "$src"
+    done
+}
+
 pick=$(sqlite3 -tabs "$db" "
 WITH
   rj AS (SELECT value AS j FROM ItemTable
@@ -29,7 +46,7 @@ WITH
     FROM json_each(json_extract(readfile('$storage'),'\$.profileAssociations.workspaces')) s)
 SELECT kind, uri, 'recent' AS src FROM recent WHERE kind IS NOT NULL
 UNION SELECT kind, uri, 'store'  AS src FROM store;
-" | awk -F'\t' -v OFS='\t' '
+" | filter_existing_paths | awk -F'\t' -v OFS='\t' '
     {
         kind=$1; uri=$2; src=$3
         if (match(uri, /^vscode-vfs:\/\/github(%2[Bb]|\+)[0-9a-fA-F]+/))
@@ -61,7 +78,7 @@ UNION SELECT kind, uri, 'store'  AS src FROM store;
 
 IFS=$'\t' read -r _ _ kind uri <<<"$pick"
 case $kind:$uri in
-    folder:file://*) exec code "$(urldecode "${uri#file://}")" ;;
+    folder:file://*) exec code "$(uri_to_path "$uri")" ;;
     folder:*)        exec code --folder-uri "$uri" ;;
     *)               exec code --file-uri  "$uri" ;;
 esac
