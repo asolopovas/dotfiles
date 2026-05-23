@@ -1,35 +1,33 @@
-## AI Sync (`scripts/sync-ai.sh`)
+# AI sync
 
-Keeps the global AI tool setup aligned across Linux, WSL, and Windows.
+`scripts/sync-ai.sh` keeps AI CLI configuration and generic skills aligned across Linux, WSL, and Windows. Project-specific guidance stays in the repo that owns it.
 
-### Commands
+## Commands
 
-```bash
-./scripts/sync-ai.sh          # Sync everything (default)
-./scripts/sync-ai.sh sync     # Sync everything
-./scripts/sync-ai.sh config   # Linux config links only
-./scripts/sync-ai.sh agents   # Linux ~/.agents and CLI skill links only
-./scripts/sync-ai.sh windows  # Windows .agents and config copies from WSL only
-```
+| Command | Scope |
+|---|---|
+| `./scripts/sync-ai.sh` | Sync everything |
+| `./scripts/sync-ai.sh sync` | Sync everything |
+| `./scripts/sync-ai.sh config` | Linux config links only |
+| `./scripts/sync-ai.sh agents` | Linux `~/.agents` and CLI skill links only |
+| `./scripts/sync-ai.sh windows` | Windows copies from WSL only |
 
-### Layout
+## Skill layout
 
-Generic skills live globally under `~/.agents/skills`.
+Generic skills live under `~/.agents/skills`.
 
-| CLI | Path | How it reads |
+| CLI | Path | Behavior |
 |---|---|---|
-| Claude Code | `~/.claude/skills` | symlink → `~/.agents/skills` |
-| Codex | `~/.codex/skills` | symlink → `~/.agents/skills` |
-| OpenCode | `~/.agents/skills` | reads natively |
-| Windows tools | `%USERPROFILE%/.agents/skills` | copied from WSL |
+| Claude Code | `~/.claude/skills` | Symlink to `~/.agents/skills` |
+| Codex | `~/.codex/skills` | Symlink to `~/.agents/skills` |
+| OpenCode | `~/.agents/skills` | Reads directly |
+| Windows tools | `%USERPROFILE%/.agents/skills` | Copied from WSL |
 
-Project-specific guidance stays in the project, for example `AGENTS.md`, project config files, or project-local agent definitions. Do not put project-only skills in the global `.agents/skills` tree.
+Do not replace `~/.claude/skills` or `~/.codex/skills` with real directories. If either is not a symlink, inspect before changing it.
 
-### Config sync
+## Config sync
 
-Linux config files are symlinked to the dotfiles copy. Existing regular files are backed up before the symlink is created.
-
-Windows config files are copied from WSL because Windows tools should read real Windows files. This includes the OpenCode `gw` command from `.config/opencode/opencode.jsonc` and Pi's `/gw` prompt template. Pi npm package manifests are synced, then `npm install` and `pi update --extensions` run where an existing Pi package install is present.
+Linux targets are symlinks to this repo. Windows targets are real file copies because Windows-native tools should read Windows paths. Existing regular Linux config files are backed up before replacement when content differs.
 
 | Source | Linux target | Windows target |
 |---|---|---|
@@ -39,15 +37,32 @@ Windows config files are copied from WSL because Windows tools should read real 
 | `.pi/agent/npm/package.json` | `~/.pi/agent/npm/package.json` | `%USERPROFILE%/.pi/agent/npm/package.json` |
 | `.pi/agent/prompts/` | `~/.pi/agent/prompts/` | `%USERPROFILE%/.pi/agent/prompts/` |
 
-### Environment
+When an existing Pi npm install is present, sync runs `npm install` and `pi update --extensions` where the relevant commands exist.
+
+## Agent definition sources
+
+| Path | Purpose |
+|---|---|
+| `.agents/` | Generic user-level agents and skills synced to `~/.agents` |
+| `AGENTS.md` | Project-local instructions for this repo |
+| `.pi/agent/` | Pi settings, prompt templates, and npm package manifest |
+
+Project-only rules belong in `AGENTS.md` or project-local config, not the global `.agents/skills` tree. `.config/agents.conf` is tracked for tools that read external agent URL lists, but `scripts/sync-ai.sh` does not copy or link it today.
+
+## Environment
 
 | Var | Purpose |
 |---|---|
 | `DOTFILES_DIR` | Dotfiles checkout, default `$HOME/dotfiles` |
-| `DOTFILES_AGENTS_DIR` | Global generic agents source, default `$DOTFILES_DIR/.agents` |
+| `DOTFILES_AGENTS_DIR` | Generic agents source, default `$DOTFILES_DIR/.agents` |
 | `AGENTS_DIR` | Linux global agents path, default `$HOME/.agents` |
-| `WINDOWS_AGENTS_DIR` | Windows global agents override, default detected Windows profile + `/.agents` |
+| `WINDOWS_AGENTS_DIR` | Windows global agents override, default detected Windows profile plus `/.agents` |
 
-### Tests
+## Validation
 
-`tests/test-sync-ai.bats` covers Linux links, Windows copies, backup behavior, and WSL detection. Run via `make test-sync-ai`.
+`tests/test-sync-ai.bats` covers Linux links, Windows copies, backup behavior, and WSL detection.
+
+```bash
+make test-sync-ai
+make test
+```

@@ -1,6 +1,6 @@
 # shellcheck disable=SC1089,SC2046,SC2283
 # Dotfiles Project Makefile
-.PHONY: help test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools clean-tests install-test-deps install kill-alacritty
+.PHONY: help install test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools clean-tests install-test-deps kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -11,7 +11,7 @@ help:
 	@echo "Dotfiles Project - Available targets:"
 	@echo ""
 	@echo "Main Installation:"
-	@echo "  install               Install everything (Git cache)"
+	@echo "  install               Run ./init.sh"
 	@echo ""
 	@echo "Testing (local, fast — core script tests):"
 	@echo "  test                  Run all local bats tests (~2-5s)"
@@ -42,6 +42,9 @@ help:
 	@echo "Maintenance:"
 	@echo "  clean-tests           Clean up test artifacts"
 	@echo "  install-test-deps     Install local testing dependencies"
+
+install:
+	@./init.sh
 
 # ---------- Local fast test targets ----------
 

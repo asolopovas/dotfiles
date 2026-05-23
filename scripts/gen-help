@@ -1,19 +1,16 @@
 #!/usr/bin/env bash
-# Generates docs/help.md with perfectly aligned columns
 set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 OUT="$DOTFILES/docs/help.md"
 
-# Column widths
-K=15  # key
-A=19  # action
-G=3   # gap between tables
+K=15
+A=19
+G=3
 
 ksep=$(printf '─%.0s' $(seq 1 $K))
 asep=$(printf '─%.0s' $(seq 1 $A))
 gsep=$(printf ' %.0s' $(seq 1 $G))
-gline=$(printf '─%.0s' $(seq 1 $G))
 
 pad() { printf "%-${2}s" "$1"; }
 
@@ -43,6 +40,8 @@ hdr3() {
 {
 cat << 'HEADER'
 # Dotfiles Help                                    F1 toggle | q quit
+
+Generated from `scripts/gen-help`; edit the generator, not this file.
 
 HEADER
 

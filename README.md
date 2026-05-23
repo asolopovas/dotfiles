@@ -1,11 +1,13 @@
 # Dotfiles
 
-Personal dotfiles and automation for Linux desktops and servers -- shell, Neovim, xmonad, tmux, and developer tooling.
+Personal Linux desktop/server dotfiles: shell, Neovim, Xmonad, tmux, terminal tooling, AI CLI config, and bootstrap automation.
 
-## Quick Start
+## Quick start
 
 ```bash
-git clone https://github.com/asolopovas/dotfiles.git ~/dotfiles && cd ~/dotfiles && ./init.sh
+git clone https://github.com/asolopovas/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./init.sh
 ```
 
 Remote bootstrap:
@@ -14,181 +16,51 @@ Remote bootstrap:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main/init.sh)"
 ```
 
-### Feature Flags
+`init.sh` is intentionally self-contained for `curl | bash` use. It updates existing checkouts destructively and replaces managed config paths with symlinks; see [docs/bootstrap.md](docs/bootstrap.md). Back up local changes first.
 
-Toggle components via environment variables (all default `true` unless noted):
+## Docs map
 
-```bash
-NODE=false FISH=false ./init.sh        # skip Node and fish
-FORCE=true ./init.sh                   # force reinstall
-CARGO=true CHANGE_SHELL=true ./init.sh # opt-in features (default false)
+Start with [docs/index.md](docs/index.md). Topic docs are the source of record:
+
+| Need | Doc |
+|---|---|
+| Bootstrap flags, flow, symlinks | [docs/bootstrap.md](docs/bootstrap.md) |
+| Test layers and validation | [docs/testing.md](docs/testing.md) |
+| Bash/fish load order and helpers | [docs/shell-env.md](docs/shell-env.md) |
+| Script taxonomy and installer rules | [docs/scripts.md](docs/scripts.md) |
+| AI CLI skill/config sync | [docs/ai-sync.md](docs/ai-sync.md) |
+| F1 keyboard cheatsheet | [docs/help.md](docs/help.md) |
+
+## Common commands
+
+| Task | Command |
+|---|---|
+| Install/update this environment | `./init.sh` or `make install` |
+| Skip selected tools | `NODE=false FISH=false ./init.sh` |
+| Force reinstall managed tools | `FORCE=true ./init.sh` |
+| Opt into cargo | `CARGO=true ./init.sh` |
+| Keep the current login shell | `CHANGE_SHELL=false ./init.sh` |
+| Run local fast tests | `make test` |
+| Run Docker bootstrap tests | `make test-init` |
+| Run X11 window tests | `make test-ui-snap-window` |
+| Regenerate F1 help | `DOTFILES="$PWD" scripts/gen-help` |
+
+Full feature flag table: [docs/bootstrap.md#feature-flags](docs/bootstrap.md#feature-flags).
+
+## Repository layout
+
+```text
+init.sh              Curl-safe bootstrap entrypoint
+globals.sh           Shared shell library
+autostart.sh         Desktop autostart
+Makefile             Test, lint, and utility targets
+scripts/             Install, config, ops, system, UI, and WSL scripts
+helpers/             Small CLI wrappers installed on PATH
+env/                 Shared shell environment fragments
+completions/         Bash and fish completions
+conf.d/              System config snippets
+fzf/                 fzf options, keybindings, exclusions
+.config/             Application configs
+tests/               Bats suites and Docker/X11 runners
+docs/                Source-of-record documentation
 ```
-
-Available flags: `BUN`, `DENO`, `FDFIND`, `FISH`, `FZF`, `NODE`, `NVIM`, `OHMYFISH`, `CARGO`, `CHANGE_SHELL`, `FORCE`, `UNATTENDED`.
-
-> **Note:** `init.sh` removes existing `~/.config/fish` and `~/.config/tmux` before symlinking.
-
-## Structure
-
-```
-.config/         App configs (alacritty, fish, nvim, tmux, polybar, rofi, xmonad, gtk)
-scripts/         ~90 scripts grouped by prefix (see below)
-helpers/         Small CLI wrappers (system/, tools/, web/)
-env/             Environment exports (vars, paths, theme)
-completions/     Bash and fish completions
-conf.d/          System config snippets (Barrier, Synaptics)
-fzf/             fzf completion, keybindings, exclusions
-tests/           Bats test suites
-redis/           Redis config and service files
-init.sh          Bootstrap installer with feature flags
-globals.sh       Shared shell library (logging, OS detection, package helpers)
-autostart.sh     Desktop autostart (compositor, polybar, flameshot)
-Makefile         Build and test automation
-```
-
-## Scripts
-
-~90 scripts in `scripts/`, organized by prefix:
-
-| Prefix | Purpose | Examples |
-|--------|---------|---------|
-| `inst-` | Install tools/runtimes | docker, node (volta), nvim, fish, golang, php, redis |
-| `cfg-`  | Configure system/tools | locale, proxy settings, default dirs, Plesk defaults |
-| `ops-`  | Operations/maintenance | db backup, git sync, symlink refresh, worker management |
-| `sec-`  | Security | SSH key auth, SSL cert import, fail2ban, permission fixes |
-| `sys-`  | System tweaks | nvidia fixes, kernel modules, inotify limits, nouveau removal |
-| `ui-`   | Desktop/WM | window snapping, polybar widgets, DPI, mouse/touchpad config |
-| `wsl-`  | WSL-specific | win32yank, wslu, Windows Hello sudo |
-
-## Make Targets
-
-```bash
-make help                  # list all targets
-make install               # install git cache (sudo)
-make test                  # run ui-snap-window bats tests (auto-installs deps)
-make clean-tests           # remove /tmp test artifacts
-```
-
-## Cheatsheet
-
-<details>
-<summary>Terminal / Tmux</summary>
-
-**Terminal:**
-`Ctrl+X E` edit command | `Esc+B/F` word back/forward
-
-**Tmux** (prefix: `Ctrl+Space`, `?` for in-tmux cheatsheet popup):
-
-| Key | Action |
-|-----|--------|
-| **No prefix (instant)** | |
-| `Ctrl+h/j/k/l` | Move between panes (vim-aware) |
-| `Alt+Arrows` | Resize pane |
-| `Alt+[` / `Alt+]` | Prev / next window |
-| `Alt+{` / `Alt+}` | Move window left / right |
-| `Alt+1..9` | Jump to window |
-| **Prefix + key** | |
-| `-` / `\` | Split horizontal / vertical |
-| `c` | New window |
-| `,` | Rename window |
-| `Tab` | Last window (toggle) |
-| `x` | Kill pane |
-| `z` | Zoom pane (toggle) |
-| `!` | Break pane to window |
-| `@` | Join pane from window |
-| `o` / `e` | Swap pane / spread evenly |
-| **Sessions** | |
-| `w` | Session/window tree |
-| `n` | New named session |
-| `q` | Kill session |
-| `d` | Detach |
-| `;` | Last session (toggle) |
-| **Copy mode** | |
-| `/` | Search |
-| `[` | Enter copy mode |
-| `v` / `C-v` / `y` | Select / rectangle / yank |
-| **Popups** | |
-| `g` / `G` / `t` | Lazygit / shell / htop |
-
-**Aliases:** `tm` attach/create main session | `tx <name>` attach | `ts` list | `tl` list windows | `tk <name>` kill
-
-</details>
-
-<details>
-<summary>Neovim keybindings (leader: Space)</summary>
-
-**Navigation & Buffers:**
-
-| Key | Action |
-|-----|--------|
-| `<leader>pv` | File explorer (`:Ex`) |
-| `<leader>h` / `l` | Prev / next buffer |
-| `<leader>bd` | Close buffer |
-| `<leader>q` | Close all buffers |
-| `<M-H>` / `<M-L>` | Prev / next tab |
-| `<M-t>` / `<M-q>` | New / close tab |
-| `<C-d>` / `<C-u>` | Page down/up (centered) |
-| `n` / `N` | Search next/prev (centered) |
-
-**Splits:**
-
-| Key | Action |
-|-----|--------|
-| `<leader>vv` / `vh` | Vertical / horizontal split |
-| `<M-h/j/k/l>` | Move between splits |
-| `<C-M-h/j/k/l>` | Resize splits |
-
-**Editing:**
-
-| Key | Action |
-|-----|--------|
-| `<leader>f` | Format file |
-| `<leader><space>` | Clear search highlight |
-| `<M-J>` / `<M-K>` | Indent left / right |
-| `<F5>` | Toggle hidden chars |
-| `J` (normal) | Join lines, keep cursor |
-| `J` / `K` (visual) | Move selection down / up |
-| `<leader>p` (visual) | Paste without yanking |
-| `jk` (insert) | Exit insert mode |
-| `w!!` (cmdline) | Sudo write |
-
-**Telescope:**
-
-| Key | Action |
-|-----|--------|
-| `<C-p>` | Smart file finder |
-| `<leader>ff` | Find files |
-| `<leader>fg` | Live grep |
-| `<leader>fh` | Help tags |
-| `<leader>fb` | File browser |
-| `<leader>fd` / `fs` | Document / workspace symbols |
-
-**Quick Edit:**
-
-| Key | File |
-|-----|------|
-| `<leader>ev` | `init.lua` |
-| `<leader>er` | `remap.lua` |
-| `<leader>es` | `set.lua` |
-| `<leader>ef` | `config.fish` |
-| `<leader>ea` | `.aliasrc` |
-| `<leader>sv` | Source `MYVIMRC` |
-
-**Other:** ``<M-`>`` toggle NvimTree | `<M-S-q>` force quit
-
-</details>
-
-<details>
-<summary>Surround.vim</summary>
-
-| Old Text | Command | New Text |
-|----------|---------|----------|
-| `surr*ound_words` | `ysiw)` | `(surround_words)` |
-| `*make strings` | `ys$"` | `"make strings"` |
-| `[delete ar*ound me!]` | `ds]` | `delete around me!` |
-| `remove <b>HTML t*ags</b>` | `dst` | `remove HTML tags` |
-| `'change quot*es'` | `cs'"` | `"change quotes"` |
-| `<b>or tag* types</b>` | `csth1<CR>` | `<h1>or tag types</h1>` |
-| `delete(functi*on calls)` | `dsf` | `function calls` |
-
-</details>

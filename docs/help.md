@@ -1,5 +1,7 @@
 # Dotfiles Help                                    F1 toggle | q quit
 
+Generated from `scripts/gen-help`; edit the generator, not this file.
+
 ## Focus & Move
 
 ```

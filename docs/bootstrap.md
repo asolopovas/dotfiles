@@ -1,52 +1,64 @@
-## Bootstrap (init.sh)
+# Bootstrap
 
-Self-contained installer — safe to `curl | bash` before `globals.sh` exists. Re-runs are idempotent (each `inst-*.sh` checks for prior install unless `FORCE=true`).
+`init.sh` installs this repo from a cold machine and must stay curl-safe. It runs before `globals.sh` exists, so its inline helpers are intentional.
 
-### Invocation
+## Invocation
 
-```bash
-./init.sh                                    # all defaults
-NODE=false FISH=false ./init.sh              # env-var feature flags
-./init.sh --no-node --no-fish                # equivalent CLI flags
-FORCE=true ./init.sh                         # force-reinstall everything
-./init.sh --type=ssh                         # use SSH instead of HTTPS for git
-```
+| Goal | Command |
+|---|---|
+| Default install | `./init.sh` |
+| Remote install | `bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main/init.sh)"` |
+| Skip Node and fish | `NODE=false FISH=false ./init.sh` |
+| Equivalent CLI skips | `./init.sh --no-node --no-fish` |
+| Force reinstall/cleanup | `FORCE=true ./init.sh` or `./init.sh --force` |
+| Use SSH git remote | `./init.sh --type=ssh` |
+| Keep current login shell | `CHANGE_SHELL=false ./init.sh` |
 
-### Feature flags
+## Feature flags
 
-Defaults defined in the `features` assoc array near the top of `init.sh`. `--no-X` flags only exist for: `fish`, `node`, `bun`, `deno`, `nvim`. Everything else uses env vars.
+Defaults live in the `features` associative array in `init.sh`. All values are exported for child scripts.
 
 | Flag | Default | Notes |
 |---|---|---|
 | `BUN`, `DENO`, `NODE`, `NVIM`, `FISH`, `FZF`, `FDFIND` | `true` | Toolchain installs |
 | `OHMYFISH` | `true` | Fish plugin manager |
 | `OHMYBASH`, `OHMYZSH`, `ZSH`, `CARGO` | `false` | Opt-in |
-| `CHANGE_SHELL` | `true` | `chsh` to fish at end |
-| `UNATTENDED` | `true` | Skip prompts |
-| `FORCE` | `false` | Re-run installers even if already installed |
-| `SYSTEM` | `false` | System-wide tweaks (mainline kernel etc.) |
-| `TYPE` | `https` | `https` or `ssh` for git remotes |
-| `NODE_VERSION` | `24.13.0` | Pinned via nvm |
+| `CHANGE_SHELL` | `true` | Run `chsh` to fish at the end |
+| `UNATTENDED` | `true` | Skip the interactive menu |
+| `FORCE` | `false` | Remove managed installs and rerun installers |
+| `SYSTEM` | `false` | Link desktop/system config set |
+| `TYPE` | `https` | `https` or `ssh` git remote |
+| `NODE_VERSION` | `24.13.0` | Node version used by the Node installer |
 
-All flags are exported so child `inst-*.sh` scripts can read them.
+CLI `--no-*` flags exist only for `fish`, `node`, `bun`, `deno`, and `nvim`. Other toggles use environment variables.
 
-### Sequence
+## Flow
 
-1. Bootstrap utils inlined (`cmd_exist`, `print_color`, `_detect_os`, `_detect_arch`) — cannot rely on `globals.sh` yet.
-2. Parse args → set feature env vars.
-3. Set up `SUDO` wrapper (no-op if root).
-4. Clone/update `$DOTFILES_DIR` from `$DOTFILES_URL`.
-5. Source `globals.sh`, then run `inst-*.sh` for enabled features.
-6. Symlinks → `~/.config/`, fish/bash configs.
-7. If `CHANGE_SHELL=true`, `chsh` to fish.
+1. Define curl-safe helpers, detect `OS`/`ARCH`, parse CLI args, and export feature flags.
+2. Ensure `unzip`, create base directories, and clean managed installs when `FORCE=true`.
+3. Exit early for shared `/opt/dotfiles` user checkouts managed by Plesk.
+4. Clone or update `$DOTFILES_DIR` from `$DOTFILES_URL`. Existing checkouts are reset hard to `origin/main` and cleaned.
+5. On root Plesk hosts, delegate to `scripts/plesk-init.sh sync` when `/opt/dotfiles` exists, otherwise `scripts/plesk-init.sh all`, then exit.
+6. Load the composer installer, optionally show `inst-menu.sh`, source `globals.sh`, and source `scripts/cfg-default-dirs.sh`.
+7. `cfg-default-dirs.sh` creates base directories and replaces managed config destinations with symlinks into the repo, including the extra desktop set when `SYSTEM=true`.
+8. Install enabled tools through `ensure_tool`, then run Neovim and Oh My Fish setup when enabled.
+9. Apply desktop side effects on supported Linux systems: local RTC for dual boot and numlock setup.
+10. If `CHANGE_SHELL=true`, switch the default shell to fish.
 
-### Idempotency rules for `inst-*.sh`
+## Idempotency rules
 
-- Check for the binary or version before downloading. Reinstall only if `FORCE=true`.
-- Use `gh_latest_release owner/repo` from `globals.sh` instead of hardcoding versions.
-- Use `installPackages` / `pkg_install` for OS-portable installs.
-- Never assume `$PATH` is set up — source the relevant `env/*.sh` if needed.
+- Check the binary or version before downloading.
+- Reinstall only when `FORCE=true`.
+- Use `installPackages` or `pkg_install` instead of raw package-manager calls after `globals.sh` is available.
+- Use `gh_latest_release owner/repo` instead of hardcoded GitHub release versions when possible.
+- Source relevant `env/*.sh` files before relying on toolchain PATH changes.
 
-### Test it
+## Validation
 
-`make test-init` runs the full bootstrap inside Docker (`tests/Dockerfile.init-test`) for both `stduser` and `plesk` users. See [testing.md](testing.md).
+| Change | Check |
+|---|---|
+| Bootstrap docs only | `make test` |
+| `init.sh`, `globals.sh`, `scripts/cfg-default-dirs.sh`, or `inst-*.sh` | `make test` and `make test-init` |
+| Individual installer with a suite | `make test-inst-opencode` or `make test-inst-picom` |
+
+`make test-init` uses Docker and can take several minutes. It may build the bootstrap snapshot first when missing.
