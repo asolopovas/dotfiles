@@ -420,23 +420,23 @@ WRAPPER
     local need_plugins=true need_mason=true need_treesitter=true
 
     # Skip if already populated (lazy dir has plugin dirs)
-    if [[ -d /opt/nvim-data/nvim/lazy ]] && \
-       [[ $(find /opt/nvim-data/nvim/lazy -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l) -gt 5 ]]; then
+    if [[ -d /opt/nvim-data/nvim/lazy ]] &&
+        [[ $(find /opt/nvim-data/nvim/lazy -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l) -gt 5 ]]; then
         need_plugins=false
     fi
 
     # Skip if mason packages already installed
-    if [[ -d /opt/nvim-data/nvim/mason/packages/lua-language-server ]] && \
-       [[ -d /opt/nvim-data/nvim/mason/packages/intelephense ]] && \
-       [[ -d /opt/nvim-data/nvim/mason/packages/json-lsp ]]; then
+    if [[ -d /opt/nvim-data/nvim/mason/packages/lua-language-server ]] &&
+        [[ -d /opt/nvim-data/nvim/mason/packages/intelephense ]] &&
+        [[ -d /opt/nvim-data/nvim/mason/packages/json-lsp ]]; then
         need_mason=false
     fi
 
     # Skip if treesitter parsers already compiled
     local ts_dir="/opt/nvim-data/nvim/lazy/nvim-treesitter/parser"
-    if [[ -d "$ts_dir" ]] && \
-       [[ -f "$ts_dir/lua.so" ]] && [[ -f "$ts_dir/php.so" ]] && \
-       [[ -f "$ts_dir/bash.so" ]] && [[ -f "$ts_dir/fish.so" ]]; then
+    if [[ -d "$ts_dir" ]] &&
+        [[ -f "$ts_dir/lua.so" ]] && [[ -f "$ts_dir/php.so" ]] &&
+        [[ -f "$ts_dir/bash.so" ]] && [[ -f "$ts_dir/fish.so" ]]; then
         need_treesitter=false
     fi
 
@@ -516,9 +516,9 @@ setup_fzf() {
 
     local fzf_arch
     case "$ARCH" in
-        x86_64)  fzf_arch="amd64" ;;
+        x86_64) fzf_arch="amd64" ;;
         aarch64) fzf_arch="arm64" ;;
-        *)       fzf_arch="amd64" ;;
+        *) fzf_arch="amd64" ;;
     esac
 
     local tmp
@@ -848,8 +848,8 @@ setup_memory_limits() {
     # Calculate limit: 25% of total RAM, minimum 1G
     local total_kb
     total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
-    local limit_mb=$(( total_kb / 1024 / 4 ))
-    (( limit_mb < 1024 )) && limit_mb=1024
+    local limit_mb=$((total_kb / 1024 / 4))
+    ((limit_mb < 1024)) && limit_mb=1024
     local limit="${limit_mb}M"
 
     if [[ -f "$conf" ]]; then

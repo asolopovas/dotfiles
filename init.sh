@@ -217,7 +217,7 @@ fi
 if [[ "$OS" != "macos" ]] && ! grep -qi microsoft /proc/version 2>/dev/null; then
     cmd_exist numlockx || pkg_install numlockx
     [ -d /etc/lightdm/lightdm.conf.d ] && echo -e "[Seat:*]\ngreeter-setup-script=/usr/bin/numlockx on" | $SUDO tee /etc/lightdm/lightdm.conf.d/90-numlock.conf >/dev/null
-    [ -f "$HOME/.xprofile" ] && ! grep -q numlockx "$HOME/.xprofile" && echo '[ -x /usr/bin/numlockx ] && /usr/bin/numlockx on' >> "$HOME/.xprofile"
+    [ -f "$HOME/.xprofile" ] && ! grep -q numlockx "$HOME/.xprofile" && echo '[ -x /usr/bin/numlockx ] && /usr/bin/numlockx on' >>"$HOME/.xprofile"
 fi
 
 if [[ "${features[CHANGE_SHELL]}" = true ]]; then

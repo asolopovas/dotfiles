@@ -1,6 +1,6 @@
 # shellcheck disable=SC1089,SC2046,SC2283
 # Dotfiles Project Makefile
-.PHONY: help install test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools clean-tests install-test-deps kill-alacritty
+.PHONY: help install test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools install-git-hooks clean-tests install-test-deps kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -42,6 +42,7 @@ help:
 	@echo "Maintenance:"
 	@echo "  clean-tests           Clean up test artifacts"
 	@echo "  install-test-deps     Install local testing dependencies"
+	@echo "  install-git-hooks     Enable repository git hooks"
 
 install:
 	@./init.sh
@@ -131,6 +132,11 @@ test-lint: install-test-deps
 
 install-lint-tools:
 	@./scripts/inst/inst-lint-tools.sh
+
+install-git-hooks:
+	@chmod +x .githooks/pre-commit
+	@git config core.hooksPath .githooks
+	@echo "Git hooks enabled"
 
 # Maintenance targets
 clean-tests:
