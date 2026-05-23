@@ -69,7 +69,8 @@ Install lint tools with `make install-lint-tools`. Use `make test-lint` for the 
 
 ## Pre-handoff checklist
 
-- Always run `make test`.
+- Run full local validation once: use `make test` when not committing, or let the pre-commit hook run it when committing.
+- If `make test` already passed for the unchanged tree, the pre-commit hook skips the duplicate run.
 - Add `make test-init` for bootstrap, globals, symlink, or installer behavior changes.
 - Add `make test-ui-snap-window` for window-manager or snap-window behavior changes.
 - Run `make lint` when lint tools are available and the change touched shell/fish formatting.

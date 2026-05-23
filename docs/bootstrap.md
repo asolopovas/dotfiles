@@ -57,8 +57,8 @@ CLI `--no-*` flags exist only for `fish`, `node`, `bun`, `deno`, and `nvim`. Oth
 
 | Change | Check |
 |---|---|
-| Bootstrap docs only | `make test` |
-| `init.sh`, `globals.sh`, `scripts/cfg-default-dirs.sh`, or `inst-*.sh` | `make test` and `make test-init` |
+| Bootstrap docs only | Pre-commit, or `make test` when not committing |
+| `init.sh`, `globals.sh`, `scripts/cfg-default-dirs.sh`, or `inst-*.sh` | Pre-commit, or `make test` when not committing; add `make test-init` |
 | Individual installer with a suite | `make test-inst-opencode` or `make test-inst-picom` |
 
 `make test-init` uses Docker and can take several minutes. It may build the bootstrap snapshot first when missing.

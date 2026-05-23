@@ -51,6 +51,7 @@ install:
 
 test: install-test-deps
 	@./tests/run-tests.sh
+	@if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && [ -x .githooks/pre-commit ]; then ./.githooks/pre-commit --record-only; fi
 
 test-globals: install-test-deps
 	@./tests/run-tests.sh globals

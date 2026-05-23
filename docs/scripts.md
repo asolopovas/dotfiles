@@ -32,8 +32,8 @@ Standalone executables installed into `~/.local/bin` may omit `.sh` when the com
 
 | Change | Check |
 |---|---|
-| Any shell script | `make test` |
-| Installer/bootstrap behavior | `make test` and `make test-init` |
+| Any shell script | Pre-commit, or `make test` when not committing |
+| Installer/bootstrap behavior | Pre-commit, or `make test` when not committing; add `make test-init` |
 | `inst-opencode.sh` | `make test-inst-opencode` |
 | `inst-picom.sh` | `make test-inst-picom` |
 | Shell lint/formatting | `make lint` or `make test-lint` |

@@ -25,8 +25,8 @@ This directory is the repository knowledge base. Keep entry points compact, put 
 
 | Change | Minimum check |
 |---|---|
-| Docs only | `make test` |
-| Bootstrap, `init.sh`, `globals.sh`, installers | `make test` and `make test-init` |
-| Xmonad/window/keybinding behavior | `make test` and `make test-ui-snap-window` |
+| Docs only | Pre-commit, or `make test` when not committing |
+| Bootstrap, `init.sh`, `globals.sh`, installers | Pre-commit, or `make test` when not committing; add `make test-init` |
+| Xmonad/window/keybinding behavior | Pre-commit, or `make test` when not committing; add `make test-ui-snap-window` |
 | `docs/help.md` content | `DOTFILES="$PWD" scripts/gen-help` then inspect `git diff` |
 | Shell formatting or lint rules | `make lint` when tools are installed |

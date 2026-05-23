@@ -10,7 +10,7 @@ Personal Linux desktop/server dotfiles for shells, editors, Xmonad, terminals, A
 - **`init.sh` must stay self-contained.** It runs before `globals.sh` exists in the curl-install path.
 - **`inst-*.sh` must be idempotent.** Check the binary or version before downloading. Reinstall only when `FORCE=true`.
 - **Never commit secrets.** `.gitignore` excludes local AI settings and aider files; keep that surface clean.
-- **Use targeted tests while developing, then run `make test` before handoff or commit.** Add `make test-init` for bootstrap/installer changes and `make test-ui-snap-window` for window-manager changes. State skipped layers.
+- **Use targeted tests while developing.** Run full local validation once: use `make test` when not committing, or let the pre-commit hook run it when committing. Do not run both for the same tree. Add `make test-init` for bootstrap/installer changes and `make test-ui-snap-window` for window-manager changes. State skipped layers.
 - **Do not reformat config files.** Preserve TOML, INI, Rasi, Lua, JSON, YAML, and fish conventions.
 - **Do not add `set -euo pipefail` to legacy scripts.** Match the file style. New scripts should use it.
 - **UI and Docker tests can mutate state.** UI tests move windows and may need sudo; Docker tests can take minutes. Do not run them in the background without telling the user.

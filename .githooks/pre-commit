@@ -2,7 +2,33 @@
 set -euo pipefail
 
 repo="$(git rev-parse --show-toplevel)"
+stamp="$repo/.git/pi-pre-commit-test"
 cd "$repo"
+
+test_key() {
+    {
+        git rev-parse HEAD
+        git diff --binary
+        git diff --cached --binary
+        git ls-files --others --exclude-standard -z | while IFS= read -r -d '' file; do
+            printf '%s\0' "$file"
+            sha256sum "$file"
+        done
+    } | sha256sum | awk '{print $1}'
+}
+
+key="$(test_key)"
+
+if [[ "${1:-}" == "--record-only" ]]; then
+    printf '%s\n' "$key" >"$stamp"
+    exit 0
+fi
+
+if [[ -f "$stamp" && "$(<"$stamp")" == "$key" ]]; then
+    echo "pre-commit: make test already passed"
+    exit 0
+fi
 
 echo "pre-commit: running make test"
 make test
+printf '%s\n' "$key" >"$stamp"
