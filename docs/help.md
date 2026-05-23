@@ -32,7 +32,7 @@ Generated from `scripts/gen-help`; edit the generator, not this file.
  Key             │ Action                Key             │ Action             
  ────────────────┼────────────────────   ────────────────┼────────────────────
  M-Return        │ Terminal              M-S-Return      │ Float terminal     
- M-d             │ Dmenu                 M-0             │ Sysact menu        
+ M-d             │ App launcher          M-0             │ Sysact menu        
  M-b             │ Firefox               M-c             │ Brave              
  M-x             │ Thunar                M-S-x           │ Pcmanfm search     
  M-m             │ AIMP                  F7              │ AIMP delete track  

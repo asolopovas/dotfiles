@@ -74,7 +74,7 @@ echo ""
 echo '```'
 hdr "Key" "Action" "Key" "Action"
 row "M-Return"       "Terminal"          "M-S-Return"     "Float terminal"
-row "M-d"            "Dmenu"             "M-0"            "Sysact menu"
+row "M-d"            "App launcher"      "M-0"            "Sysact menu"
 row "M-b"            "Firefox"           "M-c"            "Brave"
 row "M-x"            "Thunar"            "M-S-x"          "Pcmanfm search"
 row "M-m"            "AIMP"              "F7"             "AIMP delete track"
