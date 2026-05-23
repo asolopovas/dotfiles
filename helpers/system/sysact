@@ -11,64 +11,35 @@ fi
 
 sleep 0.2
 
-TCOLS() { stty size 2>/dev/null | awk '{print $2}' || tput cols 2>/dev/null || echo 24; }
-TLINES() { stty size 2>/dev/null | awk '{print $1}' || tput lines 2>/dev/null || echo 10; }
-
 centered_fzf() {
     local header="$1"
     shift
 
     clear >&2
 
-    local cols lines maxw o
-    cols=$(TCOLS)
-    lines=$(TLINES)
-    [[ "$cols" =~ ^[0-9]+$ ]] || cols=80
-    [[ "$lines" =~ ^[0-9]+$ ]] || lines=24
-
-    maxw=0
-    [[ -n "$header" && ${#header} -gt $maxw ]] && maxw=${#header}
-    for o in "$@"; do
-        ((${#o} > maxw)) && maxw=${#o}
-    done
-
-    local block content_h left right top bottom
-    block=$((maxw + 6))
-    ((block > cols)) && block=$cols
-    left=$(((cols - block) / 2))
-    right=$((cols - block - left))
-    ((left < 0)) && left=0
-    ((right < 0)) && right=0
-
-    content_h=$(($# + 1))
-    [[ -n "$header" ]] && content_h=$((content_h + 2))
-    ((content_h > lines)) && content_h=$lines
-    top=$(((lines - content_h) / 2))
-    bottom=$((lines - content_h - top))
-    ((top < 0)) && top=0
-    ((bottom < 0)) && bottom=0
-
     local fzf_args=(
         --ansi
         --cycle
         +s
-        --disabled
         --no-info
-        --no-separator
-        --border=none
         --prompt=""
         --pointer="▶ "
-        --marker=""
-        --margin="$top,$right,$bottom,$left"
-        --padding="0,1"
         --color="pointer:212,fg+:212,header:212"
     )
 
     if [[ -n "$header" ]]; then
-        fzf_args+=(--header="$header" --header-first)
+        fzf_args+=(--header="$header")
     fi
 
-    printf '%s\n' "$@" | fzf "${fzf_args[@]}"
+    local output status
+    output=$(printf '%s\n' "$@" | fzf "${fzf_args[@]}")
+    status=$?
+    if ((status == 2)); then
+        printf '%s\n' "fzf failed" >&2
+        sleep 2
+    fi
+    printf '%s\n' "$output"
+    return "$status"
 }
 
 ccenter_choose() {
