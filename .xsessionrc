@@ -1,2 +1,7 @@
 #!/bin/bash
+xsession_log_dir="${XDG_CACHE_HOME:-$HOME/.cache}/xsession"
+if mkdir -p "$xsession_log_dir"; then
+    xsession_stdout_log="$xsession_log_dir/stdout.log"
+    : >"$xsession_stdout_log" && exec >>"$xsession_stdout_log"
+fi
 [ -f "$HOME/.xprofile" ] && . "$HOME/.xprofile"
