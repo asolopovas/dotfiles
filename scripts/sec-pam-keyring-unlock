@@ -1,37 +1,56 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ "${PAM_TYPE:-}" == "auth" ]] && [[ "${PAM_USER:-}" == "$(whoami)" ]]; then
+unlock_keyring() {
+    local auth_token="$1"
+
+    [[ -n "$auth_token" ]] || return 0
+
     if ! pgrep -x "gnome-keyring-d" >/dev/null 2>&1; then
-        gnome-keyring-daemon --start --daemonize --components=gpg,pkcs11,secrets,ssh >/dev/null 2>&1 || exit 0
+        gnome-keyring-daemon --start --daemonize --components=gpg,pkcs11,secrets,ssh >/dev/null 2>&1 || return 0
     fi
-    if [[ -n "${PAM_AUTHTOK:-}" ]]; then
-        echo "${PAM_AUTHTOK}" | gnome-keyring-daemon --unlock >/dev/null 2>&1 || exit 0
+
+    printf '%s\n' "$auth_token" | gnome-keyring-daemon --unlock >/dev/null 2>&1 || return 0
+}
+
+if [[ "${PAM_TYPE:-}" == "auth" ]]; then
+    if [[ -n "${PAM_USER:-}" && "$(id -un)" != "$PAM_USER" && "$(id -u)" -eq 0 ]]; then
+        exit 0
     fi
+
+    auth_token="${PAM_AUTHTOK:-}"
+    if [[ -z "$auth_token" ]]; then
+        IFS= read -r -s auth_token || true
+    fi
+
+    unlock_keyring "$auth_token"
+    auth_token=""
+    unset auth_token
     exit 0
 fi
 
-if pgrep -x "gnome-keyring-d" >/dev/null 2>&1 && echo | gnome-keyring-daemon --unlock >/dev/null 2>&1; then
+if pgrep -x "gnome-keyring-d" >/dev/null 2>&1 && printf '\n' | gnome-keyring-daemon --unlock >/dev/null 2>&1; then
     echo "Keyring already unlocked"
     exit 0
 fi
 
-echo -n "Enter password to unlock keyring: "
-read -s password
+if [[ ! -t 0 ]]; then
+    exit 0
+fi
+
+echo -n "Enter keyring passphrase: "
+read -r -s auth_token
 echo
 
-if [[ -z "$password" ]]; then
-    echo "No password provided" >&2
+if [[ -z "$auth_token" ]]; then
+    echo "No passphrase provided" >&2
     exit 1
 fi
 
-if echo "$password" | gnome-keyring-daemon --unlock >/dev/null 2>&1; then
+if unlock_keyring "$auth_token"; then
     echo "Keyring unlocked"
-    password=""
-    unset password
-    if ! pgrep -x "gnome-keyring-d" >/dev/null 2>&1; then
-        gnome-keyring-daemon --start --daemonize --components=gpg,pkcs11,secrets,ssh >/dev/null 2>&1 || true
-    fi
+    auth_token=""
+    unset auth_token
 else
     echo "Failed to unlock keyring" >&2
     exit 1

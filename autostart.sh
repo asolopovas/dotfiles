@@ -5,8 +5,14 @@
 
 session_id="${XDG_CURRENT_DESKTOP:-} ${DESKTOP_SESSION:-} ${GDMSESSION:-}"
 shopt -s nocasematch
-if [[ "$session_id" == *xmonad* ]]; then
-	gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
+if [[ "$session_id" == *xmonad* ]] && command -v gnome-keyring-daemon &>/dev/null; then
+	while IFS='=' read -r key value; do
+		case "$key" in
+		GNOME_KEYRING_CONTROL | SSH_AUTH_SOCK)
+			export "$key=$value"
+			;;
+		esac
+	done < <(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
 fi
 shopt -u nocasematch
 

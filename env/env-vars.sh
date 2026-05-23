@@ -6,7 +6,17 @@ export EDITOR="vim"
 export DOTFILES="$HOME/dotfiles"
 export SUDO_ASKPASS="$HOME/dotfiles/helpers/tools/dmenu-pass"
 export ANDROID_SDK_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/android"
-export SSH_AUTH_SOCK="$GNOME_KEYRING_CONTROL/ssh"
+
+keyring_dir="/run/user/$(id -u)/keyring"
+if [ ! -S "${SSH_AUTH_SOCK:-}" ]; then
+	if [ -S "${GNOME_KEYRING_CONTROL:-}/ssh" ]; then
+		export SSH_AUTH_SOCK="$GNOME_KEYRING_CONTROL/ssh"
+	elif [ -S "$keyring_dir/ssh" ]; then
+		export GNOME_KEYRING_CONTROL="${GNOME_KEYRING_CONTROL:-$keyring_dir}"
+		export SSH_AUTH_SOCK="$keyring_dir/ssh"
+	fi
+fi
+unset keyring_dir
 
 export OSH="$HOME/.local/share/ohmybash"
 
