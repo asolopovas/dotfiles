@@ -9,10 +9,7 @@ PI_PACKAGES=(
     "npm:pi-subagents"
     "npm:pi-mcp-adapter"
     "npm:pi-web-access"
-    "npm:@plannotator/pi-extension"
-    "npm:@a5c-ai/babysitter-pi"
     "npm:pi-lens"
-    "npm:@feniix/pi-specdocs"
 )
 
 PI_NPM_PACKAGES=(
