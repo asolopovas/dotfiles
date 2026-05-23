@@ -3,55 +3,29 @@ module LayoutAgnostic
     ) where
 
 import qualified Data.Map.Strict as M
-import Control.Exception (SomeException, try)
-import Data.List (foldl')
-import Data.Maybe (mapMaybe)
-import System.IO.Unsafe (unsafePerformIO)
-import System.Process (readProcessWithExitCode)
-import System.Exit (ExitCode (..))
 import XMonad
 
 withLayoutAgnosticKeys :: XConfig l -> XConfig l
 withLayoutAgnosticKeys c = c { keys = \cfg -> expandKeys (keys c cfg) }
 
 expandKeys :: M.Map (KeyMask, KeySym) (X ()) -> M.Map (KeyMask, KeySym) (X ())
-expandKeys original = unsafePerformIO $ do
-    table <- loadKeycodeTable
-    let extras =
-            [ ((mask, alt), act)
-            | ((mask, ks), act) <- M.toList original
-            , kc <- maybe [] pure (M.lookup ks table)
-            , alt <- M.findWithDefault [] kc (reverseTable table)
-            , alt /= ks
-            ]
-    return $ M.union original (M.fromList extras)
-
-reverseTable :: M.Map KeySym Int -> M.Map Int [KeySym]
-reverseTable m = foldl' insert M.empty (M.toList m)
+expandKeys original = M.union original (M.fromList extras)
   where
-    insert acc (ks, kc) = M.insertWith (++) kc [ks] acc
+    extras =
+        [ ((mask, alt), act)
+        | ((mask, ks), act) <- M.toList original
+        , alt <- russianAlternate ks
+        ]
 
-loadKeycodeTable :: IO (M.Map KeySym Int)
-loadKeycodeTable = do
-    result <- try (readProcessWithExitCode "xmodmap" ["-pke"] "")
-        :: IO (Either SomeException (ExitCode, String, String))
-    case result of
-        Right (ExitSuccess, out, _) -> do
-            pairs <- mapM resolveLine (lines out)
-            return $ M.fromList (concat pairs)
-        _ -> return M.empty
+russianAlternate :: KeySym -> [KeySym]
+russianAlternate ks = maybe [] pure (M.lookup ks russianKeys)
 
-resolveLine :: String -> IO [(KeySym, Int)]
-resolveLine line = case words line of
-    ("keycode" : kcStr : "=" : rest) ->
-        case reads kcStr of
-            [(kc :: Int, _)] -> do
-                syms <- mapM stringToKeysymIO rest
-                return [(ks, kc) | ks <- mapMaybe id syms, ks /= 0]
-            _ -> return []
-    _ -> return []
-
-stringToKeysymIO :: String -> IO (Maybe KeySym)
-stringToKeysymIO name = do
-    let ks = stringToKeysym name
-    return (if ks == 0 then Nothing else Just ks)
+russianKeys :: M.Map KeySym KeySym
+russianKeys = M.fromList (zip latinKeys cyrillicKeys)
+  where
+    latinKeys = map (fromIntegral . fromEnum) ("qwertyuiopasdfghjklzxcvbnm" :: String)
+    cyrillicKeys =
+        [ 0x06ca, 0x06c3, 0x06d5, 0x06cb, 0x06c5, 0x06ce, 0x06c7, 0x06db, 0x06dd, 0x06da
+        , 0x06c6, 0x06d9, 0x06d7, 0x06c1, 0x06d0, 0x06d2, 0x06cf, 0x06cc, 0x06c4
+        , 0x06d1, 0x06de, 0x06d3, 0x06cd, 0x06c9, 0x06d4, 0x06d8
+        ]
