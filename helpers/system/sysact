@@ -59,8 +59,27 @@ logout_xmonad() {
 
 confirm() {
     clear >&2
-    vcenter 1
-    gum confirm --show-help=false --prompt.align=center --prompt.width="$(TCOLS)" "$1" && return 0 || return 1
+    vcenter 2
+    local cols; cols=$(TCOLS)
+    [[ "$cols" =~ ^[0-9]+$ ]] || cols=24
+    local affirmative="${GUM_CONFIRM_AFFIRMATIVE:-Yes}"
+    local negative="${GUM_CONFIRM_NEGATIVE:-No}"
+    local buttons_w=$(( ${#affirmative} + ${#negative} + 16 ))
+    local pad=$(( ( cols - buttons_w ) / 2 ))
+    (( pad < 0 )) && pad=0
+    local prompt_w=$(( cols - ( pad * 2 ) ))
+    (( prompt_w < 1 )) && prompt_w=$cols
+    gum confirm \
+        --show-help=false \
+        --prompt.align=center \
+        --prompt.margin="0 0" \
+        --prompt.width="$prompt_w" \
+        --selected.margin="0 1" \
+        --selected.padding="0 3" \
+        --unselected.margin="0 1" \
+        --unselected.padding="0 3" \
+        --padding="0 0 0 $pad" \
+        "$1" && return 0 || return 1
 }
 
 while :; do
