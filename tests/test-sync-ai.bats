@@ -157,6 +157,40 @@ sync_ai_run() {
     [ ! -e "$WINDOWS_AGENTS_DIR" ]
 }
 
+@test "linux npm package sync updates installed packages" {
+    mkdir -p "$FAKE_HOME/bin" "$FAKE_HOME/.pi/agent/npm/node_modules"
+    cat > "$FAKE_HOME/bin/npm" <<'S'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$HOME/npm.args"
+S
+    chmod +x "$FAKE_HOME/bin/npm"
+    PATH="$FAKE_HOME/bin:$PATH" sync_linux_npm_packages
+    [[ "$(cat "$FAKE_HOME/npm.args")" == "install --prefix $FAKE_HOME/.pi/agent/npm" ]]
+}
+
+@test "linux npm package sync rebuilds after npm invalid argument failure" {
+    mkdir -p "$FAKE_HOME/bin" "$FAKE_HOME/.pi/agent/npm/node_modules"
+    touch "$FAKE_HOME/.pi/agent/npm/package-lock.json"
+    printf '0\n' > "$FAKE_HOME/npm.count"
+    cat > "$FAKE_HOME/bin/npm" <<'S'
+#!/usr/bin/env bash
+count="$(cat "$HOME/npm.count")"
+if [[ "$count" == "0" ]]; then
+    printf 'npm error code ERR_INVALID_ARG_TYPE\n' >&2
+    printf 'npm error The "from" argument must be of type string. Received undefined\n' >&2
+    printf '1\n' > "$HOME/npm.count"
+    exit 1
+fi
+[[ ! -e "$HOME/.pi/agent/npm/node_modules" ]]
+[[ ! -e "$HOME/.pi/agent/npm/package-lock.json" ]]
+printf '%s\n' "$*" > "$HOME/npm.args"
+S
+    chmod +x "$FAKE_HOME/bin/npm"
+    PATH="$FAKE_HOME/bin:$PATH" sync_linux_npm_packages
+    [[ "$(cat "$FAKE_HOME/npm.count")" == "1" ]]
+    [[ "$(cat "$FAKE_HOME/npm.args")" == "install --prefix $FAKE_HOME/.pi/agent/npm" ]]
+}
+
 @test "linux pi package sync updates installed packages" {
     mkdir -p "$FAKE_HOME/bin" "$FAKE_HOME/.pi/agent/npm/node_modules"
     cat > "$FAKE_HOME/bin/pi" <<'S'

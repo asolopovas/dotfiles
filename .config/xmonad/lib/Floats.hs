@@ -48,5 +48,5 @@ cycleFloatSize sps dir = withFocused $ \w -> do
 
 matchingScratchpad :: [NamedScratchpad] -> Window -> X (Maybe String)
 matchingScratchpad sps w = do
-    pairs <- mapM (\sp -> (,sp) <$> runQuery (query sp) w) sps
+    pairs <- mapM (\sp -> (\matched -> (matched, sp)) <$> runQuery (query sp) w) sps
     pure (name . snd <$> find fst pairs)

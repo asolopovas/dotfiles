@@ -136,12 +136,36 @@ sync_directory() {
 	echo "-> synced directory: $src -> $dst"
 }
 
+npm_install_prefix() {
+	local prefix="$1" output status
+
+	output=$(mktemp "${TMPDIR:-/tmp}/sync-ai-npm.XXXXXX") || return 1
+	if npm install --prefix "$prefix" >"$output" 2>&1; then
+		cat "$output"
+		rm -f "$output"
+		return 0
+	fi
+	status=$?
+
+	if grep -q 'ERR_INVALID_ARG_TYPE' "$output" && grep -q 'The "from" argument must be of type string' "$output"; then
+		echo "-> npm install retry: rebuilding $prefix" >&2
+		rm -rf "$prefix/node_modules" "$prefix/package-lock.json"
+		rm -f "$output"
+		npm install --prefix "$prefix"
+		return $?
+	fi
+
+	cat "$output" >&2
+	rm -f "$output"
+	return "$status"
+}
+
 sync_linux_npm_packages() {
 	local prefix="$HOME/.pi/agent/npm"
 
 	[[ -d "$prefix/node_modules" ]] || return 0
 	have_cmd npm || return 0
-	npm install --prefix "$prefix"
+	npm_install_prefix "$prefix"
 }
 
 sync_linux_pi_packages() {

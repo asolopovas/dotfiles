@@ -2,6 +2,7 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
+    "pi-claude-oauth-adapter": "^0.1.2",
     "pi-lens": "^3.8.45",
     "pi-mcp-adapter": "^2.6.1",
     "pi-subagents": "^0.25.0",
