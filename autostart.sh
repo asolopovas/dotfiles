@@ -34,21 +34,18 @@ if command -v ibus-daemon &>/dev/null; then
 	ibus-daemon --xim --daemonize --replace --panel disable
 fi
 
-layouts=
-options=
+keyboard_layouts=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null |
+	grep -oE "'xkb', '[^']+'" | sed -E "s/.*'([^']+)'$/\1/" | paste -sd, -)
+keyboard_options=$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null |
+	grep -oE "'[^']+'" | tr -d "'" | paste -sd, -)
+
+if [[ " $session_id " == *xmonad* ]]; then
+	keyboard_layouts=gb,ru
+	keyboard_options=grp:win_space_toggle,terminate:ctrl_alt_bksp,grp_led:scroll
+fi
+
 if command -v setxkbmap &>/dev/null; then
-	layouts=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null |
-		grep -oE "'xkb', '[^']+'" | sed -E "s/.*'([^']+)'$/\1/" | paste -sd, -)
-	options=$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null |
-		grep -oE "'[^']+'" | tr -d "'" | paste -sd, -)
-	if [[ " $session_id " == *xmonad* ]]; then
-		layouts=gb,ru
-		options=grp:win_space_toggle,terminate:ctrl_alt_bksp,grp_led:scroll
-	fi
-	(
-		sleep 2
-		setxkbmap -layout "${layouts:-gb}" -option '' ${options:+-option "$options"}
-	) &
+	setxkbmap -layout "${keyboard_layouts:-gb}" -option '' ${keyboard_options:+-option "$keyboard_options"} &
 fi
 
 if command -v gxkb &>/dev/null; then
@@ -60,15 +57,12 @@ group_policy=2
 default_group=0
 never_modify_config=false
 model=pc105
-layouts=${layouts:-gb,ru}
+layouts=${keyboard_layouts:-gb,ru}
 variants=,
-toggle_option=${options:-grp:win_space_toggle,terminate:ctrl_alt_bksp,grp_led:scroll}
+toggle_option=${keyboard_options:-grp:win_space_toggle,terminate:ctrl_alt_bksp,grp_led:scroll}
 compose_key_position=
 EOF
 	fi
 	pkill -x gxkb 2>/dev/null
-	(
-		sleep 3
-		gxkb
-	) &
+	gxkb &
 fi
