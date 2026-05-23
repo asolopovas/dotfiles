@@ -11,7 +11,7 @@ import qualified XMonad.Layout.LayoutModifier as LM
 import XMonad.Layout.LimitWindows (limitWindows)
 import XMonad.Layout.MultiToggle (mkToggle, single)
 import XMonad.Layout.MultiToggle.Instances (StdTransformers (MIRROR))
-import XMonad.Layout.NoBorders (noBorders, smartBorders)
+import XMonad.Layout.NoBorders (noBorders)
 import XMonad.Layout.PerWorkspace (onWorkspaces)
 import XMonad.Layout.Reflect (reflectHoriz)
 import XMonad.Layout.Renamed (Rename (Replace), renamed)
@@ -55,7 +55,6 @@ baseTile = ResizableTall 1 (3 / 100) (1 / 2) []
 tiled =
     renamed [Replace "tiled"]
         $ mkToggle (single MIRROR)
-        $ smartBorders
         $ limitWindows 12
         $ evenSpacing 5
         $ ifMax 1 (CenterMidIf terminalClasses (7 / 10) (4 / 5)) baseTile
@@ -63,7 +62,6 @@ tiled =
 tiledR =
     renamed [Replace "tiledR"]
         $ mkToggle (single MIRROR)
-        $ smartBorders
         $ limitWindows 12
         $ evenSpacing 5
         $ reflectHoriz
