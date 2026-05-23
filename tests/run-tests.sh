@@ -17,7 +17,6 @@ SUITES=(
     "$SCRIPT_DIR/test-init.bats"
     "$SCRIPT_DIR/test-sync-ai.bats"
     "$SCRIPT_DIR/test-inst-opencode.bats"
-    "$SCRIPT_DIR/test-inst-picom.bats"
     "$SCRIPT_DIR/test-lint.bats"
 )
 

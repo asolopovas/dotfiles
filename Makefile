@@ -1,5 +1,6 @@
+# shellcheck disable=SC1089,SC2046,SC2283
 # Dotfiles Project Makefile
-.PHONY: help test test-globals test-scripts test-sync-ai test-inst-opencode test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools clean-tests install-test-deps install kill-alacritty
+.PHONY: help test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools clean-tests install-test-deps install kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -18,6 +19,7 @@ help:
 	@echo "  test-scripts          Run script unit tests"
 	@echo "  test-sync-ai          Run sync-ai.sh unit tests"
 	@echo "  test-inst-opencode    Run inst-opencode.sh unit tests"
+	@echo "  test-inst-picom       Run inst-picom.sh extensive tests"
 	@echo ""
 	@echo "Testing (Docker — full integration):"
 	@echo "  test-init             Run Docker-based init.sh integration tests"
@@ -57,6 +59,9 @@ test-sync-ai: install-test-deps
 
 test-inst-opencode: install-test-deps
 	@./tests/run-tests.sh inst-opencode
+
+test-inst-picom: install-test-deps
+	@./tests/run-tests.sh inst-picom
 
 # ---------- Docker integration test targets ----------
 
