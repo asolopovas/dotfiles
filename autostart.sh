@@ -35,6 +35,14 @@ insync start
 xset r rate 300 50 &
 xsetroot -cursor_name left_ptr &
 
+if command -v xinput &>/dev/null; then
+    touchpad_id=$(xinput list | awk '/Touch[Pp]ad|Track[Pp]ad/ && /pointer/ { sub(/.*id=/, ""); sub(/\t.*/, ""); print; exit }')
+    if [ -n "$touchpad_id" ]; then
+        xinput set-prop "$touchpad_id" "libinput Accel Speed" 0.6
+    fi
+    unset touchpad_id
+fi
+
 if command -v ibus-daemon &>/dev/null; then
     pkill -f 'ibus-daemon' 2>/dev/null
     ibus-daemon --xim --daemonize --replace --panel disable
