@@ -90,8 +90,7 @@ if ! command -v unzip &>/dev/null; then
         arch)
             $SUDO pacman -S --noconfirm unzip
             ;;
-        macos)
-            ;; # unzip ships with macOS
+        macos) ;;
     esac
 fi
 
