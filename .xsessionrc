@@ -1,7 +1,43 @@
 #!/bin/bash
+xsession_filter_errors() {
+    awk '{
+        line = tolower($0)
+        if (line ~ /(^|[^[:alpha:]])error([^[:alpha:]]|$)|fatal|failed|failure|cannot|can'"'"'t|command not found|no such file|permission denied|traceback|exception|segmentation fault|core dumped|not executable/) {
+            print
+        }
+    }'
+}
+
 xsession_log_dir="${XDG_CACHE_HOME:-$HOME/.cache}/xsession"
-if mkdir -p "$xsession_log_dir"; then
+if [ -n "${DISPLAY:-}" ] && mkdir -p "$xsession_log_dir"; then
     xsession_stdout_log="$xsession_log_dir/stdout.log"
-    : >"$xsession_stdout_log" && exec >>"$xsession_stdout_log"
+    if [ "${XSESSION_STDOUT_LOG_ACTIVE:-}" != 1 ]; then
+        : >"$xsession_stdout_log" && export XSESSION_STDOUT_LOG_ACTIVE=1 && exec >>"$xsession_stdout_log"
+    fi
+
+    xsession_stderr_log="$xsession_log_dir/stderr.log"
+    xsession_errors_file="$HOME/.xsession-errors"
+    xsession_fifo="$xsession_log_dir/stderr.$$"
+    if [ "${XSESSION_ERROR_LOG_ACTIVE:-}" != 1 ]; then
+        if [ -f "$xsession_errors_file" ]; then
+            cp "$xsession_errors_file" "$xsession_stderr_log" || : >"$xsession_stderr_log"
+            xsession_errors_tmp="$xsession_log_dir/errors.$$"
+            xsession_filter_errors <"$xsession_errors_file" >"$xsession_errors_tmp" && cat "$xsession_errors_tmp" >"$xsession_errors_file"
+            rm -f "$xsession_errors_tmp"
+        else
+            : >"$xsession_stderr_log"
+        fi
+
+        if mkfifo "$xsession_fifo"; then
+            tee -a "$xsession_stderr_log" <"$xsession_fifo" | xsession_filter_errors >>"$xsession_errors_file" &
+            export XSESSION_ERROR_LOG_ACTIVE=1
+            exec 2>"$xsession_fifo"
+            rm -f "$xsession_fifo"
+        fi
+    fi
 fi
-[ -f "$HOME/.xprofile" ] && . "$HOME/.xprofile"
+unset xsession_log_dir xsession_stdout_log xsession_stderr_log xsession_errors_file xsession_fifo xsession_errors_tmp
+
+if [ "${XPROFILE_LOADED:-}" != 1 ] && [ -f "$HOME/.xprofile" ]; then
+    . "$HOME/.xprofile"
+fi
