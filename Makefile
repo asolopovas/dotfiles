@@ -14,7 +14,7 @@ help:
 	@echo "  install               Run ./init.sh"
 	@echo ""
 	@echo "Testing (local, fast — core script tests):"
-	@echo "  test                  Run all local bats tests (~2-5s)"
+	@echo "  test                  Run local Bats tests with per-suite cache"
 	@echo "  test-globals          Run globals.sh unit tests"
 	@echo "  test-scripts          Run script unit tests"
 	@echo "  test-sync-ai          Run sync-ai.sh unit tests"

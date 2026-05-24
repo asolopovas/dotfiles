@@ -4,7 +4,7 @@ Use `make` targets as the stable interface. Drop to runner scripts only for filt
 
 ## Local fast tests
 
-`make test` runs `install-test-deps`, auto-installs Bats on apt/brew systems, then runs `tests/run-tests.sh` with the default suite list.
+`make test` runs `install-test-deps`, auto-installs Bats on apt/brew systems, then runs `tests/run-tests.sh` with the default suite list. Local suites run in parallel when Bats can use `parallel` or `rush`. Successful suites are cached under `.git/pi-bats-cache` and rerun when their suite file, runner, tested files, host fingerprints, or relevant tool versions change. Set `BATS_CACHE=0` to force execution.
 
 | Suite | Scope |
 |---|---|
