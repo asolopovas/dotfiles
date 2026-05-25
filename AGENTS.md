@@ -5,7 +5,7 @@ Personal Linux desktop/server dotfiles for shells, editors, Xmonad, terminals, A
 ## Hard Constraints
 
 - **NO COMMENTS in any file.** Do not write descriptive, explanatory, or section-divider comments in any language or config. Allowed exceptions are shebangs, `# shellcheck ...` directives, and functional pragmas the interpreter or tool reads. Markdown prose is documentation; do not add HTML comments. If a non-obvious workaround needs explanation, ask first.
-- **No commits unless explicitly instructed.**
+- **No commits unless explicitly instructed and pre-commit passes 100%.** Never use `--no-verify`, never bypass failing hooks, and never commit with skipped, partial, or failed pre-commit validation.
 - **OS-portable shell only.** Anything in `inst-*.sh`, `globals.sh`, or `init.sh` must work on `ubuntu | debian | linuxmint | arch | centos` and macOS for developer tools. Use `installPackages` or `pkg_install`, not raw `apt`, after `globals.sh` is available.
 - **`init.sh` must stay self-contained.** It runs before `globals.sh` exists in the curl-install path.
 - **`inst-*.sh` must be idempotent.** Check the binary or version before downloading. Reinstall only when `FORCE=true`.
