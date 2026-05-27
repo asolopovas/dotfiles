@@ -1,32 +1,34 @@
 # Testing
 
-Use `make` targets as the stable interface. Drop to runner scripts only for filters or debugging.
+Use `make` targets first. Use runner scripts for filters and debugging.
 
-## Local fast tests
+## Local tests
 
-`make test` runs `install-test-deps`, auto-installs Bats on apt/brew systems, then runs `tests/run-tests.sh` with the default suite list. Local suites run in parallel when Bats can use `parallel` or `rush`. Successful suites are cached under `.git/pi-bats-cache` and rerun when their suite file, runner, tested files, host fingerprints, or relevant tool versions change. Set `BATS_CACHE=0` to force execution.
+`make test` installs test deps when possible, then runs `tests/run-tests.sh`. Bats suites run in parallel when `parallel` or `rush` exists. Successful suites are cached under `.git/pi-bats-cache`; set `BATS_CACHE=0` to force reruns.
 
 | Suite | Scope |
 |---|---|
 | `test-globals.bats` | `globals.sh` helpers and OS detection |
-| `test-scripts.bats` | Script syntax and behavior smoke checks |
-| `test-init.bats` | `init.sh` arg parsing and feature flags |
-| `test-sync-ai.bats` | AI skill/config sync behavior |
-| `test-inst-opencode.bats` | OpenCode installer paths |
-| `test-lint.bats` | Lightweight lint hygiene, skipping missing tools |
-
-Focused targets:
+| `test-scripts.bats` | Script syntax and smoke checks |
+| `test-init.bats` | `init.sh` args and feature flags |
+| `test-sync-ai.bats` | AI sync behavior |
+| `test-inst-opencode.bats` | OpenCode installer |
+| `test-lint.bats` | Lightweight lint hygiene |
 
 | Target | Scope |
 |---|---|
-| `make test-globals` | `test-globals.bats` |
-| `make test-scripts` | `test-scripts.bats` |
-| `make test-sync-ai` | `test-sync-ai.bats` |
-| `make test-inst-opencode` | `test-inst-opencode.bats` |
-| `make test-inst-picom` | `test-inst-picom.bats` |
-| `make test-lint` | `test-lint.bats` |
+| `make test-globals` | globals suite |
+| `make test-scripts` | scripts suite |
+| `make test-sync-ai` | AI sync suite |
+| `make test-inst-opencode` | OpenCode installer suite |
+| `make test-inst-picom` | Picom installer suite |
+| `make test-lint` | Bats lint suite |
 
-Filter by test name with `./tests/run-tests.sh -f "pattern"`.
+Filter by test name:
+
+```bash
+./tests/run-tests.sh -f "pattern"
+```
 
 ## Docker bootstrap tests
 
@@ -34,44 +36,41 @@ Filter by test name with `./tests/run-tests.sh -f "pattern"`.
 
 | Image | Purpose |
 |---|---|
-| `dotfiles-base` | Heavy dependencies and mock Plesk environment |
-| `dotfiles-bootstrapped` | Base image plus full `init.sh` for `stduser` and `plesk` users |
-| `dotfiles-test-run` | Ephemeral runner that mounts the current repo and runs Bats |
-
-Useful targets:
+| `dotfiles-base` | Heavy deps and mock Plesk environment |
+| `dotfiles-bootstrapped` | Full `init.sh` snapshot for `stduser` and `plesk` users |
+| `dotfiles-test-run` | Ephemeral runner mounting the current repo |
 
 | Target | Use |
 |---|---|
-| `make test-bootstrap` | Build/update the bootstrapped snapshot |
-| `make test-init` | Run integration tests against the current repo |
-| `make test-init-shell` | Open a debug shell in the bootstrapped container |
-| `make test-init-rebuild` | Rebuild then run all init tests |
+| `make test-bootstrap` | Build/update bootstrapped snapshot |
+| `make test-init` | Run integration tests |
+| `make test-init-shell` | Open debug shell |
+| `make test-init-rebuild` | Rebuild, then test |
 | `make test-init-clean` | Remove Docker test images |
 
-Container suites cover NAS mounts, Plesk, standard user bootstrap, vhosts, installer scripts, and terminal toggle behavior.
+Container suites cover NAS mounts, Plesk, standard user bootstrap, vhosts, installers, and terminal toggle behavior.
 
 ## UI tests
 
-`make test-ui-snap-window` runs `tests/run-snap-tests.sh` and `test-ui-snap-window.bats`. It requires an X11 session plus `xdotool`, `wmctrl`, and `xrandr`. Some checks may require sudo. It moves and resizes real windows, so close important work first.
+`make test-ui-snap-window` runs `tests/run-snap-tests.sh` and `test-ui-snap-window.bats`. Requirements: X11, `xdotool`, `wmctrl`, `xrandr`; some checks may need sudo. It moves real windows.
 
 ## Lint
 
-`make lint` requires lint tools. Shell lint targets fail hard; fish indentation is advisory.
+`make lint` requires lint tools. Shell lint fails hard; fish indentation is advisory.
 
 | Tool | Covers |
 |---|---|
 | `shellcheck -x -S warning` | Shell scripts selected by `Makefile` |
 | `shfmt -i 4 -ci -d` | Bash formatting diff |
-| `fish_indent --check` | Fish files, advisory for vendored function trees |
-| `test-lint.bats` | Shebang and whitespace checks, with missing-tool skips |
+| `fish_indent --check` | Fish files |
+| `test-lint.bats` | Shebang and whitespace checks |
 
-Install lint tools with `make install-lint-tools`. Use `make test-lint` for the Bats lint suite that skips missing external tools.
+Install lint tools with `make install-lint-tools`. Use `make test-lint` when missing external tools should skip.
 
-## Pre-handoff checklist
+## Handoff
 
-- Run full local validation once: use `make test` when not committing, or let the pre-commit hook run it when committing.
-- If `make test` already passed for the unchanged tree, the pre-commit hook skips the duplicate run.
-- Add `make test-init` for bootstrap, globals, symlink, or installer behavior changes.
-- Add `make test-ui-snap-window` for window-manager or snap-window behavior changes.
-- Run `make lint` when lint tools are available and the change touched shell/fish formatting.
-- State skipped layers and any system-state effects in the handoff.
+- Run full local validation once: `make test` when not committing, or pre-commit when committing.
+- Add `make test-init` for bootstrap, globals, symlink, or installer behavior.
+- Add `make test-ui-snap-window` for window-manager or snap-window behavior.
+- Run `make lint` when lint tools exist and shell/fish formatting changed.
+- State skipped layers and system-state effects.

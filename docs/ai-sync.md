@@ -1,20 +1,20 @@
 # AI sync
 
-`scripts/sync-ai.sh` keeps AI CLI configuration and generic skills aligned across Linux, WSL, and Windows. Project-specific guidance stays in the repo that owns it.
+`scripts/sync-ai.sh` syncs AI CLI config and generic skills across Linux, WSL, and Windows.
 
 ## Commands
 
 | Command | Scope |
 |---|---|
-| `./scripts/sync-ai.sh` | Sync everything |
-| `./scripts/sync-ai.sh sync` | Sync everything |
-| `./scripts/sync-ai.sh config` | Linux config links only |
-| `./scripts/sync-ai.sh agents` | Linux `~/.agents` and CLI skill links only |
-| `./scripts/sync-ai.sh windows` | Windows copies from WSL only |
+| `./scripts/sync-ai.sh` | Everything |
+| `./scripts/sync-ai.sh sync` | Everything |
+| `./scripts/sync-ai.sh config` | Linux config links |
+| `./scripts/sync-ai.sh agents` | Linux `~/.agents` plus CLI skill links |
+| `./scripts/sync-ai.sh windows` | Windows copies from WSL |
 
-## Skill layout
+## Skills
 
-Generic skills live under `~/.agents/skills`.
+Generic skills live in `~/.agents/skills`.
 
 | CLI | Path | Behavior |
 |---|---|---|
@@ -23,11 +23,11 @@ Generic skills live under `~/.agents/skills`.
 | OpenCode | `~/.agents/skills` | Reads directly |
 | Windows tools | `%USERPROFILE%/.agents/skills` | Copied from WSL |
 
-Do not replace `~/.claude/skills` or `~/.codex/skills` with real directories. If either is not a symlink, inspect before changing it.
+Do not replace `~/.claude/skills` or `~/.codex/skills` with real directories.
 
-## Config sync
+## Config
 
-Linux targets are symlinks to this repo. Windows targets are real file copies because Windows-native tools should read Windows paths. Existing regular Linux config files are backed up before replacement when content differs.
+Linux targets are symlinks to this repo. Windows targets are file copies. Existing regular Linux config files are backed up before replacement when content differs.
 
 | Source | Linux target | Windows target |
 |---|---|---|
@@ -37,30 +37,29 @@ Linux targets are symlinks to this repo. Windows targets are real file copies be
 | `.pi/agent/npm/package.json` | `~/.pi/agent/npm/package.json` | `%USERPROFILE%/.pi/agent/npm/package.json` |
 | `.pi/agent/prompts/` | `~/.pi/agent/prompts/` | `%USERPROFILE%/.pi/agent/prompts/` |
 
-When an existing Pi npm install is present, sync runs `npm install` and `pi update --extensions` where the relevant commands exist.
+When Pi npm exists, sync runs `npm install` and `pi update --extensions` if available.
 
-## Agent definition sources
+## Sources
 
 | Path | Purpose |
 |---|---|
-| `.agents/` | Generic user-level agents and skills synced to `~/.agents` |
-| `AGENTS.md` | Project-local instructions for this repo |
-| `.pi/agent/` | Pi settings, prompt templates, and npm package manifest |
+| `.agents/` | Generic user-level agents and skills |
+| `AGENTS.md` | Project-local instructions |
+| `.pi/agent/` | Pi settings, prompts, npm manifest |
+| `.config/agents.conf` | External agent URL list, tracked but not synced |
 
-Project-only rules belong in `AGENTS.md` or project-local config, not the global `.agents/skills` tree. `.config/agents.conf` is tracked for tools that read external agent URL lists, but `scripts/sync-ai.sh` does not copy or link it today.
+Project-only rules belong in `AGENTS.md` or project-local config, not generic skills.
 
 ## Environment
 
-| Var | Purpose |
+| Var | Default |
 |---|---|
-| `DOTFILES_DIR` | Dotfiles checkout, default `$HOME/dotfiles` |
-| `DOTFILES_AGENTS_DIR` | Generic agents source, default `$DOTFILES_DIR/.agents` |
-| `AGENTS_DIR` | Linux global agents path, default `$HOME/.agents` |
-| `WINDOWS_AGENTS_DIR` | Windows global agents override, default detected Windows profile plus `/.agents` |
+| `DOTFILES_DIR` | `$HOME/dotfiles` |
+| `DOTFILES_AGENTS_DIR` | `$DOTFILES_DIR/.agents` |
+| `AGENTS_DIR` | `$HOME/.agents` |
+| `WINDOWS_AGENTS_DIR` | Detected Windows profile plus `/.agents` |
 
 ## Validation
-
-`tests/test-sync-ai.bats` covers Linux links, Windows copies, backup behavior, and WSL detection.
 
 ```bash
 make test-sync-ai

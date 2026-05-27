@@ -1,64 +1,64 @@
 # Bootstrap
 
-`init.sh` installs this repo from a cold machine and must stay curl-safe. It runs before `globals.sh` exists, so its inline helpers are intentional.
+`init.sh` installs this repo from a cold machine. It must stay curl-safe because it runs before `globals.sh` exists.
 
-## Invocation
+## Commands
 
 | Goal | Command |
 |---|---|
 | Default install | `./init.sh` |
 | Remote install | `bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main/init.sh)"` |
 | Skip Node and fish | `NODE=false FISH=false ./init.sh` |
-| Equivalent CLI skips | `./init.sh --no-node --no-fish` |
+| CLI skips | `./init.sh --no-node --no-fish` |
 | Force reinstall/cleanup | `FORCE=true ./init.sh` or `./init.sh --force` |
-| Use SSH git remote | `./init.sh --type=ssh` |
-| Keep current login shell | `CHANGE_SHELL=false ./init.sh` |
+| SSH git remote | `./init.sh --type=ssh` |
+| Keep login shell | `CHANGE_SHELL=false ./init.sh` |
 
 ## Feature flags
 
-Defaults live in the `features` associative array in `init.sh`. All values are exported for child scripts.
+Defaults live in the `features` associative array in `init.sh` and are exported.
 
 | Flag | Default | Notes |
 |---|---|---|
 | `BUN`, `DENO`, `NODE`, `NVIM`, `FISH`, `FZF`, `FDFIND` | `true` | Toolchain installs |
 | `OHMYFISH` | `true` | Fish plugin manager |
 | `OHMYBASH`, `OHMYZSH`, `ZSH`, `CARGO` | `false` | Opt-in |
-| `CHANGE_SHELL` | `true` | Run `chsh` to fish at the end |
-| `UNATTENDED` | `true` | Skip the interactive menu |
-| `FORCE` | `false` | Remove managed installs and rerun installers |
-| `SYSTEM` | `false` | Link desktop/system config set |
+| `CHANGE_SHELL` | `true` | Run `chsh` to fish |
+| `UNATTENDED` | `true` | Skip menu |
+| `FORCE` | `false` | Remove managed installs first |
+| `SYSTEM` | `false` | Link desktop/system configs |
 | `TYPE` | `https` | `https` or `ssh` git remote |
-| `NODE_VERSION` | `24.13.0` | Node version used by the Node installer |
+| `NODE_VERSION` | `24.13.0` | Node installer version |
 
-CLI `--no-*` flags exist only for `fish`, `node`, `bun`, `deno`, and `nvim`. Other toggles use environment variables.
+CLI `--no-*` exists only for `fish`, `node`, `bun`, `deno`, and `nvim`. Use environment variables for other toggles.
 
 ## Flow
 
-1. Define curl-safe helpers, detect `OS`/`ARCH`, parse CLI args, and export feature flags.
-2. Ensure `unzip`, create base directories, and clean managed installs when `FORCE=true`.
-3. Exit early for shared `/opt/dotfiles` user checkouts managed by Plesk.
-4. Clone or update `$DOTFILES_DIR` from `$DOTFILES_URL`. Existing checkouts are reset hard to `origin/main` and cleaned.
-5. On root Plesk hosts, delegate to `scripts/plesk-init.sh sync` when `/opt/dotfiles` exists, otherwise `scripts/plesk-init.sh all`, then exit.
-6. Load the composer installer, optionally show `inst-menu.sh`, source `globals.sh`, and source `scripts/cfg-default-dirs.sh`.
-7. `cfg-default-dirs.sh` creates base directories and replaces managed config destinations with symlinks into the repo, including the extra desktop set when `SYSTEM=true`.
-8. Install enabled tools through `ensure_tool`, then run Neovim and Oh My Fish setup when enabled.
-9. Apply desktop side effects on supported Linux systems: local RTC for dual boot and numlock setup.
-10. If `CHANGE_SHELL=true`, switch the default shell to fish.
+1. Define inline helpers, detect `OS`/`ARCH`, parse args, export flags.
+2. Ensure `unzip`, create base dirs, clean managed installs when `FORCE=true`.
+3. Skip shared `/opt/dotfiles` user checkouts managed by Plesk.
+4. Clone or reset `$DOTFILES_DIR` from `$DOTFILES_URL`.
+5. On root Plesk hosts, run `scripts/plesk-init.sh`, then exit.
+6. Load the composer installer, optional `inst-menu.sh`, `globals.sh`, and `scripts/cfg-default-dirs.sh`.
+7. Link managed configs into the repo, including desktop configs when `SYSTEM=true`.
+8. Install enabled tools through `ensure_tool`; finish Neovim and Oh My Fish setup when enabled.
+9. Apply supported Linux desktop side effects: local RTC and numlock.
+10. Switch the login shell to fish when `CHANGE_SHELL=true`.
 
-## Idempotency rules
+## Installer rules
 
-- Check the binary or version before downloading.
+- Check binary/version before downloading.
 - Reinstall only when `FORCE=true`.
-- Use `installPackages` or `pkg_install` instead of raw package-manager calls after `globals.sh` is available.
-- Use `gh_latest_release owner/repo` instead of hardcoded GitHub release versions when possible.
-- Source relevant `env/*.sh` files before relying on toolchain PATH changes.
+- After `globals.sh` loads, use `installPackages` or `pkg_install`, not raw package-manager calls.
+- Prefer `gh_latest_release owner/repo` over hardcoded GitHub release versions.
+- Source needed `env/*.sh` files before relying on toolchain PATH changes.
 
 ## Validation
 
 | Change | Check |
 |---|---|
 | Bootstrap docs only | Pre-commit, or `make test` when not committing |
-| `init.sh`, `globals.sh`, `scripts/cfg-default-dirs.sh`, or `inst-*.sh` | Pre-commit, or `make test` when not committing; add `make test-init` |
-| Individual installer with a suite | `make test-inst-opencode` or `make test-inst-picom` |
+| `init.sh`, `globals.sh`, `cfg-default-dirs.sh`, `inst-*.sh` | Above plus `make test-init` |
+| Installer with a focused suite | `make test-inst-opencode` or `make test-inst-picom` |
 
-`make test-init` uses Docker and can take several minutes. It may build the bootstrap snapshot first when missing.
+`make test-init` uses Docker and can take several minutes.
