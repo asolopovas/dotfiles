@@ -5,11 +5,12 @@ import XMonad hiding (handleEventHook)
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
 import Config (WindowRule, matchesRule, reloadSwallowExclusions)
+import Safe (silentCatchX)
 
 handleEventHook :: Event -> X All
 handleEventHook ev =
     swallowEventHook terminalWindow swallowableWindow ev
-        `catchX` pure (All True)
+        `silentCatchX` pure (All True)
 
 terminalWindow :: Query Bool
 terminalWindow = className =? "Alacritty"

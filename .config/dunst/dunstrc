@@ -3,11 +3,13 @@
 
     monitor = 0
     follow = none
-    geometry = "400x20-20-50"
+    width = 400
+    height = 50
+    origin = bottom-right
+    offset = 20x50
     indicate_hidden = yes
     shrink = no
-    transparency = 0.8
-    notification_height = 50
+    transparency = 20
     separator_height = 3
     padding = 16
     horizontal_padding = 16
@@ -79,21 +81,17 @@
     always_run_script = true
     title = Dunst
     class = Dunst
-    startup_notification = false
-    verbosity = mesg
     corner_radius = 0
+    close = ctrl+space
+    close_all = ctrl+shift+space
+    history = ctrl+grave
+    context = ctrl+shift+period
     mouse_left_click = close_current
     mouse_middle_click = do_action
     mouse_right_click = close_all
 
 [experimental]
     per_monitor_dpi = false
-
-[shortcuts]
-    close = ctrl+space
-    close_all = ctrl+shift+space
-    history = ctrl+grave
-    context = ctrl+shift+period
 
 [urgency_low]
     background = "#222222"

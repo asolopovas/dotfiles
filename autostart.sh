@@ -18,24 +18,63 @@ fi
 shopt -u nocasematch
 unset keyring_env
 
+run_if_exists() {
+    if command -v "$1" &>/dev/null; then
+        "$@" &
+    fi
+}
+
+start_policykit_agent() {
+    local agent
+    for agent in lxqt-policykit-agent lxpolkit polkit-gnome-authentication-agent-1 /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do
+        if command -v "$agent" &>/dev/null; then
+            "$agent" &
+            return
+        fi
+        if [ -x "$agent" ]; then
+            "$agent" &
+            return
+        fi
+    done
+}
+
 if command -v picom &>/dev/null; then
-    nohup picom --config ~/.config/picom.conf >/tmp/picom.log 2>&1 &
+    nohup picom --config "$HOME/.config/picom.conf" >/tmp/picom.log 2>&1 &
 elif command -v fastcompmgr &>/dev/null; then
     nohup fastcompmgr -r 7 -l -7 -t -7 -i 1.0 -c -C >/dev/null 2>&1 &
 fi
-.config/polybar/launch.sh >/tmp/polybar.log 2>&1 &
-nohup cryptomator >/tmp/cryptomator.log 2>&1 &
-ulauncher --no-window-shadow --hide-window &
-flameshot &
-nm-applet &
-lxqt-policykit-agent &
-blueman-applet >/tmp/blueman.log 2>&1 &
-set-wallpaper &
-dunst &
-telegram-desktop -startintray -- %u &
-insync start
-xset r rate 300 50 &
-xsetroot -cursor_name left_ptr &
+if [ -x "$HOME/.config/polybar/launch.sh" ]; then
+    "$HOME/.config/polybar/launch.sh" >/tmp/polybar.log 2>&1 &
+fi
+if command -v cryptomator &>/dev/null; then
+    nohup cryptomator >/tmp/cryptomator.log 2>&1 &
+fi
+case "${session_id,,}" in
+    *xmonad*) ;;
+    *) run_if_exists ulauncher --no-window-shadow --hide-window ;;
+esac
+run_if_exists flameshot
+run_if_exists nm-applet
+start_policykit_agent
+if command -v blueman-applet &>/dev/null; then
+    blueman-applet >/tmp/blueman.log 2>&1 &
+fi
+run_if_exists set-wallpaper
+if command -v pgrep &>/dev/null; then
+    pgrep -x dunst >/dev/null 2>&1 || run_if_exists dunst
+else
+    run_if_exists dunst
+fi
+if command -v telegram-desktop &>/dev/null; then
+    telegram-desktop -startintray -- %u &
+elif command -v telegram &>/dev/null; then
+    telegram -startintray -- %u &
+fi
+if command -v insync &>/dev/null; then
+    insync start &
+fi
+run_if_exists xset r rate 300 50
+run_if_exists xsetroot -cursor_name left_ptr
 
 if command -v xinput &>/dev/null; then
     touchpad_id=$(xinput list | awk '/Touch[Pp]ad|Track[Pp]ad/ && /pointer/ { sub(/.*id=/, ""); sub(/\t.*/, ""); print; exit }')

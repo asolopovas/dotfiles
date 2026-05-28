@@ -13,6 +13,8 @@ import qualified XMonad.StackSet as W
 import qualified XMonad.Util.ExtensibleState as XS
 import XMonad.Util.NamedScratchpad (scratchpadWorkspaceTag)
 
+import Safe (safeRunQuery)
+
 newtype Stash = Stash {sOrigins :: M.Map Window WorkspaceId}
 
 instance ExtensionClass Stash where
@@ -74,7 +76,7 @@ toggleActiveBrowser :: X ()
 toggleActiveBrowser = do
     ws <- gets windowset
     Stash origins <- XS.get
-    allBrowsers <- filterM (runQuery isBrowser) (W.allWindows ws)
+    allBrowsers <- filterM (safeRunQuery False isBrowser) (W.allWindows ws)
     let tag = W.currentTag ws
         onCurrent = filter ((== Just tag) . flip W.findTag ws) allBrowsers
         ownedStashed = filter (isStashed ws) (ownedByCurrent tag ws origins allBrowsers)
@@ -91,12 +93,12 @@ autoRevealBrowserHook :: X ()
 autoRevealBrowserHook = do
     ws <- gets windowset
     Stash origins <- XS.get
-    allBrowsers <- filterM (runQuery isBrowser) (W.allWindows ws)
+    allBrowsers <- filterM (safeRunQuery False isBrowser) (W.allWindows ws)
     let tag = W.currentTag ws
         ownedStashed =
             filter (isStashed ws) (ownedByCurrent tag ws origins allBrowsers)
         focused = W.peek ws
-    focusedIsBrowser <- maybe (pure False) (runQuery isBrowser) focused
+    focusedIsBrowser <- maybe (pure False) (safeRunQuery False isBrowser) focused
     case (ownedStashed, focused, focusedIsBrowser) of
         (s : _, Just f, True) | f /= s -> unstash s
         _                              -> pure ()

@@ -22,10 +22,14 @@ import qualified LogHook
 import qualified ManageRules
 import qualified Mouse
 import qualified Scratchpads
+import Safe (silentCatchX)
 import qualified Startup
 
 fullscreenBorderEventHook :: Dimension -> Event -> X All
-fullscreenBorderEventHook bw (ClientMessageEvent _ _ _ _ win typ (action:dats)) = do
+fullscreenBorderEventHook bw ev = fullscreenBorderEventHook' bw ev `silentCatchX` pure (All True)
+
+fullscreenBorderEventHook' :: Dimension -> Event -> X All
+fullscreenBorderEventHook' bw (ClientMessageEvent _ _ _ _ win typ (action:dats)) = do
     managed <- isClient win
     wmstate <- getAtom "_NET_WM_STATE"
     fullsc <- getAtom "_NET_WM_STATE_FULLSCREEN"
@@ -40,7 +44,7 @@ fullscreenBorderEventHook bw (ClientMessageEvent _ _ _ _ win typ (action:dats)) 
         when enters $ setFullscreenBorder 0 win
         when leaves $ setFullscreenBorder bw win
     pure (All True)
-fullscreenBorderEventHook _ _ = pure (All True)
+fullscreenBorderEventHook' _ _ = pure (All True)
 
 setFullscreenBorder :: Dimension -> Window -> X ()
 setFullscreenBorder bw w =

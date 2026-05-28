@@ -3,12 +3,15 @@ module WindowLog (logNewWindow) where
 
 import Control.Exception (SomeException, catch)
 import Control.Monad (unless)
+import Control.Monad.Reader (ask)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory)
 import System.FilePath (takeDirectory, (</>))
 import XMonad
 import qualified XMonad.Util.ExtensibleState as XS
+
+import Safe (safeRunQuery)
 
 windowLogPath :: IO FilePath
 windowLogPath = do
@@ -43,9 +46,10 @@ primeSeen = do
 
 logNewWindow :: ManageHook
 logNewWindow = do
-    cls <- className
-    app <- appName
-    ttl <- title
+    w <- ask
+    cls <- liftX (safeRunQuery "" className w)
+    app <- liftX (safeRunQuery "" appName w)
+    ttl <- liftX (safeRunQuery "" title w)
     liftX (record cls app ttl)
     idHook
   where
