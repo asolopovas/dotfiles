@@ -4,6 +4,7 @@ module Keys
     , parseModMask
     ) where
 
+import Data.List (nub)
 import qualified Data.Map as M
 import XMonad
 import XMonad.Layout.IndependentScreens (onCurrentScreen, workspaces')
@@ -31,7 +32,7 @@ buildWorkspaceKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 buildWorkspaceKeys conf@XConfig {XMonad.modMask = modm} =
     M.fromList $
         [ ((m .|. modm, k), windows $ onCurrentScreen f i)
-        | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
+        | (i, k) <- zip (nub (workspaces' conf)) [xK_1 .. xK_9]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]
         ]
             ++ [ ((modm,               xK_h), cycleScreens         Prev)

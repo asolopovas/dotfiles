@@ -7,7 +7,7 @@ import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen)
 import XMonad.Hooks.ManageDocks (docks)
 import XMonad.Util.WindowProperties (getProp32)
 import XMonad.Util.XUtils (fi)
-import XMonad.Layout.IndependentScreens (countScreens, withScreens)
+import XMonad.Layout.IndependentScreens (countScreens)
 import XMonad.Util.EZConfig (additionalKeysP)
 
 import qualified DBus as D
@@ -46,6 +46,10 @@ setFullscreenBorder :: Dimension -> Window -> X ()
 setFullscreenBorder bw w =
     withDisplay $ \d -> io $ setWindowBorderWidth d w bw
 
+withScreensByWorkspace :: ScreenId -> [WorkspaceId] -> [WorkspaceId]
+withScreensByWorkspace n tags =
+    [show (fromIntegral s :: Int) ++ "_" ++ tag | tag <- tags, s <- [0 .. n - 1]]
+
 main :: IO ()
 main = do
     cfg <- loadConfigOrDefault
@@ -68,7 +72,7 @@ main = do
             , clickJustFocuses   = ucClickJustFocuses cfg
             , borderWidth        = fromIntegral (ucBorderWidth cfg)
             , modMask            = Keys.parseModMask (ucModMask cfg)
-            , workspaces         = withScreens nScreens (ucWorkspaces cfg)
+            , workspaces         = withScreensByWorkspace nScreens (ucWorkspaces cfg)
             , normalBorderColor  = ucNormalColor cfg
             , focusedBorderColor = ucFocusedColor cfg
             , keys               = Keys.buildWorkspaceKeys
