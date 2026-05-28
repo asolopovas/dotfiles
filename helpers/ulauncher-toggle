@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+dbus_has_owner() {
+    dbus-send \
+        --session \
+        --print-reply \
+        --dest=org.freedesktop.DBus \
+        /org/freedesktop/DBus \
+        org.freedesktop.DBus.NameHasOwner \
+        string:net.launchpad.ulauncher 2>/dev/null | grep -q "boolean true"
+}
+
+toggle_ulauncher() {
+    dbus-send \
+        --session \
+        --print-reply \
+        --dest=net.launchpad.ulauncher \
+        /net/launchpad/ulauncher \
+        net.launchpad.ulauncher.toggle_window >/dev/null 2>&1 || return 1
+    sleep 0.03
+    if command -v wmctrl >/dev/null 2>&1; then
+        wmctrl -a "Ulauncher - Application Launcher" >/dev/null 2>&1 || true
+    fi
+}
+
+if dbus_has_owner && toggle_ulauncher; then
+    exit 0
+fi
+
+if ! command -v ulauncher >/dev/null 2>&1; then
+    notify-send "xmonad" "ulauncher not found" >/dev/null 2>&1 || true
+    exit 1
+fi
+
+ulauncher --hide-window >/tmp/ulauncher.log 2>&1 &
+
+for _ in {1..50}; do
+    if dbus_has_owner && toggle_ulauncher; then
+        exit 0
+    fi
+    sleep 0.1
+done
+
+notify-send "xmonad" "ulauncher did not start" >/dev/null 2>&1 || true
+exit 1

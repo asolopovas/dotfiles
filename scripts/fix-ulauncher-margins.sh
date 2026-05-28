@@ -6,12 +6,12 @@ PY_FILE="/usr/lib/python3/dist-packages/ulauncher/ui/windows/UlauncherWindow.py"
 if [[ -f "$UI_FILE" ]]; then
     if grep -q 'id="body"' "$UI_FILE"; then
         sudo sed -i '/<object class="GtkBox" id="body">/,/<property name="orientation">/ {
-            s/<property name="margin_left">[0-9]\+</<property name="margin_left">8</
-            s/<property name="margin_right">[0-9]\+</<property name="margin_right">10</
-            s/<property name="margin_top">[0-9]\+</<property name="margin_top">10</
-            s/<property name="margin_bottom">[0-9]\+</<property name="margin_bottom">10</
+            s/<property name="margin_left">[0-9]\+</<property name="margin_left">0</
+            s/<property name="margin_right">[0-9]\+</<property name="margin_right">0</
+            s/<property name="margin_top">[0-9]\+</<property name="margin_top">0</
+            s/<property name="margin_bottom">[0-9]\+</<property name="margin_bottom">0</
         }' "$UI_FILE"
-        echo "Ulauncher body margins patched (left:8 right:10 top:10 bottom:10)"
+        echo "Ulauncher body margins patched (left:0 right:0 top:0 bottom:0)"
     else
         echo "UI file structure changed"
     fi
