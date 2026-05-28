@@ -64,12 +64,6 @@ logout_xmonad() {
     [[ -n "$xpid" ]] && kill -TERM "$xpid"
 }
 
-confirm() {
-    local choice
-    choice=$(centered_fzf "$1" "Yes" "No") || return 1
-    [[ "$choice" == "Yes" ]]
-}
-
 while :; do
     choice=$(ccenter_choose \
         "Lock" \
@@ -98,30 +92,25 @@ while :; do
             fi
             ;;
         Logout)
-            confirm "Logout of xmonad?" || continue
             unmount_safestore
             logout_xmonad
             exit 0
             ;;
         Suspend)
-            confirm "Suspend the system?" || continue
             systemctl suspend
             exit 0
             ;;
         Reboot)
-            confirm "Reboot now?" || continue
             unmount_safestore
             systemctl reboot
             exit 0
             ;;
         Shutdown)
-            confirm "Shut down now?" || continue
             unmount_safestore
             systemctl poweroff
             exit 0
             ;;
         Halt)
-            confirm "Halt the system?" || continue
             unmount_safestore
             systemctl halt
             exit 0
