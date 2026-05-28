@@ -17,6 +17,17 @@ test_key() {
     } | sha256sum | awk '{print $1}'
 }
 
+changed_files() {
+    {
+        if git rev-parse --verify HEAD >/dev/null 2>&1; then
+            git diff --name-only HEAD --
+        else
+            git diff --cached --name-only --
+        fi
+        git ls-files --others --exclude-standard
+    } | LC_ALL=C sort -u
+}
+
 key="$(test_key)"
 
 if [[ "${1:-}" == "--record-only" ]]; then
@@ -25,10 +36,21 @@ if [[ "${1:-}" == "--record-only" ]]; then
 fi
 
 if [[ -f "$stamp" && "$(<"$stamp")" == "$key" ]]; then
-    echo "pre-commit: make test already passed"
+    echo "pre-commit: tests already passed"
     exit 0
 fi
 
-echo "pre-commit: running make test"
-make test
+mapfile -t changed < <(changed_files)
+mapfile -t suites < <(./tests/run-tests.sh --list-changed "${changed[@]}")
+
+if [[ "${#changed[@]}" -eq 0 ]]; then
+    echo "pre-commit: no changed files"
+elif [[ "${#suites[@]}" -eq 0 ]]; then
+    echo "pre-commit: no tests for changed files"
+else
+    echo "pre-commit: running tests: ${suites[*]}"
+    make install-test-deps
+    ./tests/run-tests.sh "${suites[@]}"
+fi
+
 printf '%s\n' "$key" >"$stamp"

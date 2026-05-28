@@ -18,6 +18,7 @@ setup() {
         -not -path './.config/fish/functions/__sdkman-noexport-init.sh' \
         -not -path './scripts/attic/*' \
         -not -path './tests/run-init-tests.sh' 2>/dev/null)
+    [ -f .githooks/pre-commit ] && SHELL_FILES+=("./.githooks/pre-commit")
 
     FISH_FILES=()
     while IFS= read -r f; do

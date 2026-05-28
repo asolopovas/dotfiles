@@ -4,7 +4,7 @@ Use `make` targets first. Use runner scripts for filters and debugging.
 
 ## Local tests
 
-`make test` installs test deps when possible, then runs `tests/run-tests.sh`. Bats suites run in parallel when `parallel` or `rush` exists. Successful suites are cached under `.git/pi-bats-cache`; set `BATS_CACHE=0` to force reruns.
+`make test` installs test deps when possible, then runs `tests/run-tests.sh`. Bats suites run in parallel when `parallel` or `rush` exists. Successful suites are cached under `.git/pi-bats-cache`; set `BATS_CACHE=0` to force reruns. The pre-commit hook maps changed files to affected local suites and skips unrelated suites.
 
 | Suite | Scope |
 |---|---|

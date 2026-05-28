@@ -101,7 +101,7 @@ SHELL_FILES := $(shell find . -name '*.sh' \
 	-not -path './.config/tmux/plugins/*' \
 	-not -path './.config/fish/functions/__sdkman-noexport-init.sh' \
 	-not -path './scripts/attic/*' \
-	-not -path './tests/run-init-tests.sh' 2>/dev/null)
+	-not -path './tests/run-init-tests.sh' 2>/dev/null; [ -f .githooks/pre-commit ] && printf '%s\n' ./.githooks/pre-commit)
 
 FISH_FILES := $(shell find .config/fish -name '*.fish' 2>/dev/null)
 
