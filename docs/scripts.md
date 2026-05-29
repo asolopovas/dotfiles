@@ -1,8 +1,8 @@
 # Scripts
 
-`scripts/` contains installer, config, ops, system, desktop, WSL, and maintenance helpers.
+`scripts/` holds installer, config, ops, system, desktop, WSL, and maintenance helpers.
 
-## Naming
+## Names
 
 Use `{prefix}-{name}.sh` in the matching category directory.
 
@@ -20,13 +20,6 @@ Commands installed into `~/.local/bin` may omit `.sh` when the filename is the u
 
 ## Installer contract
 
-`inst-*.sh` scripts are sourced by `init.sh` after `globals.sh` loads.
+`inst-*.sh` scripts are sourced by `init.sh` after `globals.sh` loads. They must check binary/version before downloads, reinstall only with `FORCE=true`, use shared helpers where possible, support the repo OS matrix, and source needed `env/*.sh` instead of assuming interactive PATH.
 
-- Check binary/version before downloading; reinstall only when `FORCE=true`.
-- Use `cmd_exist`, `pkg_install`, `installPackages`, and `gh_latest_release` when possible.
-- Support `ubuntu`, `debian`, `linuxmint`, `arch`, `centos`; support macOS for developer tools when practical.
-- Do not assume interactive-shell PATH setup; source needed `env/*.sh` files.
-
-## Validation
-
-See [testing.md](testing.md). Add `make test-init` for installer/bootstrap behavior. Use `make test-inst-opencode`, `make test-inst-picom`, `make lint`, or `make test-lint` when relevant. Announce Docker or UI tests before running them.
+Validate with [testing.md](testing.md). Add `make test-init` for installer/bootstrap behavior. Use focused installer, lint, Docker, or UI targets when relevant.

@@ -1,40 +1,40 @@
 # AGENTS Guide
 
-Repo-managed dotfiles for shells, editors, Xmonad, terminals, AI CLIs, and bootstrap automation. The repo is the source of truth; encode durable knowledge as docs, tests, scripts, schemas, or plans.
+Dotfiles for shells, editors, Xmonad, terminals, AI CLIs, and bootstrap automation. The repo is the source of truth; encode durable knowledge as docs, tests, scripts, generated files, or execution plans.
 
-## Non-negotiables
+## Invariants
 
-- **NO COMMENTS in any file.** Allowed: shebangs, `# shellcheck ...`, functional pragmas. Markdown prose is documentation; no HTML comments.
-- **No commits unless asked.** Never bypass hooks or commit with failed, skipped, or partial validation.
-- **No secrets.** Keep local AI settings and aider files out of git.
-- **Preserve config style.** Do not reformat TOML, INI, Rasi, Lua, JSON, YAML, fish, or generated docs.
-- **Portable shell.** `init.sh`, `globals.sh`, and `inst-*.sh` must support `ubuntu | debian | linuxmint | arch | centos`; macOS for developer tools. After `globals.sh`, use `installPackages` or `pkg_install`.
-- **Bootstrap rules.** `init.sh` is self-contained; installers check binary/version and reinstall only when `FORCE=true`.
-- **Legacy shell style stays.** Do not add `set -euo pipefail` to legacy scripts just because you touched them.
-- **AI skill links stay symlinks.** `~/.claude/skills` and `~/.codex/skills` point to `~/.agents/skills`; see [docs/ai-sync.md](docs/ai-sync.md).
-- **WSL scripts need Windows interop.** Do not run `wsl-*.sh` on native Linux without approval.
-- **Docker/UI tests mutate state.** Announce before running; UI tests move windows and may need sudo.
+- **NO COMMENTS in any file.** Allowed: shebangs, `# shellcheck ...`, functional pragmas. Markdown prose is documentation.
+- No commits unless asked. Never bypass hooks or report skipped/failed checks as passing.
+- No secrets. Keep local AI settings and aider files out of git.
+- Preserve config style; do not reformat untouched TOML, INI, Rasi, Lua, JSON, YAML, fish, shell, or generated files.
+- `init.sh`, `globals.sh`, and `inst-*.sh` support `ubuntu | debian | linuxmint | arch | centos`; macOS only for developer tools.
+- `init.sh` is self-contained before `globals.sh`; installers check binary/version and reinstall only with `FORCE=true`.
+- Do not modernize legacy shell style unless required; no blanket `set -euo pipefail`.
+- `~/.claude/skills` and `~/.codex/skills` remain symlinks to `~/.agents/skills`; see [docs/ai-sync.md](docs/ai-sync.md).
+- Do not run WSL scripts on native Linux without approval.
+- Announce Docker/UI tests before running; they mutate containers, windows, and sometimes sudo state.
 
 ## Agent loop
 
 Inspect -> plan -> implement -> run targeted checks -> inspect runtime/UI evidence when relevant -> self-review -> report validation, skipped layers, state effects, and follow-up debt.
 
-Keep PRs small; include summary, acceptance criteria addressed, validation evidence, and known debt.
+Use in-chat plans for small work. For complex or risky work, create `docs/exec-plans/active/<name>.md` with goal, scope, acceptance criteria, progress, decisions, validation, and debt; move it to `completed/` when done and copy durable debt to the tracker.
 
-Use in-chat plans for small work. For complex/risky work, add a plan under `docs/exec-plans/active/` with goal, scope, acceptance criteria, progress, decisions, validation, and debt; move it to `completed/` when done.
+Use isolated git worktrees for parallel or long-running work. Keep env vars, ports, caches, logs, metrics, traces, and test state per worktree.
 
-Use isolated git worktrees for parallel or long-running work. Keep ports, env, caches, logs, and test state per worktree.
+Prefer small PRs with summary, acceptance criteria addressed, validation evidence, UI/runtime artifacts when relevant, and known follow-ups.
 
 ## Commands
 
 | Task | Command |
 |---|---|
 | Install/update | `./init.sh` or `make install` |
-| Local validation | `make test` |
+| Validate | `make test` |
 | Filter tests | `./tests/run-tests.sh -f "pattern"` |
-| Bootstrap Docker tests | `make test-bootstrap` then `make test-init` |
-| UI window tests | `make test-ui-snap-window` |
 | Lint | `make lint` or `make test-lint` |
+| Docker bootstrap | `make test-bootstrap && make test-init` |
+| UI window checks | `make test-ui-snap-window` |
 | Sync AI tooling | `./scripts/sync-ai.sh` |
 | Recompile Xmonad | `M-F6` or `xmonad --recompile && xmonad --restart` |
 
@@ -43,7 +43,7 @@ Use isolated git worktrees for parallel or long-running work. Keep ports, env, c
 | Need | Source |
 |---|---|
 | Docs map and validation routing | [docs/index.md](docs/index.md) |
-| Bootstrap, flags, symlinks, installers | [docs/bootstrap.md](docs/bootstrap.md) |
+| Bootstrap, flags, installers | [docs/bootstrap.md](docs/bootstrap.md) |
 | Tests, lint, Docker, UI checks | [docs/testing.md](docs/testing.md) |
 | Shell load order and helpers | [docs/shell-env.md](docs/shell-env.md) |
 | Script taxonomy and installer contract | [docs/scripts.md](docs/scripts.md) |
@@ -52,7 +52,7 @@ Use isolated git worktrees for parallel or long-running work. Keep ports, env, c
 
 ## Style
 
-- Shebang: `#!/bin/bash` or `#!/usr/bin/env bash`; never `#!/bin/sh`.
-- Shell indent: 4 spaces. Makefiles: tabs.
-- Names: `snake_case` for variables/functions, `UPPER_CASE` for exported constants, `name() {` for functions.
-- Prefer `cmd_exist`, `print_color`, `installPackages`, `pkg_install`, and cached `OS`/`ARCH` from `globals.sh`.
+- Shell: `#!/bin/bash` or `#!/usr/bin/env bash`, 4-space indent, `name() {` functions.
+- Makefiles use tabs.
+- Use `snake_case` locals/functions and `UPPER_CASE` exports.
+- Prefer `cmd_exist`, `print_color`, `installPackages`, `pkg_install`, cached `OS`/`ARCH`, and explicit tests over reminders.

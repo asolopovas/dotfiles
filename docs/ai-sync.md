@@ -2,7 +2,7 @@
 
 `scripts/sync-ai.sh` syncs AI CLI config and generic skills across Linux, WSL, and Windows.
 
-## Commands
+## Targets
 
 | Command | Scope |
 |---|---|
@@ -22,7 +22,7 @@ Generic skills live in `~/.agents/skills`.
 | OpenCode | `~/.agents/skills` | Reads directly |
 | Windows tools | `%USERPROFILE%/.agents/skills` | Copied from WSL |
 
-Do not replace `~/.claude/skills` or `~/.codex/skills` with real directories.
+Do not replace Claude or Codex skill symlinks with real directories.
 
 ## Config
 
@@ -38,18 +38,4 @@ Linux targets are symlinks; Windows targets are copies. Existing regular Linux c
 
 When Pi npm exists, sync runs `npm install` and `pi update --extensions` if available.
 
-## Sources and env
-
-| Path or var | Purpose |
-|---|---|
-| `.agents/` | Generic user agents and skills |
-| `AGENTS.md` | Project-local instructions |
-| `.pi/agent/` | Pi settings, prompts, npm manifest |
-| `.config/agents.conf` | External agent URL list; tracked, not synced |
-| `DOTFILES_DIR`, `DOTFILES_AGENTS_DIR`, `AGENTS_DIR`, `WINDOWS_AGENTS_DIR` | Path overrides |
-
-Project-only rules belong in `AGENTS.md` or project-local config, not generic skills.
-
-## Validation
-
-`make test-sync-ai` and `make test`.
+Project-only rules belong in `AGENTS.md` or project-local config, not generic skills. Validate with `make test-sync-ai` and `make test`.
