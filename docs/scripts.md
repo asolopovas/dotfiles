@@ -1,6 +1,6 @@
 # Scripts
 
-`scripts/` contains installer, config, ops, system, desktop, and maintenance helpers.
+`scripts/` contains installer, config, ops, system, desktop, WSL, and maintenance helpers.
 
 ## Naming
 
@@ -22,20 +22,11 @@ Commands installed into `~/.local/bin` may omit `.sh` when the filename is the u
 
 `inst-*.sh` scripts are sourced by `init.sh` after `globals.sh` loads.
 
-- Check the binary or version before downloading.
-- Reinstall only when `FORCE=true`.
+- Check binary/version before downloading; reinstall only when `FORCE=true`.
 - Use `cmd_exist`, `pkg_install`, `installPackages`, and `gh_latest_release` when possible.
-- Support `ubuntu`, `debian`, `linuxmint`, `arch`, `centos`, and macOS for developer tools when practical.
+- Support `ubuntu`, `debian`, `linuxmint`, `arch`, `centos`; support macOS for developer tools when practical.
 - Do not assume interactive-shell PATH setup; source needed `env/*.sh` files.
 
 ## Validation
 
-| Change | Check |
-|---|---|
-| Any shell script | Pre-commit, or `make test` when not committing |
-| Installer/bootstrap behavior | Above plus `make test-init` |
-| `inst-opencode.sh` | `make test-inst-opencode` |
-| `inst-picom.sh` | `make test-inst-picom` |
-| Shell lint/formatting | `make lint` or `make test-lint` |
-
-Docker and UI tests can mutate state or take focus; announce them before running.
+See [testing.md](testing.md). Add `make test-init` for installer/bootstrap behavior. Use `make test-inst-opencode`, `make test-inst-picom`, `make lint`, or `make test-lint` when relevant. Announce Docker or UI tests before running them.

@@ -1,99 +1,58 @@
-# AGENTS Guide for dotfiles
+# AGENTS Guide
 
-Personal Linux desktop/server dotfiles for shells, editors, Xmonad, terminals, AI CLIs, and infra automation. Treat this file as the compact map; topic details live in [docs/](docs/index.md).
+Repo-managed dotfiles for shells, editors, Xmonad, terminals, AI CLIs, and bootstrap automation. The repo is the source of truth; encode durable knowledge as docs, tests, scripts, schemas, or plans.
 
-## Hard Constraints
+## Non-negotiables
 
-- **NO COMMENTS in any file.** Do not write descriptive, explanatory, or section-divider comments in any language or config. Allowed exceptions are shebangs, `# shellcheck ...` directives, and functional pragmas the interpreter or tool reads. Markdown prose is documentation; do not add HTML comments. If a non-obvious workaround needs explanation, ask first.
-- **No commits unless explicitly instructed and pre-commit passes 100%.** Never use `--no-verify`, never bypass failing hooks, and never commit with skipped, partial, or failed pre-commit validation.
-- **OS-portable shell only.** Anything in `inst-*.sh`, `globals.sh`, or `init.sh` must work on `ubuntu | debian | linuxmint | arch | centos` and macOS for developer tools. Use `installPackages` or `pkg_install`, not raw `apt`, after `globals.sh` is available.
-- **`init.sh` must stay self-contained.** It runs before `globals.sh` exists in the curl-install path.
-- **`inst-*.sh` must be idempotent.** Check the binary or version before downloading. Reinstall only when `FORCE=true`.
-- **Never commit secrets.** `.gitignore` excludes local AI settings and aider files; keep that surface clean.
-- **Use targeted tests while developing.** Run full local validation once: use `make test` when not committing, or let the pre-commit hook run it when committing. Do not run both for the same tree. Add `make test-init` for bootstrap/installer changes and `make test-ui-snap-window` for window-manager changes. State skipped layers.
-- **Do not reformat config files.** Preserve TOML, INI, Rasi, Lua, JSON, YAML, and fish conventions.
-- **Do not add `set -euo pipefail` to legacy scripts.** Match the file style. New scripts should use it.
-- **UI and Docker tests can mutate state.** UI tests move windows and may need sudo; Docker tests can take minutes. Do not run them in the background without telling the user.
-- **AI skill links are intentional.** `~/.claude/skills` and `~/.codex/skills` must stay symlinks to `~/.agents/skills`; see [docs/ai-sync.md](docs/ai-sync.md).
-- **WSL scripts require Windows interop.** Do not run `wsl-*.sh` on native Linux without user approval.
+- **NO COMMENTS in any file.** Allowed: shebangs, `# shellcheck ...`, functional pragmas. Markdown prose is documentation; no HTML comments.
+- **No commits unless asked.** Never bypass hooks or commit with failed, skipped, or partial validation.
+- **No secrets.** Keep local AI settings and aider files out of git.
+- **Preserve config style.** Do not reformat TOML, INI, Rasi, Lua, JSON, YAML, fish, or generated docs.
+- **Portable shell.** `init.sh`, `globals.sh`, and `inst-*.sh` must support `ubuntu | debian | linuxmint | arch | centos`; macOS for developer tools. After `globals.sh`, use `installPackages` or `pkg_install`.
+- **Bootstrap rules.** `init.sh` is self-contained; installers check binary/version and reinstall only when `FORCE=true`.
+- **Legacy shell style stays.** Do not add `set -euo pipefail` to legacy scripts just because you touched them.
+- **AI skill links stay symlinks.** `~/.claude/skills` and `~/.codex/skills` point to `~/.agents/skills`; see [docs/ai-sync.md](docs/ai-sync.md).
+- **WSL scripts need Windows interop.** Do not run `wsl-*.sh` on native Linux without approval.
+- **Docker/UI tests mutate state.** Announce before running; UI tests move windows and may need sudo.
 
-## Stack
+## Agent loop
 
-Bash 5, Fish 3, Bats, Docker, Xmonad, Neovim/Lua, Polybar, Alacritty, Picom, Rofi, fzf, Claude Code, OpenCode, Codex, and Pi.
+Inspect -> plan -> implement -> run targeted checks -> inspect runtime/UI evidence when relevant -> self-review -> report validation, skipped layers, state effects, and follow-up debt.
+
+Keep PRs small; include summary, acceptance criteria addressed, validation evidence, and known debt.
+
+Use in-chat plans for small work. For complex/risky work, add a plan under `docs/exec-plans/active/` with goal, scope, acceptance criteria, progress, decisions, validation, and debt; move it to `completed/` when done.
+
+Use isolated git worktrees for parallel or long-running work. Keep ports, env, caches, logs, and test state per worktree.
 
 ## Commands
 
-Prefer `make` targets; use `make help` for the full list.
-
 | Task | Command |
 |---|---|
-| Install everything | `./init.sh` or `make install` |
-| Local fast tests | `make test` |
-| Single suite | `make test-globals` · `make test-scripts` · `make test-sync-ai` · `make test-inst-opencode` · `make test-inst-picom` |
-| Filter by test name | `./tests/run-tests.sh -f "pattern"` |
-| Docker init tests | `make test-bootstrap` then `make test-init` |
-| Docker debug shell | `make test-init-shell` |
-| UI tests | `make test-ui-snap-window` |
+| Install/update | `./init.sh` or `make install` |
+| Local validation | `make test` |
+| Filter tests | `./tests/run-tests.sh -f "pattern"` |
+| Bootstrap Docker tests | `make test-bootstrap` then `make test-init` |
+| UI window tests | `make test-ui-snap-window` |
 | Lint | `make lint` or `make test-lint` |
-| Enable git hooks | `make install-git-hooks` |
 | Sync AI tooling | `./scripts/sync-ai.sh` |
 | Recompile Xmonad | `M-F6` or `xmonad --recompile && xmonad --restart` |
 
-## Layout
+## Source map
 
-```text
-init.sh              Curl-safe bootstrap
-globals.sh           Shared shell library
-autostart.sh         Desktop autostart
-.bashrc / .profile   Bash load path
-Makefile             Test, lint, install, utility targets
-scripts/             Install, config, ops, system, UI, WSL scripts
-helpers/             CLI wrappers installed on PATH
-env/                 Shared shell environment fragments
-completions/         Bash and fish completions
-conf.d/              System config snippets
-fzf/                 fzf options, keybindings, exclusions
-.config/             Application configs
-tests/               Bats suites plus Docker/X11 runners
-docs/                Source-of-record documentation
-```
+| Need | Source |
+|---|---|
+| Docs map and validation routing | [docs/index.md](docs/index.md) |
+| Bootstrap, flags, symlinks, installers | [docs/bootstrap.md](docs/bootstrap.md) |
+| Tests, lint, Docker, UI checks | [docs/testing.md](docs/testing.md) |
+| Shell load order and helpers | [docs/shell-env.md](docs/shell-env.md) |
+| Script taxonomy and installer contract | [docs/scripts.md](docs/scripts.md) |
+| AI config and skill sync | [docs/ai-sync.md](docs/ai-sync.md) |
+| Generated F1 help | [docs/help.md](docs/help.md) |
 
-## Conventions
+## Style
 
-- Shebang: `#!/bin/bash` or `#!/usr/bin/env bash`. Never `#!/bin/sh`.
-- Indent shell with 4 spaces. Tabs only in Makefiles.
-- Use `snake_case` for variables/functions and `UPPER_CASE` for exported constants.
-- Function form: `name() {`, not `function name`.
-- Prefer `cmd_exist` from `globals.sh` over ad hoc command checks.
-- Prefer `print_color` from `globals.sh`, or local `log()`/`error()` helpers.
-- Script taxonomy and installer rules live in [docs/scripts.md](docs/scripts.md).
-
-## OS pattern
-
-`globals.sh` exports cached `OS` and `ARCH`. Switch on them instead of probing repeatedly.
-
-```bash
-case "$OS" in
-    ubuntu | debian | linuxmint) ... ;;
-    centos)                       ... ;;
-    arch)                         ... ;;
-    macos)                        ... ;;
-esac
-```
-
-## Deep docs
-
-Read the relevant source of record before changing an area:
-
-- [docs/index.md](docs/index.md) — documentation map and validation routing.
-- [docs/bootstrap.md](docs/bootstrap.md) — `init.sh`, feature flags, symlinks, Plesk path, installer idempotency.
-- [docs/testing.md](docs/testing.md) — local, Docker, UI, and lint checks.
-- [docs/shell-env.md](docs/shell-env.md) — Bash load order, `globals.sh`, `env/`.
-- [docs/scripts.md](docs/scripts.md) — script categories, naming, installer contract.
-- [docs/ai-sync.md](docs/ai-sync.md) — AI skill/config sync and symlink discipline.
-- [docs/help.md](docs/help.md) — generated F1 keyboard cheatsheet.
-
-## Commit and PR
-
-- Use short, lowercase, imperative subjects. Optional prefix: `refactor:`, `feat:`, `fix:`.
-- PR bodies should list summary, key files, tests run or skipped, system-state effects, and OS assumptions.
+- Shebang: `#!/bin/bash` or `#!/usr/bin/env bash`; never `#!/bin/sh`.
+- Shell indent: 4 spaces. Makefiles: tabs.
+- Names: `snake_case` for variables/functions, `UPPER_CASE` for exported constants, `name() {` for functions.
+- Prefer `cmd_exist`, `print_color`, `installPackages`, `pkg_install`, and cached `OS`/`ARCH` from `globals.sh`.

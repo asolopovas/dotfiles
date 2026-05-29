@@ -2,7 +2,7 @@
 
 Bash and fish share paths, aliases, and helpers through repo-managed files.
 
-## Bash load order
+## Load order
 
 Interactive Bash loads:
 
@@ -19,12 +19,12 @@ fzf scripts
 toolchain envs
 ```
 
-`.profile` runs at login. `.bashrc` runs for each interactive shell.
+`.profile` runs at login; `.bashrc` runs for each interactive shell.
 
 | Put | In |
 |---|---|
 | Environment variables | `env/env-vars.sh` |
-| PATH entries for Bash and fish | `.paths` |
+| Shared PATH entries | `.paths` |
 | Bash-only PATH entries | `env/include-paths.sh` |
 | Shell-neutral aliases | `~/.config/.aliasrc` |
 
@@ -32,26 +32,14 @@ toolchain envs
 
 Source `globals.sh` before using shared helpers.
 
-| Helper | Purpose |
+| Helper group | Names |
 |---|---|
-| `detect_os`, `detect_arch` | OS/arch detection |
-| `OS`, `ARCH` | Exported cached detection |
-| `cmd_exist <name>` | `command -v` wrapper |
-| `print_color <color> <msg>` | Colored output |
-| `installPackages <pkgs...>` | apt/yum/pacman switch |
-| `pkg_install <pkgs...>` | brew/dnf-aware install wrapper |
-| `removePackage` | Remove packages |
-| `hold_packages`, `unhold_packages` | Debian package holds |
-| `is_sudoer` | Cached sudo check |
-| `add_paths_from_file <file>` | Add PATH entries from a file |
-| `load_env_vars <file>` | Load `KEY=VAL` without overriding existing values |
-| `load_env <file>` | Export variables from a sourced env file |
-| `cd_up <n>` | Move up directories |
-| `create_dir <path>` | `mkdir -p` with logging |
-| `fix_broken_symlinks <dir> [--recursive]` | Remove dangling symlinks |
-| `gh_latest_release owner/repo [--keep-v]` | Get latest GitHub release tag |
-| `require_cmd <cmd> <inst-script>` | Prompt to install a dependency |
-| `source_script <name>` | Source `$DOTFILES/env/<name>.sh` |
+| Platform | `detect_os`, `detect_arch`, `OS`, `ARCH` |
+| Commands/output | `cmd_exist`, `require_cmd`, `print_color` |
+| Packages | `installPackages`, `pkg_install`, `removePackage`, `hold_packages`, `unhold_packages` |
+| Env/PATH | `add_paths_from_file`, `load_env_vars`, `load_env`, `source_script` |
+| Filesystem | `cd_up`, `create_dir`, `fix_broken_symlinks` |
+| Other | `is_sudoer`, `gh_latest_release` |
 
 ## `env/`
 
@@ -66,6 +54,7 @@ Source `globals.sh` before using shared helpers.
 ## Rules
 
 - Add shared functions to `globals.sh` and this helper table.
-- Keep env vars out of `.bashrc` and `.profile` unless they must be shell-local.
+- Keep env vars out of `.bashrc` and `.profile` unless shell-local.
 - Keep shared PATH entries in `.paths`.
-- Match existing shell style; do not add `set -euo pipefail` to legacy scripts only because you touched them.
+- Use cached `OS`/`ARCH`; switch on `ubuntu | debian | linuxmint | arch | centos | macos`.
+- Match existing shell style.

@@ -6,11 +6,10 @@
 
 | Command | Scope |
 |---|---|
-| `./scripts/sync-ai.sh` | Everything |
-| `./scripts/sync-ai.sh sync` | Everything |
-| `./scripts/sync-ai.sh config` | Linux config links |
-| `./scripts/sync-ai.sh agents` | Linux `~/.agents` plus CLI skill links |
-| `./scripts/sync-ai.sh windows` | Windows copies from WSL |
+| `./scripts/sync-ai.sh`, `sync` | Everything |
+| `config` | Linux config links |
+| `agents` | Linux `~/.agents` plus CLI skill links |
+| `windows` | Windows copies from WSL |
 
 ## Skills
 
@@ -27,7 +26,7 @@ Do not replace `~/.claude/skills` or `~/.codex/skills` with real directories.
 
 ## Config
 
-Linux targets are symlinks to this repo. Windows targets are file copies. Existing regular Linux config files are backed up before replacement when content differs.
+Linux targets are symlinks; Windows targets are copies. Existing regular Linux config files are backed up before replacement when content differs.
 
 | Source | Linux target | Windows target |
 |---|---|---|
@@ -39,29 +38,18 @@ Linux targets are symlinks to this repo. Windows targets are file copies. Existi
 
 When Pi npm exists, sync runs `npm install` and `pi update --extensions` if available.
 
-## Sources
+## Sources and env
 
-| Path | Purpose |
+| Path or var | Purpose |
 |---|---|
-| `.agents/` | Generic user-level agents and skills |
+| `.agents/` | Generic user agents and skills |
 | `AGENTS.md` | Project-local instructions |
 | `.pi/agent/` | Pi settings, prompts, npm manifest |
-| `.config/agents.conf` | External agent URL list, tracked but not synced |
+| `.config/agents.conf` | External agent URL list; tracked, not synced |
+| `DOTFILES_DIR`, `DOTFILES_AGENTS_DIR`, `AGENTS_DIR`, `WINDOWS_AGENTS_DIR` | Path overrides |
 
 Project-only rules belong in `AGENTS.md` or project-local config, not generic skills.
 
-## Environment
-
-| Var | Default |
-|---|---|
-| `DOTFILES_DIR` | `$HOME/dotfiles` |
-| `DOTFILES_AGENTS_DIR` | `$DOTFILES_DIR/.agents` |
-| `AGENTS_DIR` | `$HOME/.agents` |
-| `WINDOWS_AGENTS_DIR` | Detected Windows profile plus `/.agents` |
-
 ## Validation
 
-```bash
-make test-sync-ai
-make test
-```
+`make test-sync-ai` and `make test`.
