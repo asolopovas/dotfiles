@@ -202,7 +202,14 @@ sync_windows_pi_packages() {
     powershell.exe -NoProfile -Command "Set-Location -LiteralPath '$win_home'; if (Get-Command pi.cmd -ErrorAction SilentlyContinue) { & pi.cmd update --extensions } elseif (Get-Command pi -ErrorAction SilentlyContinue) { & pi update --extensions }" | tr -d '\r'
 }
 
+validate_agents_layout() {
+    local nested="$DOTFILES_AGENTS_DIR/skills/skills"
+
+    [[ ! -e "$nested" ]] || die "invalid agents layout: $nested exists; skills must live directly under $DOTFILES_AGENTS_DIR/skills"
+}
+
 sync_linux_agents() {
+    validate_agents_layout
     replace_with_symlink "$DOTFILES_AGENTS_DIR" "$AGENTS_DIR"
 
     local relpath
@@ -267,6 +274,7 @@ windows_agents_dir() {
 
 sync_windows_agents() {
     is_wsl || return 0
+    validate_agents_layout
 
     local dst parent
     dst=$(windows_agents_dir) || return 0

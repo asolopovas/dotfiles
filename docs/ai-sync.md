@@ -13,7 +13,7 @@
 
 ## Skills
 
-Generic skills live in `~/.agents/skills`.
+Generic skills live in `~/.agents/skills`. Skill directories must be immediate children of that directory, such as `~/.agents/skills/playwright-cli/SKILL.md`; `~/.agents/skills/skills/...` is invalid and `sync-ai.sh` rejects it.
 
 | CLI | Path | Behavior |
 |---|---|---|

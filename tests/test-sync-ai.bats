@@ -11,13 +11,13 @@ setup() {
     export AGENTS_DIR="$FAKE_HOME/.agents"
     export WINDOWS_AGENTS_DIR="$TMPDIR/windows/.agents"
 
-    mkdir -p "$DOTFILES_AGENTS_DIR/skills/skills/example" "$DOTFILES_DIR/.claude" "$DOTFILES_DIR/.config/opencode" "$DOTFILES_DIR/.pi/agent/npm" "$DOTFILES_DIR/.pi/agent/prompts"
+    mkdir -p "$DOTFILES_AGENTS_DIR/skills/example" "$DOTFILES_DIR/.claude" "$DOTFILES_DIR/.config/opencode" "$DOTFILES_DIR/.pi/agent/npm" "$DOTFILES_DIR/.pi/agent/prompts"
     printf '{}\n' > "$DOTFILES_DIR/.claude/settings.json"
     printf '{}\n' > "$DOTFILES_DIR/.config/opencode/opencode.jsonc"
     printf '{"packages":["npm:pi-subagents"]}\n' > "$DOTFILES_DIR/.pi/agent/settings.json"
     printf '{"dependencies":{"pi-subagents":"^0.25.0"}}\n' > "$DOTFILES_DIR/.pi/agent/npm/package.json"
     printf -- '---\ndescription: Commit and push\n---\nCommit and push.\n' > "$DOTFILES_DIR/.pi/agent/prompts/gw.md"
-    printf -- '---\nname: example\ndescription: Test\n---\n' > "$DOTFILES_AGENTS_DIR/skills/skills/example/SKILL.md"
+    printf -- '---\nname: example\ndescription: Test\n---\n' > "$DOTFILES_AGENTS_DIR/skills/example/SKILL.md"
 
     source <(sed 's/^main "\$@"$//' "$REPO_DIR/scripts/sync-ai.sh")
 }
@@ -101,11 +101,18 @@ sync_ai_run() {
     [[ "$output" == *"not an empty directory or symlink"* ]]
 }
 
+@test "agents sync rejects nested skills layout" {
+    mkdir -p "$DOTFILES_AGENTS_DIR/skills/skills/example"
+    run sync_linux_agents
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"skills must live directly under"* ]]
+}
+
 @test "windows sync copies agents when running under WSL with override" {
     export WSL_DISTRO_NAME="Ubuntu"
     mkdir -p "$(dirname "$WINDOWS_AGENTS_DIR")"
     sync_windows_agents
-    [ -f "$WINDOWS_AGENTS_DIR/skills/skills/example/SKILL.md" ]
+    [ -f "$WINDOWS_AGENTS_DIR/skills/example/SKILL.md" ]
 }
 
 @test "windows sync copies configs with gw command when running under WSL" {
@@ -148,7 +155,7 @@ sync_ai_run() {
     }
 
     sync_windows_agents
-    [ -f "$TMPDIR/mnt/c/Users/alice/.agents/skills/skills/example/SKILL.md" ]
+    [ -f "$TMPDIR/mnt/c/Users/alice/.agents/skills/example/SKILL.md" ]
 }
 
 @test "windows sync is skipped outside WSL" {
