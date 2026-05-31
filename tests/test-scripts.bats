@@ -134,3 +134,35 @@ EOF
     [[ "$(<"$capture")" != *"missing-project"* ]]
     [[ "$(<"$capture")" != *"github-project"* ]]
 }
+
+@test "repo: fzf selection clones selected cached repository" {
+    local cache_home="$TMPDIR/cache"
+    local workdir="$TMPDIR/workdir"
+    local fzf_capture="$TMPDIR/repo-fzf-input"
+    local git_capture="$TMPDIR/repo-git-args"
+    mkdir -p "$cache_home/dotfiles" "$workdir"
+    printf '%s\n' $'alpha\tAlpha repo' $'beta\tBeta repo' >"$cache_home/dotfiles/repos-example"
+    printf '#!/usr/bin/env bash\ncat > "$FZF_CAPTURE"\nprintf "beta\\tBeta repo\\n"\n' >"$FAKE_BIN/fzf"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$1" "$2" > "$GIT_CAPTURE"\n' >"$FAKE_BIN/git"
+    chmod +x "$FAKE_BIN/fzf" "$FAKE_BIN/git"
+    run env HOME="$FAKE_HOME" XDG_CACHE_HOME="$cache_home" REPO_OWNER=example PATH="$FAKE_BIN:$PATH" FZF_CAPTURE="$fzf_capture" GIT_CAPTURE="$git_capture" bash -c "cd '$workdir' && '$REPO_DIR/helpers/repo' --pick"
+    [[ "$status" -eq 0 ]]
+    [[ "$(<"$fzf_capture")" == *"alpha"* ]]
+    [[ "$(<"$fzf_capture")" == *"beta"* ]]
+    [[ "$(sed -n '1p' "$git_capture")" == "clone" ]]
+    [[ "$(sed -n '2p' "$git_capture")" == "git@github.com:example/beta.git" ]]
+}
+
+@test "repo: fzf selection honors https cloning" {
+    local cache_home="$TMPDIR/cache"
+    local workdir="$TMPDIR/workdir"
+    local git_capture="$TMPDIR/repo-git-args"
+    mkdir -p "$cache_home/dotfiles" "$workdir"
+    printf '%s\n' $'beta\tBeta repo' >"$cache_home/dotfiles/repos-example"
+    printf '#!/usr/bin/env bash\ncat >/dev/null\nprintf "beta\\tBeta repo\\n"\n' >"$FAKE_BIN/fzf"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$1" "$2" > "$GIT_CAPTURE"\n' >"$FAKE_BIN/git"
+    chmod +x "$FAKE_BIN/fzf" "$FAKE_BIN/git"
+    run env HOME="$FAKE_HOME" XDG_CACHE_HOME="$cache_home" REPO_OWNER=example PATH="$FAKE_BIN:$PATH" GIT_CAPTURE="$git_capture" bash -c "cd '$workdir' && '$REPO_DIR/helpers/repo' --pick --https"
+    [[ "$status" -eq 0 ]]
+    [[ "$(sed -n '2p' "$git_capture")" == "https://github.com/example/beta.git" ]]
+}

@@ -2,14 +2,16 @@
 
 OWNER="${REPO_OWNER:-asolopovas}"
 CACHE_TTL="${REPO_CACHE_TTL:-21600}"
+REPO_LIMIT="${REPO_LIMIT:-1000}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 CACHE_DIR="$XDG_CACHE_HOME/dotfiles"
 CACHE_FILE="$CACHE_DIR/repos-$OWNER"
 USE_HTTPS=false
+PICK_REPO=false
 REPO_NAME=""
 
 usage() {
-    printf '%s\n' "Usage: repo [--https] REPO" "       repo --list" "       repo --refresh-cache"
+    printf '%s\n' "Usage: repo [--https] [REPO]" "       repo --pick" "       repo --list" "       repo --refresh-cache"
 }
 
 cache_age() {
@@ -36,7 +38,7 @@ refresh_cache() {
         return 0
     fi
 
-    gh repo list "$OWNER" --limit 300 --json name,description --template '{{range .}}{{.name}}{{"\t"}}{{.description}}{{"\n"}}{{end}}' >"$tmp"
+    gh repo list "$OWNER" --limit "$REPO_LIMIT" --json name,description --template '{{range .}}{{.name}}{{"\t"}}{{.description}}{{"\n"}}{{end}}' >"$tmp"
     status=$?
 
     if [ $status -eq 0 ] && [ -s "$tmp" ]; then
@@ -57,6 +59,37 @@ list_repos() {
     fi
 
     [ -f "$CACHE_FILE" ] && cat "$CACHE_FILE"
+}
+
+pick_repo() {
+    command -v fzf >/dev/null 2>&1 || {
+        printf '%s\n' "fzf is required for interactive repo selection" >&2
+        return 1
+    }
+
+    local repos selection self reload_cmd
+    repos=$(list_repos)
+    if [ -z "$repos" ]; then
+        printf '%s\n' "No repositories found. Run repo --refresh-cache or check gh auth." >&2
+        return 1
+    fi
+
+    self=$(printf '%q' "$0")
+    reload_cmd="$self --refresh-cache >/dev/null 2>&1; $self --list"
+    selection=$(printf '%s\n' "$repos" | fzf \
+        --height "${REPO_FZF_HEIGHT:-80%}" \
+        --layout reverse \
+        --border \
+        --prompt "$OWNER> " \
+        --delimiter=$'\t' \
+        --with-nth 1,2 \
+        --nth 1,2 \
+        --no-multi \
+        --header "enter: clone  ctrl-r: refresh" \
+        --bind "ctrl-r:reload($reload_cmd)") || return 1
+
+    [ -n "$selection" ] || return 1
+    printf '%s\n' "${selection%%$'\t'*}"
 }
 
 clone_repo() {
@@ -100,6 +133,9 @@ while [ $# -gt 0 ]; do
         --https)
             USE_HTTPS=true
             ;;
+        --pick|--fzf)
+            PICK_REPO=true
+            ;;
         --list|--complete)
             list_repos
             exit 0
@@ -131,8 +167,12 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$REPO_NAME" ]; then
-    usage >&2
-    exit 1
+    if [ "$PICK_REPO" = true ] || [ -t 0 ]; then
+        REPO_NAME=$(pick_repo) || exit $?
+    else
+        usage >&2
+        exit 1
+    fi
 fi
 
 clone_repo "$REPO_NAME"
