@@ -1,0 +1,138 @@
+#!/bin/bash
+
+OWNER="${REPO_OWNER:-asolopovas}"
+CACHE_TTL="${REPO_CACHE_TTL:-21600}"
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+CACHE_DIR="$XDG_CACHE_HOME/dotfiles"
+CACHE_FILE="$CACHE_DIR/repos-$OWNER"
+USE_HTTPS=false
+REPO_NAME=""
+
+usage() {
+    printf '%s\n' "Usage: repo [--https] REPO" "       repo --list" "       repo --refresh-cache"
+}
+
+cache_age() {
+    if [ ! -f "$CACHE_FILE" ]; then
+        printf '%s\n' 999999999
+        return
+    fi
+
+    local now modified
+    now=$(date +%s)
+    modified=$(stat -c %Y "$CACHE_FILE" 2>/dev/null || stat -f %m "$CACHE_FILE" 2>/dev/null || printf '%s\n' 0)
+    printf '%s\n' "$((now - modified))"
+}
+
+refresh_cache() {
+    command -v gh >/dev/null 2>&1 || return 1
+    mkdir -p "$CACHE_DIR"
+
+    local lock tmp status
+    lock="$CACHE_FILE.lock"
+    tmp="$CACHE_FILE.tmp.$$"
+
+    if ! mkdir "$lock" 2>/dev/null; then
+        return 0
+    fi
+
+    gh repo list "$OWNER" --limit 300 --json name,description --template '{{range .}}{{.name}}{{"\t"}}{{.description}}{{"\n"}}{{end}}' >"$tmp"
+    status=$?
+
+    if [ $status -eq 0 ] && [ -s "$tmp" ]; then
+        mv "$tmp" "$CACHE_FILE"
+    else
+        rm -f "$tmp"
+    fi
+
+    rmdir "$lock" 2>/dev/null || true
+    return $status
+}
+
+list_repos() {
+    if [ ! -f "$CACHE_FILE" ]; then
+        refresh_cache >/dev/null 2>&1 || true
+    elif [ "$(cache_age)" -gt "$CACHE_TTL" ]; then
+        "$0" --refresh-cache >/dev/null 2>&1 &
+    fi
+
+    [ -f "$CACHE_FILE" ] && cat "$CACHE_FILE"
+}
+
+clone_repo() {
+    local input repo_dir repo_url
+    input="$1"
+
+    case "$input" in
+        http://*|https://*|git@*)
+            repo_url="$input"
+            repo_dir=${input##*/}
+            repo_dir=${repo_dir%.git}
+            ;;
+        */*)
+            repo_dir=${input##*/}
+            if [ "$USE_HTTPS" = true ]; then
+                repo_url="https://github.com/$input.git"
+            else
+                repo_url="git@github.com:$input.git"
+            fi
+            ;;
+        *)
+            repo_dir="$input"
+            if [ "$USE_HTTPS" = true ]; then
+                repo_url="https://github.com/$OWNER/$input.git"
+            else
+                repo_url="git@github.com:$OWNER/$input.git"
+            fi
+            ;;
+    esac
+
+    if [ -d "$repo_dir" ]; then
+        printf '%s\n' "REPO $repo_dir already exists" >&2
+        return 1
+    fi
+
+    git clone "$repo_url"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --https)
+            USE_HTTPS=true
+            ;;
+        --list|--complete)
+            list_repos
+            exit 0
+            ;;
+        --refresh-cache)
+            refresh_cache
+            exit $?
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --*)
+            printf '%s\n' "Unrecognized argument: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+        *)
+            if [ -z "$REPO_NAME" ]; then
+                REPO_NAME="$1"
+            else
+                printf '%s\n' "Unrecognized argument: $1" >&2
+                usage >&2
+                exit 1
+            fi
+            ;;
+    esac
+    shift
+done
+
+if [ -z "$REPO_NAME" ]; then
+    usage >&2
+    exit 1
+fi
+
+clone_repo "$REPO_NAME"
