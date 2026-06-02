@@ -115,9 +115,20 @@ setup_file() {
 
 @test "vhost1: opencode config -> shared" {
     local h="/var/www/vhosts/test1.com"
-    if [ ! -d /opt/opencode-config ]; then skip "no opencode config"; fi
     [ -L "$h/.config/opencode" ]
-    [ "$(readlink "$h/.config/opencode")" = "/opt/opencode-config" ]
+    [ "$(readlink "$h/.config/opencode")" = "$h/dotfiles/.config/opencode" ]
+}
+
+@test "vhost1: ai agents use dotfiles symlinks" {
+    local h="/var/www/vhosts/test1.com"
+    [ -L "$h/.agents" ]
+    [ "$(readlink "$h/.agents")" = "$h/dotfiles/.agents" ]
+    [ -L "$h/.claude/skills" ]
+    [ "$(readlink "$h/.claude/skills")" = "$h/.agents/skills" ]
+    [ -L "$h/.codex/skills" ]
+    [ "$(readlink "$h/.codex/skills")" = "$h/.agents/skills" ]
+    [ -L "$h/.pi/agent/prompts" ]
+    [ "$(readlink "$h/.pi/agent/prompts")" = "$h/dotfiles/.pi/agent/prompts" ]
 }
 
 @test "vhost1: opencode cache -> shared" {

@@ -10,6 +10,7 @@ setup() {
     export DOTFILES_AGENTS_DIR="$DOTFILES_DIR/.agents"
     export AGENTS_DIR="$FAKE_HOME/.agents"
     export WINDOWS_AGENTS_DIR="$TMPDIR/windows/.agents"
+    export PLESK_VHOSTS_DIR="$TMPDIR/var/www/vhosts"
 
     mkdir -p "$DOTFILES_AGENTS_DIR/skills/example" "$DOTFILES_DIR/.claude" "$DOTFILES_DIR/.config/opencode" "$DOTFILES_DIR/.pi/agent/npm" "$DOTFILES_DIR/.pi/agent/prompts"
     printf '{}\n' > "$DOTFILES_DIR/.claude/settings.json"
@@ -162,6 +163,73 @@ sync_ai_run() {
     unset WSL_DISTRO_NAME
     sync_windows_agents
     [ ! -e "$WINDOWS_AGENTS_DIR" ]
+}
+
+@test "plesk sync links vhost skills prompts and mcp config to dotfiles" {
+    local vhost_home="$PLESK_VHOSTS_DIR/example.com"
+    local plesk_user
+    plesk_user="$(id -un)"
+    mkdir -p "$vhost_home"
+
+    plesk() {
+        printf 'example.com\t%s\t%s\n' "$(id -un)" "$PLESK_VHOSTS_DIR/example.com"
+    }
+
+    sync_plesk_ai
+    [ -L "$vhost_home/.agents" ]
+    [ -L "$vhost_home/.claude/skills" ]
+    [ -L "$vhost_home/.codex/skills" ]
+    [ -L "$vhost_home/.config/opencode" ]
+    [ -L "$vhost_home/.pi/agent/settings.json" ]
+    [ -L "$vhost_home/.pi/agent/npm/package.json" ]
+    [ -L "$vhost_home/.pi/agent/prompts" ]
+    [[ "$(readlink "$vhost_home/.agents")" == "$DOTFILES_AGENTS_DIR" ]]
+    [[ "$(readlink "$vhost_home/.claude/skills")" == "$vhost_home/.agents/skills" ]]
+    [[ "$(readlink "$vhost_home/.codex/skills")" == "$vhost_home/.agents/skills" ]]
+    [[ "$(readlink "$vhost_home/.config/opencode")" == "$DOTFILES_DIR/.config/opencode" ]]
+    [[ "$(readlink "$vhost_home/.pi/agent/settings.json")" == "$DOTFILES_DIR/.pi/agent/settings.json" ]]
+    [[ "$(readlink "$vhost_home/.pi/agent/npm/package.json")" == "$DOTFILES_DIR/.pi/agent/npm/package.json" ]]
+    [[ "$(readlink "$vhost_home/.pi/agent/prompts")" == "$DOTFILES_DIR/.pi/agent/prompts" ]]
+    [[ "$plesk_user" == "$(id -un)" ]]
+}
+
+@test "plesk sync keeps existing agents symlink" {
+    local vhost_home="$PLESK_VHOSTS_DIR/example.com"
+    mkdir -p "$vhost_home"
+    ln -s "$DOTFILES_AGENTS_DIR" "$vhost_home/.agents"
+
+    plesk() {
+        printf 'example.com\t%s\t%s\n' "$(id -un)" "$PLESK_VHOSTS_DIR/example.com"
+    }
+
+    sync_plesk_ai
+    [ -L "$vhost_home/.agents" ]
+    [[ "$(readlink "$vhost_home/.agents")" == "$DOTFILES_AGENTS_DIR" ]]
+    [ -L "$vhost_home/.claude/skills" ]
+    [ -L "$vhost_home/.pi/agent/prompts" ]
+}
+
+@test "plesk sync backs up duplicate directories before linking shared agent paths" {
+    local vhost_home="$PLESK_VHOSTS_DIR/example.com"
+    mkdir -p "$vhost_home/.agents/skills/local" "$vhost_home/.config/opencode"
+    printf 'local\n' > "$vhost_home/.agents/skills/local/SKILL.md"
+    printf 'local\n' > "$vhost_home/.config/opencode/local.json"
+
+    plesk() {
+        printf 'example.com\t%s\t%s\n' "$(id -un)" "$PLESK_VHOSTS_DIR/example.com"
+    }
+
+    sync_plesk_ai
+    [ -L "$vhost_home/.agents" ]
+    [ -L "$vhost_home/.config/opencode" ]
+    [[ "$(readlink "$vhost_home/.agents")" == "$DOTFILES_AGENTS_DIR" ]]
+    [[ "$(readlink "$vhost_home/.config/opencode")" == "$DOTFILES_DIR/.config/opencode" ]]
+    agents_backup="$(find "$vhost_home" -maxdepth 1 -name '.agents.backup.*' -print -quit)"
+    opencode_backup="$(find "$vhost_home/.config" -maxdepth 1 -name 'opencode.backup.*' -print -quit)"
+    [ -n "$agents_backup" ]
+    [ -n "$opencode_backup" ]
+    [ -f "$agents_backup/skills/local/SKILL.md" ]
+    [ -f "$opencode_backup/local.json" ]
 }
 
 @test "linux npm package sync updates installed packages" {

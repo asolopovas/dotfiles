@@ -8,7 +8,9 @@
 |---|---|
 | `./scripts/sync-ai.sh`, `sync` | Everything |
 | `config` | Linux config links |
-| `agents` | Linux `~/.agents` plus CLI skill links |
+| `agents` | Linux `~/.agents` plus CLI skill links, plus Plesk vhost AI links when detected |
+| `skills` | Skills and Pi prompts, plus Plesk vhost AI links when detected |
+| `plesk` | Plesk vhost skills and Pi prompts only |
 | `windows` | Windows copies from WSL |
 
 ## Skills
@@ -21,6 +23,7 @@ Generic skills live in `~/.agents/skills`. Skill directories must be immediate c
 | Codex | `~/.codex/skills` | Symlink to `~/.agents/skills` |
 | OpenCode | `~/.agents/skills` | Reads directly |
 | Windows tools | `%USERPROFILE%/.agents/skills` | Copied from WSL |
+| Plesk vhosts | `~/.agents`, `~/.claude/skills`, `~/.codex/skills` | Symlinks to dotfiles-backed shared skills |
 
 Do not replace Claude or Codex skill symlinks with real directories.
 
@@ -37,5 +40,7 @@ Linux targets are symlinks; Windows targets are copies. Existing regular Linux c
 | `.pi/agent/prompts/` | `~/.pi/agent/prompts/` | `%USERPROFILE%/.pi/agent/prompts/` |
 
 When Pi npm exists, sync runs `npm install` and `pi update --extensions` if available.
+
+On Plesk hosts, vhost AI skills, Pi prompts, Pi package config, and OpenCode MCP config are symlinked to the dotfiles checkout instead of copied.
 
 Project-only rules belong in `AGENTS.md` or project-local config, not generic skills. Validate with `make test-sync-ai` and `make test`.

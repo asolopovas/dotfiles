@@ -172,10 +172,8 @@ setup_file() {
 # ===== opencode section =====
 
 @test "plesk-opencode: config dir shared" {
-    [ -d /opt/opencode-config ]
-    [ "$(stat -c '%G' /opt/opencode-config)" = "psacln" ]
-    run stat -c '%A' /opt/opencode-config
-    [[ "$output" == *"rws"* ]]
+    [ -L /opt/opencode-config ]
+    [ "$(readlink /opt/opencode-config)" = "/opt/dotfiles/.config/opencode" ]
 }
 
 @test "plesk-opencode: cache dir shared" {
@@ -188,9 +186,15 @@ setup_file() {
     [ "$(stat -c '%G' /opt/opencode-bin)" = "psacln" ]
 }
 
-@test "plesk-opencode: group-writable" {
-    run stat -c '%a' /opt/opencode-config
-    [[ "$output" == "2775" ]]
+@test "plesk-opencode: config uses dotfiles source" {
+    [ -f /opt/opencode-config/opencode.jsonc ]
+}
+
+@test "plesk-ai: global skills use dotfiles source" {
+    [ -L /opt/agents-skills ]
+    [ "$(readlink /opt/agents-skills)" = "/opt/dotfiles/.agents/skills" ]
+    [ -L /etc/codex/skills ]
+    [ "$(readlink /etc/codex/skills)" = "/opt/dotfiles/.agents/skills" ]
 }
 
 # ===== vscode section =====
