@@ -19,6 +19,7 @@ setup() {
     export PATH="$FAKE_BIN:$PATH"
     export KILL="fake-kill"
     export SLEEP="fake-sleep"
+    unset ACTIVE_PGREP_USER PRESERVE_ACTIVE_USERS
 
     cat >"$FAKE_BIN/ps" <<'EOF'
 #!/usr/bin/env bash
@@ -90,25 +91,44 @@ child_add() { printf '%s %s\n' "$1" "$2" >>"$CHILD_FILE"; }
     [[ ! -s $KILL_LOG ]]
 }
 
-@test "active login user is skipped" {
+@test "active login user does not mask disconnected stale server by default" {
     proc_add 103 1 code-deadbeef "/home/u/.vscode-server/code-deadbeef1234567890 --cli-data-dir x agent host"
     age_set 103 90000
     printf '1 0 root - - active no -\n' >"$LOGINCTL_FILE"
     run "$SCRIPT" --kill --age-hours 12
     [[ $status -eq 0 ]]
-    [[ $output == *"skip active-login pid=103 user=root"* ]]
+    [[ $output == *"kill stale vscode pid=103 user=root"* ]]
+    grep -q -- '-TERM 103' "$KILL_LOG"
+}
+
+@test "preserve active users option skips active login user" {
+    proc_add 104 1 code-deadbeef "/home/u/.vscode-server/code-deadbeef1234567890 --cli-data-dir x agent host"
+    age_set 104 90000
+    printf '1 0 root - - active no -\n' >"$LOGINCTL_FILE"
+    run "$SCRIPT" --kill --age-hours 12 --preserve-active-users
+    [[ $status -eq 0 ]]
+    [[ $output == *"skip active-login pid=104 user=root"* ]]
     [[ ! -s $KILL_LOG ]]
 }
 
-@test "active VS Code server tree is skipped" {
+@test "stale VS Code server tree with server-main child is killed" {
     proc_add 200 1 code-deadbeef "/home/u/.vscode-server/code-deadbeef1234567890 --cli-data-dir x agent host"
     proc_add 201 200 node "/opt/vscode-server/server/out/server-main.js --start-server"
     child_add 200 201
     age_set 200 90000
     run "$SCRIPT" --kill --age-hours 12
     [[ $status -eq 0 ]]
-    [[ $output == *"skip active-vscode-tree pid=200"* ]]
-    [[ ! -s $KILL_LOG ]]
+    [[ $output == *"kill stale vscode pid=200"* ]]
+    grep -q -- '-TERM 200 201' "$KILL_LOG"
+}
+
+@test "legacy bin server-main root is detected and killed" {
+    proc_add 210 1 node "/home/u/.vscode-server/bin/deadbeef1234567890/out/server-main.js --start-server"
+    age_set 210 90000
+    run "$SCRIPT" --kill --age-hours 12
+    [[ $status -eq 0 ]]
+    [[ $output == *"kill stale vscode pid=210"* ]]
+    grep -q -- '-TERM 210' "$KILL_LOG"
 }
 
 @test "tmux child is preserved when stale VS Code parent is killed" {
@@ -119,7 +139,8 @@ child_add() { printf '%s %s\n' "$1" "$2" >>"$CHILD_FILE"; }
     run "$SCRIPT" --kill --age-hours 12
     [[ $status -eq 0 ]]
     grep -q -- '-TERM 300' "$KILL_LOG"
-    ! grep -q -- '301' "$KILL_LOG"
+    run grep -q -- '301' "$KILL_LOG"
+    [[ $status -ne 0 ]]
 }
 
 @test "install writes symlinks and cron file" {

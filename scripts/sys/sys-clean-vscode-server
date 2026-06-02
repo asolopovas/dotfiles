@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Cleanup stale VS Code Remote-SSH servers; preserves active logins, connections, tmux/screen.
-AGE_HOURS=${AGE_HOURS:-12}; DO=false; QUIET=false
+AGE_HOURS=${AGE_HOURS:-12}; DO=false; QUIET=false; PRESERVE_ACTIVE_USERS=${PRESERVE_ACTIVE_USERS:-false}
 PROC=${PROC:-/proc}; RUN=${RUN:-/run}; SBIN=${SBIN:-/usr/local/sbin}; CRON_D=${CRON_D:-/etc/cron.d}; KILL=${KILL:-kill}; SLEEP=${SLEEP:-sleep}
-usage(){ echo "usage: $0 [--kill] [--age-hours N] [--install] [--quiet]"; }
+usage(){ echo "usage: $0 [--kill] [--age-hours N] [--install] [--quiet] [--preserve-active-users]"; }
 log(){ $QUIET || printf '%(%F %T)T %s\n' -1 "$*"; }
 install_cron(){
   src=$(readlink -f "$0"); install -d "$SBIN" "$CRON_D"
@@ -15,28 +14,26 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
   chmod 644 "$CRON_D/sys-clean-vscode-server"; log "installed $CRON_D/sys-clean-vscode-server"
 }
-while (($#)); do case $1 in --kill) DO=true;; --dry-run) DO=false;; --quiet) QUIET=true;; --age-hours) AGE_HOURS=${2:?}; shift;; --install) install_cron; exit;; -h|--help) usage; exit;; *) usage >&2; exit 2;; esac; shift; done
+while (($#)); do case $1 in --kill) DO=true;; --dry-run) DO=false;; --quiet) QUIET=true;; --age-hours) AGE_HOURS=${2:?}; shift;; --preserve-active-users) PRESERVE_ACTIVE_USERS=true;; --install) install_cron; exit;; -h|--help) usage; exit;; *) usage >&2; exit 2;; esac; shift; done
 [[ $AGE_HOURS =~ ^[0-9]+$ ]] || { echo "bad AGE_HOURS" >&2; exit 2; }
 min=$((AGE_HOURS*3600)); mkdir -p "$RUN" 2>/dev/null || true; exec 9>"$RUN/sys-clean-vscode-server.lock"; flock -n 9 || exit 0
 cmd(){ { tr '\0' ' ' <"$PROC/$1/cmdline"; } 2>/dev/null || true; }
 age(){ ps -o etimes= -p "$1" 2>/dev/null | tr -d ' '; }
 ppid(){ awk '/^PPid:/{print $2}' "$PROC/$1/status" 2>/dev/null || echo 0; }
 user(){ stat -c %U "$PROC/$1" 2>/dev/null || echo '?'; }
-is_vscode(){ local c; c="$(cmd "$1")"; [[ $c == *'.vscode-server/code-'* || $c == *'/opt/vscode-server/code-'* || $c == *'/server/out/server-main.js'* || $c == *'/server/out/bootstrap-fork --type=ptyHost'* ]]; }
+is_vscode(){ local c; c="$(cmd "$1")"; [[ $c == *'.vscode-server/code-'* || $c == *'/opt/vscode-server/code-'* || (($c == *'.vscode-server/'* || $c == *'/opt/vscode-server/'*) && ($c == *'/server-main.js'* || $c == *'/bootstrap-fork'*)) ]]; }
 is_keep(){ local c n; c="$(cmd "$1")"; n=$({ cat "$PROC/$1/comm"; } 2>/dev/null || true); [[ $n =~ ^(tmux|screen)$ || $c == *'/tmux '* || $c == *'/SCREEN'* || $c == *'codex app-server'* || $c == *' pi '* ]]; }
 kids(){ pgrep -P "$1" 2>/dev/null || true; }
 tree(){ local p k; local -a q=("$1"); while ((${#q[@]})); do p=${q[0]}; q=("${q[@]:1}"); [[ -d $PROC/$p ]] || continue; echo "$p"; while read -r k; do [[ $k ]] && q+=("$k"); done < <(kids "$p"); done; }
 connected(){ local p; for p; do grep -q "pid=$p," <<<"$ESTAB" && return 0; done; return 1; }
 active_user(){ loginctl list-sessions --no-legend 2>/dev/null | awk -v u="$1" '$3==u&&$6=="active"{f=1} END{exit !f}' || pgrep -u "$1" -f "sshd: $1@" >/dev/null 2>&1; }
-active_tree(){ local p c; for p; do c="$(cmd "$p")"; [[ $c == *'/server/out/server-main.js'* || $c == *'/server/out/bootstrap-fork'* ]] && return 0; done; return 1; }
 ESTAB=$(ss -Htanp state established 2>/dev/null || true)
 mapfile -t roots < <(find "$PROC" -maxdepth 1 -regex '.*/[0-9]+' -printf '%f\n' 2>/dev/null | while read -r p; do is_vscode "$p" && ! is_vscode "$(ppid "$p")" && echo "$p"; done | sort -n)
 for r in "${roots[@]}"; do
   [[ -d $PROC/$r ]] || continue; a=$(age "$r"); [[ $a && $a -ge $min ]] || { log "skip young pid=$r age=${a:-?}"; continue; }
   u=$(user "$r"); mapfile -t all < <(tree "$r")
   connected "${all[@]}" && { log "skip connected pid=$r user=$u"; continue; }
-  active_tree "${all[@]}" && { log "skip active-vscode-tree pid=$r user=$u"; continue; }
-  active_user "$u" && { log "skip active-login pid=$r user=$u"; continue; }
+  $PRESERVE_ACTIVE_USERS && active_user "$u" && { log "skip active-login pid=$r user=$u"; continue; }
   killp=(); for p in "${all[@]}"; do is_keep "$p" || killp+=("$p"); done; ((${#killp[@]})) || continue
   if $DO; then log "kill stale vscode pid=$r user=$u pids=${killp[*]}"; "$KILL" -TERM "${killp[@]}" 2>/dev/null || true; "$SLEEP" 2; "$KILL" -KILL "${killp[@]}" 2>/dev/null || true
   else log "dry-run stale vscode pid=$r user=$u pids=${killp[*]} cmd=$(cmd "$r" | cut -c1-120)"; fi
