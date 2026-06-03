@@ -1,4 +1,4 @@
 ---
-description: Commit and push
+description: commit and push
 ---
-Commit and push
+commit and push
