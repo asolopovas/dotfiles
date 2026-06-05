@@ -42,6 +42,163 @@ shared_perms() {
 	find "$dir" -type f -exec chmod 664 {} +
 }
 
+setup_pi() {
+	print_color bold_green "=== Pi ==="
+
+	cat >/usr/local/sbin/pi-self-update <<'HELPER'
+#!/bin/sh
+set -eu
+
+case "${1:-}" in
+  "") ;;
+  --force) ;;
+  *)
+    echo "Usage: pi-self-update [--force]" >&2
+    exit 2
+    ;;
+esac
+
+export PI_UPDATE_WRAPPER_BYPASS=1
+
+status=0
+/usr/local/bin/pi update --self "$@" || status=$?
+
+if [ -x /opt/dotfiles/scripts/plesk-init.sh ]; then
+  bash /opt/dotfiles/scripts/plesk-init.sh pi >/dev/null 2>&1 || true
+elif [ -x /root/dotfiles/scripts/plesk-init.sh ]; then
+  bash /root/dotfiles/scripts/plesk-init.sh pi >/dev/null 2>&1 || true
+fi
+
+exit "$status"
+HELPER
+	chmod 755 /usr/local/sbin/pi-self-update
+
+	rm -f /usr/local/bin/pi
+	cat >/usr/local/bin/pi <<'WRAPPER'
+#!/bin/sh
+set -eu
+
+find_node() {
+  if [ -n "${PI_NODE_BIN:-}" ] && [ -x "$PI_NODE_BIN" ]; then
+    printf '%s\n' "$PI_NODE_BIN"
+    return 0
+  fi
+
+  for candidate in \
+    /opt/plesk/node/23/bin/node \
+    /opt/plesk/node/22/bin/node \
+    /usr/local/bin/node \
+    /usr/bin/node \
+    /bin/node
+  do
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  for candidate in /opt/plesk/node/*/bin/node; do
+    if [ -x "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+run_pi_cli() {
+  NODE_BIN=$(find_node) || {
+    echo "pi: unable to find an executable Node.js runtime" >&2
+    exit 127
+  }
+
+  PI_CLI=/usr/local/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js
+  if [ ! -x "$PI_CLI" ]; then
+    echo "pi: CLI not found at $PI_CLI" >&2
+    exit 127
+  fi
+
+  NODE_DIR=$(dirname "$NODE_BIN")
+  PATH="$NODE_DIR:$PATH"
+  export PATH
+
+  exec "$NODE_BIN" "$PI_CLI" "$@"
+}
+
+is_update_all() {
+  saw_self=0
+  saw_extensions=0
+  saw_source=0
+  saw_help=0
+  for arg in "$@"; do
+    case "$arg" in
+      --self) saw_self=1 ;;
+      --extensions) saw_extensions=1 ;;
+      --extension) return 1 ;;
+      --force) ;;
+      -h|--help) saw_help=1 ;;
+      self|pi) saw_self=1 ;;
+      *) saw_source=1 ;;
+    esac
+  done
+
+  [ "$saw_help" -eq 0 ] || return 1
+  [ "$saw_source" -eq 0 ] || return 1
+  [ "$saw_extensions" -eq 0 ] && return 0
+  [ "$saw_self" -eq 1 ]
+}
+
+is_update_self_only() {
+  saw_self=0
+  for arg in "$@"; do
+    case "$arg" in
+      --self|self|pi) saw_self=1 ;;
+      --force) ;;
+      *) return 1 ;;
+    esac
+  done
+  [ "$saw_self" -eq 1 ]
+}
+
+run_self_update() {
+  if [ "$(id -u)" = "0" ]; then
+    exec /usr/local/sbin/pi-self-update ${force_arg:+$force_arg}
+  fi
+  exec sudo -n /usr/local/sbin/pi-self-update ${force_arg:+$force_arg}
+}
+
+if [ "${1:-}" = "update" ] && [ "${PI_UPDATE_WRAPPER_BYPASS:-}" != "1" ]; then
+  shift
+  force_arg=""
+  for arg in "$@"; do
+    [ "$arg" = "--force" ] && force_arg="--force"
+  done
+
+  if is_update_self_only "$@"; then
+    run_self_update
+  fi
+
+  if is_update_all "$@"; then
+    "$0" update --extensions
+    run_self_update
+  fi
+
+  set -- update "$@"
+fi
+
+run_pi_cli "$@"
+WRAPPER
+	chmod 755 /usr/local/bin/pi
+
+	local sudoers="/etc/sudoers.d/pi-self-update"
+	printf '%%psacln ALL=(root) NOPASSWD: /usr/local/sbin/pi-self-update, /usr/local/sbin/pi-self-update --force\n' >"$sudoers"
+	chmod 440 "$sudoers"
+	visudo -cf "$sudoers" >/dev/null
+
+	print_color green "  /usr/local/bin/pi wrapper ready"
+}
+
 ensure_symlink() {
 	local src="$1"
 	local dest="$2"
@@ -716,6 +873,30 @@ setup_vhost_omf() {
 	fi
 }
 
+setup_vhost_pi_package_json() {
+	local home_dir="$1"
+	local plesk_user="$2"
+	local dotfiles_dir="$3"
+	local src="$dotfiles_dir/.pi/agent/npm/package.json"
+	local dst="$home_dir/.pi/agent/npm/package.json"
+
+	[[ -f "$src" ]] || return 0
+	mkdir -p "$(dirname "$dst")"
+
+	if [[ -L "$dst" ]]; then
+		rm -f "$dst"
+	elif [[ -e "$dst" && ! -f "$dst" ]]; then
+		backup_path "$dst"
+	fi
+
+	if [[ ! -f "$dst" ]]; then
+		cp "$src" "$dst"
+	fi
+
+	chown "$plesk_user:" "$dst" 2>/dev/null || true
+	chmod u+rw,go+r "$dst" 2>/dev/null || true
+}
+
 setup_vhost_plesk_bins() {
 	local home_dir="$1"
 	local bin_dir="$home_dir/.local/bin"
@@ -822,7 +1003,7 @@ setup_vhosts() {
 		replace_with_symlink "$home_dir/.agents/skills" "$home_dir/.codex/skills"
 		[[ -d "$dotfiles_dir/.pi/agent/prompts" ]] && replace_with_symlink "$dotfiles_dir/.pi/agent/prompts" "$home_dir/.pi/agent/prompts"
 		[[ -f "$dotfiles_dir/.pi/agent/settings.json" ]] && replace_with_symlink "$dotfiles_dir/.pi/agent/settings.json" "$home_dir/.pi/agent/settings.json"
-		[[ -f "$dotfiles_dir/.pi/agent/npm/package.json" ]] && replace_with_symlink "$dotfiles_dir/.pi/agent/npm/package.json" "$home_dir/.pi/agent/npm/package.json"
+		setup_vhost_pi_package_json "$home_dir" "$plesk_user" "$dotfiles_dir"
 
 		mkdir -p \
 			"$home_dir/.local/state/nvim" \
@@ -851,7 +1032,6 @@ setup_vhosts() {
 			"$home_dir/.codex/skills" \
 			"$home_dir/.pi/agent/prompts" \
 			"$home_dir/.pi/agent/settings.json" \
-			"$home_dir/.pi/agent/npm/package.json" \
 			"$home_dir/.local/bin/helpers" \
 			2>/dev/null || true
 
@@ -900,6 +1080,7 @@ do_sync() {
 
 	setup_memory_limits
 	setup_dotfiles
+	setup_pi
 	setup_vhosts
 
 	if [[ -d /opt/nvim-config/nvim ]]; then
@@ -924,6 +1105,7 @@ do_all() {
 	setup_nvim
 	setup_fzf
 	setup_bun
+	setup_pi
 	setup_vhosts
 
 	echo ""
@@ -962,6 +1144,7 @@ Commands:
   nvim      Install/update nvim, plugins, LSPs, parsers
   fzf       Install/update fzf
   bun       Install/update bun with shared cache
+  pi        Install/update pi wrapper and self-update sudo helper
   vhosts    Configure all vhost user symlinks + cleanup
   memlimit  Set per-user systemd memory limits
 EOF
@@ -1000,6 +1183,7 @@ vscode) setup_vscode ;;
 nvim) setup_nvim ;;
 fzf) setup_fzf ;;
 bun) setup_bun ;;
+pi) setup_pi ;;
 vhosts) setup_vhosts ;;
 memlimit) setup_memory_limits ;;
 *)

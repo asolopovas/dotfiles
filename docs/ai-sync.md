@@ -29,7 +29,7 @@ Do not replace Claude or Codex skill symlinks with real directories.
 
 ## Config
 
-Linux targets are symlinks; Windows targets are copies. Existing regular Linux config files are backed up before replacement when content differs.
+Linux targets are symlinks; Windows targets are copies. Existing regular Linux config files are backed up before replacement when content differs. Plesk vhost Pi npm `package.json` is copied instead of symlinked so `pi update` can rewrite it as the vhost user.
 
 | Source | Linux target | Windows target |
 |---|---|---|
@@ -41,6 +41,6 @@ Linux targets are symlinks; Windows targets are copies. Existing regular Linux c
 
 When Pi npm exists, sync runs `npm install` and `pi update --extensions` if available.
 
-On Plesk hosts, vhost AI skills, Pi prompts, Pi package config, and OpenCode MCP config are symlinked to the dotfiles checkout instead of copied.
+On Plesk hosts, vhost AI skills, Pi prompts, Pi settings, and OpenCode MCP config are symlinked to the dotfiles checkout. Pi npm `package.json` is copied and owned by each vhost user so package updates remain writable.
 
 Project-only rules belong in `AGENTS.md` or project-local config, not generic skills. Validate with `make test-sync-ai` and `make test`.

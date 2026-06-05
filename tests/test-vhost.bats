@@ -129,6 +129,9 @@ setup_file() {
     [ "$(readlink "$h/.codex/skills")" = "$h/.agents/skills" ]
     [ -L "$h/.pi/agent/prompts" ]
     [ "$(readlink "$h/.pi/agent/prompts")" = "$h/dotfiles/.pi/agent/prompts" ]
+    [ -f "$h/.pi/agent/npm/package.json" ]
+    [ ! -L "$h/.pi/agent/npm/package.json" ]
+    [ "$(stat -c '%U' "$h/.pi/agent/npm/package.json")" = "testuser1" ]
 }
 
 @test "vhost1: opencode cache -> shared" {

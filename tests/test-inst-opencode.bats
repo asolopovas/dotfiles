@@ -2,6 +2,8 @@
 
 REPO_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 
+bats_require_minimum_version 1.5.0
+
 setup() {
     FAKE_HOME="$(mktemp -d)"
     export FAKE_HOME
@@ -59,6 +61,6 @@ opencode_run() {
     for dir in $PATH; do
         [[ -x "$dir/opencode" ]] || filtered="${filtered:+$filtered:}$dir"
     done
-    run env PATH="$FAKE_BIN:$filtered" bash "$REPO_DIR/scripts/inst/inst-opencode.sh"
+    run -127 env PATH="$FAKE_BIN:$filtered" /bin/bash "$REPO_DIR/scripts/inst/inst-opencode.sh"
     [[ "$output" == *"Installing OpenCode"* ]]
 }

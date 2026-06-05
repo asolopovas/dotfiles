@@ -165,7 +165,7 @@ sync_ai_run() {
     [ ! -e "$WINDOWS_AGENTS_DIR" ]
 }
 
-@test "plesk sync links vhost skills prompts and mcp config to dotfiles" {
+@test "plesk sync links shared config and copies writable vhost pi package config" {
     local vhost_home="$PLESK_VHOSTS_DIR/example.com"
     local plesk_user
     plesk_user="$(id -un)"
@@ -181,14 +181,16 @@ sync_ai_run() {
     [ -L "$vhost_home/.codex/skills" ]
     [ -L "$vhost_home/.config/opencode" ]
     [ -L "$vhost_home/.pi/agent/settings.json" ]
-    [ -L "$vhost_home/.pi/agent/npm/package.json" ]
+    [ -f "$vhost_home/.pi/agent/npm/package.json" ]
+    [ ! -L "$vhost_home/.pi/agent/npm/package.json" ]
+    [ -w "$vhost_home/.pi/agent/npm/package.json" ]
     [ -L "$vhost_home/.pi/agent/prompts" ]
     [[ "$(readlink "$vhost_home/.agents")" == "$DOTFILES_AGENTS_DIR" ]]
     [[ "$(readlink "$vhost_home/.claude/skills")" == "$vhost_home/.agents/skills" ]]
     [[ "$(readlink "$vhost_home/.codex/skills")" == "$vhost_home/.agents/skills" ]]
     [[ "$(readlink "$vhost_home/.config/opencode")" == "$DOTFILES_DIR/.config/opencode" ]]
     [[ "$(readlink "$vhost_home/.pi/agent/settings.json")" == "$DOTFILES_DIR/.pi/agent/settings.json" ]]
-    [[ "$(readlink "$vhost_home/.pi/agent/npm/package.json")" == "$DOTFILES_DIR/.pi/agent/npm/package.json" ]]
+    cmp -s "$DOTFILES_DIR/.pi/agent/npm/package.json" "$vhost_home/.pi/agent/npm/package.json"
     [[ "$(readlink "$vhost_home/.pi/agent/prompts")" == "$DOTFILES_DIR/.pi/agent/prompts" ]]
     [[ "$plesk_user" == "$(id -un)" ]]
 }

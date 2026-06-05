@@ -169,6 +169,19 @@ setup_file() {
     [ "$status" -eq 0 ]
 }
 
+@test "plesk-pi: wrapper and self-update helper installed" {
+    [ -x /usr/local/bin/pi ]
+    [ -x /usr/local/sbin/pi-self-update ]
+    run grep "pi-self-update" /usr/local/bin/pi
+    [ "$status" -eq 0 ]
+}
+
+@test "plesk-pi: sudoers valid" {
+    [ -f /etc/sudoers.d/pi-self-update ]
+    run visudo -cf /etc/sudoers.d/pi-self-update
+    [ "$status" -eq 0 ]
+}
+
 # ===== opencode section =====
 
 @test "plesk-opencode: config dir shared" {

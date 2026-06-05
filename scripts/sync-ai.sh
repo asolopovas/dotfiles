@@ -25,6 +25,9 @@ SKILL_LINKS=(
 
 PLESK_CONFIG_LINKS=(
 	".pi/agent/settings.json"
+)
+
+PLESK_COPY_CONFIGS=(
 	".pi/agent/npm/package.json"
 )
 
@@ -149,6 +152,29 @@ sync_config_file() {
 	ensure_parent "$dst"
 	cp "$src" "$dst"
 	echo "-> copy: $src -> $dst"
+}
+
+ensure_user_config_copy() {
+	local src="$1" dst="$2" owner="${3:-}"
+
+	[[ -e "$src" ]] || die "source does not exist: $src"
+
+	if [[ -L "$dst" ]]; then
+		rm -f "$dst"
+	elif [[ -e "$dst" && ! -f "$dst" ]]; then
+		backup_path "$dst"
+	fi
+
+	if [[ ! -f "$dst" ]]; then
+		ensure_parent "$dst"
+		cp "$src" "$dst"
+		echo "-> copy: $src -> $dst"
+	fi
+
+	if [[ -n "$owner" ]]; then
+		chown "$owner:" "$dst" 2>/dev/null || true
+	fi
+	chmod u+rw,go+r "$dst" 2>/dev/null || true
 }
 
 sync_directory() {
@@ -395,6 +421,12 @@ sync_plesk_vhost_links() {
 			replace_config_with_symlink "$src" "$home_dir/$relpath"
 		done
 
+		for relpath in "${PLESK_COPY_CONFIGS[@]}"; do
+			src="$shared_dotfiles_dir/$relpath"
+			[[ -e "$src" ]] || continue
+			ensure_user_config_copy "$src" "$home_dir/$relpath" "$plesk_user"
+		done
+
 		for relpath in "${PLESK_DIR_LINKS[@]}"; do
 			src="$shared_dotfiles_dir/$relpath"
 			[[ -d "$src" ]] || continue
@@ -408,7 +440,6 @@ sync_plesk_vhost_links() {
 			"$home_dir/.codex/skills" \
 			"$home_dir/.config/opencode" \
 			"$home_dir/.pi/agent/settings.json" \
-			"$home_dir/.pi/agent/npm/package.json" \
 			"$home_dir/.pi/agent/prompts" \
 			2>/dev/null || true
 
