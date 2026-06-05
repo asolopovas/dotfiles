@@ -1,13 +1,21 @@
+# Keep non-interactive shells quiet for ssh/scp/rsync automation.
+# Interactive setup belongs here; scripts should not inherit aliases,
+# prompts, completions, or optional toolchain startup files.
+case $- in
+    *i*) ;;
+    *) return 0 2>/dev/null || exit 0 ;;
+esac
+
 export LIBGUESTFS_DEBUG=1
 export LIBGUESTFS_TRACE=1
 export NVM_DIR="$HOME/.nvm"
 export DOTFILES="$HOME/dotfiles"
 
-source "$DOTFILES/globals.sh"
-source "$DOTFILES/env/env-vars.sh"
-source "$DOTFILES/env/include-paths.sh"
+[ -f "$DOTFILES/globals.sh" ] && source "$DOTFILES/globals.sh"
+[ -f "$DOTFILES/env/env-vars.sh" ] && source "$DOTFILES/env/env-vars.sh"
+[ -f "$DOTFILES/env/include-paths.sh" ] && source "$DOTFILES/env/include-paths.sh"
 
-if [ "$OHMYBASH" == true ]; then
+if [ "${OHMYBASH:-}" = true ] && [ -f "$DOTFILES/env/oh-my-bash.sh" ]; then
     source "$DOTFILES/env/oh-my-bash.sh"
 fi
 
@@ -62,6 +70,4 @@ export LD_LIBRARY_PATH="$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvi
 [ -f "$HOME/.bash_completions/rmodel.sh" ] && source "$HOME/.bash_completions/rmodel.sh"
 
 export PATH="$HOME/.pixi/bin:$HOME/.local/bin:$PATH"
-. "$HOME/.cargo/env"
-
-. "$HOME/.local/share/../bin/env"
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"

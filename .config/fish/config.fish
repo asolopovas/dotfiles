@@ -1,5 +1,12 @@
 #!/bin/fish
 
+# Keep non-interactive shells quiet and fast for ssh/scp/rsync automation.
+# Interactive-only aliases, prompts, completions, and toolchain startup files
+# must not print output or slow down protocol commands such as dsync.
+if not status is-interactive
+    return
+end
+
 set fish_greeting
 
 set -g fish_csi_u 0
@@ -10,10 +17,19 @@ set -x TERMINAL alacritty
 set -x EDITOR nvim
 
 fish_default_key_bindings
-load_env "$HOME/.env-vars"
-source $HOME/dotfiles/.config/.aliasrc
-for line in (cat $HOME/dotfiles/.paths)
-    add2path $line
+
+if functions -q load_env
+    load_env "$HOME/.env-vars"
+end
+
+if test -f "$HOME/dotfiles/.config/.aliasrc"
+    source "$HOME/dotfiles/.config/.aliasrc"
+end
+
+if test -f "$HOME/dotfiles/.paths"; and functions -q add2path
+    for line in (cat "$HOME/dotfiles/.paths")
+        add2path $line
+    end
 end
 
 set -gx BUN_INSTALL "$HOME/.bun"
@@ -33,7 +49,9 @@ end
 set -gx FZF_CTRL_T_COMMAND "fd -H $FZFARGS"
 set -gx FZF_ALT_C_COMMAND "fd -H -t d $FZFARGS"
 
-fzf_key_bindings
+if functions -q fzf_key_bindings
+    fzf_key_bindings
+end
 
 if [ -d "$HOME/go" ]
     set -x GOPATH $HOME/go
