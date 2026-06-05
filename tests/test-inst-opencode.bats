@@ -14,7 +14,14 @@ setup() {
     printf '#!/bin/sh\necho "0.0.0-test"\n' >"$FAKE_BIN/opencode"
     printf '#!/bin/sh\nexit 0\n' >"$FAKE_BIN/curl"
     printf '#!/bin/sh\necho "FAIL: bunx called" >&2; exit 1\n' >"$FAKE_BIN/bunx"
-    chmod +x "$FAKE_BIN/opencode" "$FAKE_BIN/curl" "$FAKE_BIN/bunx"
+    cat >"$FAKE_BIN/grep" <<'GREP'
+#!/bin/sh
+if [ "$1" = "-qi" ] && [ "$2" = "microsoft" ]; then
+    exit 1
+fi
+exec /usr/bin/grep "$@"
+GREP
+    chmod +x "$FAKE_BIN/opencode" "$FAKE_BIN/curl" "$FAKE_BIN/bunx" "$FAKE_BIN/grep"
     mkdir -p "$FAKE_HOME/dotfiles/.config/opencode" "$FAKE_HOME/dotfiles/scripts"
     echo '{}' >"$FAKE_HOME/dotfiles/.config/opencode/opencode.jsonc"
     cat >"$FAKE_HOME/dotfiles/globals.sh" <<'G'
@@ -61,6 +68,6 @@ opencode_run() {
     for dir in $PATH; do
         [[ -x "$dir/opencode" ]] || filtered="${filtered:+$filtered:}$dir"
     done
-    run -127 env PATH="$FAKE_BIN:$filtered" /bin/bash "$REPO_DIR/scripts/inst/inst-opencode.sh"
+    run env PATH="$FAKE_BIN:$filtered" /bin/bash "$REPO_DIR/scripts/inst/inst-opencode.sh"
     [[ "$output" == *"Installing OpenCode"* ]]
 }

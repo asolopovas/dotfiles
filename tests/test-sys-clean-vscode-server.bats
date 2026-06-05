@@ -92,22 +92,26 @@ child_add() { printf '%s %s\n' "$1" "$2" >>"$CHILD_FILE"; }
 }
 
 @test "active login user does not mask disconnected stale server by default" {
+    local user
+    user="$(id -un)"
     proc_add 103 1 code-deadbeef "/home/u/.vscode-server/code-deadbeef1234567890 --cli-data-dir x agent host"
     age_set 103 90000
-    printf '1 0 root - - active no -\n' >"$LOGINCTL_FILE"
+    printf '1 0 %s - - active no -\n' "$user" >"$LOGINCTL_FILE"
     run "$SCRIPT" --kill --age-hours 12
     [[ $status -eq 0 ]]
-    [[ $output == *"kill stale vscode pid=103 user=root"* ]]
+    [[ $output == *"kill stale vscode pid=103 user=$user"* ]]
     grep -q -- '-TERM 103' "$KILL_LOG"
 }
 
 @test "preserve active users option skips active login user" {
+    local user
+    user="$(id -un)"
     proc_add 104 1 code-deadbeef "/home/u/.vscode-server/code-deadbeef1234567890 --cli-data-dir x agent host"
     age_set 104 90000
-    printf '1 0 root - - active no -\n' >"$LOGINCTL_FILE"
+    printf '1 0 %s - - active no -\n' "$user" >"$LOGINCTL_FILE"
     run "$SCRIPT" --kill --age-hours 12 --preserve-active-users
     [[ $status -eq 0 ]]
-    [[ $output == *"skip active-login pid=104 user=root"* ]]
+    [[ $output == *"skip active-login pid=104 user=$user"* ]]
     [[ ! -s $KILL_LOG ]]
 }
 

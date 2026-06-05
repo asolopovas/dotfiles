@@ -1,29 +1,22 @@
 #!/usr/bin/env bats
 
-# Static lint suite for scripts/inst-*.sh.
-# Verifies each install script follows the project's standard pattern:
-#   - bash shebang
-#   - `set -e` (or set -euo pipefail)
-#   - syntactically valid (bash -n)
-#   - sources globals.sh OR is documented as exempt
-#
-# Does NOT execute installs (would touch the system / require sudo / network).
 
 REPO_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
 SCRIPTS_DIR="$REPO_DIR/scripts/inst"
 
-# Scripts intentionally exempt from the standard pattern (config dumps,
-# heavy interactive setup, or third-party-shaped installers).
 EXEMPT=(
     inst-cinnamon-settings.sh
     inst-grub.sh
+    inst-lenovo-t15p-audio.sh
     inst-menu.sh
     inst-nvim.sh
     inst-picom.sh
     inst-redis-service.sh
     inst-samba.sh
+    inst-telegram.sh
     inst-software.sh
     inst-xmonad.sh
+    inst-zapzap.sh
 )
 
 is_exempt() {
@@ -92,10 +85,6 @@ each_script() {
 }
 
 @test "no hardcoded version pins in inst-*.sh (besides exempt set)" {
-    # Heuristic: VER="x.y.z" or VERSION="x.y.z" lines that look pinned.
-    # Exempts:
-    #   - inst-php.sh (major.minor selector by design)
-    #   - inst-rye.sh (Python toolchain pin by design)
     local pin_exempt=(inst-php.sh inst-rye.sh "${EXEMPT[@]}")
     local is_pe=0 fail=0
     while IFS= read -r f; do

@@ -1,8 +1,5 @@
 #!/usr/bin/env bats
 
-# Lint sanity checks. Each test skips cleanly if the underlying tool isn't
-# installed — keeps `make test` green on machines without lint tooling.
-# Install all tools with: make install-lint-tools
 
 setup() {
     REPO_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
@@ -42,8 +39,6 @@ setup() {
 
 @test "fish_indent: project-owned fish files are formatted" {
     command -v fish_indent >/dev/null || skip "fish_indent not installed"
-    # Most of .config/fish/functions/ is vendored (fisher, fzf, nvm, sdk,
-    # prompt). Only check files we author ourselves.
     local owned=(
         ".config/fish/config.fish"
         ".config/fish/functions/gr.fish"
