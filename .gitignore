@@ -29,3 +29,6 @@ task.md
 .agents/skills/.system
 .pi/agent/npm/*
 !.pi/agent/npm/package.json
+/graphify-out/
+/.vix/
+
