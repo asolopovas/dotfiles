@@ -24,8 +24,16 @@ SKILL_LINKS=(
 )
 
 PLESK_CONFIG_LINKS=(
+	".claude/settings.json"
 	".pi/agent/settings.json"
 )
+
+PLESK_CLAUDE_DIR="${PLESK_CLAUDE_DIR:-/opt/claude}"
+PLESK_CLAUDE_BIN="${PLESK_CLAUDE_BIN:-/usr/local/bin/claude}"
+PLESK_CLAUDE_GROUP="${PLESK_CLAUDE_GROUP:-}"
+
+PLESK_GRAPHIFY_DIR="${PLESK_GRAPHIFY_DIR:-/opt/graphify}"
+PLESK_GRAPHIFY_BIN="${PLESK_GRAPHIFY_BIN:-/usr/local/bin/graphify}"
 
 PLESK_COPY_CONFIGS=(
 	".pi/agent/npm/package.json"
@@ -386,6 +394,131 @@ resolve_path() {
 	readlink -f "$1" 2>/dev/null || printf '%s\n' "$1"
 }
 
+detect_plesk_claude_group() {
+	if [[ -n "$PLESK_CLAUDE_GROUP" ]]; then
+		getent group "$PLESK_CLAUDE_GROUP" >/dev/null 2>&1 && { printf '%s\n' "$PLESK_CLAUDE_GROUP"; return 0; }
+		return 1
+	fi
+
+	local g
+	for g in codex psacln; do
+		if getent group "$g" >/dev/null 2>&1; then
+			printf '%s\n' "$g"
+			return 0
+		fi
+	done
+	return 1
+}
+
+active_claude_version_src() {
+	local bin
+	bin=$(command -v claude 2>/dev/null) || return 1
+	bin=$(readlink -f "$bin" 2>/dev/null) || return 1
+	[[ -x "$bin" && -f "$bin" ]] || return 1
+	printf '%s\n' "$bin"
+}
+
+setup_plesk_claude_store() {
+	local group store versions src ver wrapper
+	group=$(detect_plesk_claude_group) || {
+		echo "-> plesk claude: no shared group (set PLESK_CLAUDE_GROUP, or create codex/psacln); skipping shared binary" >&2
+		return 1
+	}
+
+	store="$PLESK_CLAUDE_DIR"
+	versions="$store/versions"
+	mkdir -p "$versions"
+
+	if [[ -z "$(find "$versions" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
+		src=$(active_claude_version_src) || {
+			echo "-> plesk claude: no source claude binary to seed $versions" >&2
+			return 1
+		}
+		ver=$(basename "$src")
+		cp -a "$src" "$versions/$ver.tmp.$$"
+		mv -f "$versions/$ver.tmp.$$" "$versions/$ver"
+		echo "-> plesk claude: seeded $versions/$ver"
+	fi
+
+	chgrp -R "$group" "$store" 2>/dev/null || true
+	chmod -R g+rX "$store" 2>/dev/null || true
+	find "$store" -type d -exec chmod g+ws {} + 2>/dev/null || true
+
+	wrapper="$PLESK_CLAUDE_BIN"
+	ensure_parent "$wrapper"
+	cat >"$wrapper" <<EOF
+#!/bin/sh
+umask 002
+store="$versions"
+bin=""
+if [ -d "\$store" ]; then
+	for v in \$(ls "\$store" 2>/dev/null | sort -V); do
+		[ -x "\$store/\$v" ] && bin="\$store/\$v"
+	done
+fi
+if [ -z "\$bin" ]; then
+	echo "claude: no installed version found in \$store" >&2
+	exit 127
+fi
+exec "\$bin" "\$@"
+EOF
+	chmod 0755 "$wrapper"
+	echo "-> plesk claude: store $store (group $group), launcher $wrapper"
+	return 0
+}
+
+setup_plesk_graphify() {
+	local venv="$PLESK_GRAPHIFY_DIR" bin="$PLESK_GRAPHIFY_BIN"
+
+	if [[ ! -x "$venv/bin/graphify" ]]; then
+		have_cmd python3 || { echo "-> plesk graphify: python3 missing; skipping" >&2; return 1; }
+		if ! python3 -m venv "$venv" 2>/dev/null; then
+			echo "-> plesk graphify: venv creation failed (need python3-venv); skipping" >&2
+			return 1
+		fi
+		"$venv/bin/pip" install --quiet --upgrade pip >/dev/null 2>&1 || true
+		if ! "$venv/bin/pip" install --quiet graphifyy >/dev/null 2>&1; then
+			echo "-> plesk graphify: pip install graphifyy failed; skipping" >&2
+			return 1
+		fi
+		chmod -R a+rX "$venv" 2>/dev/null || true
+	fi
+
+	[[ -x "$venv/bin/graphify" ]] || return 1
+	ln -sfn "$venv/bin/graphify" "$bin"
+	echo "-> plesk graphify: $bin -> $venv/bin/graphify"
+	return 0
+}
+
+ensure_user_in_group() {
+	local user="$1" group="$2"
+	id -nG "$user" 2>/dev/null | tr ' ' '\n' | grep -qx "$group" && return 0
+	if usermod -aG "$group" "$user" 2>/dev/null; then
+		echo "-> plesk claude: added $user to $group"
+	fi
+}
+
+link_user_claude() {
+	local home_dir="$1" user="$2"
+	local store="$PLESK_CLAUDE_DIR" share="$home_dir/.local/share/claude" userbin="$home_dir/.local/bin/claude"
+
+	mkdir -p "$home_dir/.local/share" "$home_dir/.local/bin"
+
+	if [[ -L "$share" ]]; then
+		[[ "$(readlink "$share")" == "$store" ]] || { rm -f "$share"; ln -s "$store" "$share"; }
+	elif [[ -e "$share" ]]; then
+		echo "-> plesk claude: $share is a private install; leaving it untouched" >&2
+	else
+		ln -s "$store" "$share"
+	fi
+
+	if [[ ! -e "$userbin" && ! -L "$userbin" ]]; then
+		ln -s "$PLESK_CLAUDE_BIN" "$userbin"
+	fi
+
+	chown -h "$user:" "$share" "$userbin" 2>/dev/null || true
+}
+
 sync_plesk_vhost_links() {
 	local rows
 	rows=$(query_plesk_vhosts)
@@ -394,6 +527,9 @@ sync_plesk_vhost_links() {
 	local shared_dotfiles_dir shared_agents_dir
 	shared_dotfiles_dir=$(resolve_path "$DOTFILES_DIR")
 	shared_agents_dir=$(resolve_path "$DOTFILES_AGENTS_DIR")
+
+	local claude_group=""
+	claude_group=$(detect_plesk_claude_group) || true
 
 	local -A seen=()
 	local domain plesk_user home_dir ok skip
@@ -433,9 +569,15 @@ sync_plesk_vhost_links() {
 			replace_path_with_symlink "$src" "$home_dir/$relpath"
 		done
 
+		if [[ -n "$claude_group" ]]; then
+			ensure_user_in_group "$plesk_user" "$claude_group"
+			link_user_claude "$home_dir" "$plesk_user"
+		fi
+
 		chown "$plesk_user:" "$home_dir/.claude" "$home_dir/.codex" 2>/dev/null || true
 		chown -h "$plesk_user:" \
 			"$home_dir/.agents" \
+			"$home_dir/.claude/settings.json" \
 			"$home_dir/.claude/skills" \
 			"$home_dir/.codex/skills" \
 			"$home_dir/.config/opencode" \
@@ -452,6 +594,8 @@ sync_plesk_vhost_links() {
 sync_plesk_ai() {
 	is_plesk_host || return 0
 	validate_agents_layout
+	setup_plesk_claude_store || true
+	setup_plesk_graphify || true
 	sync_plesk_vhost_links
 }
 
