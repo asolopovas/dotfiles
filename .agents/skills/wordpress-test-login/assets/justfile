@@ -1,0 +1,12 @@
+# WordPress test-login recipes. Usage: just wp-login path=/path/to/wp
+skill := env_var('HOME') + "/.agents/skills/wordpress-test-login/scripts"
+path  := "."
+
+# Provision test admin + log into wp-admin via Playwright.
+wp-login:
+    bash {{skill}}/wp-test-login.sh {{path}}
+
+# Remove the test user and stored credentials.
+wp-clean:
+    wp --path={{path}} user delete pi-test-admin --reassign=1 --yes
+    rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/wp-test-auth/$(wp --path={{path}} option get siteurl | sed -E 's#^https?://##; s#/.*##').env"
