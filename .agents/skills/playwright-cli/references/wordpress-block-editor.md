@@ -7,11 +7,11 @@ session, use the **wordpress** skill's `references/test-login.md`.
 
 ## WP 7.0 reality
 
-- The post editor canvas is an **iframe by default** (core 7.0). Page-level CSS/text selectors
-  do **not** reach block content — target it by snapshot ref. Frame refs are prefixed `fNeN`
-  (e.g. `f2e18`); pass the bare ref: `playwright-cli click f2e18`.
-- Snapshot refs belong to the latest snapshot and **renumber on reload** (`f2e18` -> `f4e18`):
-  snapshot -> grep -> act, every time. Wait `sleep 3` after `goto` for hydration.
+- The post editor canvas is an **iframe by default** (core 7.0): page-level CSS/text selectors
+  do **not** reach block content. Target it by snapshot frame ref. The iframe-ref and
+  snapshot -> grep -> act rules are in the main SKILL.md (Inspect loop, Gotchas) — they apply
+  here unchanged.
+- Wait `sleep 3` after `goto` for editor hydration (longer than the generic `sleep 2`).
 
 ## UI path — exercise a control end-to-end
 
@@ -31,8 +31,9 @@ grep -niE '\[pressed\]' $S                        # assert control state
 
 If the Block tab shows "No block selected", re-select the block (click its canvas ref) and retry.
 
-## Reading values not in the snapshot
+## Reading / selecting / saving block state
 
-`playwright-cli eval` runs in the page, where `wp.data` is available — the fast, exact path
-for reading/selecting/saving blocks and staged post meta. See `references/gutenberg.md` in the
-wordpress skill for those snippets and when clicking is required instead.
+Don't script that through the DOM. The fast, exact path is `playwright-cli eval` with core
+`wp.data` — those snippets and the rule for when a real UI click is required instead live in
+the **wordpress** skill's `references/gutenberg.md`. Use the UI path above only when you need
+a control's real handlers to fire.
