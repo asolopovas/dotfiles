@@ -11,8 +11,13 @@ export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig/xorg-server.pc:$PKG_C
 export BROWSER="/usr/bin/brave-browser --enable-features=WebUIDarkMode --force-dark-mode --enable-dark-mode"
 
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
-export VOLTA_HOME="$HOME/.volta"
-export PATH="$VOLTA_HOME/bin:$PATH"
+# node: Plesk on server, Volta locally
+if [ -d "/opt/plesk/node/24/bin" ]; then
+    export PATH="/opt/plesk/node/24/bin:$PATH"
+else
+    export VOLTA_HOME="$HOME/.volta"
+    export PATH="$VOLTA_HOME/bin:$PATH"
+fi
 
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

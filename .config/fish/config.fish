@@ -35,8 +35,13 @@ end
 set -gx BUN_INSTALL "$HOME/.bun"
 fish_add_path $BUN_INSTALL/bin
 
-set -gx VOLTA_HOME "$HOME/.volta"
-fish_add_path "$VOLTA_HOME/bin"
+# node: Plesk on server, Volta locally
+if test -d /opt/plesk/node/24/bin
+    fish_add_path /opt/plesk/node/24/bin
+else
+    set -gx VOLTA_HOME "$HOME/.volta"
+    fish_add_path "$VOLTA_HOME/bin"
+end
 
 if type -q bass
     bass source $HOME/dotfiles/env/env-vars.sh
