@@ -35,8 +35,9 @@ grep -niE 'button "Save"|Thickness' /tmp/s.yml     # locate the ref you need
 playwright-cli click e66                            # act immediately
 ```
 
-For the WordPress block editor (auth + editor automation), use the **wordpress-test-login**
-and **wordpress-gutenberg** skills, then drive the same session with the loop above.
+For the WordPress block editor (auth + editor automation), use the **wordpress** skill (its
+test-login and gutenberg references), then drive the same session with the loop above.
+Editor-specific browser mechanics: [references/wordpress-block-editor.md](references/wordpress-block-editor.md).
 
 ## Commands
 
@@ -116,7 +117,7 @@ playwright-cli eval "el => el.getAttribute('data-x')" e5   # read attrs not in s
   nav/reload/DOM change; counters renumber on reload (a canvas ref `f2e18` becomes `f4e18`).
 - **iframe content** (e.g. the WordPress block editor, embedded apps): target it by snapshot
   ref. Frame refs are prefixed `fNeN` (e.g. `f2e18`); pass the bare ref to actions (`click f2e18`).
-  For the WordPress block editor specifically, use the **wordpress-gutenberg** skill.
+  For the WordPress block editor specifically, see [references/wordpress-block-editor.md](references/wordpress-block-editor.md).
 - Call `dialog-accept`/`dialog-dismiss` after the action that opens a dialog (e.g. leaving an
   editor fires `beforeunload`); a pending dialog must exist when you call it.
 - `fill`/`select`/`check` accept only snapshot refs (`e12`), not CSS; `click`/`hover` accept CSS.
@@ -143,6 +144,6 @@ npm install -g @playwright/cli@latest        # else install globally
 - Tracing — [references/tracing.md](references/tracing.md)
 - Video recording — [references/video-recording.md](references/video-recording.md)
 - Element attributes — [references/element-attributes.md](references/element-attributes.md)
-- WordPress block editor — use the **wordpress-gutenberg** skill
+- WordPress block editor — [references/wordpress-block-editor.md](references/wordpress-block-editor.md) (+ the **wordpress** skill)
 </content>
 </invoke>
