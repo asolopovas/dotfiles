@@ -1,7 +1,6 @@
 ---
 name: wordpress
 description: "Master skill for operating, debugging, testing, and securing WordPress (7.0 'Armstrong') from the shell and an automated browser. Start here, then open the targeted reference for diagnostics, debugging, WP-CLI, authenticated login, the block editor, WooCommerce, or penetration testing."
-risk: medium
 ---
 
 # WordPress
