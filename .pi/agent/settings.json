@@ -16,7 +16,7 @@
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-4-8",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "medium",
   "lastChangelogVersion": "0.79.0",
   "enableInstallTelemetry": false,
   "autocompleteMaxVisible": 7
