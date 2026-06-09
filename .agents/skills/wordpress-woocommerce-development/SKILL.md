@@ -2,10 +2,20 @@
 name: wordpress-woocommerce-development
 description: "WooCommerce store development workflow covering store setup, payment integration, shipping configuration, customization, and WordPress 7.0 features: AI connectors, DataViews, and collaboration tools."
 category: granular-workflow-bundle
+group: WordPress
 risk: safe
 source: personal
 date_added: "2026-02-27"
 ---
+
+> Part of the **WordPress** skill group. Related: `wordpress-diagnostics` (triage),
+> `wordpress-debugging` (errors), `wordpress-wp-cli` (admin/data ops),
+> `wordpress-test-login` + `wordpress-gutenberg` (authenticated UI/editor tests),
+> `wordpress-penetration-testing` (security), `playwright-cli` (browser).
+>
+> **WP 7.0 "Armstrong" facts:** released 20 May 2026; floors PHP 7.4 min (8.3+ rec),
+> MySQL 8.0 / MariaDB 10.6 min; core ships the AI Client, Connectors API, and Abilities API
+> (`wp_register_ability`, REST `wp-abilities/v1`).
 
 # WordPress WooCommerce Development Workflow
 
@@ -621,9 +631,9 @@ Use @playwright-skill to test WooCommerce checkout flow
 
 ## Related Workflow Bundles
 
-- `wordpress` - WordPress development
-- `wordpress-theme-development` - Theme development
-- `wordpress-plugin-development` - Plugin development
+- `wordpress-wp-cli` - shell admin/data operations and diagnostics quick reference
+- `wordpress-diagnostics` / `wordpress-debugging` - triage and root-cause
+- `wordpress-test-login` + `wordpress-gutenberg` - authenticated UI/editor testing
 - `payment-integration` - Payment processing
 
 ## Limitations

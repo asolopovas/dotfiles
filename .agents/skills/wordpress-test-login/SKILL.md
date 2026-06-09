@@ -1,6 +1,7 @@
 ---
 name: wordpress-test-login
-description: "Fast sign-in to a local WordPress wp-admin to start Playwright CLI inspection or testing. Provisions a dedicated test admin with a random password stored securely, then logs the browser in. Use whenever a task needs an authenticated WordPress session via playwright-cli."
+description: "Provision a throwaway WordPress admin and log a Playwright browser into wp-admin in one command, for authenticated UI/editor testing on local/dev sites. Use whenever a task needs a real, valid WordPress session."
+group: WordPress
 risk: medium
 source: user-requirements
 created: "2026-06-09"
@@ -8,59 +9,55 @@ created: "2026-06-09"
 
 # WordPress Test Login
 
-Fast authenticated wp-admin session for playwright-cli. Local/dev sites only.
-Provisions a dedicated `pi-test-admin`; never touches real users.
+**Purpose** — Get a valid, authenticated wp-admin browser session (real form login, real
+`wp_rest` nonce) for `playwright-cli`, without touching real users.
 
-## Fast sign-in
+**When to use** — Any task that must act as a logged-in user: editor/Gutenberg tests, admin
+UI checks, REST-backed saves. Local/dev hosts only.
+
+**Required inputs**
+- WordPress path (`/path/to/wp`) on a local host (`*.test`, `*.local`, `localhost`); the script refuses others.
+- `wp` (wp-cli) and `playwright-cli` on `PATH`. Without `playwright-cli` the script provisions creds only.
+
+## Key actions
 
 ```bash
+# One command: provision/rotate `pi-test-admin` (random WP password), store creds chmod 600 at
+# ${XDG_DATA_HOME:-$HOME/.local/share}/wp-test-auth/<host>.env, open playwright-cli, log into
+# wp-admin in the default session. Prints `Logged in -> wp-admin ready`. No secrets printed.
 bash <skill_dir>/scripts/wp-test-login.sh /path/to/wordpress
-```
 
-One command: provisions/rotates `pi-test-admin` (random WP-generated password), stores creds
-chmod 600 at `${XDG_DATA_HOME:-$HOME/.local/share}/wp-test-auth/<host>.env`, opens
-playwright-cli, and logs into wp-admin in the default session. Prints `Logged in -> wp-admin
-ready` on success. No secrets are printed.
-
-Then inspect/test in the same session, e.g.:
-
-```bash
+# Then drive the same session:
 playwright-cli goto http://<host>/wp-admin/post.php?post=<ID>&action=edit
-playwright-cli snapshot --filename=/tmp/edit.yml   # YAML goes to the file, not stdout
-```
+playwright-cli snapshot --filename=/tmp/edit.yml     # YAML to the file, not stdout
 
-## Requirements
+# Reuse creds in a script without echoing them:
+set -a; . "${XDG_DATA_HOME:-$HOME/.local/share}/wp-test-auth/<host>.env"; set +a
 
-- `wp` (wp-cli): check `command -v wp`. Install: download `wp-cli.phar`, `chmod +x`,
-  move to `/usr/local/bin/wp`.
-- `playwright-cli` (for the browser login). The script falls back to provision-only if absent.
-
-## Rules
-
-- Local hosts only (`*.test`, `*.local`, localhost); the script refuses others.
-- Never echo `WP_PASSWORD`. To reuse creds: `set -a; . <host>.env; set +a`.
-
-## playwright-cli gotchas (v0.1.0)
-
-- `--raw` is unsupported; parse normal output (`eval` prints the value after `### Result`).
-- `snapshot` stdout is only a link; use `snapshot --filename=FILE` and read the YAML.
-- `fill` accepts only snapshot refs (`e12`), not CSS/locators; `click` accepts CSS.
-  The script discovers login-form refs from the snapshot, then fills by ref.
-- `run-code` is a sandboxed VM: no `process.env`, no `require`, no dynamic `import`.
-  Do not pass secrets through it.
-- Do NOT inject `wp_generate_auth_cookie` cookies: tokens are not registered as sessions,
-  so REST nonces 403 and Gutenberg saves fail silently. Real form login (this script)
-  gives a valid session + `wp_rest` nonce.
-- Leaving the editor fires a `beforeunload` dialog: `playwright-cli dialog-accept` first.
-
-## Clean up
-
-```bash
+# Clean up when done:
 playwright-cli close
 wp --path=<wp> user delete pi-test-admin --reassign=1 --yes
 rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/wp-test-auth/<host>.env"
 ```
 
-## Task runner
+Task runner: copy `assets/justfile` (preferred) or `assets/Makefile` and run
+`just wp-login path=/path/to/wp` / `just wp-clean path=/path/to/wp`.
 
-Copy `assets/justfile` or `assets/Makefile` (`wp-login`, `wp-clean`) into a project.
+## Rules
+
+- Never echo `WP_PASSWORD`; reuse via the `.env` file above.
+- Use a **real form login** (this script). Do **not** inject `wp_generate_auth_cookie` cookies —
+  those tokens aren't registered sessions, so REST nonces 403 and editor saves fail silently.
+
+## Handoff rules
+
+- Logged in and need to drive the block editor → **wordpress-gutenberg**.
+- Browser primitives (snapshot refs, dialogs, iframes) → **playwright-cli**.
+- Verify what the UI persisted → **wordpress-wp-cli** (`wp post meta get`).
+- Editor/REST errors during a test → **wordpress-debugging**.
+
+## WordPress skill group
+
+Parent group: **WordPress**. Siblings: `wordpress-diagnostics` · `wordpress-debugging` ·
+`wordpress-wp-cli` · `wordpress-gutenberg` · `wordpress-penetration-testing` ·
+`wordpress-woocommerce-development`. Browser primitives: `playwright-cli`.

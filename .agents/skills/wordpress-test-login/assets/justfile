@@ -2,7 +2,7 @@
 skill := env_var('HOME') + "/.agents/skills/wordpress-test-login/scripts"
 path  := "."
 
-# Provision test admin + log into wp-admin via Playwright.
+# Provision test admin + log into wp-admin via Playwright (default session).
 wp-login:
     bash {{skill}}/wp-test-login.sh {{path}}
 
