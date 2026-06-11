@@ -52,6 +52,20 @@ setup() {
     [ "$status" -eq 0 ]
 }
 
+@test "fish config starts without Plesk node directories" {
+    command -v fish >/dev/null || skip "fish not installed"
+    local fake_home
+    fake_home="$(mktemp -d)"
+    ln -s "$REPO_DIR" "$fake_home/dotfiles"
+    mkdir -p "$fake_home/.config/fish"
+    ln -s "$REPO_DIR/.config/fish/functions" "$fake_home/.config/fish/functions"
+    run env HOME="$fake_home" fish -i -C 'source ~/dotfiles/.config/fish/config.fish' -c true
+    rm -rf "$fake_home"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"No matches for wildcard"* ]]
+    [[ "$output" != *"Unmatched wildcard"* ]]
+}
+
 @test "no script uses /bin/sh shebang" {
     [ "${#SHELL_FILES[@]}" -gt 0 ] || skip "no shell files found"
     local bad=()

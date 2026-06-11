@@ -36,8 +36,9 @@ set -gx BUN_INSTALL "$HOME/.bun"
 fish_add_path $BUN_INSTALL/bin
 
 # node: latest Plesk node on server, Volta locally
-set -l plesk_node (ls -d /opt/plesk/node/*/bin 2>/dev/null | sort -V | tail -1)
-if test -n "$plesk_node"
+set -l plesk_nodes /opt/plesk/node/*/bin
+if test (count $plesk_nodes) -gt 0
+    set -l plesk_node (printf '%s\n' $plesk_nodes | sort -V | tail -1)
     fish_add_path $plesk_node
 else if test -d "$HOME/.volta"
     set -gx VOLTA_HOME "$HOME/.volta"
