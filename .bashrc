@@ -56,13 +56,15 @@ export SDKMAN_DIR="$HOME/.sdkman"
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# node: Plesk on server, Volta locally
-if [ -d "/opt/plesk/node/24/bin" ]; then
-    export PATH="/opt/plesk/node/24/bin:$PATH"
-else
+# node: latest Plesk node on server, Volta locally
+plesk_node=$(ls -d /opt/plesk/node/*/bin 2>/dev/null | sort -V | tail -1)
+if [ -n "$plesk_node" ]; then
+    export PATH="$plesk_node:$PATH"
+elif [ -d "$HOME/.volta" ]; then
     export VOLTA_HOME="$HOME/.volta"
     export PATH="$VOLTA_HOME/bin:$PATH"
 fi
+unset plesk_node
 
 # rmodel CUDA environment
 export LD_LIBRARY_PATH="$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cudnn/lib:$HOME/.rye/tools/rmodel/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:${LD_LIBRARY_PATH:-}"
