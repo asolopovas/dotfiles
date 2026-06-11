@@ -85,8 +85,7 @@ find_node() {
   fi
 
   for candidate in \
-    /opt/plesk/node/23/bin/node \
-    /opt/plesk/node/22/bin/node \
+    /opt/plesk/node/24/bin/node \
     /usr/local/bin/node \
     /usr/bin/node \
     /bin/node
