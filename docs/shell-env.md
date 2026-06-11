@@ -33,5 +33,4 @@ Source before shared helpers.
 - Add shared helpers to `globals.sh` and this table.
 - Keep env vars out of `.bashrc` and `.profile` unless shell-local.
 - Keep shared PATH in `.paths`.
-- Use cached `OS`/`ARCH`; support `ubuntu | debian | linuxmint | arch | centos | macos`.
-- Match existing shell style.
+- Use cached `OS`/`ARCH`; support the OS matrix in [../AGENTS.md](../AGENTS.md).

@@ -20,6 +20,6 @@ Commands installed into `~/.local/bin` may omit `.sh` when the filename is the u
 
 ## Installer contract
 
-`inst-*.sh` scripts are sourced by `init.sh` after `globals.sh` loads. They must check binary/version before downloads, reinstall only with `FORCE=true`, use shared helpers where possible, support the repo OS matrix, and source needed `env/*.sh` instead of assuming interactive PATH.
+`inst-*.sh` scripts are sourced by `init.sh` after `globals.sh` loads. They must check binary/version before downloads, reinstall only with `FORCE=true`, use `installPackages`/`pkg_install` and prefer `gh_latest_release`, support the repo OS matrix, and source needed `env/*.sh` instead of assuming interactive PATH.
 
-Validate with [testing.md](testing.md). Add `make test-init` for installer/bootstrap behavior. Use focused installer, lint, Docker, or UI targets when relevant.
+Validation routing: [testing.md](testing.md).

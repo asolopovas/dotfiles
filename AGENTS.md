@@ -42,9 +42,9 @@ Prefer small PRs with summary, acceptance criteria addressed, validation evidenc
 
 | Need | Source |
 |---|---|
-| Docs map and validation routing | [docs/index.md](docs/index.md) |
+| Docs map and doc rules | [docs/index.md](docs/index.md) |
 | Bootstrap, flags, installers | [docs/bootstrap.md](docs/bootstrap.md) |
-| Tests, lint, Docker, UI checks | [docs/testing.md](docs/testing.md) |
+| Tests, lint, Docker/UI checks, validation routing | [docs/testing.md](docs/testing.md) |
 | Shell load order and helpers | [docs/shell-env.md](docs/shell-env.md) |
 | Script taxonomy and installer contract | [docs/scripts.md](docs/scripts.md) |
 | AI config and skill sync | [docs/ai-sync.md](docs/ai-sync.md) |

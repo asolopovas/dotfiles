@@ -34,8 +34,4 @@ CLI `--no-*` only covers `fish`, `node`, `bun`, `deno`, and `nvim`.
 5. Load composer installer, optional menu, `globals.sh`, and `scripts/cfg-default-dirs.sh`.
 6. Link configs, install enabled tools via `ensure_tool`, apply desktop and shell side effects.
 
-## Contract
-
-Installers check binary/version before downloading, reinstall only with `FORCE=true`, use `installPackages` or `pkg_install` after `globals.sh`, prefer `gh_latest_release`, and source needed `env/*.sh` before relying on PATH.
-
-Validate with [testing.md](testing.md); add `make test-init` for bootstrap, globals, default dirs, or `inst-*.sh` changes.
+Installer requirements: [scripts.md](scripts.md#installer-contract). Validation routing: [testing.md](testing.md).

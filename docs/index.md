@@ -24,12 +24,4 @@ The repo is the source of truth. Store each durable fact once, link to it, and e
 - Promote repeated review feedback into docs, examples, tests, or lint.
 - If a doc rule cannot be checked yet, add debt or a follow-up plan.
 
-## Validation routing
-
-| Change | Check |
-|---|---|
-| Docs only | Pre-commit, or `make test` when not committing |
-| `docs/help.md` | `DOTFILES="$PWD" scripts/gen-help`, then inspect diff |
-| Bootstrap, globals, installers | `make test-init` plus local tests |
-| Xmonad, windows, keybindings | `make test-ui-snap-window` plus local tests |
-| Shell/fish formatting | `make lint` when tools exist; otherwise `make test-lint` |
+Validation routing lives in [testing.md](testing.md).

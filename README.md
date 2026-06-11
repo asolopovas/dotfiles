@@ -23,10 +23,9 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asolopovas/dotfiles/main
 | Task | Command |
 |---|---|
 | Install/update | `./init.sh` or `make install` |
-| Skip tools | `NODE=false FISH=false ./init.sh` |
-| Force reinstall | `FORCE=true ./init.sh` |
-| Keep login shell | `CHANGE_SHELL=false ./init.sh` |
 | Validate | `make test` |
 | Regenerate F1 help | `DOTFILES="$PWD" scripts/gen-help` |
+
+Install flags and variants: [docs/bootstrap.md](docs/bootstrap.md).
 
 Agents start with [AGENTS.md](AGENTS.md). Humans start with [docs/index.md](docs/index.md).

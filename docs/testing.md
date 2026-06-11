@@ -29,13 +29,15 @@ Run the same checks locally that CI and hooks run. Use `make` targets first.
 | `make test-init-clean` | Remove Docker images |
 | `make test-ui-snap-window` | X11 snap-window tests |
 
-Announce Docker or UI targets before running. UI tests require X11, `xdotool`, `wmctrl`, `xrandr`; they move real windows and may need sudo.
+UI tests require X11, `xdotool`, `wmctrl`, `xrandr`; they move real windows and may need sudo.
 
 ## Routing
 
-- Bootstrap, globals, symlinks, installers: local target plus `make test-init`.
-- Window manager or snap-window behavior: local target plus `make test-ui-snap-window`.
-- Shell/fish formatting: `make lint` when tools exist, otherwise `make test-lint`.
-- UI/runtime changes: capture before/after evidence, console/log output when relevant, and rerun after restart.
-
-Report commands, results, skipped layers, state effects, and follow-up debt.
+| Change | Check |
+|---|---|
+| Docs only | Pre-commit, or `make test` when not committing |
+| `docs/help.md` | `DOTFILES="$PWD" scripts/gen-help`, then inspect diff |
+| Bootstrap, globals, symlinks, installers | Local target plus `make test-init` |
+| Xmonad, windows, keybindings | Local target plus `make test-ui-snap-window` |
+| Shell/fish formatting | `make lint` when tools exist; otherwise `make test-lint` |
+| UI/runtime | Before/after evidence, console/log output, rerun after restart |
