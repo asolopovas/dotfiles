@@ -6,25 +6,40 @@ allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 
 # Browser Automation with playwright-cli (v0.1.13+)
 
-Accurate to installed **v0.1.13/0.1.14**. Run `playwright-cli --help [command]` to confirm any option.
+Accurate to installed **v0.1.13/0.1.14**. To see help for a command run
+`playwright-cli --help <command>` (e.g. `playwright-cli --help open`) — **not**
+`playwright-cli <command> --help`, which errors with exit code 2. Help/usage output may
+arrive with a non-zero exit code; that is not a failure signal.
 Global options: `--help [command]` · `--version` · `--json` (response as JSON) · `--raw` (result value only).
 
 ## Environment invariants (read first)
 
-`playwright-cli` is **preinstalled** — locally (Volta) and on servers (global npm under the
-Plesk Node in `/opt/plesk/node/<latest>/bin`). Browsers are preinstalled too (on the VPS at
-`PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers`, set system-wide in `/etc/environment`).
+`playwright-cli` is **preinstalled and fully provisioned** — locally (Volta) and on servers
+(global npm under the Plesk Node in `/opt/plesk/node/<latest>/bin`). On servers, browsers
+live in the **shared root-owned directory `/opt/playwright-browsers`**
+(`PLAYWRIGHT_BROWSERS_PATH`, set system-wide in `/etc/environment`).
 
-- **Never install or switch Node versions.** An error like `/opt/plesk/node/23/bin/node: No
-  such file or directory` means a stale wrapper/install, not a missing Node — re-run
-  `~/dotfiles/scripts/inst/inst-playwright-cli.sh` and report it; do not hand-patch.
+- **`~/.cache/ms-playwright` is NOT where browsers live on servers.** It holds only
+  playwright-cli session data, and may not exist at all. Finding it empty or missing
+  means nothing. To check browser provisioning, run:
+  `ls "$PLAYWRIGHT_BROWSERS_PATH"` — you should see `chromium-<rev>` directories.
+- **Never install browsers, by any route.** Not `playwright-cli install-browser`, not
+  `npx playwright install`, and **never** by invoking internals such as
+  `.../node_modules/playwright-core/cli.js install`. As a vhost user you cannot write to
+  `/opt/playwright-browsers` or the global npm root, so any install attempt either fails
+  or downloads a useless private copy into your home directory.
+- **If the environment looks broken, stop and report — do not repair it.** Symptoms like
+  `PLAYWRIGHT_BROWSERS_PATH` unset, `/opt/playwright-browsers` missing/empty,
+  `playwright-cli` not on PATH, or `/opt/plesk/node/<N>/bin/node: No such file or
+  directory` are provisioning problems only the server admin (root) can fix, by running
+  `~/dotfiles/scripts/inst/inst-playwright-cli.sh` **as root**. State the exact symptom in
+  your final answer and continue with whatever else you can do. Never install or switch
+  Node versions, and never hand-patch wrappers.
 - **Headless is the default.** No flag needed; `--headed` is only for desktop sessions.
 - **On servers always `open --browser=chromium`.** The default `open` uses the branded
   Chrome channel (`/opt/google/chrome/chrome`), which servers don't have. The error
   `Chromium distribution 'chrome' is not found` means you forgot `--browser=chromium` —
-  it does **not** mean you should install Chrome.
-- **Never run `install-browser` or `npx playwright install`.** A missing browser is a
-  provisioning problem; fix it by re-running `inst-playwright-cli.sh`, not ad-hoc installs.
+  it does **not** mean you should install Chrome or any browser.
 
 ## Fast workflow
 
@@ -78,7 +93,7 @@ DevTools: `console [min-level]` · `run-code <code>` · `tracing-start` · `trac
 `video-start` · `video-stop` · `video-chapter` · `show` (dashboard) ·
 `highlight [target]` · `generate-locator <target>`
 Test debug: `pause-at <file:line>` · `resume` · `step-over`
-Install (provisioning only — see Environment invariants): `install` · `install-browser`
+Install (root-only provisioning — never run these; see Environment invariants): `install` · `install-browser`
 Sessions: `list` · `close-all` · `kill-all`
 
 ## Key options (per command)
@@ -149,14 +164,21 @@ playwright-cli eval "el => el.getAttribute('data-x')" e5   # read attrs not in s
 - `fill`/`select`/`check` accept only snapshot refs (`e12`), not CSS; `click`/`hover` accept CSS.
 - There is no `network` command — use `requests` (list) and `request <n>` (detail).
 
-## Installation (provisioning only)
+## Installation (root-only provisioning)
 
-Already installed everywhere. If genuinely missing or broken (e.g. stale Node path),
-re-run the installer — never `npm install` pieces by hand or switch Node versions:
+Already installed everywhere. If genuinely missing or broken (e.g. stale Node path):
 
-```bash
-~/dotfiles/scripts/inst/inst-playwright-cli.sh   # latest CLI + skills + chromium with deps
-```
+- **As root** (or locally): re-run the installer — never `npm install` pieces by hand or
+  switch Node versions:
+
+  ```bash
+  ~/dotfiles/scripts/inst/inst-playwright-cli.sh   # latest CLI + skills + shared chromium
+  ```
+
+- **As a vhost/subscription user**: you cannot fix it (the installer refuses to run, and
+  the shared paths are root-owned). Verify with `playwright-cli --version` and
+  `ls "$PLAYWRIGHT_BROWSERS_PATH"`, then report the exact failing command and output to
+  the server admin. Do not attempt any workaround install.
 
 ## Specific tasks
 
