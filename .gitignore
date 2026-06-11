@@ -32,3 +32,5 @@ task.md
 /graphify-out/
 /.vix/
 
+
+**/.claude/settings.local.json

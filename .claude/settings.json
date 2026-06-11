@@ -4,9 +4,9 @@
     "pr": ""
   },
   "includeGitInstructions": false,
+  "model": "claude-fable-5[1m]",
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
-  "editorMode": "vim",
-  "model": "claude-fable-5[1m]"
+  "editorMode": "vim"
 }
