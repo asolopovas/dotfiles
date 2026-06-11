@@ -16,4 +16,7 @@ fi
 print_color green "Installing Playwright CLI skills..."
 playwright-cli install --skills
 
-print_color green "Playwright CLI installation complete."
+print_color green "Installing Chromium with system dependencies..."
+playwright-cli install-browser chromium --with-deps
+
+print_color green "Playwright CLI $(playwright-cli --version) installation complete."
