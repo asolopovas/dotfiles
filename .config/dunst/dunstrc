@@ -3,22 +3,22 @@
 
     monitor = 0
     follow = none
-    width = 400
-    height = 50
-    origin = bottom-right
-    offset = 20x50
+    # NOTE: dunst 1.5.0 uses the old `geometry` syntax, NOT width/height/origin/offset (1.7+).
+    # Format: [{width}]x{height}[+/-{x}+/-{y}]  — height = max number of notifications shown.
+    # -x = from right edge, -y = from bottom edge  => bottom-right corner with 20px/50px margin.
+    geometry = "600x5-20-50"
     indicate_hidden = yes
     shrink = no
     transparency = 20
     separator_height = 3
-    padding = 16
-    horizontal_padding = 16
+    padding = 24
+    horizontal_padding = 24
     frame_width = 1
     frame_color = "#fff323"
     separator_color = frame
     sort = yes
     idle_threshold = 120
-    font = Monospace 11
+    font = Monospace 14
     line_height = 0
     markup = full
 
