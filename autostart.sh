@@ -53,6 +53,9 @@ case "${session_id,,}" in
     *xmonad*) ;;
     *) run_if_exists ulauncher --no-window-shadow --hide-window ;;
 esac
+if [ -x "$HOME/.local/bin/lyn" ] && ! pgrep -x lyn >/dev/null 2>&1; then
+    "$HOME/.local/bin/lyn" --start-hidden &
+fi
 run_if_exists flameshot
 run_if_exists nm-applet
 start_policykit_agent
