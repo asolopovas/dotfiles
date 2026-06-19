@@ -78,3 +78,10 @@ fish_add_path $HOME/.opencode/bin
 function chrome-debug
     bash $HOME/dotfiles/scripts/chrome-debug.sh $argv
 end
+
+# pnpm
+set -gx PNPM_HOME "/home/andrius/.local/share/pnpm"
+if not string match -q -- "$PNPM_HOME/bin" $PATH
+  set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+# pnpm end

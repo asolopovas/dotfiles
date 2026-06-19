@@ -408,6 +408,10 @@
     {
       "className": "Qemu-system-x86_64",
       "float": "tile"
+    },
+    {
+      "className": "Lyn",
+      "float": "center"
     }
   ],
   "swallowExclusions": [
