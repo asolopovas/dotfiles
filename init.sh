@@ -220,10 +220,20 @@ if [[ "$OS" != "macos" ]] && ! grep -qi microsoft /proc/version 2>/dev/null; the
 fi
 
 if [[ "${features[CHANGE_SHELL]}" = true ]]; then
-    print_color green "CHANGING SHELL TO FISH"
-    if command -v fish &>/dev/null; then
-        $SUDO chsh -s "$(which fish)" "$(whoami)"
-    else
+    fish_path="$(command -v fish)"
+    current_shell="$(getent passwd "$(whoami)" 2>/dev/null | cut -d: -f7)"
+    if [ -z "$fish_path" ]; then
         print_color red "Fish not installed. Please install fish and run this script again."
+    elif [ "$current_shell" = "$fish_path" ]; then
+        print_color green "Shell already fish — skipping"
+    else
+        print_color green "CHANGING SHELL TO FISH"
+        if [ "$EUID" -eq 0 ]; then
+            chsh -s "$fish_path" "$(whoami)"
+        elif sudo -n true 2>/dev/null; then
+            sudo chsh -s "$fish_path" "$(whoami)"
+        elif ! chsh -s "$fish_path" 2>/dev/null; then
+            print_color yellow "Could not change shell automatically. Run: chsh -s $fish_path"
+        fi
     fi
 fi
