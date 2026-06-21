@@ -30,6 +30,6 @@ print_color green "Installing fzf ${VER}..."
 mkdir -p "$HOME/.local/bin"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-curl -fsSL "https://github.com/junegunn/fzf/releases/download/$VER/$TARBALL" -o "$TMP/$TARBALL"
+curl -fsSL "https://github.com/junegunn/fzf/releases/download/v$VER/$TARBALL" -o "$TMP/$TARBALL"
 tar -xf "$TMP/$TARBALL" -C "$TMP"
 mv "$TMP/fzf" "$HOME/.local/bin/"
