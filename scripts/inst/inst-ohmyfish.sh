@@ -11,7 +11,7 @@ fi
 
 if [ -d "$DEST" ]; then
     print_color green "oh-my-fish already installed — skipping"
-    exit 0
+    return 0 2>/dev/null || exit 0
 fi
 
 require_cmd fish scripts/inst/inst-fish.sh || exit 1

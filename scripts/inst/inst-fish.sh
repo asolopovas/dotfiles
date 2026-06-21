@@ -4,7 +4,7 @@ source "$HOME/dotfiles/globals.sh"
 
 if [ "${FORCE:-false}" != true ] && cmd_exist fish; then
     print_color green "fish already installed — skipping"
-    exit 0
+    return 0 2>/dev/null || exit 0
 fi
 
 print_color green "Installing fish for $OS..."
@@ -19,6 +19,6 @@ case "$OS" in
     macos) brew install fish ;;
     *)
         print_color red "Unsupported OS: $OS"
-        exit 1
+        return 1 2>/dev/null || exit 1
         ;;
 esac

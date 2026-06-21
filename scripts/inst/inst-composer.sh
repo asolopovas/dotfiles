@@ -10,7 +10,7 @@ fi
 
 if [ -x "$DEST" ] || cmd_exist composer; then
     print_color green "composer already installed — skipping"
-    exit 0
+    return 0 2>/dev/null || exit 0
 fi
 
 print_color green "Installing Composer..."
