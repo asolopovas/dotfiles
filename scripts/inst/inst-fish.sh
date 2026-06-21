@@ -10,9 +10,18 @@ fi
 print_color green "Installing fish for $OS..."
 case "$OS" in
     ubuntu | debian | linuxmint | pop)
-        sudo apt-add-repository -y ppa:fish-shell/release-3
-        sudo apt update -qq
-        sudo apt install -y fish
+        # Prefer the fish-shell PPA, but fall back to the distro repos when the
+        # PPA has no build for this release (e.g. Ubuntu 26.04 ships fish 4.x).
+        if sudo apt-add-repository -y ppa:fish-shell/release-3 2>/dev/null \
+            && sudo apt update -qq 2>/dev/null; then
+            sudo apt install -y fish
+        else
+            print_color yellow "fish PPA unavailable for this release — using distro repos"
+            sudo rm -f /etc/apt/sources.list.d/fish-shell-ubuntu-release-3-*.sources \
+                /etc/apt/sources.list.d/fish-shell-ubuntu-release-3-*.list 2>/dev/null || true
+            sudo apt update -qq
+            sudo apt install -y fish
+        fi
         ;;
     fedora) sudo dnf install -y fish ;;
     arch) sudo pacman -S --noconfirm fish ;;
