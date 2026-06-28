@@ -1,79 +1,147 @@
 ---
 name: docs-refactor
-description: Refactor and clean up documentation — make docs concise, remove repetition and fluff, fix broken links, split bloated files, and align them to agent-harness doc principles. Use when asked to refactor docs, clean up docs, tighten/trim documentation, dedupe docs, or audit a docs tree.
+description: Refactor and repair documentation trees: audit, trim, dedupe, fix links, create missing docs, and enforce the repository docs architecture template.
 ---
 
 # docs-refactor
 
-Refactor a docs tree to be **as concise as possible** — remove repetition and
-fluff, fix structure, and align to the agent-harness principles in
-`principles.md`. Don't read every file by hand: run the audit driver first, then
-spend your judgment on the findings it surfaces.
+Use this skill for docs cleanup, docs audits, docs architecture updates, and
+requests to make documentation compact and agent-ready.
 
-Paths below are relative to the **target repo root** (the docs you're cleaning).
-The driver lives in this skill dir.
+## Non-negotiables
 
-## Run the audit (do this first)
+- Fix docs in the repo. Do not stop at advice.
+- Create missing docs and directories from `architecture-template.md`.
+- Keep `AGENTS.md` a short map: rules, workflow, commands, source links.
+- Put durable facts in the canonical file. Replace repeats with links.
+- Preserve command syntax, paths, options, code fences, and behavior.
+- Treat docs as code: versioned markdown, reviewed with code, checked links,
+  generated-doc commands, and decision records.
+- Enforce the no-comments policy in code. Keep only comments that are functional
+  syntax or toolchain directives and cannot be removed without changing build,
+  typecheck, generation, or documentation output.
+
+## Comment cleanup
+
+Run `node <skill-dir>/audit.mjs . --comments --architecture` to find comments in
+JavaScript, TypeScript, JSX, TSX, PHP, Go, and Rust.
+
+Keep untouched only after verifying necessity:
+
+- Shebangs.
+- TypeScript triple-slash references.
+- JSX pragma comments that alter compilation.
+- Go build tags, `//go:` directives, cgo directives, and generated-code markers.
+- Rust doc comments when rustdoc or `missing_docs` requires them.
+
+Remove explanatory comments, LLM notes, section labels, stale task markers,
+commented-out code, and lint-suppression comments. Prefer fixing code over
+keeping suppressions.
+
+Use language-aware removal, not regex:
+
+- JS/TS/JSX/TSX: Babel parser and generator with `comments: false`, or
+  `decomment` for quick cleanup.
+- PHP: `PhpToken::tokenize` or `token_get_all`; remove `T_COMMENT` and
+  `T_DOC_COMMENT`; validate with `php -l`.
+- Go: `go/parser` and `go/printer` or an AST tool; preserve build and cgo
+  directives; validate with `gofmt` and `go test ./...`.
+- Rust: tree-sitter tools such as `uncomment` or `silence-cli`; preserve needed
+  rustdoc comments; validate with `cargo fmt` and `cargo test`.
+
+## Audit first
+
+Run from the target repo root:
 
 ```bash
-node <skill-dir>/audit.mjs docs          # scan the docs/ tree
-node <skill-dir>/audit.mjs . --json      # whole repo, machine-readable
-node <skill-dir>/audit.mjs README.md docs --top=30   # specific paths + more rows
+node <skill-dir>/audit.mjs docs
+node <skill-dir>/audit.mjs . --architecture --comments
+node <skill-dir>/audit.mjs . --json
+node <skill-dir>/audit.mjs README.md docs --top=30
 ```
 
-`<skill-dir>` is `~/.claude/skills/docs-refactor` (or this file's directory).
-Flags: `--json`, `--max-lines=N` (bloat threshold, default 400), `--top=N`
-(rows per section, default 12). Exit code is `1` when findings exist, `0` clean —
-usable as a CI gate.
+`<skill-dir>` is this skill directory. Flags: `--json`, `--max-lines=N`,
+`--top=N`. Exit code `1` means findings exist.
 
-It prints six prioritized sections (worst-first):
+Fix in this order:
 
-| Section | Means | Action |
-|---|---|---|
-| **BLOAT** | file > `--max-lines` | split by topic, or cut to essentials |
-| **FLUFF** | filler-word density (`in order to`, `simply`, `utilize`, `just`, `very`…) | rewrite tighter; cut hedging |
-| **DUPLICATION** | a prose line appears in 2+ places | keep one canonical copy, link the rest |
-| **BROKEN LINKS** | local `[..](path.md)` doesn't resolve | fix the path or drop the link |
-| **STRUCTURE** | missing/duplicate H1, heading-level jumps | one H1 per file; no skipped levels |
-| **STALE MARKERS** | `TODO`/`FIXME`/old dates | resolve or delete |
+1. Broken links.
+2. Duplicate facts.
+3. Missing architecture files and directories.
+4. Nonfunctional code comments.
+5. Bloat.
+6. Fluff and hedging.
+7. Heading structure.
+8. Stale markers.
+
+## Enforced architecture
+
+Use `architecture-template.md`. The required shape is:
+
+```text
+AGENTS.md
+ARCHITECTURE.md
+docs/
+├── design-docs/
+│   ├── index.md
+│   ├── core-beliefs.md
+│   └── ...
+├── exec-plans/
+│   ├── active/
+│   ├── completed/
+│   └── tech-debt-tracker.md
+├── generated/
+│   └── db-schema.md
+├── product-specs/
+│   ├── index.md
+│   ├── new-user-onboarding.md
+│   └── ...
+├── references/
+│   ├── design-system-reference-llms.txt
+│   ├── nixpacks-llms.txt
+│   ├── uv-llms.txt
+│   └── ...
+├── DESIGN.md
+├── FRONTEND.md
+├── PLANS.md
+├── PRODUCT_SENSE.md
+├── QUALITY_SCORE.md
+├── RELIABILITY.md
+└── SECURITY.md
+```
+
+Create a required file even when the topic is not applicable. Keep it short:
+state status, link the nearest source of truth, and note validation or owner.
+Do not invent product, security, reliability, schema, or UX facts.
 
 ## Refactor loop
 
-1. **Audit** — run the driver on the target. Note total findings.
-2. **Fix in priority order:** broken links → duplication → bloat → fluff →
-   structure → stale markers. (Links/dupes change file boundaries, so do them
-   before trimming prose.)
-3. **Apply the principles** (`principles.md`): docs are the repo's source of
-   truth; `AGENTS.md` is a short *map* that points to deeper sources, not a
-   manual; prefer short, linked, composable docs over long monoliths.
-4. **Re-audit** — rerun until findings drop to the irreducible set. Aim for
-   exit 0, or a short, deliberate list of accepted findings.
-5. **Report** — summarize what you cut (lines before/after), what you merged,
-   and any findings you intentionally kept and why.
+1. Audit and record counts.
+2. Compare the repo to `architecture-template.md`.
+3. Create or move docs into the required shape.
+4. Read only files needed for the top findings.
+5. Move each fact to its canonical file.
+6. Replace repeated prose with links.
+7. Split by topic, not by line count.
+8. Delete filler, restatements, and obsolete notes.
+9. Remove nonfunctional comments with language-aware tools.
+10. Re-audit until clean or only intentional findings remain.
+11. Report changed files, findings before/after, validation, and accepted debt.
 
-## Editing rules
+## Page checks
 
-- **Cut, don't pad.** Every sentence earns its place. Delete throat-clearing
-  ("It is important to note…"), hedges ("basically", "just"), and restatements.
-- **One source of truth per fact.** When the audit flags duplication,
-  consolidate to one location and replace the others with a link.
-- **Preserve meaning and commands.** Tightening prose must not change
-  documented behavior, command syntax, or code blocks. Don't touch fenced code.
-- **Split by topic, not by line count.** A 600-line file flagged as bloat gets
-  split where its sections naturally divide — then cross-link them.
-- **Match the surrounding doc's voice** and formatting conventions.
+For every changed file:
 
-## Gotchas
-
-- The duplication detector only flags prose lines ≥40 chars; it deliberately
-  skips headings, list bullets, and table rows (those repeat legitimately).
-- Code inside ``` fences is ignored for fluff/dup/link/marker checks — so a
-  `# comment` or a `TODO` in an example won't false-positive.
-- A clean tree prints "0 findings" and exits 0 — that's success, not a no-op.
-- `--json` paths are relative to the cwd you ran from; run from the repo root
-  for stable paths.
+- One H1.
+- No skipped heading levels.
+- Local links resolve.
+- No duplicated source-of-truth facts.
+- No unresolved task markers or stale date.
+- No code comments except verified functional directives.
+- New docs are linked from `AGENTS.md`, `ARCHITECTURE.md`, or the nearest index.
 
 ## Files
 
-- `audit.mjs` — the audit driver (Node ≥18, zero dependencies).
-- `principles.md` — the agent-harness doc principles to align docs toward.
+- `audit.mjs`: zero-dependency Node 18+ docs audit.
+- `principles.md`: compact doc principles.
+- `architecture-template.md`: required docs tree and page templates.
