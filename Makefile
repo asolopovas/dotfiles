@@ -1,6 +1,6 @@
 # shellcheck disable=SC1089,SC2046,SC2283
 # Dotfiles Project Makefile
-.PHONY: help install test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools install-git-hooks clean-tests install-test-deps kill-alacritty
+.PHONY: help install sync test test-globals test-scripts test-sync-ai test-inst-opencode test-inst-picom test-init test-bootstrap test-init-shell test-init-clean test-init-rebuild test-ui-snap-window test-lint lint lint-shell lint-shell-fix lint-fish install-lint-tools install-git-hooks clean-tests install-test-deps kill-alacritty
 
 # Common variables
 CLEAR_PROXY_ENV = env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY
@@ -12,6 +12,7 @@ help:
 	@echo ""
 	@echo "Main Installation:"
 	@echo "  install               Run ./init.sh"
+	@echo "  sync                  Pull latest agents submodule and re-link AI skills/config"
 	@echo ""
 	@echo "Testing (local, fast — core script tests):"
 	@echo "  test                  Run local Bats tests with per-suite cache"
@@ -46,6 +47,10 @@ help:
 
 install:
 	@./init.sh
+
+sync:
+	@git submodule update --init --remote agents
+	@./scripts/sync-ai.sh agents
 
 # ---------- Local fast test targets ----------
 
