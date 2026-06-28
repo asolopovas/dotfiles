@@ -1,6 +1,6 @@
 ---
 name: docs-refactor
-description: Refactor and repair documentation trees: audit, trim, dedupe, fix links, create missing docs, and enforce the repository docs architecture template.
+description: "Refactor and repair documentation trees: audit, trim, dedupe, fix links, create missing docs, and enforce the repository docs architecture template."
 ---
 
 # docs-refactor
