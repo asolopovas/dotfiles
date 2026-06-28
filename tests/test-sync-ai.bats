@@ -7,7 +7,7 @@ setup() {
     export TMPDIR="$(mktemp -d)"
     export HOME="$FAKE_HOME"
     export DOTFILES_DIR="$TMPDIR/dotfiles"
-    export DOTFILES_AGENTS_DIR="$DOTFILES_DIR/.agents"
+    export DOTFILES_AGENTS_DIR="$DOTFILES_DIR/agents"
     export AGENTS_DIR="$FAKE_HOME/.agents"
     export WINDOWS_AGENTS_DIR="$TMPDIR/windows/.agents"
     export PLESK_VHOSTS_DIR="$TMPDIR/var/www/vhosts"
@@ -38,7 +38,10 @@ sync_ai_run() {
     [ "$(readlink "$AGENTS_DIR")" = "$DOTFILES_AGENTS_DIR" ]
     [ -L "$FAKE_HOME/.claude/skills" ]
     [ -L "$FAKE_HOME/.codex/skills" ]
+    [ -L "$FAKE_HOME/.config/opencode/skills" ]
+    [ -L "$FAKE_HOME/.pi/agent/skills" ]
     [ "$(readlink "$FAKE_HOME/.claude/skills")" = "$AGENTS_DIR/skills" ]
+    [ "$(readlink "$FAKE_HOME/.pi/agent/skills")" = "$AGENTS_DIR/skills" ]
     for path in "$FAKE_HOME/.claude/settings.json" "$FAKE_HOME/.config/opencode/opencode.jsonc" "$FAKE_HOME/.pi/agent/settings.json" "$FAKE_HOME/.pi/agent/npm/package.json" "$FAKE_HOME/.pi/agent/prompts"; do
         [ -L "$path" ]
     done

@@ -2,6 +2,8 @@
 
 `scripts/sync-ai.sh` syncs AI CLI config and generic skills across Linux, WSL, and Windows.
 
+Generic agent content (skills, `.skill-lock.json`, and per-agent dirs `claude/`, `codex/`, `pi/`, `opencode/`) lives in the private `asolopovas/agents` repo, mounted as a git submodule at `agents/` in this repo and in `winconf`. After cloning or pulling, run `git submodule update --init --recursive`. To change skills: edit inside `agents/`, push that repo, then commit the new submodule pointer here.
+
 ## Targets
 
 | Command | Scope |
@@ -22,10 +24,11 @@ Generic skills live in `~/.agents/skills`. Skill directories must be immediate c
 | Claude Code | `~/.claude/skills` | Symlink to `~/.agents/skills` |
 | Codex | `~/.codex/skills` | Symlink to `~/.agents/skills` |
 | OpenCode | `~/.config/opencode/skills` | Symlink to `~/.agents/skills` |
+| Pi | `~/.pi/agent/skills` | Symlink to `~/.agents/skills` |
 | Windows tools | `%USERPROFILE%/.agents/skills` | Copied from WSL |
-| Plesk vhosts | `~/.agents`, `~/.claude/skills`, `~/.codex/skills` | Symlinks to dotfiles-backed shared skills |
+| Plesk vhosts | `~/.agents`, `~/.claude/skills`, `~/.codex/skills`, `~/.pi/agent/skills` | Symlinks to dotfiles-backed shared skills |
 
-Do not replace Claude or Codex skill symlinks with real directories.
+`~/.agents` is a symlink to the `agents/` submodule checkout. OpenCode and Pi additionally read `~/.agents/skills` natively, but the explicit per-CLI symlinks keep all four agents consistent. Do not replace the skill symlinks with real directories.
 
 ## Config
 

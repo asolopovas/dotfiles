@@ -11,7 +11,7 @@ Dotfiles for shells, editors, Xmonad, terminals, AI CLIs, and bootstrap automati
 - `init.sh`, `globals.sh`, and `inst-*.sh` support `ubuntu | debian | linuxmint | arch | centos`; macOS only for developer tools.
 - `init.sh` is self-contained before `globals.sh`; installers check binary/version and reinstall only with `FORCE=true`.
 - Do not modernize legacy shell style unless required; no blanket `set -euo pipefail`.
-- `~/.claude/skills` and `~/.codex/skills` remain symlinks to `~/.agents/skills`; see [docs/ai-sync.md](docs/ai-sync.md).
+- Generic agent content is the `asolopovas/agents` submodule at `agents/`; run `git submodule update --init --recursive` after pulling. `~/.claude/skills`, `~/.codex/skills`, `~/.config/opencode/skills`, and `~/.pi/agent/skills` remain symlinks to `~/.agents/skills`; see [docs/ai-sync.md](docs/ai-sync.md).
 - Do not run WSL scripts on native Linux without approval.
 - Announce Docker/UI tests before running; they mutate containers, windows, and sometimes sudo state.
 

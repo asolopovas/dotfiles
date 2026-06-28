@@ -26,7 +26,6 @@ task.md
 .config/nvim/lazy-lock.json
 .config/tmux/plugins/
 .playwright-cli/
-.agents/skills/.system
 .pi/agent/npm/*
 !.pi/agent/npm/package.json
 /graphify-out/

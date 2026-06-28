@@ -10,8 +10,8 @@ fi
 print_color green "Installing fish for $OS..."
 case "$OS" in
     ubuntu | debian | linuxmint | pop)
-        if sudo apt-add-repository -y ppa:fish-shell/release-3 2>/dev/null \
-            && sudo apt update -qq 2>/dev/null; then
+        if sudo apt-add-repository -y ppa:fish-shell/release-3 2>/dev/null &&
+            sudo apt update -qq 2>/dev/null; then
             sudo apt install -y fish
         else
             print_color yellow "fish PPA unavailable for this release — using distro repos"
