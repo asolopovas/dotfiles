@@ -21,6 +21,7 @@ CONFIG_DIRS=(
 SKILL_LINKS=(
     ".claude/skills"
     ".codex/skills"
+    ".config/opencode/skills"
 )
 
 PLESK_CONFIG_LINKS=(

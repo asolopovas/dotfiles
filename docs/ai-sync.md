@@ -21,7 +21,7 @@ Generic skills live in `~/.agents/skills`. Skill directories must be immediate c
 |---|---|---|
 | Claude Code | `~/.claude/skills` | Symlink to `~/.agents/skills` |
 | Codex | `~/.codex/skills` | Symlink to `~/.agents/skills` |
-| OpenCode | `~/.agents/skills` | Reads directly |
+| OpenCode | `~/.config/opencode/skills` | Symlink to `~/.agents/skills` |
 | Windows tools | `%USERPROFILE%/.agents/skills` | Copied from WSL |
 | Plesk vhosts | `~/.agents`, `~/.claude/skills`, `~/.codex/skills` | Symlinks to dotfiles-backed shared skills |
 
