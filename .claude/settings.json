@@ -4,11 +4,12 @@
     "pr": ""
   },
   "includeGitInstructions": false,
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
+  },
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
   "editorMode": "vim",
-  "enabledPlugins": {
-    "gopls-lsp@claude-plugins-official": true
-  }
+  "tui": "fullscreen"
 }
