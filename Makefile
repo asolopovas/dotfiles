@@ -49,7 +49,7 @@ install:
 	@./init.sh
 
 sync:
-	@git submodule update --init --remote agents
+	@./scripts/sync-agents.sh
 	@./scripts/sync-ai.sh agents
 
 # ---------- Local fast test targets ----------
