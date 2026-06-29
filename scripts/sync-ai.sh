@@ -284,8 +284,6 @@ sync_linux_agents() {
     for relpath in "${SKILL_LINKS[@]}"; do
         replace_with_symlink "$AGENTS_DIR/skills" "$HOME/$relpath"
     done
-
-    replace_with_symlink "$AGENTS_DIR/claude/commands" "$HOME/.claude/commands"
 }
 
 sync_linux_config_dirs() {
