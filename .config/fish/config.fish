@@ -75,6 +75,9 @@ end
 
 fish_add_path $HOME/.opencode/bin
 
+# The phone is connected to Windows. Use its ADB server from WSL.
+alias adb='adb.exe'
+
 function chrome-debug
     bash $HOME/dotfiles/scripts/chrome-debug.sh $argv
 end
