@@ -32,6 +32,7 @@ export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
+export NPM_CONFIG_PREFIX="$HOME/.local"
 export DOTFILES_DIR="$HOME/dotfiles"
 
 export PHPENV_SHELL=bash
