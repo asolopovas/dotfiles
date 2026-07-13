@@ -11,8 +11,14 @@ PUSH=1
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-push) PUSH=0 ;;
-        --branch) BRANCH="$2"; shift ;;
-        *) echo "unknown arg: $1" >&2; exit 2 ;;
+        --branch)
+            BRANCH="$2"
+            shift
+            ;;
+        *)
+            echo "unknown arg: $1" >&2
+            exit 2
+            ;;
     esac
     shift
 done
