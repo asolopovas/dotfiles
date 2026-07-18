@@ -6,6 +6,8 @@ Bash and fish share paths, aliases, and helpers through repo-managed files.
 
 Interactive Bash: `.bashrc` -> `globals.sh` -> `env/env-vars.sh` -> `env/include-paths.sh` -> optional `env/oh-my-bash.sh` -> completions/fzf -> `.paths` -> `~/.config/.aliasrc` -> toolchain envs.
 
+Fish: `conf.d/env-vars.fish` -> `config.fish` -> aliases/paths -> toolchain envs.
+
 `.profile` runs at login; `.bashrc` runs for each interactive shell.
 
 | Put | In |

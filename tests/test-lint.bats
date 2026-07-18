@@ -41,6 +41,7 @@ setup() {
     command -v fish_indent >/dev/null || skip "fish_indent not installed"
     local owned=(
         ".config/fish/config.fish"
+        ".config/fish/conf.d/env-vars.fish"
         ".config/fish/functions/gr.fish"
         ".config/fish/functions/gtp.fish"
         ".config/fish/functions/nvm_get_arch.fish"
@@ -72,6 +73,7 @@ setup() {
     fake_home="$(mktemp -d)"
     mkdir -p "$fake_home/.config/fish"
     ln -s "$REPO_DIR/.config/fish/config.fish" "$fake_home/.config/fish/config.fish"
+    ln -s "$REPO_DIR/.config/fish/conf.d" "$fake_home/.config/fish/conf.d"
     ln -s "$REPO_DIR/.config/fish/functions" "$fake_home/.config/fish/functions"
     printf 'PERSONAL_ENV_TEST=loaded\n' >"$fake_home/.env-vars"
     run env -u PERSONAL_ENV_TEST HOME="$fake_home" fish -c 'printf "%s\n" "$PERSONAL_ENV_TEST"'

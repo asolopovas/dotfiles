@@ -3,10 +3,6 @@
 # Keep non-interactive shells quiet and fast for ssh/scp/rsync automation.
 # Interactive-only aliases, prompts, completions, and toolchain startup files
 # must not print output or slow down protocol commands such as dsync.
-if test -f "$HOME/.env-vars"; and functions -q load_env
-    load_env "$HOME/.env-vars"
-end
-
 if not status is-interactive
     return
 end
