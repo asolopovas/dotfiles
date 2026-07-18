@@ -66,6 +66,20 @@ setup() {
     [[ "$output" != *"Unmatched wildcard"* ]]
 }
 
+@test "fish config loads personal environment variables non-interactively" {
+    command -v fish >/dev/null || skip "fish not installed"
+    local fake_home
+    fake_home="$(mktemp -d)"
+    mkdir -p "$fake_home/.config/fish"
+    ln -s "$REPO_DIR/.config/fish/config.fish" "$fake_home/.config/fish/config.fish"
+    ln -s "$REPO_DIR/.config/fish/functions" "$fake_home/.config/fish/functions"
+    printf 'PERSONAL_ENV_TEST=loaded\n' >"$fake_home/.env-vars"
+    run env -u PERSONAL_ENV_TEST HOME="$fake_home" fish -c 'printf "%s\n" "$PERSONAL_ENV_TEST"'
+    rm -rf "$fake_home"
+    [ "$status" -eq 0 ]
+    [ "$output" = "loaded" ]
+}
+
 @test "no script uses /bin/sh shebang" {
     [ "${#SHELL_FILES[@]}" -gt 0 ] || skip "no shell files found"
     local bad=()
