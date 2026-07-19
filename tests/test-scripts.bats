@@ -28,6 +28,52 @@ source_add2path() {
     eval "$(sed -n '1,/^while/{ /^while/!p }' "$REPO_DIR/env/include-paths.sh")"
 }
 
+setup_php_installer() {
+    cat >"$FAKE_HOME/dotfiles/globals.sh" <<'EOF'
+OS=ubuntu
+cmd_exist() { command -v "$1" >/dev/null 2>&1; }
+print_color() { shift; printf '%s\n' "$*"; }
+removePackage() { printf 'REMOVE'; printf ' %s' "$@"; printf '\n'; }
+pkg_install() { printf 'PKG_INSTALL'; printf ' %s' "$@"; printf '\n'; }
+unhold_packages() { printf 'UNHOLD'; printf ' %s' "$@"; printf '\n'; }
+EOF
+    cat >"$FAKE_BIN/apt-cache" <<'EOF'
+#!/bin/bash
+if [ "$1" = "pkgnames" ]; then
+    printf '%s\n' php8.2 php8.3 php8.4
+fi
+exit 0
+EOF
+    cat >"$FAKE_BIN/dpkg-query" <<'EOF'
+#!/bin/bash
+printf 'php8.3-cli\thi \n'
+printf 'php8.3-common\tii \n'
+printf 'php8.4-cli\tii \n'
+printf 'php8.4-common\tii \n'
+EOF
+    cat >"$FAKE_BIN/apt-mark" <<'EOF'
+#!/bin/bash
+printf 'php8.4-cli\n'
+EOF
+    cat >"$FAKE_BIN/sudo" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+    cat >"$FAKE_BIN/add-apt-repository" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+    cat >"$FAKE_BIN/apt" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+    chmod +x "$FAKE_BIN/apt-cache" "$FAKE_BIN/dpkg-query" "$FAKE_BIN/apt-mark" "$FAKE_BIN/sudo" "$FAKE_BIN/add-apt-repository" "$FAKE_BIN/apt"
+}
+
+run_php_installer() {
+    env HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" bash "$REPO_DIR/scripts/inst/inst-php.sh" "$@"
+}
+
 @test "symlinks: creates expected links and is idempotent" {
     symlinks_run
     [ -L "$FAKE_HOME/.config/fish" ]
@@ -165,4 +211,29 @@ EOF
     run env HOME="$FAKE_HOME" XDG_CACHE_HOME="$cache_home" REPO_OWNER=example PATH="$FAKE_BIN:$PATH" GIT_CAPTURE="$git_capture" bash -c "cd '$workdir' && '$REPO_DIR/helpers/repo' --pick --https"
     [[ "$status" -eq 0 ]]
     [[ "$(sed -n '2p' "$git_capture")" == "https://github.com/example/beta.git" ]]
+}
+
+@test "php installer: installs the common package set without extension selection" {
+    setup_php_installer
+    run run_php_installer 8.4
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"PKG_INSTALL php8.4-cli php8.4-common php8.4-fpm php8.4-bcmath php8.4-bz2 php8.4-curl php8.4-gd php8.4-imagick php8.4-intl php8.4-mbstring php8.4-mysql php8.4-opcache php8.4-readline php8.4-soap php8.4-sqlite3 php8.4-xml php8.4-zip"* ]]
+    [[ "$output" == *"UNHOLD php8.4-cli"* ]]
+    [[ "$output" != *"REMOVE"* ]]
+}
+
+@test "php installer: removes only the requested installed version" {
+    setup_php_installer
+    run run_php_installer remove 8.3
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"REMOVE php8.3-cli php8.3-common"* ]]
+    [[ "$output" != *"php8.4-cli"* ]]
+}
+
+@test "php installer: help describes version selection without package options" {
+    setup_php_installer
+    run run_php_installer --help
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Install a common PHP package set"* ]]
+    [[ "$output" != *"--packages"* ]]
 }

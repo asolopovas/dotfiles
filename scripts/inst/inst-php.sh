@@ -3,47 +3,36 @@ set -euo pipefail
 
 source "$HOME/dotfiles/globals.sh"
 
-DEFAULT_VERSION="8.3"
 MIN_PHP_VERSION="8.2"
 ACTION="install"
 REQUESTED_VERSION=""
-PACKAGE_INPUT=""
-SELECTED_PACKAGES=()
+VER=""
+PHP_PACKAGES=()
 
-PACKAGE_CHOICES=(
-    cli common fpm bcmath bz2 curl gd igbinary imagick intl mbstring
-    mongodb mysql opcache pcov pgsql phpdbg readline redis soap sqlite3
-    xdebug xml yaml zip
+COMMON_EXTENSIONS=(
+    cli common fpm bcmath bz2 curl gd imagick intl mbstring mysql
+    opcache readline soap sqlite3 xml zip
 )
-
-DEFAULT_PACKAGE_CHOICES=(cli common)
 
 usage() {
     cat <<EOF
-Usage: inst-php.sh [ACTION] [VERSION] [OPTIONS]
+Usage: inst-php.sh [ACTION] [VERSION]
 
 Actions:
-  install             Choose one PHP version and package set to install
-  remove, uninstall   Remove one PHP version
+  install             Install a common PHP package set
+  remove, uninstall   Remove every package for one PHP version
   list                Show installed versioned PHP packages
-
-Options:
-  -v, --version X.Y       Use PHP version without prompting
-  -p, --packages LIST     Space or comma separated package names
-  --all                   Install every available package in the menu
-  -h, --help              Show this help
 
 Examples:
   inst-php.sh
-  inst-php.sh install 8.3 --packages "cli common curl mbstring xml zip"
-  inst-php.sh --version 8.4 --packages cli,curl,mbstring
-  inst-php.sh remove 8.2
+  inst-php.sh 8.4
+  inst-php.sh install 8.4
+  inst-php.sh remove 8.3
   inst-php.sh list
 
-Interactive choices use fzf.
-The install menu offers PHP $MIN_PHP_VERSION and newer.
-The install action removes other installed versioned PHP packages first.
-Apt may still add dependency packages required by your choices.
+fzf selects an available version for install or an installed version for removal.
+Pass VERSION when running non-interactively.
+Installing a version does not remove or hold any other PHP packages.
 EOF
 }
 
@@ -64,100 +53,101 @@ php_version_supported() {
 
 require_apt_system() {
     case "$OS" in
-        ubuntu | debian | linuxmint | pop) ;;
-        *) error_exit "PHP version selection is only supported on apt based systems here." ;;
+        ubuntu | debian | linuxmint) ;;
+        *) error_exit "Versioned PHP installation is supported only on Ubuntu, Debian, and Linux Mint." ;;
     esac
 }
 
 require_fzf() {
     if ! cmd_exist fzf; then
-        error_exit "fzf is required for interactive choices. Install it or pass --version and --packages."
+        error_exit "fzf is required for interactive version selection. Pass a version explicitly or install fzf."
     fi
 }
 
+parse_args() {
+    case "${1:-install}" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        install)
+            [ "$#" -le 2 ] || error_exit "Usage: inst-php.sh install [VERSION]"
+            REQUESTED_VERSION="${2:-}"
+            ;;
+        remove | uninstall)
+            [ "$#" -le 2 ] || error_exit "Usage: inst-php.sh remove [VERSION]"
+            ACTION="remove"
+            REQUESTED_VERSION="${2:-}"
+            ;;
+        list)
+            [ "$#" -eq 1 ] || error_exit "Usage: inst-php.sh list"
+            ACTION="list"
+            ;;
+        *)
+            [ "$#" -eq 1 ] && is_php_version "$1" || error_exit "Unknown argument: $1"
+            REQUESTED_VERSION="$1"
+            ;;
+    esac
+}
+
 validate_requested_version() {
-    if [ -z "$REQUESTED_VERSION" ]; then
-        return 0
-    fi
+    [ -n "$REQUESTED_VERSION" ] || return 0
+
     if ! is_php_version "$REQUESTED_VERSION"; then
         error_exit "Invalid PHP version: $REQUESTED_VERSION"
     fi
+
     if [ "$ACTION" = "install" ] && ! php_version_supported "$REQUESTED_VERSION"; then
         error_exit "Install supports PHP $MIN_PHP_VERSION and newer."
     fi
 }
 
-parse_args() {
-    while [ "$#" -gt 0 ]; do
-        case "$1" in
-            -h | --help)
-                usage
-                exit 0
-                ;;
-            install)
-                ACTION="install"
-                shift
-                ;;
-            remove | uninstall)
-                ACTION="remove"
-                shift
-                ;;
-            list)
-                ACTION="list"
-                shift
-                ;;
-            -v | --version)
-                [ "$#" -ge 2 ] || error_exit "Missing value for $1"
-                REQUESTED_VERSION="$2"
-                shift 2
-                ;;
-            --version=*)
-                REQUESTED_VERSION="${1#*=}"
-                shift
-                ;;
-            -p | --packages)
-                [ "$#" -ge 2 ] || error_exit "Missing value for $1"
-                PACKAGE_INPUT="$2"
-                shift 2
-                ;;
-            --packages=*)
-                PACKAGE_INPUT="${1#*=}"
-                shift
-                ;;
-            --all)
-                PACKAGE_INPUT="all"
-                shift
-                ;;
-            *)
-                if is_php_version "$1"; then
-                    REQUESTED_VERSION="$1"
-                    shift
-                else
-                    error_exit "Unknown argument: $1"
-                fi
-                ;;
-        esac
-    done
+ensure_ubuntu_repository() {
+    if grep -rqs "ondrej/php" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+        return 0
+    fi
+
+    if ! cmd_exist add-apt-repository; then
+        SUDO="sudo env DEBIAN_FRONTEND=noninteractive" pkg_install software-properties-common
+    fi
+
+    print_color green "Adding ondrej/php PPA ..."
+    sudo add-apt-repository -y ppa:ondrej/php
+    sudo apt update
 }
 
-ensure_ppa() {
+ensure_debian_repository() {
+    if grep -rqs "packages.sury.org/php" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+        return 0
+    fi
+
+    local keyring_package
+    SUDO="sudo env DEBIAN_FRONTEND=noninteractive" pkg_install lsb-release ca-certificates curl
+    keyring_package="$(mktemp --suffix=.deb)"
+
+    if ! curl -fsSLo "$keyring_package" https://packages.sury.org/debsuryorg-archive-keyring.deb; then
+        rm -f "$keyring_package"
+        error_exit "Failed to download the deb.sury.org archive keyring."
+    fi
+
+    if ! sudo dpkg -i "$keyring_package"; then
+        rm -f "$keyring_package"
+        error_exit "Failed to install the deb.sury.org archive keyring."
+    fi
+    rm -f "$keyring_package"
+
+    printf 'deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ %s main\n' "$(lsb_release -sc)" |
+        sudo tee /etc/apt/sources.list.d/php.list >/dev/null
+    sudo apt update
+}
+
+ensure_php_repository() {
     case "$OS" in
-        ubuntu | linuxmint | pop)
-            if ! grep -rqh "ondrej/php" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
-                print_color green "Adding ondrej/php PPA ..."
-                sudo add-apt-repository -y ppa:ondrej/php
-                sudo apt update
-            fi
+        ubuntu | linuxmint)
+            ensure_ubuntu_repository
             ;;
         debian)
-            if ! grep -rqh "packages.sury.org/php" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
-                print_color green "Adding sury.org PHP repo ..."
-                SUDO=sudo pkg_install lsb-release ca-certificates curl gnupg
-                sudo curl -fsSLo /etc/apt/trusted.gpg.d/sury-php.gpg https://packages.sury.org/php/apt.gpg
-                echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |
-                    sudo tee /etc/apt/sources.list.d/sury-php.list >/dev/null
-                sudo apt update
-            fi
+            ensure_debian_repository
             ;;
     esac
 }
@@ -169,9 +159,8 @@ package_exists() {
 available_versions() {
     local version
     apt-cache pkgnames php 2>/dev/null |
-        grep -E '^php[0-9]+\.[0-9]+$' |
-        sed 's/^php//' |
-        sort -Vr |
+        sed -nE 's/^php([0-9]+\.[0-9]+)$/\1/p' |
+        sort -Vru |
         while IFS= read -r version; do
             if php_version_supported "$version"; then
                 printf '%s\n' "$version"
@@ -180,216 +169,92 @@ available_versions() {
 }
 
 installed_php_packages() {
-    dpkg -l 'php*' 2>/dev/null |
-        awk '/^[ih]i/ {print $2}' |
-        sed 's/:.*//' |
-        grep -E '^php[0-9]+\.[0-9]+($|-)' |
+    dpkg-query -W -f='${binary:Package}\t${db:Status-Abbrev}\n' 'php*' 2>/dev/null |
+        awk '$2 ~ /^[ih]i/ {
+            sub(/:.*/, "", $1)
+            if ($1 ~ /^php[0-9]+\.[0-9]+($|-)/) {
+                print $1
+            }
+        }' |
         sort -u || true
 }
 
 installed_versions() {
     installed_php_packages |
         sed -E 's/^php([0-9]+\.[0-9]+).*/\1/' |
-        sort -Vr |
-        uniq || true
+        sort -Vru || true
 }
 
 list_installed_php() {
     local packages
     packages="$(installed_php_packages)"
+
     if [ -z "$packages" ]; then
         print_color yellow "No versioned PHP packages are installed."
         return 0
     fi
+
     print_color green "Installed versioned PHP packages:"
     printf '%s\n' "$packages"
 }
 
-choose_version() {
-    if [ -n "$REQUESTED_VERSION" ]; then
-        is_php_version "$REQUESTED_VERSION" || error_exit "Invalid PHP version: $REQUESTED_VERSION"
-        VER="$REQUESTED_VERSION"
-        return 0
-    fi
-
-    if [ ! -t 0 ]; then
-        VER="$DEFAULT_VERSION"
-        return 0
-    fi
-
-    local versions=()
-    mapfile -t versions < <(available_versions)
-
-    if [ "${#versions[@]}" -eq 0 ]; then
-        VER="$DEFAULT_VERSION"
-        return 0
-    fi
-
-    require_fzf
-
-    VER="$(printf '%s\n' "${versions[@]}" | fzf --height=40% --reverse --prompt="PHP version> " --header="PHP $MIN_PHP_VERSION and newer" || true)"
-    [ -n "$VER" ] || error_exit "Cancelled."
-}
-
-choose_installed_version() {
+select_php_version() {
     if [ -n "$REQUESTED_VERSION" ]; then
         VER="$REQUESTED_VERSION"
         return 0
     fi
 
-    if [ ! -t 0 ]; then
-        error_exit "Choose a PHP version to remove."
-    fi
+    [ -t 0 ] || error_exit "Pass a PHP version when running non-interactively."
 
     local versions=()
-    mapfile -t versions < <(installed_versions)
-    [ "${#versions[@]}" -gt 0 ] || error_exit "No versioned PHP packages are installed."
+    local prompt
+    local header
+
+    if [ "$ACTION" = "install" ]; then
+        mapfile -t versions < <(available_versions)
+        prompt="Install PHP version> "
+        header="PHP $MIN_PHP_VERSION and newer"
+        [ "${#versions[@]}" -gt 0 ] || error_exit "No supported PHP versions are available from apt."
+    else
+        mapfile -t versions < <(installed_versions)
+        prompt="Remove PHP version> "
+        header="Installed PHP versions"
+        [ "${#versions[@]}" -gt 0 ] || error_exit "No versioned PHP packages are installed."
+    fi
 
     require_fzf
-    VER="$(printf '%s\n' "${versions[@]}" | fzf --height=40% --reverse --prompt="Remove PHP version> " --header="Installed PHP versions" || true)"
+    VER="$(printf '%s\n' "${versions[@]}" | fzf --height=40% --reverse --prompt="$prompt" --header="$header" || true)"
     [ -n "$VER" ] || error_exit "Cancelled."
 }
 
-available_package_choices() {
+build_common_package_set() {
     local version="$1"
-    local item
-    for item in "${PACKAGE_CHOICES[@]}"; do
-        if package_exists "php$version-$item"; then
-            printf '%s\n' "$item"
-        fi
-    done
-}
-
-choice_available() {
-    local needle="$1"
-    shift
-    local item
-    for item in "$@"; do
-        [ "$item" = "$needle" ] && return 0
-    done
-    return 1
-}
-
-add_selected_package() {
-    local package="$1"
-    local existing
-    for existing in "${SELECTED_PACKAGES[@]}"; do
-        [ "$existing" = "$package" ] && return 0
-    done
-    SELECTED_PACKAGES+=("$package")
-}
-
-parse_package_input() {
-    local version="$1"
-    local input="$2"
-    shift 2
-    local available=("$@")
-    local tokens=()
-    local token
-
-    SELECTED_PACKAGES=()
-    input="${input//,/ }"
-    read -r -a tokens <<<"$input"
-
-    for token in "${tokens[@]}"; do
-        [ -n "$token" ] || continue
-        if [ "$token" = "all" ]; then
-            local item
-            for item in "${available[@]}"; do
-                add_selected_package "php$version-$item"
-            done
-            continue
-        fi
-        token="${token#php$version-}"
-        if ! choice_available "$token" "${available[@]}"; then
-            error_exit "Package php$version-$token is not available."
-        fi
-        add_selected_package "php$version-$token"
-    done
-
-    [ "${#SELECTED_PACKAGES[@]}" -gt 0 ] || error_exit "No PHP packages selected."
-}
-
-choose_packages() {
-    local version="$1"
-    local available=()
-    mapfile -t available < <(available_package_choices "$version")
-
-    [ "${#available[@]}" -gt 0 ] || error_exit "No packages are available for PHP $version."
-
-    if ! package_exists "php$version"; then
-        error_exit "PHP $version is not available from apt."
-    fi
-
-    local input="$PACKAGE_INPUT"
-    if [ -n "$input" ]; then
-        parse_package_input "$version" "$input" "${available[@]}"
-        return 0
-    fi
-
-    if [ ! -t 0 ]; then
-        parse_package_input "$version" "${DEFAULT_PACKAGE_CHOICES[*]}" "${available[@]}"
-        return 0
-    fi
-
-    require_fzf
-    local choices=()
-    mapfile -t choices < <(printf '%s\n' "${available[@]}" | fzf --multi --height=70% --reverse --prompt="PHP $version packages> " --header="Tab selects packages. Enter confirms." || true)
-    [ "${#choices[@]}" -gt 0 ] || error_exit "No PHP packages selected."
-
-    local choice
-    for choice in "${choices[@]}"; do
-        add_selected_package "php$version-$choice"
-    done
-}
-
-remove_packages_if_needed() {
-    local packages=("$@")
-    [ "${#packages[@]}" -gt 0 ] || return 0
-    print_color yellow "Removing packages that should not remain installed:"
-    printf '  %s\n' "${packages[@]}"
-
-    if [ -t 0 ]; then
-        require_fzf
-        local reply
-        reply="$(printf 'no\nyes\n' | fzf --height=20% --reverse --prompt="Remove these packages?> " || true)"
-        [ "$reply" = "yes" ] || error_exit "Cancelled."
-    fi
-
-    unhold_packages "${packages[@]}" || true
-    removePackage "${packages[@]}"
-}
-
-selected_package() {
-    local package="$1"
-    local selected
-    for selected in "${SELECTED_PACKAGES[@]}"; do
-        [ "$selected" = "$package" ] && return 0
-    done
-    return 1
-}
-
-remove_unwanted_php_packages() {
-    local version="$1"
-    local installed=()
-    local remove=()
+    local extension
     local package
-    mapfile -t installed < <(installed_php_packages)
+    local skipped=()
+    PHP_PACKAGES=()
 
-    for package in "${installed[@]}"; do
-        if [[ "$package" != php"$version" && "$package" != php"$version"-* ]]; then
-            remove+=("$package")
-        elif ! selected_package "$package"; then
-            remove+=("$package")
+    for extension in "${COMMON_EXTENSIONS[@]}"; do
+        package="php$version-$extension"
+        if package_exists "$package"; then
+            PHP_PACKAGES+=("$package")
+        else
+            skipped+=("$package")
         fi
     done
 
-    remove_packages_if_needed "${remove[@]}"
+    package_exists "php$version-cli" || error_exit "PHP $version is not available from apt."
+
+    if [ "${#skipped[@]}" -gt 0 ]; then
+        print_color yellow "Skipping unavailable PHP packages:"
+        printf '  %s\n' "${skipped[@]}"
+    fi
 }
 
 set_php_alternatives() {
     local version="$1"
     local name
+
     for name in php phar phar.phar phpize php-config; do
         if [ -x "/usr/bin/$name$version" ]; then
             sudo update-alternatives --set "$name" "/usr/bin/$name$version" >/dev/null 2>&1 || true
@@ -397,42 +262,63 @@ set_php_alternatives() {
     done
 }
 
+remove_legacy_package_holds() {
+    local held=()
+    mapfile -t held < <(comm -12 <(printf '%s\n' "${PHP_PACKAGES[@]}" | sort) <(apt-mark showhold 2>/dev/null | sort))
+    [ "${#held[@]}" -gt 0 ] || return 0
+
+    print_color yellow "Removing legacy PHP package holds:"
+    printf '  %s\n' "${held[@]}"
+    unhold_packages "${held[@]}"
+}
+
 install_php() {
-    ensure_ppa
-    choose_version
-    choose_packages "$VER"
+    ensure_php_repository
+    select_php_version
+    build_common_package_set "$VER"
 
-    print_color green "PHP $VER selected packages:"
-    printf '  %s\n' "${SELECTED_PACKAGES[@]}"
+    print_color green "Installing the common PHP $VER package set:"
+    printf '  %s\n' "${PHP_PACKAGES[@]}"
 
-    remove_unwanted_php_packages "$VER"
-    unhold_packages "${SELECTED_PACKAGES[@]}" || true
-    installPackages "${SELECTED_PACKAGES[@]}"
-    hold_packages "${SELECTED_PACKAGES[@]}"
+    remove_legacy_package_holds
+    SUDO="sudo env DEBIAN_FRONTEND=noninteractive" pkg_install "${PHP_PACKAGES[@]}"
     set_php_alternatives "$VER"
 
-    print_color green "PHP $VER is installed with your selected package set."
+    print_color green "PHP $VER and common extensions are installed."
+}
+
+confirm_removal() {
+    [ -t 0 ] || return 0
+
+    require_fzf
+    local reply
+    reply="$(printf 'No\nYes\n' | fzf --height=20% --reverse --prompt="Remove PHP $VER?> " || true)"
+    [ "$reply" = "Yes" ] || error_exit "Cancelled."
 }
 
 remove_php() {
-    choose_installed_version
+    select_php_version
+
     local installed=()
-    local remove=()
+    local packages=()
     local package
     mapfile -t installed < <(installed_php_packages)
 
     for package in "${installed[@]}"; do
         if [[ "$package" == php"$VER" || "$package" == php"$VER"-* ]]; then
-            remove+=("$package")
+            packages+=("$package")
         fi
     done
 
-    if [ "${#remove[@]}" -eq 0 ]; then
+    if [ "${#packages[@]}" -eq 0 ]; then
         print_color yellow "No PHP $VER packages are installed."
         return 0
     fi
 
-    remove_packages_if_needed "${remove[@]}"
+    print_color yellow "Removing PHP $VER packages:"
+    printf '  %s\n' "${packages[@]}"
+    confirm_removal
+    removePackage "${packages[@]}"
     print_color green "PHP $VER packages removed."
 }
 

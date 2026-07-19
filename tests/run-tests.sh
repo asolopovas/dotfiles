@@ -77,7 +77,7 @@ suite_deps() {
             printf '%s\n' tests/test-globals.bats globals.sh
             ;;
         scripts)
-            printf '%s\n' tests/test-scripts.bats scripts/ops/ops-update-symlinks.sh env/include-paths.sh env/env-vars.sh .profile helpers/ls-path helpers/fzf-code
+            printf '%s\n' tests/test-scripts.bats scripts/ops/ops-update-symlinks.sh scripts/inst/inst-php.sh env/include-paths.sh env/env-vars.sh .profile helpers/ls-path helpers/fzf-code
             ;;
         init)
             printf '%s\n' tests/test-init.bats init.sh globals.sh scripts/inst/inst-bun.sh scripts/inst/inst-deno.sh scripts/inst/inst-fd.sh scripts/inst/inst-fish.sh scripts/inst/inst-fzf.sh scripts/inst/inst-cargo.sh scripts/cfg-default-dirs.sh scripts/inst/inst-nvim.sh
