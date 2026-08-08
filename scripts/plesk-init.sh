@@ -446,6 +446,12 @@ setup_claude() {
     if [[ -d "$root_skills" ]]; then
         replace_path_with_symlink /opt/dotfiles/.agents/skills /opt/agents-skills
         mkdir -p /etc/codex
+        chgrp psacln /etc/codex
+        chmod 2755 /etc/codex
+        if [[ -f /etc/codex/config.toml ]]; then
+            chgrp psacln /etc/codex/config.toml
+            chmod 640 /etc/codex/config.toml
+        fi
         replace_path_with_symlink /opt/dotfiles/.agents/skills /etc/codex/skills
         ensure_symlink /opt/dotfiles/.agents/skills "$HOME/.claude/skills"
         print_color green "  shared skills -> /opt/dotfiles/.agents/skills"

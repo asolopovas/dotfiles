@@ -63,6 +63,12 @@ setup_file() {
     [ "$(readlink /opt/agents-skills)" = "/opt/dotfiles/.agents/skills" ]
     [ -L /etc/codex/skills ]
     [ "$(readlink /etc/codex/skills)" = "/opt/dotfiles/.agents/skills" ]
+    [ "$(stat -c '%G' /etc/codex)" = "psacln" ]
+    [ "$(stat -c '%a' /etc/codex)" = "2755" ]
+    if [ -f /etc/codex/config.toml ]; then
+        [ "$(stat -c '%G' /etc/codex/config.toml)" = "psacln" ]
+        [ "$(stat -c '%a' /etc/codex/config.toml)" = "640" ]
+    fi
 }
 
 @test "plesk: optional shared caches use psacln" {
