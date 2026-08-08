@@ -43,7 +43,8 @@ setup_file() {
 @test "vhost1: ai and developer caches are shared" {
     local h="/var/www/vhosts/test1.com"
     [ -L "$h/.agents" ]
-    [ "$(readlink "$h/.agents")" = "$h/dotfiles/.agents" ]
+    [ "$(readlink "$h/.agents")" = "/opt/dotfiles/agents" ]
+    [ -d "$h/.agents/skills" ]
     [ -L "$h/.claude/skills" ]
     [ "$(readlink "$h/.claude/skills")" = "$h/.agents/skills" ]
     [ -L "$h/.codex/skills" ]

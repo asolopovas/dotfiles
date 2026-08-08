@@ -15,7 +15,8 @@ setup_file() {
     [ -f /opt/dotfiles/globals.sh ]
     [ -f /opt/dotfiles/init.sh ]
     [ -d /opt/dotfiles/scripts ]
-    [ ! -d /opt/dotfiles/.git ]
+    [ -d /opt/dotfiles/agents/skills ]
+    [ -d /opt/dotfiles/.git ]
     [ "$(stat -c '%U' /opt/dotfiles)" = "root" ]
 }
 
@@ -60,9 +61,11 @@ setup_file() {
     [ "$(readlink /opt/opencode-config)" = "/opt/dotfiles/.config/opencode" ]
     [ -f /opt/opencode-config/opencode.jsonc ]
     [ -L /opt/agents-skills ]
-    [ "$(readlink /opt/agents-skills)" = "/opt/dotfiles/.agents/skills" ]
+    [ "$(readlink /opt/agents-skills)" = "/opt/dotfiles/agents/skills" ]
+    [ -d /opt/agents-skills ]
     [ -L /etc/codex/skills ]
-    [ "$(readlink /etc/codex/skills)" = "/opt/dotfiles/.agents/skills" ]
+    [ "$(readlink /etc/codex/skills)" = "/opt/dotfiles/agents/skills" ]
+    [ -d /etc/codex/skills ]
     [ "$(stat -c '%G' /etc/codex)" = "psacln" ]
     [ "$(stat -c '%a' /etc/codex)" = "2755" ]
     if [ -f /etc/codex/config.toml ]; then

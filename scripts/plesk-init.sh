@@ -302,6 +302,8 @@ setup_dotfiles() {
         git -C /opt/dotfiles pull --ff-only 2>/dev/null || true
     fi
 
+    git -C /opt/dotfiles submodule update --init --recursive
+
     # Wire root's dotfiles the same way as vhosts
     local src
     for src in "${VHOST_SYMLINKS[@]}"; do
@@ -444,7 +446,7 @@ setup_claude() {
 
     local root_skills="$HOME/.agents/skills"
     if [[ -d "$root_skills" ]]; then
-        replace_path_with_symlink /opt/dotfiles/.agents/skills /opt/agents-skills
+        replace_path_with_symlink /opt/dotfiles/agents/skills /opt/agents-skills
         mkdir -p /etc/codex
         chgrp psacln /etc/codex
         chmod 2755 /etc/codex
@@ -452,9 +454,9 @@ setup_claude() {
             chgrp psacln /etc/codex/config.toml
             chmod 640 /etc/codex/config.toml
         fi
-        replace_path_with_symlink /opt/dotfiles/.agents/skills /etc/codex/skills
-        ensure_symlink /opt/dotfiles/.agents/skills "$HOME/.claude/skills"
-        print_color green "  shared skills -> /opt/dotfiles/.agents/skills"
+        replace_path_with_symlink /opt/dotfiles/agents/skills /etc/codex/skills
+        ensure_symlink /opt/dotfiles/agents/skills "$HOME/.claude/skills"
+        print_color green "  shared skills -> /opt/dotfiles/agents/skills"
     fi
 
     # Share the claude binary — same pattern as opencode
@@ -1003,7 +1005,7 @@ setup_vhosts() {
             chown "$plesk_user:" "$home_dir/.claude/settings.json"
         fi
         rm -f "$home_dir/.claude/commands" 2>/dev/null || true
-        replace_path_with_symlink "$dotfiles_dir/.agents" "$home_dir/.agents"
+        replace_path_with_symlink /opt/dotfiles/agents "$home_dir/.agents"
         replace_with_symlink "$home_dir/.agents/skills" "$home_dir/.claude/skills"
         replace_with_symlink "$home_dir/.agents/skills" "$home_dir/.codex/skills"
         [[ -d "$dotfiles_dir/.pi/agent/prompts" ]] && replace_with_symlink "$dotfiles_dir/.pi/agent/prompts" "$home_dir/.pi/agent/prompts"
