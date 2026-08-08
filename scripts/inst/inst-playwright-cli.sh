@@ -84,6 +84,7 @@ WRAPPER
 fi
 
 print_color green "Installing Playwright CLI Chromium with system dependencies..."
+mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
 "$PLAYWRIGHT_CLI_BIN" install-browser chromium --with-deps
 
 if [[ -d /opt/plesk ]]; then

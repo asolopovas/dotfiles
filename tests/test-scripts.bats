@@ -74,6 +74,24 @@ run_php_installer() {
     env HOME="$FAKE_HOME" PATH="$FAKE_BIN:$PATH" bash "$REPO_DIR/scripts/inst/inst-php.sh" "$@"
 }
 
+prepare_codex_wrapper() {
+    CODEX_TEST_ROOT="$TMPDIR/codex-root"
+    CODEX_TEST_HOME="$TMPDIR/codex-home"
+    CODEX_TEST_CONFIG="$TMPDIR/codex-config.toml"
+    export CODEX_TEST_ROOT CODEX_TEST_HOME CODEX_TEST_CONFIG
+    mkdir -p "$CODEX_TEST_ROOT/bin" "$CODEX_TEST_HOME"
+    cp "$REPO_DIR/scripts/plesk-codex-wrapper.sh" "$CODEX_TEST_ROOT/bin/codex"
+    printf '%s\n' 'sqlite_home = "/opt/codex/state"' '[features]' >"$CODEX_TEST_CONFIG"
+    cat >"$CODEX_TEST_ROOT/bin/codex-real" <<'EOF'
+#!/bin/bash
+printf 'home=%s\n' "$HOME"
+printf 'sqlite=%s\n' "$CODEX_SQLITE_HOME"
+printf 'install=%s\n' "$CODEX_INSTALL_DIR"
+printf 'args=%s\n' "$*"
+EOF
+    chmod +x "$CODEX_TEST_ROOT/bin/codex" "$CODEX_TEST_ROOT/bin/codex-real"
+}
+
 @test "symlinks: creates expected links and is idempotent" {
     symlinks_run
     [ -L "$FAKE_HOME/.config/fish" ]
@@ -236,4 +254,36 @@ EOF
     [[ "$status" -eq 0 ]]
     [[ "$output" == *"Install a common PHP package set"* ]]
     [[ "$output" != *"--packages"* ]]
+}
+
+@test "codex wrapper keeps SQLite state in the user Codex home" {
+    prepare_codex_wrapper
+    run env HOME="$CODEX_TEST_HOME" CODEX_SQLITE_HOME=/opt/codex/state CODEX_CONFIG_TEMPLATE="$CODEX_TEST_CONFIG" "$CODEX_TEST_ROOT/bin/codex" doctor
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"sqlite=$CODEX_TEST_HOME/.codex"* ]]
+    [[ "$output" == *"install=$CODEX_TEST_ROOT/bin"* ]]
+    [[ "$output" == *"args=doctor"* ]]
+    [ -f "$CODEX_TEST_HOME/.codex/config.toml" ]
+    [ "$(stat -c '%a' "$CODEX_TEST_HOME/.codex")" = "700" ]
+    [ "$(stat -c '%a' "$CODEX_TEST_HOME/.codex/config.toml")" = "600" ]
+    ! grep -q /opt/codex/state "$CODEX_TEST_HOME/.codex/config.toml"
+}
+
+@test "codex wrapper honors a user-specific CODEX_HOME" {
+    prepare_codex_wrapper
+    local custom_home="$CODEX_TEST_HOME/custom-codex"
+    run env HOME="$CODEX_TEST_HOME" CODEX_HOME="$custom_home" CODEX_SQLITE_HOME=/opt/codex/state CODEX_CONFIG_TEMPLATE="$CODEX_TEST_CONFIG" "$CODEX_TEST_ROOT/bin/codex" --version
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"sqlite=$custom_home"* ]]
+    [ -f "$custom_home/config.toml" ]
+}
+
+@test "codex wrapper resolves its shared root through a symlink" {
+    prepare_codex_wrapper
+    local link_dir="$TMPDIR/usr-local-bin"
+    mkdir -p "$link_dir"
+    ln -s "$CODEX_TEST_ROOT/bin/codex" "$link_dir/codex"
+    run env HOME="$CODEX_TEST_HOME" CODEX_CONFIG_TEMPLATE="$CODEX_TEST_CONFIG" "$link_dir/codex" --version
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"install=$CODEX_TEST_ROOT/bin"* ]]
 }

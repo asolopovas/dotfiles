@@ -9,7 +9,16 @@ RUN apt-get update -qq && \
         locales unzip fish lua5.1 luarocks && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/psa /opt/plesk/node/22.0.0/bin /opt/plesk/php/8.3/bin
+RUN mkdir -p /etc/psa /etc/codex /opt/plesk/node/22.0.0/bin /opt/plesk/php/8.3/bin && \
+    printf 'sqlite_home = "/opt/codex/state"\n' > /etc/codex/config.toml
+
+RUN printf '#!/bin/bash\nexit 0\n' > /usr/local/bin/systemctl && \
+    cp /usr/local/bin/systemctl /usr/local/bin/numlockx && \
+    chmod 755 /usr/local/bin/systemctl /usr/local/bin/numlockx
+
+RUN mkdir -p /opt/codex/packages/standalone/current/bin && \
+    printf '#!/bin/bash\nif [ "${1:-}" = "--version" ]; then printf "codex-cli test\\n"; else printf "%%s\\n" "$CODEX_SQLITE_HOME"; fi\n' > /opt/codex/packages/standalone/current/bin/codex && \
+    chmod 755 /opt/codex/packages/standalone/current/bin/codex
 
 RUN printf '#!/bin/bash\n\
 if [ "$1" = "db" ]; then\n\
@@ -17,11 +26,15 @@ if [ "$1" = "db" ]; then\n\
     printf "test2.org\\ttestuser2\\t/var/www/vhosts/test2.org\\n"\n\
 fi\n' > /usr/local/bin/plesk && chmod 755 /usr/local/bin/plesk
 
-RUN touch /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php && \
-    chmod 755 /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php
+RUN printf '#!/bin/bash\nif [ "${1:-}" = "view" ]; then printf "0.1.0\\n"; fi\n' > /opt/plesk/node/22.0.0/bin/npm && \
+    printf '#!/bin/bash\nif [ "${1:-}" = "--version" ]; then printf "0.1.0\\n"; fi\n' > /opt/plesk/node/22.0.0/bin/playwright-cli && \
+    touch /opt/plesk/node/22.0.0/bin/node /opt/plesk/php/8.3/bin/php && \
+    chmod 755 /opt/plesk/node/22.0.0/bin/node /opt/plesk/node/22.0.0/bin/npm \
+        /opt/plesk/node/22.0.0/bin/playwright-cli /opt/plesk/php/8.3/bin/php
 
-RUN for u in testuser1 testuser2; do \
-        useradd -m -s /bin/bash "$u" 2>/dev/null || true; \
+RUN groupadd psacln && \
+    for u in testuser1 testuser2; do \
+        useradd -m -g psacln -s /bin/bash "$u" 2>/dev/null || true; \
     done && \
     mkdir -p /var/www/vhosts/test1.com /var/www/vhosts/test2.org && \
     chown testuser1: /var/www/vhosts/test1.com && \

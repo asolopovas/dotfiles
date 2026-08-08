@@ -591,6 +591,7 @@ sync_plesk_vhost_links() {
         fi
 
         chown "$plesk_user:" "$home_dir/.claude" "$home_dir/.codex" 2>/dev/null || true
+        chmod 0700 "$home_dir/.codex" 2>/dev/null || true
         chown -h "$plesk_user:" \
             "$home_dir/.agents" \
             "$home_dir/.claude/settings.json" \

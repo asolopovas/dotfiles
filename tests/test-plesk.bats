@@ -74,6 +74,21 @@ setup_file() {
     fi
 }
 
+@test "plesk: Codex runtime is shared without shared writable state" {
+    [ -x /opt/codex/bin/codex ]
+    [ -x /opt/codex/bin/codex-real ]
+    [ -L /usr/local/bin/codex ]
+    [ "$(readlink /usr/local/bin/codex)" = "/opt/codex/bin/codex" ]
+    [ -x /usr/local/sbin/codex-self-update ]
+    [ "$(stat -c '%U:%G' /opt/codex/bin/codex)" = "root:root" ]
+    [ "$(stat -c '%a' /opt/codex/bin/codex)" = "755" ]
+    [ -f /etc/profile.d/codex-global.sh ]
+    ! grep -q CODEX_SQLITE_HOME /etc/profile.d/codex-global.sh
+    ! grep -q /opt/codex/state /etc/codex/config.toml
+    run visudo -cf /etc/sudoers.d/codex-self-update
+    [ "$status" -eq 0 ]
+}
+
 @test "plesk: playwright CLI and skill targets are provisioned" {
     [ -x /usr/local/bin/playwright-cli ]
     [ -f /opt/agents-skills/playwright-cli/SKILL.md ]

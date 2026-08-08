@@ -23,3 +23,5 @@ Commands installed into `~/.local/bin` may omit `.sh` when the filename is the u
 `inst-*.sh` scripts are sourced by `init.sh` after `globals.sh` loads. They must check binary/version before downloads, reinstall only with `FORCE=true`, use `installPackages`/`pkg_install` and prefer `gh_latest_release`, support the repo OS matrix, and source needed `env/*.sh` instead of assuming interactive PATH.
 
 Validation routing: [testing.md](testing.md).
+
+Plesk AI runtime ownership, vhost state, and update behavior are documented in [ai-sync.md](ai-sync.md).

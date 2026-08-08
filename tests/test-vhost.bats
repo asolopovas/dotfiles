@@ -49,6 +49,8 @@ setup_file() {
     [ "$(readlink "$h/.claude/skills")" = "$h/.agents/skills" ]
     [ -L "$h/.codex/skills" ]
     [ "$(readlink "$h/.codex/skills")" = "$h/.agents/skills" ]
+    [ "$(stat -c '%U' "$h/.codex")" = "testuser1" ]
+    [ "$(stat -c '%a' "$h/.codex")" = "700" ]
     [ -L "$h/.config/opencode" ]
     [ "$(readlink "$h/.config/opencode")" = "$h/dotfiles/.config/opencode" ]
     [ -L "$h/.pi/agent/prompts" ]
@@ -68,6 +70,20 @@ setup_file() {
     fi
 }
 
+@test "vhosts: Codex uses private state for each user" {
+    local h1="/var/www/vhosts/test1.com"
+    local h2="/var/www/vhosts/test2.org"
+    run sudo -u testuser1 env HOME="$h1" CODEX_SQLITE_HOME=/opt/codex/state /usr/local/bin/codex state-home
+    [ "$status" -eq 0 ]
+    [ "$output" = "$h1/.codex" ]
+    run sudo -u testuser2 env HOME="$h2" CODEX_SQLITE_HOME=/opt/codex/state /usr/local/bin/codex state-home
+    [ "$status" -eq 0 ]
+    [ "$output" = "$h2/.codex" ]
+    [ "$h1/.codex" != "$h2/.codex" ]
+    ! grep -q /opt/codex/state "$h1/.codex/config.toml"
+    ! grep -q /opt/codex/state "$h2/.codex/config.toml"
+}
+
 @test "vhost2: essential setup mirrors vhost1" {
     local h="/var/www/vhosts/test2.org"
     [ -L "$h/dotfiles" ]
@@ -80,4 +96,6 @@ setup_file() {
     [ -d "$h/.local/state/nvim" ]
     [ -d "$h/.cache/nvim" ]
     [ "$(stat -c '%U' "$h/.local/state")" = "testuser2" ]
+    [ "$(stat -c '%U' "$h/.codex")" = "testuser2" ]
+    [ "$(stat -c '%a' "$h/.codex")" = "700" ]
 }

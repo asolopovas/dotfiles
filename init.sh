@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export CONFIG_DIR="$HOME/.config"
-export DOTFILES_URL="https://github.com/asolopovas/dotfiles.git"
+export DOTFILES_URL="${DOTFILES_URL:-https://github.com/asolopovas/dotfiles.git}"
 export DOTFILES_DIR="$HOME/dotfiles"
 export SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
@@ -144,7 +144,7 @@ if [ "$(id -u)" -ne 0 ] && [ -d /opt/dotfiles ] && [ -L "$HOME/dotfiles" ]; then
     exit 0
 fi
 
-install_essentials
+install_essentials || exit 1
 
 if [ "$(id -u)" -eq 0 ] && [ "$HOME" = "/root" ] && [ -d /etc/psa ]; then
     if [ -d /opt/dotfiles ]; then

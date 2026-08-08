@@ -8,8 +8,22 @@ ok() { printf '\033[0;32m  PASS: %s\033[0m\n' "$*"; }
 fail() { printf '\033[0;31m  FAIL: %s\033[0m\n' "$*" >&2; }
 
 setup_local_repo() {
+    if [ ! -d /srv/agents.git ]; then
+        git clone --bare /mnt/dotfiles/agents /srv/agents.git 2>/dev/null
+    fi
+    git config --global protocol.file.allow always
+    git config --global url."file:///srv/agents.git".insteadOf git@github.com:asolopovas/agents.git
     [ -d /srv/dotfiles.git ] && return
-    git clone --bare /mnt/dotfiles /srv/dotfiles.git 2>/dev/null
+    local worktree
+    worktree=$(mktemp -d)
+    git clone /mnt/dotfiles "$worktree/repo" 2>/dev/null
+    rsync -a --delete --exclude=.git --exclude=agents /mnt/dotfiles/ "$worktree/repo/"
+    git -C "$worktree/repo" add -A
+    git -C "$worktree/repo" -c user.name=tests -c user.email=tests@localhost \
+        commit --allow-empty -m working-tree >/dev/null
+    git clone --bare "$worktree/repo" /srv/dotfiles.git 2>/dev/null
+    rm -rf "$worktree"
+    git config --system --add safe.directory /srv/dotfiles.git
     local head
     head=$(git -C /srv/dotfiles.git branch | head -1 | sed 's/^[* ]*//')
     [ "$head" != "main" ] && [ -n "$head" ] &&
@@ -91,7 +105,8 @@ run_suite() {
 sync_tests() {
     for d in /home/stduser/dotfiles /root/dotfiles; do
         [ -d "$d" ] || continue
-        cp -a /mnt/dotfiles/tests "$d/tests"
+        mkdir -p "$d/tests"
+        rsync -a --delete /mnt/dotfiles/tests/ "$d/tests/"
     done
     [ -d /home/stduser/dotfiles/tests ] &&
         chown -R stduser: /home/stduser/dotfiles/tests

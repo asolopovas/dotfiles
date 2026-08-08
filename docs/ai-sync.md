@@ -46,4 +46,12 @@ When Pi npm exists, sync runs `npm install` and `pi update --extensions` if avai
 
 On Plesk hosts, vhost AI skills, Pi prompts, Pi settings, and OpenCode MCP config are symlinked to the dotfiles checkout. Pi npm `package.json` is copied and owned by each vhost user so package updates remain writable.
 
+## Codex on Plesk
+
+`scripts/plesk-init.sh codex` provisions a root-owned runtime at `/opt/codex`, a wrapper at `/usr/local/bin/codex`, managed config and skills under `/etc/codex`, and a fixed privileged self-update helper. `codex update` invokes that helper without granting vhost users write access to the shared executable.
+
+Each vhost owns a private `~/.codex` directory with mode `0700`. The wrapper forces `CODEX_SQLITE_HOME` to that user's `CODEX_HOME` and removes the obsolete `/opt/codex/state` setting from managed and migrated configs; authentication, configuration, sessions, and SQLite databases are never shared through `/opt/codex/state`. The profile exports only the shared executable path. Existing shared state is retained root-only as legacy data.
+
+Run `scripts/plesk-init.sh sync` after changing the wrapper or vhost provisioning. The tracked runtime sources are `scripts/plesk-codex-wrapper.sh` and `scripts/plesk-codex-self-update.sh`.
+
 Project-only rules belong in `AGENTS.md` or project-local config, not generic skills. Validate with `make test-sync-ai` and `make test`.

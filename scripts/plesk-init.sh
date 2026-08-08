@@ -439,6 +439,116 @@ ROOTWRAPPER
     fi
 }
 
+install_codex_binary() {
+    local installer status=0
+    mkdir -p /opt/codex/bin /opt/codex/lib
+    installer=$(mktemp "${TMPDIR:-/tmp}/codex-install.XXXXXX")
+    curl -fsSL https://chatgpt.com/codex/install.sh -o "$installer" || status=$?
+    if [[ $status -eq 0 ]]; then
+        (
+            cd "${TMPDIR:-/tmp}"
+            env \
+                CODEX_NON_INTERACTIVE=true \
+                CODEX_INSTALL_DIR=/opt/codex/bin \
+                CODEX_HOME=/opt/codex \
+                bash "$installer"
+        ) || status=$?
+    fi
+    rm -f "$installer"
+    if [[ $status -ne 0 ]]; then
+        return "$status"
+    fi
+
+    local package_bin="/opt/codex/packages/standalone/current/bin/codex"
+    if [[ ! -x "$package_bin" ]]; then
+        print_color red "  Codex installer did not create $package_bin"
+        return 1
+    fi
+    ln -sfn "$package_bin" /opt/codex/bin/codex-real
+}
+
+write_codex_runtime() {
+    local wrapper_src="$SCRIPT_DIR/plesk-codex-wrapper.sh"
+    local updater_src="$SCRIPT_DIR/plesk-codex-self-update.sh"
+    local sudoers="/etc/sudoers.d/codex-self-update"
+
+    mkdir -p /opt/codex/bin /opt/codex/lib /etc/codex
+    install -m 0755 "$wrapper_src" /opt/codex/lib/codex-wrapper
+    install -m 0755 "$wrapper_src" /opt/codex/bin/codex
+    install -m 0755 "$updater_src" /usr/local/sbin/codex-self-update
+    ln -sfn /opt/codex/bin/codex /usr/local/bin/codex
+
+    cat >/etc/profile.d/codex-global.sh <<'PROFILE'
+export CODEX_INSTALL_DIR=/opt/codex/bin
+case ":$PATH:" in
+    *:/opt/codex/bin:*) ;;
+    *) export PATH="/opt/codex/bin:$PATH" ;;
+esac
+PROFILE
+    chmod 0644 /etc/profile.d/codex-global.sh
+
+    printf '%%psacln ALL=(root) NOPASSWD: /usr/local/sbin/codex-self-update\n' >"$sudoers"
+    chmod 0440 "$sudoers"
+    visudo -cf "$sudoers" >/dev/null
+
+    chown root:psacln /etc/codex
+    chmod 2755 /etc/codex
+    if [[ -f /etc/codex/config.toml ]]; then
+        sed -i '\|^[[:space:]]*sqlite_home[[:space:]]*=.*"/opt/codex/state"|d' /etc/codex/config.toml
+        chown root:psacln /etc/codex/config.toml
+        chmod 0640 /etc/codex/config.toml
+    fi
+    if [[ -f /root/.codex/config.toml ]]; then
+        sed -i '\|^[[:space:]]*sqlite_home[[:space:]]*=.*"/opt/codex/state"|d' /root/.codex/config.toml
+        chmod 0600 /root/.codex/config.toml
+    fi
+    replace_path_with_symlink /opt/dotfiles/agents/skills /etc/codex/skills
+
+    local path
+    for path in /opt/codex/bin /opt/codex/lib /opt/codex/packages; do
+        [[ -e "$path" ]] && lock_perms "$path"
+    done
+    chown root:root /opt/codex
+    chmod 0755 /opt/codex
+    if [[ -d /opt/codex/state ]]; then
+        chown -R root:root /opt/codex/state
+        find /opt/codex/state -type d -exec chmod 0700 {} +
+        find /opt/codex/state -type f -exec chmod 0600 {} +
+    fi
+}
+
+setup_codex() {
+    print_color bold_green "=== Codex ==="
+
+    local package_bin="/opt/codex/packages/standalone/current/bin/codex"
+    if [[ ! -x /opt/codex/bin/codex-real ]]; then
+        if [[ -x "$package_bin" ]]; then
+            mkdir -p /opt/codex/bin
+            ln -sfn "$package_bin" /opt/codex/bin/codex-real
+        else
+            install_codex_binary
+        fi
+    elif confirm_reinstall "Codex"; then
+        install_codex_binary
+    fi
+
+    write_codex_runtime
+    setup_codex_vhosts
+    print_color green "  $(/opt/codex/bin/codex-real --version 2>/dev/null) ready"
+}
+
+update_codex() {
+    print_color bold_green "=== Codex update ==="
+    install_codex_binary
+    write_codex_runtime
+    /opt/codex/bin/codex-real --version
+}
+
+setup_playwright_cli() {
+    print_color bold_green "=== Playwright CLI ==="
+    "${SCRIPT_DIR}/inst/inst-playwright-cli.sh"
+}
+
 setup_claude() {
     print_color bold_green "=== Claude Code ==="
 
@@ -451,22 +561,16 @@ setup_claude() {
     local root_skills="$HOME/.agents/skills"
     if [[ -d "$root_skills" ]]; then
         replace_path_with_symlink /opt/dotfiles/agents/skills /opt/agents-skills
-        mkdir -p /etc/codex
-        chgrp psacln /etc/codex
-        chmod 2755 /etc/codex
-        if [[ -f /etc/codex/config.toml ]]; then
-            chgrp psacln /etc/codex/config.toml
-            chmod 640 /etc/codex/config.toml
-        fi
-        replace_path_with_symlink /opt/dotfiles/agents/skills /etc/codex/skills
         ensure_symlink /opt/dotfiles/agents/skills "$HOME/.claude/skills"
         print_color green "  shared skills -> /opt/dotfiles/agents/skills"
     fi
 
     # Share the claude binary — same pattern as opencode
     local claude_ver_dir="$HOME/.local/share/claude/versions"
-    local claude_src
-    claude_src=$(find "$claude_ver_dir" -maxdepth 1 -type f -executable 2>/dev/null | sort -V | tail -1)
+    local claude_src=""
+    if [[ -d "$claude_ver_dir" ]]; then
+        claude_src=$(find "$claude_ver_dir" -maxdepth 1 -type f -executable 2>/dev/null | sort -V | tail -1)
+    fi
 
     if [[ -n "$claude_src" && -x "$claude_src" ]]; then
         if [[ ! -x /usr/local/bin/claude-bin ]] || ! cmp -s "$claude_src" /usr/local/bin/claude-bin; then
@@ -908,6 +1012,48 @@ setup_vhost_pi_package_json() {
     chmod u+rw,go+r "$dst" 2>/dev/null || true
 }
 
+setup_vhost_codex() {
+    local home_dir="$1"
+    local plesk_user="$2"
+    local codex_dir="$home_dir/.codex"
+    local config="$codex_dir/config.toml"
+
+    mkdir -p "$codex_dir"
+    chown "$plesk_user:" "$codex_dir"
+    chmod 0700 "$codex_dir"
+
+    if [[ -L "$config" ]]; then
+        rm -f "$config"
+    fi
+    if [[ ! -e "$config" && -f /etc/codex/config.toml ]]; then
+        install -m 0600 /etc/codex/config.toml "$config"
+    fi
+    if [[ -f "$config" ]]; then
+        sed -i '\|^[[:space:]]*sqlite_home[[:space:]]*=.*"/opt/codex/state"|d' "$config"
+        chown "$plesk_user:" "$config"
+        chmod 0600 "$config"
+    fi
+}
+
+setup_codex_vhosts() {
+    local rows
+    rows=$(query_vhosts)
+    [[ -n "$rows" ]] || return 0
+
+    local -A seen=()
+    local domain plesk_user home_dir count=0
+    while IFS=$'\t' read -r domain plesk_user home_dir; do
+        [[ -z "$domain" || -z "$plesk_user" || -z "$home_dir" ]] && continue
+        [[ -n "${seen[$home_dir]:-}" ]] && continue
+        seen[$home_dir]=1
+        if id "$plesk_user" >/dev/null 2>&1 && [[ -d "$home_dir" ]]; then
+            setup_vhost_codex "$home_dir" "$plesk_user"
+            count=$((count + 1))
+        fi
+    done <<<"$rows"
+    print_color green "  $count vhost Codex homes ready"
+}
+
 setup_vhost_plesk_bins() {
     local home_dir="$1"
     local bin_dir="$home_dir/.local/bin"
@@ -1002,7 +1148,8 @@ setup_vhosts() {
         replace_with_symlink /opt/nvim-config/nvim "$home_dir/.config/nvim"
 
         # Claude — copy settings (not symlink) so vhost user can write to it
-        mkdir -p "$home_dir/.claude" "$home_dir/.codex" "$home_dir/.pi/agent"
+        mkdir -p "$home_dir/.claude" "$home_dir/.pi/agent"
+        setup_vhost_codex "$home_dir" "$plesk_user"
         if [[ ! -f "$home_dir/.claude/settings.json" ]] || [[ -L "$home_dir/.claude/settings.json" ]]; then
             rm -f "$home_dir/.claude/settings.json" 2>/dev/null || true
             cp "$dotfiles_dir/.claude/settings.json" "$home_dir/.claude/settings.json"
@@ -1091,6 +1238,7 @@ do_sync() {
 
     setup_memory_limits
     setup_dotfiles
+    setup_codex
     setup_pi
     setup_vhosts
 
@@ -1111,6 +1259,8 @@ do_all() {
     setup_dotfiles
     setup_omf
     setup_opencode
+    setup_codex
+    setup_playwright_cli
     setup_claude
     setup_vscode
     setup_nvim
@@ -1150,6 +1300,9 @@ Commands:
   dotfiles  Ensure /opt/dotfiles is canonical, wire root symlinks
   omf       Install/update shared Oh My Fish + bass
   opencode  Sync opencode config + binary
+  codex     Install/configure shared Codex with per-user state
+  codex-update  Update the shared Codex runtime
+  playwright  Install/update shared Playwright CLI and Chromium
   vscode    Sync VS Code Server (merge root -> shared)
   claude    Sync Claude Code config + shared skills
   nvim      Install/update nvim, plugins, LSPs, parsers
@@ -1189,6 +1342,9 @@ case "${cmd:-all}" in
     dotfiles) setup_dotfiles ;;
     omf) setup_omf ;;
     opencode) setup_opencode ;;
+    codex) setup_codex ;;
+    codex-update) update_codex ;;
+    playwright) setup_playwright_cli ;;
     claude) setup_claude ;;
     vscode) setup_vscode ;;
     nvim) setup_nvim ;;
