@@ -83,6 +83,14 @@ sync_ai_run() {
     [[ "$output" == *"skills must live directly under"* ]]
 }
 
+@test "sync-ai: rejects an uninitialized agents submodule before linking" {
+    rm -rf "$DOTFILES_AGENTS_DIR/skills"
+    run sync_linux_agents
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"agents submodule is uninitialized"* ]]
+    [ ! -e "$AGENTS_DIR" ]
+}
+
 @test "sync-ai: windows sync copies agents and configs under WSL" {
     export WSL_DISTRO_NAME="Ubuntu"
     mkdir -p "$(dirname "$WINDOWS_AGENTS_DIR")"

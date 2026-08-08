@@ -74,6 +74,16 @@ setup_file() {
     fi
 }
 
+@test "plesk: playwright CLI and skill targets are provisioned" {
+    [ -x /usr/local/bin/playwright-cli ]
+    [ -f /opt/agents-skills/playwright-cli/SKILL.md ]
+    run /usr/local/bin/playwright-cli --version
+    [ "$status" -eq 0 ]
+    run /usr/local/bin/playwright --version
+    [ "$status" -eq 127 ]
+    [[ "$output" == *"legacy wrapper disabled"* ]]
+}
+
 @test "plesk: optional shared caches use psacln" {
     if [ -d /opt/opencode-cache ]; then
         [ "$(stat -c '%G' /opt/opencode-cache)" = "psacln" ]

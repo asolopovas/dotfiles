@@ -272,7 +272,11 @@ sync_windows_pi_packages() {
 
 validate_agents_layout() {
     local nested="$DOTFILES_AGENTS_DIR/skills/skills"
+    local skill_file
 
+    [[ -d "$DOTFILES_AGENTS_DIR/skills" ]] || die "agents submodule is uninitialized: missing $DOTFILES_AGENTS_DIR/skills"
+    skill_file=$(find "$DOTFILES_AGENTS_DIR/skills" -mindepth 2 -maxdepth 2 -type f -name SKILL.md -print -quit)
+    [[ -n "$skill_file" ]] || die "agents submodule is uninitialized: no skills found under $DOTFILES_AGENTS_DIR/skills"
     [[ ! -e "$nested" ]] || die "invalid agents layout: $nested exists; skills must live directly under $DOTFILES_AGENTS_DIR/skills"
 }
 

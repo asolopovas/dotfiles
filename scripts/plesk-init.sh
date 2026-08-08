@@ -303,6 +303,10 @@ setup_dotfiles() {
     fi
 
     git -C /opt/dotfiles submodule update --init --recursive
+    if [[ ! -f /opt/dotfiles/agents/skills/playwright-cli/SKILL.md ]]; then
+        print_color red "Agents submodule is uninitialized: missing /opt/dotfiles/agents/skills/playwright-cli/SKILL.md"
+        return 1
+    fi
 
     # Wire root's dotfiles the same way as vhosts
     local src
