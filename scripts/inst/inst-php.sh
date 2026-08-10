@@ -19,7 +19,7 @@ usage() {
 Usage: inst-php.sh [ACTION] [VERSION]
 
 Actions:
-  install             Install a common PHP package set
+  install, update     Install a common PHP package set or update it
   remove, uninstall   Remove every package for one PHP version
   list                Show installed versioned PHP packages
 
@@ -27,11 +27,13 @@ Examples:
   inst-php.sh
   inst-php.sh 8.4
   inst-php.sh install 8.4
+  inst-php.sh update 8.4
   inst-php.sh remove 8.3
   inst-php.sh list
 
-fzf selects an available version for install or an installed version for removal.
-Pass VERSION when running non-interactively.
+With no arguments, the newest supported PHP version available from apt is installed or updated.
+Pass VERSION to install or update a specific version.
+fzf selects an installed version when removal is run without VERSION.
 Installing a version does not remove or hold any other PHP packages.
 EOF
 }
@@ -70,8 +72,8 @@ parse_args() {
             usage
             exit 0
             ;;
-        install)
-            [ "$#" -le 2 ] || error_exit "Usage: inst-php.sh install [VERSION]"
+        install | update)
+            [ "$#" -le 2 ] || error_exit "Usage: inst-php.sh $1 [VERSION]"
             REQUESTED_VERSION="${2:-}"
             ;;
         remove | uninstall)
@@ -84,7 +86,9 @@ parse_args() {
             ACTION="list"
             ;;
         *)
-            [ "$#" -eq 1 ] && is_php_version "$1" || error_exit "Unknown argument: $1"
+            if [ "$#" -ne 1 ] || ! is_php_version "$1"; then
+                error_exit "Unknown argument: $1"
+            fi
             REQUESTED_VERSION="$1"
             ;;
     esac
@@ -113,7 +117,6 @@ ensure_ubuntu_repository() {
 
     print_color green "Adding ondrej/php PPA ..."
     sudo add-apt-repository -y ppa:ondrej/php
-    sudo apt update
 }
 
 ensure_debian_repository() {
@@ -138,7 +141,6 @@ ensure_debian_repository() {
 
     printf 'deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ %s main\n' "$(lsb_release -sc)" |
         sudo tee /etc/apt/sources.list.d/php.list >/dev/null
-    sudo apt update
 }
 
 ensure_php_repository() {
@@ -150,6 +152,8 @@ ensure_php_repository() {
             ensure_debian_repository
             ;;
     esac
+
+    sudo apt-get update
 }
 
 package_exists() {
@@ -204,26 +208,21 @@ select_php_version() {
         return 0
     fi
 
-    [ -t 0 ] || error_exit "Pass a PHP version when running non-interactively."
-
     local versions=()
-    local prompt
-    local header
 
     if [ "$ACTION" = "install" ]; then
         mapfile -t versions < <(available_versions)
-        prompt="Install PHP version> "
-        header="PHP $MIN_PHP_VERSION and newer"
         [ "${#versions[@]}" -gt 0 ] || error_exit "No supported PHP versions are available from apt."
-    else
-        mapfile -t versions < <(installed_versions)
-        prompt="Remove PHP version> "
-        header="Installed PHP versions"
-        [ "${#versions[@]}" -gt 0 ] || error_exit "No versioned PHP packages are installed."
+        VER="${versions[0]}"
+        print_color green "Using the newest available PHP version: $VER"
+        return 0
     fi
 
+    [ -t 0 ] || error_exit "Pass a PHP version when running removal non-interactively."
+    mapfile -t versions < <(installed_versions)
+    [ "${#versions[@]}" -gt 0 ] || error_exit "No versioned PHP packages are installed."
     require_fzf
-    VER="$(printf '%s\n' "${versions[@]}" | fzf --height=40% --reverse --prompt="$prompt" --header="$header" || true)"
+    VER="$(printf '%s\n' "${versions[@]}" | fzf --height=40% --reverse --prompt="Remove PHP version> " --header="Installed PHP versions" || true)"
     [ -n "$VER" ] || error_exit "Cancelled."
 }
 
@@ -262,25 +261,29 @@ set_php_alternatives() {
     done
 }
 
-remove_legacy_package_holds() {
+prepare_legacy_php_packages() {
     local held=()
-    mapfile -t held < <(comm -12 <(printf '%s\n' "${PHP_PACKAGES[@]}" | sort) <(apt-mark showhold 2>/dev/null | sort))
+    local additional=()
+    mapfile -t held < <(apt-mark showhold 2>/dev/null | awk -v prefix="php$VER" '$0 == prefix || index($0, prefix "-") == 1' | sort -u)
     [ "${#held[@]}" -gt 0 ] || return 0
 
     print_color yellow "Removing legacy PHP package holds:"
     printf '  %s\n' "${held[@]}"
     unhold_packages "${held[@]}"
+
+    mapfile -t additional < <(comm -23 <(printf '%s\n' "${held[@]}" | sort) <(printf '%s\n' "${PHP_PACKAGES[@]}" | sort))
+    PHP_PACKAGES+=("${additional[@]}")
 }
 
 install_php() {
     ensure_php_repository
     select_php_version
     build_common_package_set "$VER"
+    prepare_legacy_php_packages
 
     print_color green "Installing the common PHP $VER package set:"
     printf '  %s\n' "${PHP_PACKAGES[@]}"
 
-    remove_legacy_package_holds
     SUDO="sudo env DEBIAN_FRONTEND=noninteractive" pkg_install "${PHP_PACKAGES[@]}"
     set_php_alternatives "$VER"
 
