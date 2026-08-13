@@ -35,3 +35,9 @@ CLI `--no-*` only covers `fish`, `node`, `bun`, `deno`, and `nvim`.
 6. Link configs, install enabled tools via `ensure_tool`, apply desktop and shell side effects.
 
 Installer requirements: [scripts.md](scripts.md#installer-contract). Validation routing: [testing.md](testing.md).
+
+## Plesk Bun runtime
+
+`scripts/plesk-init.sh bun` installs the immutable runtime as `/usr/local/bin/bun-bin` and a root-owned wrapper as `/usr/local/bin/bun`. The wrapper runs Bun as the caller and sets `BUN_INSTALL_CACHE_DIR` to `${XDG_CACHE_HOME:-${HOME}/.cache}/bun` with mode `0700`.
+
+Every update runs the installed binary once as root, discovers each current `/tmp/bun-node-*` directory, sets the directory to `root:root` mode `1777`, and normalizes root-owned `bun` and `node` symlinks to `/usr/local/bin/bun-bin`. The update refuses to replace an ordinary file at either canonical link path.

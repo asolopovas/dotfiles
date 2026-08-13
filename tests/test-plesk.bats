@@ -41,15 +41,33 @@ setup_file() {
     [ ! -f /etc/profile.d/nvim.sh ]
 }
 
-@test "plesk: bun and pi wrappers are installed" {
+@test "plesk: bun uses private user caches and pi wrapper is installed" {
     [ -x /usr/local/bin/bun-bin ]
     [ -x /usr/local/bin/bun ]
-    [ -x /usr/local/bin/bun-run ]
     [ -L /usr/local/bin/bunx ]
-    [ -d /var/www/bun-cache ]
-    [ -f /etc/profile.d/bun.sh ]
-    run visudo -cf /etc/sudoers.d/bun-cache
+    [ ! -e /usr/local/bin/bun-run ]
+    [ ! -e /etc/profile.d/bun.sh ]
+    [ ! -e /etc/sudoers.d/bun-cache ]
+    [ "$(stat -c '%U:%G' /usr/local/bin/bun)" = "root:root" ]
+    [ "$(stat -c '%a' /usr/local/bin/bun)" = "755" ]
+    run bash -n /usr/local/bin/bun
     [ "$status" -eq 0 ]
+    run sudo -u stduser env -u XDG_CACHE_HOME HOME=/home/stduser /usr/local/bin/bun --version
+    [ "$status" -eq 0 ]
+    [ -d /home/stduser/.cache/bun ]
+    [ "$(stat -c '%U:%G' /home/stduser/.cache/bun)" = "stduser:stduser" ]
+    [ "$(stat -c '%a' /home/stduser/.cache/bun)" = "700" ]
+    local shim_count=0
+    while IFS= read -r -d '' shim_dir; do
+        shim_count=$((shim_count + 1))
+        [ "$(stat -c '%U:%G' "$shim_dir")" = "root:root" ]
+        [ "$(stat -c '%a' "$shim_dir")" = "1777" ]
+        [ "$(readlink "$shim_dir/bun")" = "/usr/local/bin/bun-bin" ]
+        [ "$(readlink "$shim_dir/node")" = "/usr/local/bin/bun-bin" ]
+        [ "$(stat -c '%U:%G' "$shim_dir/bun")" = "root:root" ]
+        [ "$(stat -c '%U:%G' "$shim_dir/node")" = "root:root" ]
+    done < <(find /tmp -maxdepth 1 -type d -name 'bun-node-*' -print0)
+    [ "$shim_count" -gt 0 ]
     [ -x /usr/local/bin/pi ]
     [ -x /usr/local/sbin/pi-self-update ]
     run visudo -cf /etc/sudoers.d/pi-self-update

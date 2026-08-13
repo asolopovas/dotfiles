@@ -836,6 +836,7 @@ setup_bun() {
     local new_ver
     new_ver=$("$tmp/bin/bun" --version)
 
+    local install_binary=true
     if [[ -f /usr/local/bin/bun-bin ]]; then
         local old_ver
         old_ver=$(/usr/local/bin/bun-bin --version 2>/dev/null || echo "unknown")
@@ -844,7 +845,7 @@ setup_bun() {
                 : # fall through to install
             else
                 print_color green "  bun v${new_ver} (up to date)"
-                return
+                install_binary=false
             fi
         else
             print_color green "  bun v${old_ver} -> v${new_ver}"
@@ -853,62 +854,45 @@ setup_bun() {
         print_color green "  Installing bun v${new_ver}"
     fi
 
-    install -m 755 -o root -g root "$tmp/bin/bun" /usr/local/bin/bun-bin
-
-    cat >/usr/local/bin/bun-run <<'HELPER'
-#!/bin/bash
-CALLER_USER="$1"
-CALLER_GROUP="$2"
-WORK_DIR="$3"
-shift 3
-
-export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"
-cd "$WORK_DIR" || exit 1
-
-/usr/local/bin/bun-bin "$@"
-status=$?
-
-# Restore ownership of outputs to the calling user
-if [[ -d node_modules ]]; then
-    chown -R "${CALLER_USER}:${CALLER_GROUP}" node_modules 2>/dev/null &
-fi
-for f in bun.lock bun.lockb; do
-    [[ -f "$f" ]] && chown "${CALLER_USER}:${CALLER_GROUP}" "$f" 2>/dev/null
-done
-
-exit $status
-HELPER
-    chmod 755 /usr/local/bin/bun-run
+    if [[ "$install_binary" == true ]]; then
+        install -m 755 -o root -g root "$tmp/bin/bun" /usr/local/bin/bun-bin
+    fi
 
     cat >/usr/local/bin/bun <<'WRAPPER'
 #!/bin/bash
-export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"
-if [[ "$(id -un)" == "root" ]]; then
-    exec /usr/local/bin/bun-bin "$@"
-else
-    exec sudo /usr/local/bin/bun-run "$(id -un)" "$(id -gn)" "$(pwd)" "$@"
-fi
+set -euo pipefail
+
+bun_cache_dir="${XDG_CACHE_HOME:-${HOME}/.cache}/bun"
+mkdir -p "$bun_cache_dir"
+chmod 0700 "$bun_cache_dir"
+
+export BUN_INSTALL_CACHE_DIR="$bun_cache_dir"
+exec /usr/local/bin/bun-bin "$@"
 WRAPPER
-    chmod 755 /usr/local/bin/bun
+    chown root:root /usr/local/bin/bun
+    chmod 0755 /usr/local/bin/bun
+    bash -n /usr/local/bin/bun
     ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
-    mkdir -p /var/www/bun-cache
-    chmod 755 /var/www/bun-cache
-    if [[ -n "$(ls -A /var/www/bun-cache 2>/dev/null)" ]]; then
-        lock_perms /var/www/bun-cache
-    fi
+    rm -f /usr/local/bin/bun-run /etc/sudoers.d/bun-cache /etc/profile.d/bun.sh
 
-    local sudoers="/etc/sudoers.d/bun-cache"
-    printf 'ALL ALL=(root) NOPASSWD: /usr/local/bin/bun-run *\n' >"$sudoers"
-    chmod 440 "$sudoers"
-    if ! visudo -cf "$sudoers" >/dev/null 2>&1; then
-        print_color red "  Sudoers syntax check failed"
-        rm -f "$sudoers"
-        return 1
-    fi
+    /usr/local/bin/bun-bin --bun run true >/dev/null
 
-    printf 'export BUN_INSTALL_CACHE_DIR="/var/www/bun-cache"\n' >/etc/profile.d/bun.sh
-    chmod 644 /etc/profile.d/bun.sh
+    local shim_dir
+    while IFS= read -r -d '' shim_dir; do
+        chown root:root "$shim_dir"
+        chmod 1777 "$shim_dir"
+
+        local shim_link
+        for shim_link in bun node; do
+            if [[ -e "$shim_dir/$shim_link" && ! -L "$shim_dir/$shim_link" ]]; then
+                print_color red "  Refusing to replace non-symlink $shim_dir/$shim_link"
+                return 1
+            fi
+            ln -sfn /usr/local/bin/bun-bin "$shim_dir/$shim_link"
+            chown -h root:root "$shim_dir/$shim_link"
+        done
+    done < <(find /tmp -maxdepth 1 -type d -name 'bun-node-*' -print0)
 
     print_color green "  bun v$(/usr/local/bin/bun-bin --version) ready"
 }
@@ -1274,7 +1258,6 @@ do_all() {
     printf "  %-24s %s\n" "/opt/dotfiles" "$(du -sh /opt/dotfiles 2>/dev/null | cut -f1)"
     printf "  %-24s %s\n" "/opt/omf" "$(du -sh /opt/omf 2>/dev/null | cut -f1)"
     printf "  %-24s %s\n" "/opt/nvim-data" "$(du -sh /opt/nvim-data 2>/dev/null | cut -f1)"
-    printf "  %-24s %s\n" "/var/www/bun-cache" "$(du -sh /var/www/bun-cache 2>/dev/null | cut -f1)"
     [[ -d /opt/opencode-config ]] &&
         printf "  %-24s %s\n" "/opt/opencode-config" "$(du -sh /opt/opencode-config 2>/dev/null | cut -f1)"
     [[ -d /opt/opencode-cache ]] &&
